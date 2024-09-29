@@ -1,0 +1,33 @@
+{
+    "manifest_version": 3,
+    "name": "PSP Detector",
+    "version": "1.0",
+    "description": "Detects which Payment Service Provider (PSP) is used on the webpage and displays its logo.",
+    "permissions": ["activeTab", "scripting", "storage"],
+    "action": {
+      "default_icon": {
+        "16": "images/default_16.png",
+        "48": "images/default_48.png",
+        "128": "images/default_128.png"
+      },
+      "default_popup": "popup.html"
+    },
+    "background": {
+      "service_worker": "background.js"
+    },
+    "web_accessible_resources": [
+      {
+        "resources": ["psp-config.json"],
+        "matches": ["<all_urls>"]
+      }
+    ],
+    "host_permissions": [
+      "*://*/*"
+    ],
+    "content_scripts": [
+      {
+        "matches": ["https://*/*"],
+        "js": ["content.js"]
+      }
+    ]
+  }

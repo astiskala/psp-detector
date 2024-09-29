@@ -1,0 +1,151 @@
+{
+  "psps": [
+    {
+      "name": "2Checkout (Verifone)",
+      "regex": "2pay-js\\.2checkout\\.com",
+      "url": "https://www.2checkout.com",
+      "image": "verifone",
+      "summary": "2Checkout, now part of Verifone, offers a payment platform for online businesses to accept payments globally. It supports multiple payment methods and currencies, with features like subscription billing, fraud detection, invoicing, and seamless integration with e-commerce platforms."
+    },
+    {
+      "name": "Adyen",
+      "regex": "checkoutshopper-live\\.adyen\\.com|checkoutshopper-live-apse\\.adyen\\.com|checkoutshopper-live-au\\.adyen\\.com|checkoutshopper-live-in\\.adyen\\.com|checkoutshopper-live-us\\.adyen\\.com|cdn\\.adyen\\.com",
+      "url": "https://www.adyen.com",
+      "image": "adyen",
+      "summary": "Adyen is a global payment company offering businesses an end-to-end infrastructure for managing online, mobile, and in-store payments. Adyen provides solutions for risk management, analytics, and acquiring services, catering to enterprises with high transaction volumes."
+    },
+    {
+      "name": "Authorize.net",
+      "regex": "authorizecim",
+      "url": "https://www.authorize.net",
+      "image": "authorize",
+      "summary": "Authorize.net is a trusted payment gateway service provider that enables merchants to accept credit card and electronic check payments securely. It offers fraud detection, recurring billing, and customer information management tools to businesses of all sizes."
+    },
+    {
+      "name": "Bambora",
+      "regex": "libs\\.na\\.bambora\\.com",
+      "url": "https://www.bambora.com",
+      "image": "bambora",
+      "summary": "Bambora, now part of Worldline, provides a wide range of payment services for businesses, from e-commerce and mobile payments to in-store transactions. The company focuses on simplifying the payment process for small and medium-sized enterprises globally."
+    },
+    {
+      "name": "BlueSnap",
+      "regex": "pay\\.bluesnap\\.com",
+      "url": "https://www.bluesnap.com",
+      "image": "bluesnap",
+      "summary": "BlueSnap is a global payments provider that helps businesses accept payments online, on mobile, and via marketplaces. It offers built-in fraud prevention, supports over 100 payment methods, and helps businesses streamline global payment processing with support for multiple currencies."
+    },
+    {
+      "name": "Braintree",
+      "regex": "js\\.braintreegateway\\.com|assets\\.braintreegateway\\.com",
+      "url": "https://www.braintreepayments.com",
+      "image": "braintree",
+      "summary": "Braintree, a PayPal service, offers a full-stack payment platform designed to make online payments seamless for merchants. Its services include credit card processing, PayPal, Apple Pay, and subscription billing, with a focus on providing scalable solutions for businesses."
+    },
+    {
+      "name": "Checkout.com",
+      "regex": "cdn\\.checkout\\.com|cdn\\.sandbox\\.checkout\\.com|js\\.checkout\\.com|js\\.sandbox\\.checkout\\.com",
+      "url": "https://www.checkout.com",
+      "image": "checkout",
+      "summary": "Checkout.com is a global payment solutions provider offering comprehensive payment processing, including accepting online payments and fraud detection. It supports multiple currencies and payment methods, aiming to improve transaction speed and customer conversion for businesses worldwide."
+    },
+    {
+      "name": "Cybersource",
+      "regex": "flex\\.cybersource\\.com|testflex\\.cybersource\\.com",
+      "url": "https://www.cybersource.com",
+      "image": "cybersource",
+      "summary": "Cybersource, a Visa company, provides a robust payment management platform that includes global payment processing, fraud management, and security solutions. It helps businesses optimize their payment operations, offering reliability and scalability for enterprises handling complex transactions."
+    },
+    {
+      "name": "Eway",
+      "regex": "secure\\.ewaypayments\\.com",
+      "url": "https://eway.io",
+      "image": "eway",
+      "summary": "Eway is a widely-used payment gateway in Australia and beyond, known for offering simple and secure payment processing. It supports all major credit cards, is PCI-DSS compliant, and integrates seamlessly with various e-commerce platforms. eWay also provides 24/7 technical support and flat-rate transaction fees, making it ideal for small to medium businesses."
+    },
+    {
+      "name": "Fat Zebra",
+      "regex": "pmnts\\.io|pmnts-sandbox\\.io",
+      "url": "https://www.fatzebra.com",
+      "image": "fatzebra",
+      "summary": "Fat Zebra is an Australian-based payment gateway that specializes in providing simple and secure payment solutions for businesses. It focuses on delivering a robust platform for e-commerce, supporting multiple payment methods and currencies to streamline transactions."
+    },
+    {
+      "name": "Fiserv",
+      "regex": "api\\.firstdata\\.com",
+      "url": "https://www.fiserv.com",
+      "image": "fiserv",
+      "summary": "Fiserv, formerly First Data, is a leading provider of financial services technology, including payment processing for businesses of all sizes. Its platform supports a variety of payment methods and offers solutions for both online and in-store payments."
+    },
+    {
+      "name": "Mastercard Gateway (MPGS)",
+      "regex": "gateway\\.mastercard\\.com",
+      "url": "https://www.mastercard.com/gateway.html",
+      "image": "mastercard",
+      "summary": "Mastercard Payment Gateway Services (MPGS) offers businesses a secure platform for accepting online payments with global reach. It supports multiple payment methods, including credit cards and digital wallets, providing fraud detection and security features for merchants."
+    },
+    {
+      "name": "Payoneer",
+      "regex": "integration\\.oscato\\.com",
+      "url": "https://www.payoneer.com",
+      "image": "payoneer",
+      "summary": "Payoneer offers cross-border payment solutions for freelancers, marketplaces, and large enterprises. It supports multi-currency transactions and allows businesses to send and receive funds globally. The platform includes services like billing, global transfers, and integrated payment solutions."
+    },
+    {
+      "name": "Shopify Payments",
+      "regex": "checkout\\.shopifycs\\.com",
+      "url": "https://www.shopify.com",
+      "image": "shopify",
+      "summary": "Shopify Payments is an integrated payment processing solution for Shopify store owners. It allows businesses to accept payments directly through their Shopify platform, supporting major credit cards and offering streamlined checkout experiences for customers."
+    },
+    {
+      "name": "Square",
+      "regex": "web\\.squarecdn\\.com|js\\.squareup\\.com|pci-connect\\.squareupsandbox\\.com|js\\.squareupsandbox\\.com|pci-connect\\.squareup\\.com",
+      "url": "https://www.squareup.com",
+      "image": "square",
+      "summary": "Square is a leading payment processing platform for businesses, offering easy-to-use solutions for in-person, online, and mobile payments. Known for its Square Reader, the platform also provides tools for inventory management, invoicing, and e-commerce integration."
+    },
+    {
+      "name": "Stripe",
+      "regex": "checkout\\.stripe\\.com",
+      "url": "https://www.stripe.com",
+      "image": "stripe",
+      "summary": "Stripe is a global payments infrastructure provider that powers online transactions for internet businesses. With a focus on developer-friendly APIs, Stripe supports multiple currencies and offers tools for subscription management, invoicing, and fraud prevention."
+    },
+    {
+      "name": "Tyro",
+      "regex": "pay\\.connect\\.tyro\\.com",
+      "url": "https://www.tyro.com",
+      "image": "tyro",
+      "summary": "Tyro is an Australian fintech company specializing in EFTPOS (electronic funds transfer at point of sale) solutions for small and medium-sized businesses. It caters primarily to the healthcare, retail, and hospitality industries, providing innovative, integrated payment solutions with competitive rates. Tyro also offers banking services, including business loans and term deposits."
+    },
+    {
+      "name": "Windcave",
+      "regex": "sec\\.windcave\\.com",
+      "url": "https://www.windcave.com",
+      "image": "windcave",
+      "summary": "Windcave is a payment solutions provider offering secure payment processing for both online and in-store transactions. With a focus on security and reliability, Windcave serves businesses in various industries with customizable payment solutions."
+    },
+    {
+      "name": "Worldline",
+      "regex": "payment\\.direct\\.worldline-solutions\\.com|payment\\.preprod\\.direct\\.worldline-solutions\\.com",
+      "url": "https://www.worldline.com",
+      "image": "worldline",
+      "summary": "Worldline is a global leader in payment services, providing businesses with secure, innovative payment solutions. It offers a wide range of services, from payment terminals to e-commerce processing, designed to optimize transactions and improve customer experience."
+    },
+    {
+      "name": "Worldpay",
+      "regex": "access\\.worldpay\\.com",
+      "url": "https://www.worldpay.com",
+      "image": "worldpay",
+      "summary": "Worldpay, part of FIS, is a payment processing company that provides global solutions for online, in-store, and mobile transactions. It supports a wide range of payment methods, offering advanced security features and fraud management tools for businesses."
+    },
+    {
+      "name": "Zai",
+      "regex": "hosted-fields\\.assemblypay\\.com",
+      "url": "https://www.hellozai.com",
+      "image": "zai",
+      "summary": "Zai, formerly known as Assembly Payments, is an Australian-based fintech company providing automated, real-time payment solutions for large-scale businesses. Specializing in complex financial flows, Zai leverages the New Payments Platform (NPP) for fast, secure account-to-account payments. It supports industries like marketplaces, banking, and lending, enhancing financial operations with tailored API-driven solutions."
+    }
+  ]
+}
