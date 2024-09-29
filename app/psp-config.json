@@ -36,13 +36,6 @@
       "summary": "BlueSnap is a global payments provider that helps businesses accept payments online, on mobile, and via marketplaces. It offers built-in fraud prevention, supports over 100 payment methods, and helps businesses streamline global payment processing with support for multiple currencies."
     },
     {
-      "name": "Braintree",
-      "regex": "js\\.braintreegateway\\.com|assets\\.braintreegateway\\.com",
-      "url": "https://www.braintreepayments.com",
-      "image": "braintree",
-      "summary": "Braintree, a PayPal service, offers a full-stack payment platform designed to make online payments seamless for merchants. Its services include credit card processing, PayPal, Apple Pay, and subscription billing, with a focus on providing scalable solutions for businesses."
-    },
-    {
       "name": "Checkout.com",
       "regex": "cdn\\.checkout\\.com|cdn\\.sandbox\\.checkout\\.com|js\\.checkout\\.com|js\\.sandbox\\.checkout\\.com",
       "url": "https://www.checkout.com",
@@ -50,11 +43,25 @@
       "summary": "Checkout.com is a global payment solutions provider offering comprehensive payment processing, including accepting online payments and fraud detection. It supports multiple currencies and payment methods, aiming to improve transaction speed and customer conversion for businesses worldwide."
     },
     {
+      "name": "Cielo",
+      "regex": "cieloecommerce\\.cielo\\.com\\.br",
+      "url": "https://www.cielo.com.br",
+      "image": "cielo",
+      "summary": "Cielo is one of Brazil's largest payment processors, providing solutions for both online and offline transactions. It supports credit and debit card payments, including installment options, making it a popular choice for e-commerce in Brazil."
+    },
+    {
       "name": "Cybersource",
-      "regex": "flex\\.cybersource\\.com|testflex\\.cybersource\\.com",
+      "regex": "flex\\.cybersource\\.com|testflex\\.cybersource\\.com|secureacceptance\\.cybersource\\.com",
       "url": "https://www.cybersource.com",
       "image": "cybersource",
       "summary": "Cybersource, a Visa company, provides a robust payment management platform that includes global payment processing, fraud management, and security solutions. It helps businesses optimize their payment operations, offering reliability and scalability for enterprises handling complex transactions."
+    },
+    {
+      "name": "EBANX",
+      "regex": "ebanx-js\\.ebanx\\.com|ui-elements\\.ebanx\\.com",
+      "url": "https://www.ebanx.com",
+      "image": "ebanx",
+      "summary": "EBANX is a payment gateway tailored for the Latin American market, supporting local payment methods in Brazil, Mexico, Argentina, and more. It enables international businesses to reach LATAM consumers with local payment solutions."
     },
     {
       "name": "Eway",
@@ -71,6 +78,13 @@
       "summary": "Fat Zebra is an Australian-based payment gateway that specializes in providing simple and secure payment solutions for businesses. It focuses on delivering a robust platform for e-commerce, supporting multiple payment methods and currencies to streamline transactions."
     },
     {
+      "name": "Fiuu",
+      "regex": "onlinepayment\\.com\\.my",
+      "url": "https://www.fiuu.com",
+      "image": "fiuu",
+      "summary": "Fiuu, formerly known as Razer Merchant Services, is a payment service provider offering businesses in Southeast Asia and beyond a comprehensive platform for online, mobile, and in-store payments. With a focus on scalability, Fiuu supports various payment methods and currencies for seamless global transactions."
+    },    
+    {
       "name": "Fiserv",
       "regex": "api\\.firstdata\\.com",
       "url": "https://www.fiserv.com",
@@ -78,12 +92,26 @@
       "summary": "Fiserv, formerly First Data, is a leading provider of financial services technology, including payment processing for businesses of all sizes. Its platform supports a variety of payment methods and offers solutions for both online and in-store payments."
     },
     {
-      "name": "Mastercard Gateway (MPGS)",
-      "regex": "gateway\\.mastercard\\.com",
-      "url": "https://www.mastercard.com/gateway.html",
-      "image": "mastercard",
-      "summary": "Mastercard Payment Gateway Services (MPGS) offers businesses a secure platform for accepting online payments with global reach. It supports multiple payment methods, including credit cards and digital wallets, providing fraud detection and security features for merchants."
+      "name": "MercadoPago",
+      "regex": "api-static\\.mercadopago\\.com",
+      "url": "https://www.mercadopago.com",
+      "image": "mercadopago",
+      "summary": "MercadoPago is a leading payment platform in Latin America, offering a range of payment solutions including credit and debit cards, bank transfers, and cash-based payments. It operates in countries like Argentina, Brazil, and Mexico."
     },
+    {
+      "name": "Mollie",
+      "regex": "api\\.mollie\\.com|js\\.mollie\\.com",
+      "url": "https://www.mollie.com",
+      "image": "mollie",
+      "summary": "Mollie is a European payment service provider offering businesses a simple and reliable way to accept online payments. It supports a wide range of payment methods, including credit cards, PayPal, and local options like iDEAL and SEPA, making it popular across Europe."
+    },
+    {
+      "name": "Opn Payments",
+      "regex": "cdn\\.omise\\.co",
+      "url": "https://www.opn.ooo",
+      "image": "opn",
+      "summary": "Opn Payments, formerly known as Omise, is a leading payments platform in Asia, offering a comprehensive suite of payment solutions. It supports online payments, recurring billing, and multi-currency transactions, catering to businesses of all sizes, with a focus on providing secure, scalable solutions."
+    },  
     {
       "name": "Payoneer",
       "regex": "integration\\.oscato\\.com",
@@ -92,11 +120,11 @@
       "summary": "Payoneer offers cross-border payment solutions for freelancers, marketplaces, and large enterprises. It supports multi-currency transactions and allows businesses to send and receive funds globally. The platform includes services like billing, global transfers, and integrated payment solutions."
     },
     {
-      "name": "Shopify Payments",
-      "regex": "checkout\\.shopifycs\\.com",
-      "url": "https://www.shopify.com",
-      "image": "shopify",
-      "summary": "Shopify Payments is an integrated payment processing solution for Shopify store owners. It allows businesses to accept payments directly through their Shopify platform, supporting major credit cards and offering streamlined checkout experiences for customers."
+      "name": "PayU",
+      "regex": "paymentsos\\.com|checkout\\.payulatam\\.com|api\\.payu\\.in|jssdk\\.payu\\.in|payudc\\.net",
+      "url": "https://corporate.payu.com/",
+      "image": "payu",
+      "summary": "PayU is a global payment service provider operating in multiple markets, with a focus on emerging economies. It offers a variety of payment solutions including credit and debit cards, as well as alternative payment methods. PayU enables businesses to accept localized payments, providing secure and scalable solutions for e-commerce and mobile platforms."
     },
     {
       "name": "Square",
@@ -146,6 +174,34 @@
       "url": "https://www.hellozai.com",
       "image": "zai",
       "summary": "Zai, formerly known as Assembly Payments, is an Australian-based fintech company providing automated, real-time payment solutions for large-scale businesses. Specializing in complex financial flows, Zai leverages the New Payments Platform (NPP) for fast, secure account-to-account payments. It supports industries like marketplaces, banking, and lending, enhancing financial operations with tailored API-driven solutions."
+    },
+    {
+      "name": "Mastercard Gateway (MPGS)",
+      "regex": "gateway\\.mastercard\\.com",
+      "url": "https://www.mastercard.com/gateway.html",
+      "image": "mastercard",
+      "summary": "Mastercard Payment Gateway Services (MPGS) offers businesses a secure platform for accepting online payments with global reach. It supports multiple payment methods, including credit cards and digital wallets, providing fraud detection and security features for merchants."
+    },
+    {
+      "name": "Shopify Payments",
+      "regex": "checkout\\.shopifycs\\.com",
+      "url": "https://www.shopify.com",
+      "image": "shopify",
+      "summary": "Shopify Payments is an integrated payment processing solution for Shopify store owners. It allows businesses to accept payments directly through their Shopify platform, supporting major credit cards and offering streamlined checkout experiences for customers."
+    },
+    {
+      "name": "Alipay",
+      "regex": "itscenter\\.alipay\\.com",
+      "url": "https://www.alipay.com",
+      "image": "alipay",
+      "summary": "Alipay is a leading mobile and online payment platform in China, operated by Ant Group. It offers a range of financial services including payment processing, money transfers, and investment options, catering primarily to consumers and businesses looking for seamless digital transactions."
+    },
+    {
+      "name": "Braintree",
+      "regex": "js\\.braintreegateway\\.com|assets\\.braintreegateway\\.com",
+      "url": "https://www.braintreepayments.com",
+      "image": "braintree",
+      "summary": "Braintree, a PayPal service, offers a full-stack payment platform designed to make online payments seamless for merchants. Its services include credit card processing, PayPal, Apple Pay, and subscription billing, with a focus on providing scalable solutions for businesses."
     }
   ]
 }
