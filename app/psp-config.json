@@ -8,6 +8,13 @@
       "summary": "2Checkout, now part of Verifone, offers a payment platform for online businesses to accept payments globally. It supports multiple payment methods and currencies, with features like subscription billing, fraud detection, invoicing, and seamless integration with e-commerce platforms."
     },
     {
+      "name": "2C2P",
+      "regex": "pgw\\.2c2p\\.com|pgwid\\.2c2p\\.com|https://t\\.2c2p\\.com|demo2\\.2c2p\\.com",
+      "url": "https://www.2c2p.com",
+      "image": "2c2p",
+      "summary": "2C2P is a leading payment service provider in Southeast Asia, offering secure payment solutions for online, mobile, and in-store transactions. The platform supports multiple payment methods, including credit cards, digital wallets, and alternative payment channels, providing businesses with comprehensive tools for seamless payments across the region."
+    },    
+    {
       "name": "Adyen",
       "regex": "checkoutshopper-live\\.adyen\\.com|checkoutshopper-live-apse\\.adyen\\.com|checkoutshopper-live-au\\.adyen\\.com|checkoutshopper-live-in\\.adyen\\.com|checkoutshopper-live-us\\.adyen\\.com|cdn\\.adyen\\.com",
       "url": "https://www.adyen.com",
