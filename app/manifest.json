@@ -7,6 +7,11 @@
     "activeTab",
     "scripting"
   ],
+  "icons": {
+    "16": "images/default_16.png",
+    "48": "images/default_48.png",
+    "128": "images/default_128.png"
+  },
   "action": {
     "default_icon": {
       "16": "images/default_16.png",
