@@ -40,6 +40,10 @@ chrome.tabs.onActivated.addListener(tabInfo => {
     // Run on any HTTPS website, excluding extension galleries
     if (tab && eligibleUrls.test(tab.url)) {
       detectedPsp = tabPsps[currentTabId]
+      if (!detectedPsp) {
+        executeContentScript(currentTabId)
+      }
+
       setPspIcon()
     }
   })
@@ -54,20 +58,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.status === 'complete' && tab && tab.url) {
     // Run on any HTTPS website, excluding extension galleries
     if (eligibleUrls.test(tab.url)) {
-      chrome.scripting.executeScript(
-        {
-          target: { tabId: tabId },
-          files: ['content.js']
-        },
-        () => {
-          if (chrome.runtime.lastError) {
-            console.error(
-              `Failed to inject content script on tab ${tabId}`,
-              chrome.runtime.lastError.message
-            )
-          }
-        }
-      )
+      executeContentScript(tabId)
     } else {
       chrome.action.setIcon({ path: defaultIcons })
     }
@@ -77,6 +68,23 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
   delete tabPsps[tabId]
 })
+
+function executeContentScript (tabId) {
+  chrome.scripting.executeScript(
+    {
+      target: { tabId: tabId },
+      files: ['content.js']
+    },
+    () => {
+      if (chrome.runtime.lastError) {
+        console.error(
+          `Failed to inject content script on tab ${tabId}`,
+          chrome.runtime.lastError.message
+        )
+      }
+    }
+  )
+}
 
 function setPspIcon () {
   if (cachedPspConfig) {
