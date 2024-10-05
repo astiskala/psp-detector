@@ -118,7 +118,7 @@
       "url": "https://www.opn.ooo",
       "image": "opn",
       "summary": "Opn Payments, formerly known as Omise, is a leading payments platform in Asia, offering a comprehensive suite of payment solutions. It supports online payments, recurring billing, and multi-currency transactions, catering to businesses of all sizes, with a focus on providing secure, scalable solutions."
-    },  
+    },
     {
       "name": "Payoneer",
       "regex": "integration\\.oscato\\.com",
@@ -133,6 +133,13 @@
       "image": "payu",
       "summary": "PayU is a global payment service provider operating in multiple markets, with a focus on emerging economies. It offers a variety of payment solutions including credit and debit cards, as well as alternative payment methods. PayU enables businesses to accept localized payments, providing secure and scalable solutions for e-commerce and mobile platforms."
     },
+    {
+      "name": "Razorpay",
+      "regex": "checkout\\.razorpay\\.com|api\\.razorpay\\.com|cdn\\.razorpay\\.com",
+      "url": "https://www.razorpay.com",
+      "image": "razorpay",
+      "summary": "Razorpay is a leading Indian payment gateway offering a comprehensive suite of solutions for businesses to accept online payments. It supports multiple payment methods such as credit/debit cards, UPI, and wallets, making it a popular choice for Indian e-commerce merchants."
+    },    
     {
       "name": "Square",
       "regex": "web\\.squarecdn\\.com|js\\.squareup\\.com|pci-connect\\.squareupsandbox\\.com|js\\.squareupsandbox\\.com|pci-connect\\.squareup\\.com",
@@ -154,6 +161,13 @@
       "image": "tyro",
       "summary": "Tyro is an Australian fintech company specializing in EFTPOS (electronic funds transfer at point of sale) solutions for small and medium-sized businesses. It caters primarily to the healthcare, retail, and hospitality industries, providing innovative, integrated payment solutions with competitive rates. Tyro also offers banking services, including business loans and term deposits."
     },
+    {
+      "name": "WePay",
+      "regex": "wepayapi\\.com|staging\\.wepayapi\\.com|cdn\\.wepay\\.com",
+      "url": "https://go.wepay.com",
+      "image": "wepay",
+      "summary": "WePay, a Chase company, provides integrated payment solutions for platforms and marketplaces. It offers seamless payments, fraud protection, and risk management with the ability to integrate payments into partner platforms."
+    },    
     {
       "name": "Windcave",
       "regex": "sec\\.windcave\\.com",
@@ -183,6 +197,13 @@
       "summary": "Zai, formerly known as Assembly Payments, is an Australian-based fintech company providing automated, real-time payment solutions for large-scale businesses. Specializing in complex financial flows, Zai leverages the New Payments Platform (NPP) for fast, secure account-to-account payments. It supports industries like marketplaces, banking, and lending, enhancing financial operations with tailored API-driven solutions."
     },
     {
+      "name": "Paysera",
+      "regex": "card-gateway-api\\.paysera\\.com|www\\.paysera\\.com/new/api",
+      "url": "https://www.paysera.com",
+      "image": "paysera",
+      "summary": "Paysera is a European-based payment gateway offering international money transfers, online payment processing, and prepaid cards. It provides businesses with affordable payment solutions, focusing on cross-border transactions."
+    },
+    {
       "name": "Mastercard Gateway (MPGS)",
       "regex": "gateway\\.mastercard\\.com",
       "url": "https://www.mastercard.com/gateway.html",
@@ -208,7 +229,7 @@
       "regex": "js\\.braintreegateway\\.com|assets\\.braintreegateway\\.com",
       "url": "https://www.braintreepayments.com",
       "image": "braintree",
-      "summary": "Braintree, a PayPal service, offers a full-stack payment platform designed to make online payments seamless for merchants. Its services include credit card processing, PayPal, Apple Pay, and subscription billing, with a focus on providing scalable solutions for businesses."
+      "summary": "Braintree, a PayPal service, offers a full-stack payment platform designed to make online payments seamless for merchants. Its services include credit card processing, PayPal, Apple Pay, and subscription billing, with a focus on providing scalable solutions for businesses.<br /><br /><strong>Note: Because PayPal and Braintree are integrated, sometimes Braintree is misidentified as the PSP (even though a separate PSP may be used for card processing).</strong>"
     }
   ]
 }
