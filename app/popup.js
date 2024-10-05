@@ -1,11 +1,11 @@
 document.addEventListener('DOMContentLoaded', function () {
-  chrome.runtime.sendMessage({ action: 'getPSP' }, function (response) {
-    const detectedPSP = response.psp
+  chrome.runtime.sendMessage({ action: 'getPsp' }, function (response) {
+    const detectedPsp = response.psp
     fetch(chrome.runtime.getURL('psp-config.json'))
       .then(response => response.json())
       .then(pspConfig => {
-        if (detectedPSP) {
-          const psp = pspConfig.psps.find(p => p.name === detectedPSP)
+        if (detectedPsp) {
+          const psp = pspConfig.psps.find(p => p.name === detectedPsp)
           document.getElementById('psp-name').innerHTML = psp.name
           document.getElementById('psp-description').innerHTML = psp.summary
           document.getElementById(
