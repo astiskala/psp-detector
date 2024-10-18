@@ -1,0 +1,50 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*'  # Trigger on version tags like v1.0, v1.1, etc.
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '16'
+
+    - name: Get version from tag
+      id: extract_version
+      run: |
+        TAG_NAME=${GITHUB_REF##*/}
+        VERSION=${TAG_NAME#v}
+        echo "::set-output name=version::$VERSION"
+
+    - name: Zip app directory
+      run: |
+        VERSION=${{ steps.extract_version.outputs.version }}
+        zip -r "psp-detector-${VERSION}.zip" app/
+
+    - name: Create GitHub Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ steps.extract_version.outputs.version }}
+        draft: false
+        prerelease: false
+
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: psp-detector-${{ steps.extract_version.outputs.version }}.zip
+        asset_name: psp-detector-${{ steps.extract_version.outputs.version }}.zip
+        asset_content_type: application/zip
