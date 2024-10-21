@@ -1,15 +1,14 @@
 name: Create Release
 
-permissions:
-  contents: write
-
 on:
   push:
     tags:
       - 'v*'  # Trigger on version tags like v1.0, v1.1, etc.
-  workflow_dispatch:
-    inputs:
-      tags:
+
+  workflow_dispatch:  # Allow the workflow to be manually triggered
+
+permissions:
+  contents: write  # Allow write access to repository contents (required for creating releases)
 
 jobs:
   create-release:
@@ -26,6 +25,7 @@ jobs:
 
     - name: Get version from tag
       id: extract_version
+      if: github.event_name == 'push'
       run: |
         TAG_NAME=${GITHUB_REF##*/}
         VERSION=${TAG_NAME#v}
@@ -33,14 +33,18 @@ jobs:
 
     - name: Zip app directory
       run: |
-        VERSION=${{ steps.extract_version.outputs.version }}
+        if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+          VERSION="manual"
+        else
+          VERSION=${{ steps.extract_version.outputs.version }}
+        fi
         zip -r "psp-detector-${VERSION}.zip" app/
 
     - name: Create GitHub Release
       id: create_release
       uses: actions/create-release@v1
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}  # Use the PAT instead of GITHUB_TOKEN
       with:
         tag_name: ${{ github.ref }}
         release_name: Release ${{ steps.extract_version.outputs.version }}
