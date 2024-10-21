@@ -184,7 +184,7 @@
     },
     {
       "name": "Worldpay",
-      "regex": "access\\.worldpay\\.com",
+      "regex": "access\\.worldpay\\.com|hpp\\.worldpay\\.com",
       "url": "https://www.worldpay.com",
       "image": "worldpay",
       "summary": "Worldpay, part of FIS, is a payment processing company that provides global solutions for online, in-store, and mobile transactions. It supports a wide range of payment methods, offering advanced security features and fraud management tools for businesses."
