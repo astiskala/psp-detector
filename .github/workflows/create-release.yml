@@ -8,6 +8,8 @@ on:
     tags:
       - 'v*'  # Trigger on version tags like v1.0, v1.1, etc.
   workflow_dispatch:
+    inputs:
+      tags:
 
 jobs:
   create-release:
