@@ -99,6 +99,13 @@
       "summary": "Fiserv, formerly First Data, is a leading provider of financial services technology, including payment processing for businesses of all sizes. Its platform supports a variety of payment methods and offers solutions for both online and in-store payments."
     },
     {
+      "name": "Linkly",
+      "regex": "www\\.merchantsuite\\.com/api",
+      "url": "https://www.linkly.com.au",
+      "image": "linkly",
+      "summary": "Linkly, formerly known as PC-EFTPOS, is an Australian-based payment solutions provider focused on secure, integrated point-of-sale (POS) systems. Linkly offers reliable EFTPOS services, supporting thousands of businesses with seamless payment processing and in-depth reporting tools to streamline transaction management."
+    },    
+    {
       "name": "MercadoPago",
       "regex": "api-static\\.mercadopago\\.com",
       "url": "https://www.mercadopago.com",
@@ -112,6 +119,13 @@
       "image": "mollie",
       "summary": "Mollie is a European payment service provider offering businesses a simple and reliable way to accept online payments. It supports a wide range of payment methods, including credit cards, PayPal, and local options like iDEAL and SEPA, making it popular across Europe."
     },
+    {
+      "name": "Nuvei",
+      "regex": "cdn\\.safecharge\\.com|gateway\\.tillpayments\\.com",
+      "url": "https://www.nuvei.com",
+      "image": "nuvei",
+      "summary": "Nuvei is a global payments technology company providing secure and reliable payment processing solutions for businesses of all sizes. Supporting credit cards, alternative payment methods, and cryptocurrency transactions, Nuvei's platform is designed for flexibility, scalability, and seamless integrations across multiple sectors."
+    },    
     {
       "name": "Opn Payments",
       "regex": "cdn\\.omise\\.co",
@@ -129,7 +143,7 @@
     {
       "name": "PayU",
       "regex": "paymentsos\\.com|checkout\\.payulatam\\.com|api\\.payu\\.in|jssdk\\.payu\\.in|payudc\\.net",
-      "url": "https://corporate.payu.com/",
+      "url": "https://corporate.payu.com",
       "image": "payu",
       "summary": "PayU is a global payment service provider operating in multiple markets, with a focus on emerging economies. It offers a variety of payment solutions including credit and debit cards, as well as alternative payment methods. PayU enables businesses to accept localized payments, providing secure and scalable solutions for e-commerce and mobile platforms."
     },

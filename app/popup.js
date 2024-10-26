@@ -8,14 +8,12 @@ document.addEventListener('DOMContentLoaded', function () {
           const psp = pspConfig.psps.find(p => p.name === detectedPsp)
           document.getElementById('psp-name').innerHTML = psp.name
           document.getElementById('psp-description').innerHTML = psp.summary
-          document.getElementById(
-            'psp-url'
-          ).innerHTML = `<a href="${psp.url}" target="_blank">Learn More</a>`
+          document.getElementById('psp-url').innerHTML = `<a href="${psp.url}" target="_blank">Learn More</a>`
         } else {
           document.getElementById('psp-name').innerHTML = 'No PSP detected'
           document.getElementById('psp-description').innerHTML =
             "The Payment Service Provider could be determined based on the contents of the current page. Please ensure you have navigated to website's checkout page."
-          document.getElementById('psp-url').innerHTML = ''
+          document.getElementById('psp-url').innerHTML = '<a href="mailto:psp-detector@adamstiskala.com" target="_blank">Suggest Improvement</a>'
         }
       })
       .catch(error => {
