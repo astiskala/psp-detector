@@ -23,7 +23,7 @@
     },
     {
       "name": "Authorize.net",
-      "regex": "authorizecim",
+      "regex": "jstest\\.authorize\\.net|js\\.authorize\\.net",
       "url": "https://www.authorize.net",
       "image": "authorize",
       "summary": "Authorize.net is a trusted payment gateway service provider that enables merchants to accept credit card and electronic check payments securely. It offers fraud detection, recurring billing, and customer information management tools to businesses of all sizes."
