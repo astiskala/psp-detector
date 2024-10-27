@@ -13,7 +13,7 @@
       "url": "https://www.2c2p.com",
       "image": "2c2p",
       "summary": "2C2P is a leading payment service provider in Southeast Asia, offering secure payment solutions for online, mobile, and in-store transactions. The platform supports multiple payment methods, including credit cards, digital wallets, and alternative payment channels, providing businesses with comprehensive tools for seamless payments across the region."
-    },    
+    },
     {
       "name": "Adyen",
       "regex": "checkoutshopper-live\\.adyen\\.com|checkoutshopper-live-apse\\.adyen\\.com|checkoutshopper-live-au\\.adyen\\.com|checkoutshopper-live-in\\.adyen\\.com|checkoutshopper-live-us\\.adyen\\.com|cdn\\.adyen\\.com",
@@ -90,7 +90,7 @@
       "url": "https://www.fiuu.com",
       "image": "fiuu",
       "summary": "Fiuu, formerly known as Razer Merchant Services, is a payment service provider offering businesses in Southeast Asia and beyond a comprehensive platform for online, mobile, and in-store payments. With a focus on scalability, Fiuu supports various payment methods and currencies for seamless global transactions."
-    },    
+    },
     {
       "name": "Fiserv",
       "regex": "api\\.firstdata\\.com",
@@ -104,7 +104,14 @@
       "url": "https://www.linkly.com.au",
       "image": "linkly",
       "summary": "Linkly, formerly known as PC-EFTPOS, is an Australian-based payment solutions provider focused on secure, integrated point-of-sale (POS) systems. Linkly offers reliable EFTPOS services, supporting thousands of businesses with seamless payment processing and in-depth reporting tools to streamline transaction management."
-    },    
+    },
+    {
+      "name": "Maya",
+      "regex": "payments\\.maya\\.ph|payments-web-sandbox\\.maya\\.ph",
+      "url": "https://www.paymaya.com",
+      "image": "paymaya",
+      "summary": "Maya is a Philippine-based digital payment platform offering payment processing solutions for online and offline businesses. It supports various payment methods, including credit cards, debit cards, and e-wallets, with a focus on secure, user-friendly transactions for the Southeast Asian market."
+    },
     {
       "name": "MercadoPago",
       "regex": "api-static\\.mercadopago\\.com",
@@ -125,7 +132,7 @@
       "url": "https://www.nuvei.com",
       "image": "nuvei",
       "summary": "Nuvei is a global payments technology company providing secure and reliable payment processing solutions for businesses of all sizes. Supporting credit cards, alternative payment methods, and cryptocurrency transactions, Nuvei's platform is designed for flexibility, scalability, and seamless integrations across multiple sectors."
-    },    
+    },
     {
       "name": "Opn Payments",
       "regex": "cdn\\.omise\\.co",
@@ -153,7 +160,7 @@
       "url": "https://www.razorpay.com",
       "image": "razorpay",
       "summary": "Razorpay is a leading Indian payment gateway offering a comprehensive suite of solutions for businesses to accept online payments. It supports multiple payment methods such as credit/debit cards, UPI, and wallets, making it a popular choice for Indian e-commerce merchants."
-    },    
+    },
     {
       "name": "Square",
       "regex": "web\\.squarecdn\\.com|js\\.squareup\\.com|pci-connect\\.squareupsandbox\\.com|js\\.squareupsandbox\\.com|pci-connect\\.squareup\\.com",
@@ -181,7 +188,7 @@
       "url": "https://go.wepay.com",
       "image": "wepay",
       "summary": "WePay, a Chase company, provides integrated payment solutions for platforms and marketplaces. It offers seamless payments, fraud protection, and risk management with the ability to integrate payments into partner platforms."
-    },    
+    },
     {
       "name": "Windcave",
       "regex": "sec\\.windcave\\.com",
