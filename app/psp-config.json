@@ -162,6 +162,13 @@
       "summary": "Razorpay is a leading Indian payment gateway offering a comprehensive suite of solutions for businesses to accept online payments. It supports multiple payment methods such as credit/debit cards, UPI, and wallets, making it a popular choice for Indian e-commerce merchants."
     },
     {
+      "name": "Red Dot Payment",
+      "regex": "secure\\.reddotpayment\\.com",
+      "url": "https://www.reddotpayment.com",
+      "image": "reddotpayment",
+      "summary": "Red Dot Payment, a member of PayU, is a leading online payment gateway in Southeast Asia, offering secure and customized payment solutions for businesses across sectors like retail, hospitality, and airlines. With advanced fraud detection, multi-currency support, and seamless integration, Red Dot Payment provides businesses with tools to manage online transactions effectively."
+    },    
+    {
       "name": "Square",
       "regex": "web\\.squarecdn\\.com|js\\.squareup\\.com|pci-connect\\.squareupsandbox\\.com|js\\.squareupsandbox\\.com|pci-connect\\.squareup\\.com",
       "url": "https://www.squareup.com",
