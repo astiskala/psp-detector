@@ -35,7 +35,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 chrome.tabs.onActivated.addListener(tabInfo => {
   currentTabId = tabInfo.tabId
+
+  // Reset to default
+  detectedPsp = null;
   chrome.action.setIcon({ path: defaultIcons })
+
   chrome.tabs.get(currentTabId, function (tab) {
     // Run on any HTTPS website, excluding extension galleries
     if (tab && eligibleUrls.test(tab.url)) {
