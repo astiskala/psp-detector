@@ -93,7 +93,7 @@
     },
     {
       "name": "Fiserv",
-      "regex": "api\\.firstdata\\.com",
+      "regex": "api\\.firstdata\\.com|ipg-online\\.com",
       "url": "https://www.fiserv.com",
       "image": "fiserv",
       "summary": "Fiserv, formerly First Data, is a leading provider of financial services technology, including payment processing for businesses of all sizes. Its platform supports a variety of payment methods and offers solutions for both online and in-store payments."
