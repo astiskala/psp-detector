@@ -167,7 +167,14 @@
       "url": "https://www.reddotpayment.com",
       "image": "reddotpayment",
       "summary": "Red Dot Payment, a member of PayU, is a leading online payment gateway in Southeast Asia, offering secure and customized payment solutions for businesses across sectors like retail, hospitality, and airlines. With advanced fraud detection, multi-currency support, and seamless integration, Red Dot Payment provides businesses with tools to manage online transactions effectively."
-    },    
+    },
+    {
+      "name": "SB Payment Service",
+      "regex": "stbfep\\.sps-system\\.com|zz\\.fep\\.sbps\\.jp",
+      "url": "https://www.sbpayment.jp",
+      "image": "sbpayment",
+      "summary": "SB Payment Service, a part of SoftBank Group, provides a comprehensive payment solution for Japan-based businesses. The platform supports credit card processing, convenience store payments, carrier billing, and electronic money, offering both online and in-store payment options with a strong focus on security and seamless integration."
+    },
     {
       "name": "Square",
       "regex": "web\\.squarecdn\\.com|js\\.squareup\\.com|pci-connect\\.squareupsandbox\\.com|js\\.squareupsandbox\\.com|pci-connect\\.squareup\\.com",
