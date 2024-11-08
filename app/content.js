@@ -1,7 +1,7 @@
 ;(() => {
   let cachedPspConfig = null
   let compiledPspRegexes = null
-  const mutationDebounceDelay = 1000 // Delay for MutationObserver debounce
+  const mutationDebounceDelay = 3000 // Delay for MutationObserver debounce
 
   // Load PSP configuration and cache it
   const loadPspConfig = async () => {
