@@ -23,13 +23,13 @@
     }
 
     if (detectedPsp) {
-      // Mark PSP as detected to stop further checks
-      pspDetected = true;
-      
       chrome.runtime.sendMessage({ action: 'getTabId' }, response => {
         const pspData = { psp: detectedPsp, tabId: response.tabId }
         chrome.runtime.sendMessage({ action: 'detectPsp', data: pspData })
       });
+
+      // Mark PSP as detected to stop further checks
+      pspDetected = true;
 
       // Stop observing mutations since PSP is already detected
       if (observer) {
