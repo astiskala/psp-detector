@@ -190,6 +190,13 @@
       "summary": "SB Payment Service, a part of SoftBank Group, provides a comprehensive payment solution for Japan-based businesses. The platform supports credit card processing, convenience store payments, carrier billing, and electronic money, offering both online and in-store payment options with a strong focus on security and seamless integration."
     },
     {
+      "name": "Sony Payment Services",
+      "regex": "e-scott\\.jp",
+      "url": "https://www.sonypaymentservices.jp",
+      "image": "sonypaymentservices",
+      "summary": "Sony Payment Services offers a comprehensive payment processing solution designed for global businesses. It provides a range of secure and scalable payment methods, including credit cards, e-wallets, and mobile payments, with a focus on seamless integration and high security."
+    },
+    {
       "name": "Square",
       "regex": "web\\.squarecdn\\.com|js\\.squareup\\.com|pci-connect\\.squareupsandbox\\.com|js\\.squareupsandbox\\.com|pci-connect\\.squareup\\.com",
       "url": "https://www.squareup.com",
