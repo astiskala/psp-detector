@@ -12,6 +12,13 @@ const defaultIcons = {
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === 'getPspConfig') {
+    fetchAndCachePspConfig().then(({ config }) => {
+      sendResponse({ config });
+    });
+    return true; // Keeps the message channel open for async response
+  }
+
   if (message.action === 'detectPsp') {
     detectedPsp = message.data.psp
     if (detectedPsp) {
@@ -89,6 +96,21 @@ function executeContentScript (tabId) {
     }
   )
 }
+
+const fetchAndCachePspConfig = async () => {
+  if (cachedPspConfig) {
+    return { config: cachedPspConfig };
+  }
+
+  try {
+    const response = await fetch(chrome.runtime.getURL('psp-config.json'));
+    cachedPspConfig = await response.json();
+    return { config: cachedPspConfig };
+  } catch (error) {
+    console.error('Error loading the JSON config', error);
+    return { config: null };
+  }
+};
 
 function setPspIcon () {
   if (cachedPspConfig) {

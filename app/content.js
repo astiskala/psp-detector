@@ -1,39 +1,21 @@
 ;(() => {
   let cachedPspConfig = null
-  let compiledPspRegexes = null
   const mutationDebounceDelay = 3000 // Delay for MutationObserver debounce
-
-  // Load PSP configuration and cache it
-  const loadPspConfig = async () => {
-    if (cachedPspConfig) {
-      return cachedPspConfig
-    }
-    try {
-      const response = await fetch(chrome.runtime.getURL('./psp-config.json'))
-      cachedPspConfig = await response.json()
-
-      // Compile regex patterns for performance
-      compiledPspRegexes = cachedPspConfig.psps.map(psp => ({
-        name: psp.name,
-        regex: new RegExp(psp.regex, 'i') // Pre-compile the regex pattern
-      }))
-
-      return cachedPspConfig
-    } catch (error) {
-      console.error('Error loading the JSON config', error)
-      throw error
-    }
-  }
 
   // Detect PSP on the page by matching content against regexes
   const detectPsp = () => {
     const pageContent = `${document.URL}\n\n${document.documentElement.outerHTML}`
 
     let detectedPsp = null
-    for (let { name, regex } of compiledPspRegexes) {
-      if (regex.test(pageContent)) {
-        detectedPsp = name
-        break
+    for (let psp of cachedPspConfig.psps) {
+      try {
+        const regex = new RegExp(psp.regex, 'i');
+        if (regex.test(pageContent)) {
+          detectedPsp = psp.name
+          break
+        }
+      } catch (error) {
+        console.error(`Invalid regex pattern for PSP "${psp.name}":`, error);
       }
     }
 
@@ -66,13 +48,15 @@
 
   // Main logic
   const main = async () => {
-    try {
-      await loadPspConfig() // Load and cache PSP config
-      detectPsp() // Initial PSP detection
-      initMutationObserver() // Set up DOM change observer
-    } catch (error) {
-      console.error('Error initializing PSP detection', error)
-    }
+    chrome.runtime.sendMessage({ action: 'getPspConfig' }, response => {
+      if (response && response.config) {
+        cachedPspConfig = response.config;
+        detectPsp();
+        initMutationObserver();
+      } else {
+        console.error('Failed to load PSP config');
+      }
+    });
   }
 
   // Run the main function
