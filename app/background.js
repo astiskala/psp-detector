@@ -4,7 +4,7 @@ let currentTabId = null
 let tabPsps = {}
 
 let eligibleUrls =
-  /^https:\/\/(?!.*(google\.com|mozilla\.org|microsoft\.com|linkedin\.com|zoom\.us|salesforce\.com|monday\.com|myworkday\.com))/
+  /^https:\/\/(?!.*(google\.com|mozilla\.org|microsoft\.com|chatgpt\.com|linkedin\.com|zoom\.us|salesforce\.com|monday\.com|myworkday\.com))/
 const defaultIcons = {
   16: 'images/default_16.png',
   48: 'images/default_48.png',

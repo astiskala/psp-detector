@@ -1,9 +1,12 @@
 ;(() => {
   let cachedPspConfig = null
+  let pspDetected = false  // Flag to track if PSP has already been detected
   const mutationDebounceDelay = 3000 // Delay for MutationObserver debounce
 
   // Detect PSP on the page by matching content against regexes
   const detectPsp = () => {
+    if (pspDetected) return;  // Skip if PSP is already detected
+
     const pageContent = `${document.URL}\n\n${document.documentElement.outerHTML}`
 
     let detectedPsp = null
@@ -20,17 +23,26 @@
     }
 
     if (detectedPsp) {
+      // Mark PSP as detected to stop further checks
+      pspDetected = true;
+      
       chrome.runtime.sendMessage({ action: 'getTabId' }, response => {
         const pspData = { psp: detectedPsp, tabId: response.tabId }
         chrome.runtime.sendMessage({ action: 'detectPsp', data: pspData })
-      })
+      });
+
+      // Stop observing mutations since PSP is already detected
+      if (observer) {
+        observer.disconnect();
+      }
     }
   }
 
   // Initialize MutationObserver with debounce
+  let observer;
   const initMutationObserver = () => {
     let debounceTimeout
-    const observer = new MutationObserver(mutationsList => {
+    observer = new MutationObserver(mutationsList => {
       clearTimeout(debounceTimeout)
       debounceTimeout = setTimeout(() => {
         for (const mutation of mutationsList) {
@@ -51,8 +63,8 @@
     chrome.runtime.sendMessage({ action: 'getPspConfig' }, response => {
       if (response && response.config) {
         cachedPspConfig = response.config;
-        detectPsp();
-        initMutationObserver();
+        detectPsp();  // Run the initial PSP detection
+        initMutationObserver();  // Start observing DOM mutations
       } else {
         console.error('Failed to load PSP config');
       }
@@ -61,4 +73,4 @@
 
   // Run the main function
   main()
-})()
+})();
