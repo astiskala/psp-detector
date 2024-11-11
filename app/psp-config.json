@@ -155,6 +155,13 @@
       "summary": "Opn Payments, formerly known as Omise, is a leading payments platform in Asia, offering a comprehensive suite of payment solutions. It supports online payments, recurring billing, and multi-currency transactions, catering to businesses of all sizes, with a focus on providing secure, scalable solutions."
     },
     {
+      "name": "PayGent",
+      "regex": "service\\.paygent\\.co\\.jp|sandbox\\.paygent\\.co\\.jp",
+      "url": "https://www.paygent.co.jp",
+      "image": "paygent",
+      "summary": "PayGent is a Japanese payment service provider that specializes in offering secure and reliable payment solutions for e-commerce. It supports multiple payment methods, including credit cards, and provides robust fraud prevention and transaction management features."
+    },
+    {
       "name": "Payoneer",
       "regex": "integration\\.oscato\\.com",
       "url": "https://www.payoneer.com",
