@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "PSP Detector",
-  "version": "1.6",
+  "version": "1.7",
   "description": "Detects which Payment Service Provider (PSP) is used on the webpage and displays its logo.",
   "action": {
     "default_icon": {
