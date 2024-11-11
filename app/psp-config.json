@@ -64,6 +64,13 @@
       "summary": "Cybersource, a Visa company, provides a robust payment management platform that includes global payment processing, fraud management, and security solutions. It helps businesses optimize their payment operations, offering reliability and scalability for enterprises handling complex transactions."
     },
     {
+      "name": "DG Financial Technology",
+      "regex": "pay\\.veritrans\\.co\\.jp|api\\.veritrans\\.co\\.jp",
+      "url": "https://www.dgft.jp",
+      "image": "dgft",
+      "summary": "DGFT (formerly VeriTrans), a service by Digital Garage in Japan, provides secure and efficient payment processing solutions. It offers comprehensive services for online payments, including credit card and mobile payments, catering to a wide range of businesses with robust fraud prevention and seamless integration options."
+    },      
+    {
       "name": "EBANX",
       "regex": "ebanx-js\\.ebanx\\.com|ui-elements\\.ebanx\\.com",
       "url": "https://www.ebanx.com",
