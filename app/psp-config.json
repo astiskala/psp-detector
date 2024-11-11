@@ -99,6 +99,13 @@
       "summary": "Fiserv, formerly First Data, is a leading provider of financial services technology, including payment processing for businesses of all sizes. Its platform supports a variety of payment methods and offers solutions for both online and in-store payments."
     },
     {
+      "name": "GMO Payment Gateway",
+      "regex": "static\\.mul-pay\\.jp|p01\\.mul-pay\\.jp",
+      "url": "https://www.gmo-pg.com",
+      "image": "gmopayment",
+      "summary": "GMO Payment Gateway is a leading payment service provider in Japan, offering a wide range of solutions for online and in-store transactions. It supports credit cards, e-wallets, and various alternative payment methods, with a focus on security, fraud prevention, and comprehensive payment processing for businesses of all sizes."
+    },    
+    {
       "name": "Linkly",
       "regex": "www\\.merchantsuite\\.com/api",
       "url": "https://www.linkly.com.au",
