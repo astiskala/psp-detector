@@ -156,7 +156,7 @@
     },
     {
       "name": "PayGent",
-      "regex": "service\\.paygent\\.co\\.jp|sandbox\\.paygent\\.co\\.jp",
+      "regex": "token\\.paygent\\.co\\.jp|service\\.paygent\\.co\\.jp|sandbox\\.paygent\\.co\\.jp",
       "url": "https://www.paygent.co.jp",
       "image": "paygent",
       "summary": "PayGent is a Japanese payment service provider that specializes in offering secure and reliable payment solutions for e-commerce. It supports multiple payment methods, including credit cards, and provides robust fraud prevention and transaction management features."
