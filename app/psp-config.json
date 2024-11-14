@@ -212,7 +212,7 @@
     },
     {
       "name": "Stripe",
-      "regex": "checkout\\.stripe\\.com",
+      "regex": "checkout\\.stripe\\.com|js\\.stripe\\.com",
       "url": "https://www.stripe.com",
       "image": "stripe",
       "summary": "Stripe is a global payments infrastructure provider that powers online transactions for internet businesses. With a focus on developer-friendly APIs, Stripe supports multiple currencies and offers tools for subscription management, invoicing, and fraud prevention."
