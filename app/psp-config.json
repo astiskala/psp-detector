@@ -27,7 +27,7 @@
       "url": "https://www.airwallex.com",
       "image": "airwallex",
       "summary": "Airwallex is a global payment platform offering a wide range of financial services, including cross-border payments, multi-currency accounts, and virtual cards. It focuses on providing seamless financial solutions for businesses looking to expand their operations globally with efficient and transparent payment options."
-    },    
+    },
     {
       "name": "Authorize.net",
       "regex": "jstest\\.authorize\\.net|js\\.authorize\\.net",
@@ -76,7 +76,7 @@
       "url": "https://www.dgft.jp",
       "image": "dgft",
       "summary": "DGFT (formerly VeriTrans), a service by Digital Garage in Japan, provides secure and efficient payment processing solutions. It offers comprehensive services for online payments, including credit card and mobile payments, catering to a wide range of businesses with robust fraud prevention and seamless integration options."
-    },      
+    },
     {
       "name": "EBANX",
       "regex": "ebanx-js\\.ebanx\\.com|ui-elements\\.ebanx\\.com",
@@ -118,7 +118,7 @@
       "url": "https://www.gmo-pg.com",
       "image": "gmopayment",
       "summary": "GMO Payment Gateway is a leading payment service provider in Japan, offering a wide range of solutions for online and in-store transactions. It supports credit cards, e-wallets, and various alternative payment methods, with a focus on security, fraud prevention, and comprehensive payment processing for businesses of all sizes."
-    },    
+    },
     {
       "name": "Linkly",
       "regex": "www\\.merchantsuite\\.com/api",
@@ -146,6 +146,13 @@
       "url": "https://www.mollie.com",
       "image": "mollie",
       "summary": "Mollie is a European payment service provider offering businesses a simple and reliable way to accept online payments. It supports a wide range of payment methods, including credit cards, PayPal, and local options like iDEAL and SEPA, making it popular across Europe."
+    },
+    {
+      "name": "NMI",
+      "regex": "secure\\.networkmerchants\\.com|www\\.usaepay\\.com",
+      "url": "https://www.nmi.com",
+      "image": "nmi",
+      "summary": "NMI (Network Merchants Inc) is a payment gateway provider offering a robust platform for in-person, online, and mobile transactions. NMI specializes in omnichannel payment solutions, enabling businesses to streamline their payment processing with a focus on security and scalability across multiple sales channels."
     },
     {
       "name": "Nuvei",
@@ -188,7 +195,7 @@
       "url": "https://www.rapyd.net",
       "image": "rapyd",
       "summary": "Rapyd is a global Fintech-as-a-Service platform offering comprehensive payment solutions, including online payments, digital wallets, and remittance services. It supports various payment methods across multiple markets, enabling businesses to accept local and cross-border payments with ease."
-    },    
+    },
     {
       "name": "Razorpay",
       "regex": "checkout\\.razorpay\\.com|api\\.razorpay\\.com|cdn\\.razorpay\\.com",
