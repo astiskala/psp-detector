@@ -1,10 +1,6 @@
 # PSP Detector
 
-Detects which Payment Service Provider (PSP) is used on the webpage and displays its logo.
-
 Curious about which Payment Service Provider (PSP) is used on a webpage? PSP Detector is a straightforward extension that helps you identify the payment gateway powering any site you visit.
-
-## What Does PSP Detector Do?
 
 With PSP Detector, you can quickly find out which PSP is handling payments on a specific website. The extension displays the PSP’s logo, offers a brief description, and provides a link to its official website for more information.
 
@@ -20,6 +16,59 @@ With PSP Detector, you can quickly find out which PSP is handling payments on a 
 - Logo & Description: View the provider’s logo alongside a brief overview of its services.
 - Direct Links: Quickly navigate to the PSP’s website for further exploration.
 
+## Supported PSPs:
+
+- 2Checkout (Verifone)
+- 2C2P
+- Adyen
+- Airwallex
+- Alipay
+- Authorize.net
+- Bambora
+- BlueSnap
+- Braintree
+- Chase Payment Solutions
+- Checkout.com
+- Cielo
+- Cybersource
+- DG Financial Technology
+- EBANX
+- Eway
+- Fat Zebra
+- Fiserv
+- Fiuu
+- Global Payments
+- GMO Payment Gateway
+- Linkly
+- Mastercard Gateway (MPGS)
+- Maya
+- MercadoPago
+- Mollie
+- NMI
+- Nuvei
+- Opn Payments (Omise)
+- PayGent
+- Payoneer
+- Paysera
+- PayU
+- Rapyd
+- Razorpay
+- Red Dot Payment
+- SB Payment Service
+- Shift4
+- Shopify Payments
+- Sony Payment Services
+- Square
+- Stripe
+- Trust Payments
+- Tyro
+- WePay
+- Windcave
+- Worldline
+- Worldpay
+- Xendit
+- Zai (Assembly Payments)
+
 ## How to Use:
 
-Just install the PSP Detector extension, visit any website, and click on the extension icon to see the payment provider in use. It’s that simple!
+Just install the PSP Detector extension (available in the Chrome Web Store at https://chromewebstore.google.com/detail/iblfofcbjioicompkmafdehbdakdbjle), visit any website, navigate to the checkout page, and click on the extension icon to see the payment provider in use. It’s that simple!
