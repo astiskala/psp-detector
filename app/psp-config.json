@@ -120,6 +120,13 @@
       "summary": "Fiserv, formerly First Data, is a leading provider of financial services technology, including payment processing for businesses of all sizes. Its platform supports a variety of payment methods and offers solutions for both online and in-store payments."
     },
     {
+      "name": "Global Payments",
+      "regex": "js\\.globalpay\\.com|apis\\.globalpay\\.com|apis\\.sandbox\\.globalpay\\.com",
+      "url": "https://www.globalpayments.com",
+      "image": "globalpayments",
+      "summary": "Global Payments is a leading provider of payment technology services, offering secure and innovative solutions for in-store, online, and mobile transactions. It serves businesses worldwide with comprehensive tools for payment processing, fraud prevention, and data analytics."
+    },    
+    {
       "name": "GMO Payment Gateway",
       "regex": "static\\.mul-pay\\.jp|p01\\.mul-pay\\.jp",
       "url": "https://www.gmo-pg.com",
