@@ -88,7 +88,7 @@ function executeContentScript (tabId) {
     },
     () => {
       if (chrome.runtime.lastError) {
-        console.error(
+        console.warn(
           `Failed to inject content script on tab ${tabId}`,
           chrome.runtime.lastError.message
         )
