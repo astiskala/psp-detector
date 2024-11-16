@@ -176,6 +176,13 @@
       "summary": "PayU is a global payment service provider operating in multiple markets, with a focus on emerging economies. It offers a variety of payment solutions including credit and debit cards, as well as alternative payment methods. PayU enables businesses to accept localized payments, providing secure and scalable solutions for e-commerce and mobile platforms."
     },
     {
+      "name": "Rapyd",
+      "regex": "checkouttoolkit\\.rapyd\\.net|checkout\\.rapyd\\.net",
+      "url": "https://www.rapyd.net",
+      "image": "rapyd",
+      "summary": "Rapyd is a global Fintech-as-a-Service platform offering comprehensive payment solutions, including online payments, digital wallets, and remittance services. It supports various payment methods across multiple markets, enabling businesses to accept local and cross-border payments with ease."
+    },    
+    {
       "name": "Razorpay",
       "regex": "checkout\\.razorpay\\.com|api\\.razorpay\\.com|cdn\\.razorpay\\.com",
       "url": "https://www.razorpay.com",
