@@ -50,6 +50,13 @@
       "summary": "BlueSnap is a global payments provider that helps businesses accept payments online, on mobile, and via marketplaces. It offers built-in fraud prevention, supports over 100 payment methods, and helps businesses streamline global payment processing with support for multiple currencies."
     },
     {
+      "name": "Chase Payment Solutions",
+      "regex": "checkout-cat\\.merchant\\.jpmorgan.com|safetechpageencryption\\.chasepaymentech\\.com|safetechpageencryptionvar\\.chasepaymentech\\.com",
+      "url": "https://www.chase.com/business/payments",
+      "image": "chase",
+      "summary": "Chase Payment Solutions offers comprehensive payment processing solutions, including online, in-store, and mobile transactions. It provides businesses with secure payment processing, fraud prevention, and analytics, catering to a wide range of industries and sizes."
+    },    
+    {
       "name": "Checkout.com",
       "regex": "cdn\\.checkout\\.com|cdn\\.sandbox\\.checkout\\.com|js\\.checkout\\.com|js\\.sandbox\\.checkout\\.com",
       "url": "https://www.checkout.com",
