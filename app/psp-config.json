@@ -274,6 +274,13 @@
       "summary": "Worldpay, part of FIS, is a payment processing company that provides global solutions for online, in-store, and mobile transactions. It supports a wide range of payment methods, offering advanced security features and fraud management tools for businesses."
     },
     {
+      "name": "Xendit",
+      "regex": "js\\.xendit\\.co|checkout\\.xendit\\.co",
+      "url": "https://www.xendit.co",
+      "image": "xendit",
+      "summary": "Xendit is a leading payment gateway in Southeast Asia, offering a range of digital payment solutions for businesses. It supports various payment methods including credit cards, e-wallets, direct bank transfers, and online invoicing, aiming to simplify payment processes across Indonesia, the Philippines, and beyond."
+    },    
+    {
       "name": "Zai",
       "regex": "hosted-fields\\.assemblypay\\.com",
       "url": "https://www.hellozai.com",
