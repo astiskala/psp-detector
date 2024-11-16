@@ -232,6 +232,13 @@
       "summary": "SB Payment Service, a part of SoftBank Group, provides a comprehensive payment solution for Japan-based businesses. The platform supports credit card processing, convenience store payments, carrier billing, and electronic money, offering both online and in-store payment options with a strong focus on security and seamless integration."
     },
     {
+      "name": "Shift4",
+      "regex": "js\\.dev\\.shift4\\.com",
+      "url": "https://www.shift4.com",
+      "image": "shift4",
+      "summary": "Shift4 is a comprehensive payment processing company offering end-to-end solutions for businesses of all sizes. It provides secure payment technologies, including integrated POS systems, e-commerce solutions, and advanced fraud prevention tools, catering to various industries like hospitality, retail, and food services."
+    },    
+    {
       "name": "Sony Payment Services",
       "regex": "e-scott\\.jp",
       "url": "https://www.sonypaymentservices.jp",
