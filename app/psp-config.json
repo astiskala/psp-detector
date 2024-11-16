@@ -239,6 +239,13 @@
       "summary": "Stripe is a global payments infrastructure provider that powers online transactions for internet businesses. With a focus on developer-friendly APIs, Stripe supports multiple currencies and offers tools for subscription management, invoicing, and fraud prevention."
     },
     {
+      "name": "Trust Payments",
+      "regex": "payments\\.securetrading\\.net|webservices\\.securetrading\\.net|cdn\\.eu\\.trustpayments\\.com",
+      "url": "https://www.trustpayments.com",
+      "image": "trustpayments",
+      "summary": "Trust Payments is a global payment service provider offering a seamless, secure platform for online, in-store, and omnichannel payments. It caters to various industries with features like fraud prevention, recurring billing, and multi-currency processing, aimed at enhancing the customer payment experience."
+    },    
+    {
       "name": "Tyro",
       "regex": "pay\\.connect\\.tyro\\.com",
       "url": "https://www.tyro.com",
