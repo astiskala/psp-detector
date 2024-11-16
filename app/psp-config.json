@@ -55,7 +55,7 @@
       "url": "https://www.chase.com/business/payments",
       "image": "chase",
       "summary": "Chase Payment Solutions offers comprehensive payment processing solutions, including online, in-store, and mobile transactions. It provides businesses with secure payment processing, fraud prevention, and analytics, catering to a wide range of industries and sizes."
-    },    
+    },
     {
       "name": "Checkout.com",
       "regex": "cdn\\.checkout\\.com|cdn\\.sandbox\\.checkout\\.com|js\\.checkout\\.com|js\\.sandbox\\.checkout\\.com",
@@ -125,7 +125,7 @@
       "url": "https://www.globalpayments.com",
       "image": "globalpayments",
       "summary": "Global Payments is a leading provider of payment technology services, offering secure and innovative solutions for in-store, online, and mobile transactions. It serves businesses worldwide with comprehensive tools for payment processing, fraud prevention, and data analytics."
-    },    
+    },
     {
       "name": "GMO Payment Gateway",
       "regex": "static\\.mul-pay\\.jp|p01\\.mul-pay\\.jp",
@@ -237,7 +237,7 @@
       "url": "https://www.shift4.com",
       "image": "shift4",
       "summary": "Shift4 is a comprehensive payment processing company offering end-to-end solutions for businesses of all sizes. It provides secure payment technologies, including integrated POS systems, e-commerce solutions, and advanced fraud prevention tools, catering to various industries like hospitality, retail, and food services."
-    },    
+    },
     {
       "name": "Sony Payment Services",
       "regex": "e-scott\\.jp",
@@ -265,7 +265,7 @@
       "url": "https://www.trustpayments.com",
       "image": "trustpayments",
       "summary": "Trust Payments is a global payment service provider offering a seamless, secure platform for online, in-store, and omnichannel payments. It caters to various industries with features like fraud prevention, recurring billing, and multi-currency processing, aimed at enhancing the customer payment experience."
-    },    
+    },
     {
       "name": "Tyro",
       "regex": "pay\\.connect\\.tyro\\.com",
@@ -307,7 +307,7 @@
       "url": "https://www.xendit.co",
       "image": "xendit",
       "summary": "Xendit is a leading payment gateway in Southeast Asia, offering a range of digital payment solutions for businesses. It supports various payment methods including credit cards, e-wallets, direct bank transfers, and online invoicing, aiming to simplify payment processes across Indonesia, the Philippines, and beyond."
-    },    
+    },
     {
       "name": "Zai",
       "regex": "hosted-fields\\.assemblypay\\.com",
@@ -342,6 +342,13 @@
       "url": "https://www.alipay.com",
       "image": "alipay",
       "summary": "Alipay is a leading mobile and online payment platform in China, operated by Ant Group. It offers a range of financial services including payment processing, money transfers, and investment options, catering primarily to consumers and businesses looking for seamless digital transactions."
+    },
+    {
+      "name": "PayPal",
+      "regex": "www\\.paypal\\.com/sdk",
+      "url": "https://www.paypal.com",
+      "image": "paypal",
+      "summary": "PayPal is a global online payment platform that allows individuals and businesses to make payments, transfer money, and complete online transactions securely. It supports a variety of payment methods, including credit cards, bank transfers, and PayPal account balances, making it a versatile choice for e-commerce and personal transactions."
     },
     {
       "name": "Braintree",
