@@ -22,6 +22,13 @@
       "summary": "Adyen is a global payment company offering businesses an end-to-end infrastructure for managing online, mobile, and in-store payments. Adyen provides solutions for risk management, analytics, and acquiring services, catering to enterprises with high transaction volumes."
     },
     {
+      "name": "Airwallex",
+      "regex": "pay\\.airwallex\\.com|checkout\\.airwallex\\.com",
+      "url": "https://www.airwallex.com",
+      "image": "airwallex",
+      "summary": "Airwallex is a global payment platform offering a wide range of financial services, including cross-border payments, multi-currency accounts, and virtual cards. It focuses on providing seamless financial solutions for businesses looking to expand their operations globally with efficient and transparent payment options."
+    },    
+    {
       "name": "Authorize.net",
       "regex": "jstest\\.authorize\\.net|js\\.authorize\\.net",
       "url": "https://www.authorize.net",
