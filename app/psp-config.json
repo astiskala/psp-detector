@@ -341,7 +341,7 @@
       "regex": "checkout\\.shopifycs\\.com",
       "url": "https://www.shopify.com",
       "image": "shopify",
-      "summary": "Shopify Payments is an integrated payment processing solution for Shopify store owners. It allows businesses to accept payments directly through their Shopify platform, supporting major credit cards and offering streamlined checkout experiences for customers."
+      "summary": "Shopify Payments is an integrated payment processing solution for Shopify store owners. It allows businesses to accept payments directly through their Shopify platform, supporting major credit cards and offering streamlined checkout experiences for customers.<br /><br /><strong>Note: Because Shopify can host a payment page for other PSPs, sometimes Shopify is misidentified as the PSP (even though a separate PSP may be used for card processing).</strong>"
     },
     {
       "name": "Alipay",
