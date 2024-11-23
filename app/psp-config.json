@@ -92,6 +92,13 @@
       "summary": "EBANX is a payment gateway tailored for the Latin American market, supporting local payment methods in Brazil, Mexico, Argentina, and more. It enables international businesses to reach LATAM consumers with local payment solutions."
     },
     {
+      "name": "Elavon",
+      "regex": "pay\\.elavonpaymentgateway\\.com|pay\\.sandbox\\.elavonpaymentgateway\\.com|rxp-js\\.js|pay\\.realexpayments\\.com|pay\\.sandbox\\.realexpayments\\.com",
+      "url": "https://www.elavon.com",
+      "image": "elavon",
+      "summary": "Elavon is a global provider of payment processing solutions, serving businesses across industries with secure, scalable, and innovative payment technologies. It supports a variety of payment methods and provides seamless integrations for both in-store and online transactions."
+    },    
+    {
       "name": "Eway",
       "regex": "secure\\.ewaypayments\\.com",
       "url": "https://eway.io",

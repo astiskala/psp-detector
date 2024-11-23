@@ -33,6 +33,7 @@ With PSP Detector, you can quickly find out which PSP is handling payments on a 
 - Cybersource
 - DG Financial Technology
 - EBANX
+- Elavon
 - Eway
 - Fat Zebra
 - Fiserv
