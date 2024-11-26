@@ -47,6 +47,7 @@ With PSP Detector, you can quickly find out which PSP is handling payments on a 
 - Maya
 - MercadoPago
 - Mollie
+- NHN KCP
 - NMI
 - Nuvei
 - Opn Payments (Omise)

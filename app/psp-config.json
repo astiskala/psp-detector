@@ -183,6 +183,13 @@
       "summary": "Mollie is a European payment service provider offering businesses a simple and reliable way to accept online payments. It supports a wide range of payment methods, including credit cards, PayPal, and local options like iDEAL and SEPA, making it popular across Europe."
     },
     {
+      "name": "NHN KCP",
+      "regex": "pay\\.kcp\\.co\\.kr",
+      "url": "https://www.kcp.co.kr",
+      "image": "kcp",
+      "summary": "KCP is a prominent payment gateway in South Korea, offering robust payment processing solutions for businesses across various industries. It supports multiple payment methods, including credit cards, bank transfers, and alternative payment channels, with a strong focus on security and seamless integration."
+    },
+    {
       "name": "NMI",
       "regex": "secure\\.networkmerchants\\.com|www\\.usaepay\\.com",
       "url": "https://www.nmi.com",
