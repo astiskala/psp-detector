@@ -41,6 +41,7 @@ With PSP Detector, you can quickly find out which PSP is handling payments on a 
 - Fiuu
 - Global Payments
 - GMO Payment Gateway
+- KSNET
 - Linkly
 - Mastercard Gateway (MPGS)
 - Maya

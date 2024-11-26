@@ -148,6 +148,13 @@
       "summary": "GMO Payment Gateway is a leading payment service provider in Japan, offering a wide range of solutions for online and in-store transactions. It supports credit cards, e-wallets, and various alternative payment methods, with a focus on security, fraud prevention, and comprehensive payment processing for businesses of all sizes."
     },
     {
+      "name": "KSNET",
+      "regex": "kspay\\.ksnet\\.to",
+      "url": "https://www.ksnet.co.kr",
+      "image": "ksnet",
+      "summary": "KSNET is a prominent South Korean payment service provider offering VAN (Value-Added Network) services and payment gateway solutions. Established in 1994, it supports credit card processing, bank transfers, and alternative payment methods for online and in-store transactions."
+    },    
+    {
       "name": "Linkly",
       "regex": "www\\.merchantsuite\\.com/api",
       "url": "https://www.linkly.com.au",
