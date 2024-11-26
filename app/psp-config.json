@@ -97,13 +97,20 @@
       "url": "https://www.elavon.com",
       "image": "elavon",
       "summary": "Elavon is a global provider of payment processing solutions, serving businesses across industries with secure, scalable, and innovative payment technologies. It supports a variety of payment methods and provides seamless integrations for both in-store and online transactions."
-    },    
+    },
     {
       "name": "Eway",
       "regex": "secure\\.ewaypayments\\.com",
       "url": "https://eway.io",
       "image": "eway",
       "summary": "Eway is a widely-used payment gateway in Australia and beyond, known for offering simple and secure payment processing. It supports all major credit cards, is PCI-DSS compliant, and integrates seamlessly with various e-commerce platforms. eWay also provides 24/7 technical support and flat-rate transaction fees, making it ideal for small to medium businesses."
+    },
+    {
+      "name": "Eximbay",
+      "regex": "secureapi\\.eximbay\\.com|api-test\\.eximbay\\.com",
+      "url": "https://www.eximbay.com",
+      "image": "eximbay",
+      "summary": "Eximbay is a global payment gateway specializing in cross-border e-commerce, offering secure payment solutions and supporting a variety of international payment methods. It caters to businesses seeking efficient and localized payment processing for global markets."
     },
     {
       "name": "Fat Zebra",

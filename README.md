@@ -35,6 +35,7 @@ With PSP Detector, you can quickly find out which PSP is handling payments on a 
 - EBANX
 - Elavon
 - Eway
+- Eximbay
 - Fat Zebra
 - Fiserv
 - Fiuu
