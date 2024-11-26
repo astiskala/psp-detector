@@ -9,30 +9,48 @@
     body {
       min-width: 300px;
       max-width: 100%;
-      position: relative;
-      vertical-align: middle;
       text-align: center;
-      font-family: sans-serif;
-      padding: 5px;
+      font-family: Arial, sans-serif;
+      padding: 15px;
+      background-color: #F7F7F7;
+      color: #244c3c;
+      box-sizing: border-box;
+    }
+
+    h2#psp-name {
+      margin: 0 0 10px;
+      font-size: 18px;
+      color: #244c3c;
     }
 
     #psp-description {
-      margin: 10px;
+      margin: 10px 0;
+      font-size: 13px;
+      line-height: 1.5;
     }
 
     #psp-url {
-      margin: 10px;
+      margin: 10px 0;
+      font-size: 13px;
       font-weight: bold;
+      color: #244c3c;
+    }
+
+    #psp-url a {
+      text-decoration: none;
+      color: inherit;
+    }
+
+    #psp-url a:hover {
+      text-decoration: underline;
     }
   </style>
 </head>
 
 <body>
-  <div id="psp-container">
-    <h2 id="psp-name">Detecting PSP...</h3>
-      <div id="psp-description"></div>
-      <div id="psp-url"></div>
-  </div>
+  <h2 id="psp-name">Detecting PSP...</h2>
+  <div id="psp-description">Please wait while we identify the Payment Service Provider.</div>
+  <div id="psp-url"><a href="#" target="_blank">Learn more</a></div>
 
   <script src="popup.js"></script>
 </body>
