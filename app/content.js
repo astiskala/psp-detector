@@ -1,11 +1,14 @@
 ;(() => {
   let cachedPspConfig = null
   let pspDetected = false  // Flag to track if PSP has already been detected
+  let eligibleUrls = /^https:\/\/(?!.*(google\.com|mozilla\.org|microsoft\.com|chatgpt\.com|linkedin\.com|zoom\.us|salesforce\.com|monday\.com|myworkday\.com))/
+
   const mutationDebounceDelay = 3000 // Delay for MutationObserver debounce
 
   // Detect PSP on the page by matching content against regexes
   const detectPsp = () => {
     if (pspDetected) return;  // Skip if PSP is already detected
+    if (!eligibleUrls.test(document.URL)) return; // Don't consider any ineligible URLs
 
     const pageContent = `${document.URL}\n\n${document.documentElement.outerHTML}`
 

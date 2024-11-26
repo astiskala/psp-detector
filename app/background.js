@@ -3,12 +3,24 @@ let detectedPsp = null
 let currentTabId = null
 let tabPsps = {}
 
-let eligibleUrls =
-  /^https:\/\/(?!.*(google\.com|mozilla\.org|microsoft\.com|chatgpt\.com|linkedin\.com|zoom\.us|salesforce\.com|monday\.com|myworkday\.com))/
+let eligibleUrls = /^https:\/\/(?!.*(google\.com|mozilla\.org|microsoft\.com|chatgpt\.com|linkedin\.com|zoom\.us|salesforce\.com|monday\.com|myworkday\.com))/
 const defaultIcons = {
   16: 'images/default_16.png',
   48: 'images/default_48.png',
   128: 'images/default_128.png'
+}
+
+// Debounce function to prevent excessive calls
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -24,7 +36,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (detectedPsp) {
       if (message.data.tabId == currentTabId) {
         tabPsps[currentTabId] = detectedPsp
-        setPspIcon()
+        debouncedSetPspIcon()
       }
     } else {
       chrome.action.setIcon({ path: defaultIcons })
@@ -32,7 +44,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.action === 'getPsp') {
-    sendResponse({ psp: detectedPsp })
+    sendResponse({ psp: detectedPsp || tabPsps[currentTabId] })
   }
 
   if (message.action === 'getTabId') {
@@ -40,24 +52,31 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 })
 
+const debouncedSetPspIcon = debounce(setPspIcon, 200)
+
 chrome.tabs.onActivated.addListener(tabInfo => {
   currentTabId = tabInfo.tabId
 
-  // Reset to default
+  // Reset to default more explicitly
   detectedPsp = null;
   chrome.action.setIcon({ path: defaultIcons })
 
-  chrome.tabs.get(currentTabId, function (tab) {
-    // Run on any HTTPS website, excluding extension galleries
-    if (tab && eligibleUrls.test(tab.url)) {
-      detectedPsp = tabPsps[currentTabId]
-      if (!detectedPsp) {
-        executeContentScript(currentTabId)
-      }
+  // Add a slight delay to ensure tab is fully loaded
+  setTimeout(() => {
+    chrome.tabs.get(currentTabId, function (tab) {
+      // Run on any HTTPS website, excluding extension galleries
+      if (tab && eligibleUrls.test(tab.url)) {
+        // More robust PSP detection
+        detectedPsp = tabPsps[currentTabId]
+        
+        if (!detectedPsp) {
+          executeContentScript(currentTabId)
+        }
 
-      setPspIcon()
-    }
-  })
+        debouncedSetPspIcon()
+      }
+    })
+  }, 100)
 })
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
@@ -80,18 +99,18 @@ chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
   delete tabPsps[tabId]
 })
 
-function executeContentScript (tabId) {
+function executeContentScript(tabId) {
   chrome.scripting.executeScript(
     {
       target: { tabId: tabId },
       files: ['content.js']
     },
-    () => {
+    (results) => {
       if (chrome.runtime.lastError) {
-        console.warn(
-          `Failed to inject content script on tab ${tabId}`,
-          chrome.runtime.lastError.message
-        )
+        console.error(
+          `Detailed script injection error on tab ${tabId}:`, 
+          chrome.runtime.lastError
+        );
       }
     }
   )
@@ -104,15 +123,20 @@ const fetchAndCachePspConfig = async () => {
 
   try {
     const response = await fetch(chrome.runtime.getURL('psp-config.json'));
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
     cachedPspConfig = await response.json();
     return { config: cachedPspConfig };
   } catch (error) {
-    console.error('Error loading the JSON config', error);
+    console.error('Detailed config loading error:', error);
     return { config: null };
   }
 };
 
-function setPspIcon () {
+function setPspIcon() {
+  if (!currentTabId) return;
+
   if (cachedPspConfig) {
     applyPspIcon(cachedPspConfig)
   } else {
@@ -128,8 +152,10 @@ function setPspIcon () {
   }
 }
 
-function applyPspIcon (pspConfig) {
-  const psp = pspConfig.psps.find(p => p.name === detectedPsp)
+function applyPspIcon(pspConfig) {
+  const detectedPspName = detectedPsp || tabPsps[currentTabId]
+  const psp = pspConfig.psps.find(p => p.name === detectedPspName)
+  
   if (psp && psp.image) {
     const icons = {
       16: `images/${psp.image}_16.png`,
@@ -138,5 +164,21 @@ function applyPspIcon (pspConfig) {
     }
 
     chrome.action.setIcon({ path: icons })
+  } else {
+    chrome.action.setIcon({ path: defaultIcons })
   }
 }
+
+// Add a periodic check to ensure icon consistency
+setInterval(() => {
+  if (currentTabId) {
+    chrome.tabs.get(currentTabId, tab => {
+      if (tab && eligibleUrls.test(tab.url)) {
+        // Re-run detection if no PSP is detected
+        if (!tabPsps[currentTabId]) {
+          executeContentScript(currentTabId)
+        }
+      }
+    })
+  }
+}, 5000)
