@@ -16,7 +16,7 @@
     },
     {
       "name": "Adyen",
-      "regex": "checkoutshopper-live\\.adyen\\.com|checkoutshopper-live-apse\\.adyen\\.com|checkoutshopper-live-au\\.adyen\\.com|checkoutshopper-live-in\\.adyen\\.com|checkoutshopper-live-us\\.adyen\\.com|cdn\\.adyen\\.com",
+      "regex": "checkoutshopper-live\\.adyen\\.com|checkoutshopper-live-apse\\.adyen\\.com|checkoutshopper-live-au\\.adyen\\.com|checkoutshopper-live-in\\.adyen\\.com|checkoutshopper-live-us\\.adyen\\.com|cdn\\.adyen\\.com|live\\.adyen\\.com",
       "url": "https://www.adyen.com",
       "image": "adyen",
       "summary": "Adyen is a global payment company offering businesses an end-to-end infrastructure for managing online, mobile, and in-store payments. Adyen provides solutions for risk management, analytics, and acquiring services, catering to enterprises with high transaction volumes."
