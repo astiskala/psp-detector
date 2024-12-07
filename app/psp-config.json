@@ -155,11 +155,11 @@
       "summary": "GMO Payment Gateway is a  payment service provider in Japan, offering a various solutions for online and in-store transactions. It supports credit cards, e-wallets, and various alternative payment methods, with a focus on security, fraud prevention, and  payment processing for businesses of all sizes."
     },
     {
-      "name": "Inicis",
-      "regex": "stdpay\\.inicis\\.com|mobile\\.inicis\\.com",
+      "name": "KG Inicis",
+      "regex": "stdpay\\.inicis\\.com|mobile\\.inicis\\.com|plugin\\.inicis\\.com",
       "url": "https://www.inicis.com",
       "image": "inicis",
-      "summary": "Inicis is a  payment service provider in South Korea, specializing in  and  payment solutions for online and offline businesses. It offers  payment processing services, including credit card payments, mobile payments, and  fraud detection technologies."
+      "summary": "KG Inicis is a South Korean payment gateway offering solutions for online and mobile payments. It supports various payment methods, including credit cards, e-wallets, and bank transfers, with a focus on secure transactions."
     },
     {
       "name": "KSNET",
