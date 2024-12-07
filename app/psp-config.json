@@ -204,6 +204,13 @@
       "summary": "KCP is a prominent payment gateway in South Korea, offering  payment processing solutions for businesses across various industries. It supports multiple payment methods, including credit cards, bank transfers, and alternative payment channels, with a strong focus on security and  integration."
     },
     {
+      "name": "NICE Payments",
+      "regex": "web\\.nicepay\\.co\\.kr",
+      "url": "https://www.nicepay.co.kr",
+      "image": "nicepay",
+      "summary": "NICE Payments provides payment gateway services in South Korea, supporting credit card processing, virtual accounts, and alternative payment methods for online transactions."
+    },
+    {
       "name": "NMI",
       "regex": "secure\\.networkmerchants\\.com|www\\.usaepay\\.com",
       "url": "https://www.nmi.com",
