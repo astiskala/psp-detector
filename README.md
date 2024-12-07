@@ -16,6 +16,10 @@ With PSP Detector, you can quickly find out which PSP is handling payments on a 
 - Logo & Description: View the provider’s logo alongside a brief overview of its services.
 - Direct Links: Quickly navigate to the PSP’s website for further exploration.
 
+## How to Use:
+
+Just install the PSP Detector extension (available in the Chrome Web Store at https://chromewebstore.google.com/detail/iblfofcbjioicompkmafdehbdakdbjle), visit any website, navigate to the checkout page, and click on the extension icon to see the payment provider in use. It’s that simple!
+
 ## Supported PSPs:
 
 - 2Checkout (Verifone)
@@ -30,6 +34,7 @@ With PSP Detector, you can quickly find out which PSP is handling payments on a 
 - Chase Payment Solutions
 - Checkout.com
 - Cielo
+- CX Pay
 - Cybersource
 - DG Financial Technology
 - EBANX
@@ -49,10 +54,12 @@ With PSP Detector, you can quickly find out which PSP is handling payments on a 
 - MercadoPago
 - Mollie
 - NHN KCP
+- NICE Payments
 - NMI
 - Nuvei
 - Opn Payments (Omise)
 - PayGent
+- Payletter
 - Payoneer
 - Paysera
 - PayU
@@ -73,7 +80,3 @@ With PSP Detector, you can quickly find out which PSP is handling payments on a 
 - Worldpay
 - Xendit
 - Zai (Assembly Payments)
-
-## How to Use:
-
-Just install the PSP Detector extension (available in the Chrome Web Store at https://chromewebstore.google.com/detail/iblfofcbjioicompkmafdehbdakdbjle), visit any website, navigate to the checkout page, and click on the extension icon to see the payment provider in use. It’s that simple!

@@ -239,6 +239,13 @@
       "summary": "PayGent is a Japanese payment service provider that specializes in offering  and  payment solutions for e-commerce. It supports multiple payment methods, including credit cards, and provides  fraud prevention and transaction management features."
     },
     {
+      "name": "Payletter",
+      "regex": "pgweb\\.payletter\\.com|pg\\.payletter\\.com|gpgclient\\.payletter\\.com",
+      "url": "https://www.payletter.com",
+      "image": "payletter",
+      "summary": "Payletter specializes in payment solutions for digital content and online services, offering recurring billing, in-app purchases, and support for international payments."
+    },
+    {
       "name": "Payoneer",
       "regex": "integration\\.oscato\\.com",
       "url": "https://www.payoneer.com",
