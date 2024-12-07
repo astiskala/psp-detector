@@ -71,6 +71,13 @@
       "summary": "Cielo is one of Brazil's largest payment processors, providing solutions for both online and offline transactions. It supports credit and debit card payments, including installment options, making it a popular choice for e-commerce in Brazil."
     },
     {
+      "name": "CX Pay",
+      "regex": "cxpay\\.transactiongateway\\.com",
+      "url": "https://cxpay.global",
+      "image": "cxpay",
+      "summary": "CX Pay is a payment gateway specializing in solutions for the Dutch Caribbean, Latin America, and global merchants. It supports a wide range of payment methods, including Visa, Mastercard, iDeal, Giropay, and alternative payments like Paysafecard and Bitcoin. CX Pay offers a seamless multi-channel integration, advanced fraud protection, and tools for cross-border transactions, making it an ideal partner for eCommerce businesses looking to expand globally."
+    },    
+    {
       "name": "Cybersource",
       "regex": "flex\\.cybersource\\.com|testflex\\.cybersource\\.com|secureacceptance\\.cybersource\\.com",
       "url": "https://www.cybersource.com",
