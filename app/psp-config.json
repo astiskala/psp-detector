@@ -414,6 +414,54 @@
       "image": "braintree",
       "summary": "Braintree, a PayPal service, offers a full-stack payment platform intended to make online payments for merchants. Its services include credit card processing, PayPal, Apple Pay, and subscription billing, with a focus on providing solutions for businesses.",
       "notice": "Because PayPal and Braintree are integrated, sometimes Braintree is misidentified as the PSP (even though a separate PSP may be used for card processing)."
-    }
+    },
+    {
+      "name": "Gr4vy",
+      "regex": "gr4vy\\.app",
+      "url": "https://www.gr4vy.com",
+      "image": "gr4vy",
+      "summary": "Gr4vy is a cloud-native payment orchestration platform offering businesses the ability to deploy their payment infrastructure on the cloud. It simplifies the integration and management of multiple payment methods and gateways, providing features like tokenization, routing, and failover.",
+      "notice": "As an orchestration/proxy platform, Gr4vy obscures the underlying PSP processing the payment. It is not possible from the merchant's frontend to determine who is the underlying card processor."
+    },
+    {
+      "name": "IXOPAY",
+      "regex": "gateway\\.ixopay\\.com",
+      "url": "https://www.ixopay.com",
+      "image": "ixopay",
+      "summary": "IXOPAY is a payment orchestration platform providing centralized payment management, dynamic routing, and tokenization. It supports global payment methods and offers fraud prevention tools, making it a comprehensive solution for large enterprises.",
+      "notice": "As an orchestration/proxy platform, IXOPAY obscures the underlying PSP processing the payment. It is not possible from the merchant's frontend to determine who is the underlying card processor."
+    },
+    {
+      "name": "PCI-Proxy",
+      "regex": "pay\\.datatrans\\.com|pay\\.sandbox\\.datatrans\\.com|pci-proxy\\.com",
+      "url": "https://www.pci-proxy.com",
+      "image": "pci-proxy",
+      "summary": "PCI-Proxy is a tokenization and proxy platform that enables businesses to securely handle sensitive payment data. It provides PCI compliance, tokenization, and flexible APIs for easy integration into payment systems.",
+      "notice": "As an orchestration/proxy platform, PCI-Proxy obscures the underlying PSP processing the payment. It is not possible from the merchant's frontend to determine who is the underlying card processor."
+    },
+    {
+      "name": "PCI Vault",
+      "regex": "api\\.pcivault\\.io",
+      "url": "https://www.pcivault.com",
+      "image": "pci-vault",
+      "summary": "PCI Vault offers secure tokenization services for storing and managing sensitive payment data. It focuses on compliance with PCI standards and provides robust APIs for seamless integration with eCommerce platforms.",
+      "notice": "As an orchestration/proxy platform, PCI Vault obscures the underlying PSP processing the payment. It is not possible from the merchant's frontend to determine who is the underlying card processor."
+    },
+    {
+      "name": "Spreedly",
+      "regex": "core\\.spreedly\\.com",
+      "url": "https://www.spreedly.com",
+      "image": "spreedly",
+      "summary": "Spreedly is a payment orchestration platform allowing businesses to securely tokenize, store, and optimize payment data. It supports connections to multiple gateways and payment services, enabling greater flexibility and scalability.",
+      "notice": "As an orchestration/proxy platform, Spreedly obscures the underlying PSP processing the payment. It is not possible from the merchant's frontend to determine who is the underlying card processor."
+    },
+    {
+      "name": "VGS (Very Good Security)",
+      "regex": "js\\.verygoodvault\\.com",
+      "url": "https://www.verygoodsecurity.com",
+      "image": "vgs",
+      "summary": "Very Good Security (VGS) is a data security and tokenization platform that simplifies PCI compliance by replacing sensitive data with tokens. It offers seamless integration with payment systems while maintaining privacy and security.",
+      "notice": "As an orchestration/proxy platform, VGS obscures the underlying PSP processing the payment. It is not possible from the merchant's frontend to determine who is the underlying card processor."
+    }    
   ]
 }

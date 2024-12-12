@@ -80,3 +80,12 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Worldpay
 - Xendit
 - Zai (Assembly Payments)
+
+## Supported orchestrators / proxies
+
+- Gr4vy
+- IXOPAY
+- PCI-Proxy
+- PCI Vault
+- Spreedly
+- VGS (Very Good Security)
