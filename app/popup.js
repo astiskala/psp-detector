@@ -16,6 +16,10 @@ document.addEventListener('DOMContentLoaded', function () {
           if (psp) {
             document.getElementById('psp-name').textContent = psp.name;
             document.getElementById('psp-description').textContent = psp.summary;
+
+            document.getElementById('psp-notice').style.display = 'block';
+            document.getElementById('psp-notice').textContent = psp.notice;
+
             document.getElementById('psp-url').innerHTML = `<a href="${psp.url}" target="_blank">Learn More</a>`;
             
             const pspImage = document.getElementById('psp-image');
@@ -37,6 +41,8 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('psp-name').textContent = 'No PSP detected';
     document.getElementById('psp-description').textContent = 
       "The Payment Service Provider could not be determined. Please ensure you have navigated to the website's checkout page.";
+    document.getElementById('psp-notice').style.display = 'none';
+    document.getElementById('psp-notice').textContent = '';
     document.getElementById('psp-url').innerHTML = '<a href="mailto:psp-detector@adamstiskala.com" target="_blank">Suggest Improvement</a>';
     document.getElementById('psp-image').src = chrome.runtime.getURL(`images/default_128.png`);
   }

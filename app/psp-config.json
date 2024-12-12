@@ -390,7 +390,8 @@
       "regex": "checkout\\.shopifycs\\.com",
       "url": "https://www.shopify.com",
       "image": "shopify",
-      "summary": "Shopify Payments is an integrated payment processing solution for Shopify store owners. It allows businesses to accept payments directly through their Shopify platform, supporting major credit cards and offering  checkout experiences for customers.<br /><br /><strong>Note: Because Shopify can host a payment page for other PSPs, sometimes Shopify is misidentified as the PSP (even though a separate PSP may be used for card processing).</strong>"
+      "summary": "Shopify Payments is an integrated payment processing solution for Shopify store owners. It allows businesses to accept payments directly through their Shopify platform, supporting major credit cards and offering  checkout experiences for customers.",
+      "notice": "Shopify's payment page can be configured to submit payments via other PSPs. As such, it is possible that Shopify is misidentified as the PSP (and another PSP is used for card processing)."
     },
     {
       "name": "Alipay",
@@ -411,7 +412,8 @@
       "regex": "js\\.braintreegateway\\.com|assets\\.braintreegateway\\.com",
       "url": "https://www.braintreepayments.com",
       "image": "braintree",
-      "summary": "Braintree, a PayPal service, offers a full-stack payment platform intended to make online payments  for merchants. Its services include credit card processing, PayPal, Apple Pay, and subscription billing, with a focus on providing  solutions for businesses.<br /><br /><strong>Note: Because PayPal and Braintree are integrated, sometimes Braintree is misidentified as the PSP (even though a separate PSP may be used for card processing).</strong>"
+      "summary": "Braintree, a PayPal service, offers a full-stack payment platform intended to make online payments  for merchants. Its services include credit card processing, PayPal, Apple Pay, and subscription billing, with a focus on providing  solutions for businesses.",
+      "notice": "Because PayPal and Braintree are integrated, sometimes Braintree is misidentified as the PSP (even though a separate PSP may be used for card processing)."
     }
   ]
 }
