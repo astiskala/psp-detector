@@ -92,6 +92,13 @@
       "summary": "DGFT (formerly VeriTrans), a service by Digital Garage in Japan, provides payment processing solutions. It offers services for online payments, including credit card and mobile payments, catering to a various businesses with fraud prevention and integration options."
     },
     {
+      "name": "dLocal",
+      "regex": "js\\.dlocal\\.com|js-sandbox\\.dlocal\\.com|pay\\.dlocal\\.com|sandbox\\.dlocal\\.com",
+      "url": "https://www.dlocal.com",
+      "image": "dlocal",
+      "summary": "dLocal is a payment platform focused on emerging markets, enabling global businesses to accept payments, send payouts, and settle funds locally. It supports multiple payment methods, including cards, bank transfers, and digital wallets, across Latin America, Africa, and Asia."
+    },    
+    {
       "name": "EBANX",
       "regex": "ebanx-js\\.ebanx\\.com|ui-elements\\.ebanx\\.com",
       "url": "https://www.ebanx.com",
@@ -432,12 +439,12 @@
       "notice": "As an orchestration/proxy platform, IXOPAY obscures the underlying PSP processing the payment. It is not possible from the merchant's frontend to determine who is the underlying card processor."
     },
     {
-      "name": "PCI-Proxy",
+      "name": "PCI Proxy",
       "regex": "pay\\.datatrans\\.com|pay\\.sandbox\\.datatrans\\.com|pci-proxy\\.com",
       "url": "https://www.pci-proxy.com",
       "image": "pci-proxy",
-      "summary": "PCI-Proxy is a tokenization and proxy platform that enables businesses to securely handle sensitive payment data. It provides PCI compliance, tokenization, and flexible APIs for easy integration into payment systems.",
-      "notice": "As an orchestration/proxy platform, PCI-Proxy obscures the underlying PSP processing the payment. It is not possible from the merchant's frontend to determine who is the underlying card processor."
+      "summary": "PCI Proxy is a tokenization and proxy platform that enables businesses to securely handle sensitive payment data. It provides PCI compliance, tokenization, and flexible APIs for easy integration into payment systems.",
+      "notice": "As an orchestration/proxy platform, PCI Proxy obscures the underlying PSP processing the payment. It is not possible from the merchant's frontend to determine who is the underlying card processor."
     },
     {
       "name": "PCI Vault",

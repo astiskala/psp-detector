@@ -17,8 +17,12 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('psp-name').textContent = psp.name;
             document.getElementById('psp-description').textContent = psp.summary;
 
-            document.getElementById('psp-notice').style.display = 'block';
-            document.getElementById('psp-notice').textContent = psp.notice;
+            if (psp.notice) {
+              document.getElementById('psp-notice').style.display = 'block';
+              document.getElementById('psp-notice').textContent = psp.notice;
+            } else {
+              document.getElementById('psp-notice').style.display = 'none';
+            }
 
             document.getElementById('psp-url').innerHTML = `<a href="${psp.url}" target="_blank">Learn More</a>`;
             

@@ -37,6 +37,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - CX Pay
 - Cybersource
 - DG Financial Technology
+- dLocal
 - EBANX
 - Elavon
 - Eway
@@ -61,6 +62,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - PayGent
 - Payletter
 - Payoneer
+- PayPal
 - Paysera
 - PayU
 - Rapyd
@@ -85,7 +87,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 
 - Gr4vy
 - IXOPAY
-- PCI-Proxy
+- PCI Proxy
 - PCI Vault
 - Spreedly
 - VGS (Very Good Security)
