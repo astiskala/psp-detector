@@ -260,6 +260,13 @@
       "summary": "Payoneer offers cross-border payment solutions for freelancers, marketplaces, and large enterprises. It supports multi-currency transactions and allows businesses to send and receive funds. The platform includes services like billing, transfers, and integrated payment solutions."
     },
     {
+      "name": "Paysafe",
+      "regex": "hosted\\.paysafe\\.com|api\\.paysafe\\.com|api\\.qa\\.paysafe\\.com",
+      "url": "https://www.paysafe.com",
+      "image": "paysafe",
+      "summary": "Paysafe is a leading specialized payments platform that provides online payment processing, digital wallet solutions, and card issuing services. It supports a wide range of payment methods and offers fraud management and recurring billing solutions for businesses globally."
+    },    
+    {
       "name": "PayU",
       "regex": "paymentsos\\.com|checkout\\.payulatam\\.com|api\\.payu\\.in|jssdk\\.payu\\.in|payudc\\.net",
       "url": "https://corporate.payu.com",
