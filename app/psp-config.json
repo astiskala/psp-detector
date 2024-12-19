@@ -476,6 +476,22 @@
       "image": "vgs",
       "summary": "Very Good Security (VGS) is a data security and tokenization platform that simplifies PCI compliance by replacing sensitive data with tokens. It offers seamless integration with payment systems while maintaining privacy and security.",
       "notice": "As an orchestration/proxy platform, VGS obscures the underlying PSP processing the payment. It is not possible from the merchant's frontend to determine who is the underlying card processor."
-    }    
+    },
+    {
+      "name": "Amadeus Hospitality (TravelClick)",
+      "regex": "static\\.travelclick\\.com",
+      "url": "https://www.amadeus-hospitality.com/",
+      "image": "amadeus",
+      "summary": "Amadeus Hospitality (TravelClick) enables hotels to validate credit cards and capture deposit payments for bookings. It integrates with third-party Payment Service Providers to facilitate secure and efficient payment management.",
+      "notice": "As a third party service provider (TSP), Amadeus Hospitality obscures the underlying PSP processing the payment. It is not possible from the merchant's frontend to determine who is the underlying card processor."
+    },
+    {
+      "name": "Sabre SynXis",
+      "regex": "synxis\\.com",
+      "url": "https://www.sabre.com/products/travel-agency-solutions/synxis-platform/",
+      "image": "sabre",
+      "summary": "Sabre SynXis provides secure handling of payments for hotels, enabling seamless transactions across booking channels. It supports credit card validation, tokenization, and integration with multiple payment service providers to streamline the payment process and enhance guest experiences.",
+      "notice": "As a third party service provider (TSP), Amadeus Hospitality obscures the underlying PSP processing the payment. It is not possible from the merchant's frontend to determine who is the underlying card processor."
+    }
   ]
 }
