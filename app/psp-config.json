@@ -437,7 +437,7 @@
     },
     {
       "name": "PayPal",
-      "regex": "www\\.paypal\\.com/sdk",
+      "regex": "paypalobjects\\.com/webstatic/.+/developer/docs/css/cardfields\\.css",
       "url": "https://www.paypal.com",
       "image": "paypal",
       "summary": "PayPal is an online payment platform that allows individuals and businesses to make payments, transfer money, and complete online transactions. It supports a variety of payment methods, including credit cards, bank transfers, and PayPal account balances, making it a versatile choice for e-commerce and personal transactions."
