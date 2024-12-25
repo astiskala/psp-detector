@@ -344,6 +344,13 @@
       "summary": "Stripe is a payments infrastructure provider that powers online transactions for internet businesses. With a focus on developer-friendly APIs, Stripe supports multiple currencies and offers tools for subscription management, invoicing, and fraud prevention."
     },
     {
+      "name": "SumUp",
+      "regex": "api\\.sumup\\.com|gateway\\.sumup\\.com",
+      "url": "https://sumup.com",
+      "image": "sumup",
+      "summary": "SumUp is a global fintech company offering payment solutions such as card readers, POS systems, and online payment services, enabling businesses to accept payments seamlessly across various channels."
+    },
+    {
       "name": "Trust Payments",
       "regex": "payments\\.securetrading\\.net|webservices\\.securetrading\\.net|cdn\\.eu\\.trustpayments\\.com",
       "url": "https://www.trustpayments.com",

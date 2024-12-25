@@ -77,6 +77,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Sony Payment Services
 - Square
 - Stripe
+- SumUp
 - Trust Payments
 - Tyro
 - WePay
