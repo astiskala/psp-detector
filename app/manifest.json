@@ -43,7 +43,8 @@
         "<all_urls>"
       ],
       "resources": [
-        "psp-config.json"
+        "psp-config.json",
+        "exempt-domains.json"
       ]
     }
   ]

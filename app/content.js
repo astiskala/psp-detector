@@ -1,18 +1,34 @@
 ;(() => {
   let cachedPspConfig = null
-  let pspDetected = false  // Flag to track if PSP has already been detected
-  let eligibleUrls = /^https:\/\/(?!.*(google\.com|mozilla\.org|microsoft\.com|chatgpt\.com|linkedin\.com|zoom\.us|salesforce\.com|monday\.com|myworkday\.com))/
+  let pspDetected = false
+  let exemptDomains = []  // To store exempted domains
 
-  const mutationDebounceDelay = 3000 // Delay for MutationObserver debounce
+  // Function to load exempt domains from the JSON file
+  const loadExemptDomains = async () => {
+    try {
+      const response = await fetch(chrome.runtime.getURL('exempt-domains.json'));
+      const data = await response.json();
+      exemptDomains = data.exemptDomains;
+    } catch (error) {
+      console.error('Failed to load exempt domains:', error);
+    }
+  };
+
+  // Update eligibleUrls regex dynamically based on exemptDomains
+  const getEligibleUrls = () => {
+    const domainPattern = exemptDomains.join('|');
+    return new RegExp(`^https://(?!.*(${domainPattern}))`);
+  };
 
   // Detect PSP on the page by matching content against regexes
   const detectPsp = () => {
-    if (pspDetected) return;  // Skip if PSP is already detected
-    if (!eligibleUrls.test(document.URL)) return; // Don't consider any ineligible URLs
+    if (pspDetected) return;
+    const eligibleUrls = getEligibleUrls();
+    if (!eligibleUrls.test(document.URL)) return;
 
     const pageContent = `${document.URL}\n\n${document.documentElement.outerHTML}`
-
     let detectedPsp = null
+
     for (let psp of cachedPspConfig.psps) {
       try {
         const regex = new RegExp(psp.regex, 'i');
@@ -31,10 +47,8 @@
         chrome.runtime.sendMessage({ action: 'detectPsp', data: pspData })
       });
 
-      // Mark PSP as detected to stop further checks
       pspDetected = true;
 
-      // Stop observing mutations since PSP is already detected
       if (observer) {
         observer.disconnect();
       }
@@ -54,26 +68,23 @@
             break
           }
         }
-      }, mutationDebounceDelay)
+      }, 3000)
     })
-
-    // Observe the entire document for DOM changes
     observer.observe(document.body, { childList: true, subtree: true })
   }
 
-  // Main logic
   const main = async () => {
+    await loadExemptDomains();  // Load exempt domains before running any other logic
     chrome.runtime.sendMessage({ action: 'getPspConfig' }, response => {
       if (response && response.config) {
         cachedPspConfig = response.config;
-        detectPsp();  // Run the initial PSP detection
-        initMutationObserver();  // Start observing DOM mutations
+        detectPsp();
+        initMutationObserver();
       } else {
         console.error('Failed to load PSP config');
       }
     });
   }
 
-  // Run the main function
   main()
 })();

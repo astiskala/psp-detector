@@ -3,12 +3,24 @@ let detectedPsp = null
 let currentTabId = null
 let tabPsps = {}
 
-let eligibleUrls = /^https:\/\/(?!.*(google\.com|mozilla\.org|microsoft\.com|chatgpt\.com|linkedin\.com|zoom\.us|salesforce\.com|monday\.com|myworkday\.com))/
 const defaultIcons = {
   16: 'images/default_16.png',
   48: 'images/default_48.png',
   128: 'images/default_128.png'
 }
+
+let exemptDomains = []  // To store exempted domains
+
+// Function to load exempt domains from the JSON file
+const loadExemptDomains = async () => {
+  try {
+    const response = await fetch(chrome.runtime.getURL('exempt-domains.json'));
+    const data = await response.json();
+    exemptDomains = data.exemptDomains;
+  } catch (error) {
+    console.error('Failed to load exempt domains:', error);
+  }
+};
 
 // Debounce function to prevent excessive calls
 function debounce(func, wait) {
@@ -22,6 +34,15 @@ function debounce(func, wait) {
     timeout = setTimeout(later, wait);
   };
 }
+
+// Update the eligibleUrls regex dynamically based on exemptDomains
+const getEligibleUrls = () => {
+  const domainPattern = exemptDomains.join('|');
+  return new RegExp(`^https://(?!.*(${domainPattern}))`);
+};
+
+// Make sure to load exempt domains on extension startup
+loadExemptDomains();
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'getPspConfig') {
@@ -56,23 +77,17 @@ const debouncedSetPspIcon = debounce(setPspIcon, 200)
 
 chrome.tabs.onActivated.addListener(tabInfo => {
   currentTabId = tabInfo.tabId
-
-  // Reset to default more explicitly
   detectedPsp = null;
   chrome.action.setIcon({ path: defaultIcons })
 
-  // Add a slight delay to ensure tab is fully loaded
   setTimeout(() => {
     chrome.tabs.get(currentTabId, function (tab) {
-      // Run on any HTTPS website, excluding extension galleries
+      const eligibleUrls = getEligibleUrls();
       if (tab && eligibleUrls.test(tab.url)) {
-        // More robust PSP detection
         detectedPsp = tabPsps[currentTabId]
-        
         if (!detectedPsp) {
           executeContentScript(currentTabId)
         }
-
         debouncedSetPspIcon()
       }
     })
@@ -86,7 +101,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   }
 
   if (changeInfo.status === 'complete' && tab && tab.url) {
-    // Run on any HTTPS website, excluding extension galleries
+    const eligibleUrls = getEligibleUrls();
     if (eligibleUrls.test(tab.url)) {
       executeContentScript(tabId)
     } else {

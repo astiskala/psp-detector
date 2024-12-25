@@ -1,0 +1,30 @@
+{
+    "exemptDomains": [
+      "apple.com",
+      "bing.com",
+      "chatgpt.com",
+      "dropbox.com",
+      "duckduckgo.com",
+      "facebook.com",
+      "github.com",
+      "google.com",
+      "instagram.com",
+      "linkedin.com",
+      "live.com",
+      "microsoft.com",
+      "microsoftonline.com",
+      "monday.com",
+      "mozilla.org",
+      "myworkday.com",
+      "office.com",
+      "reddit.com",
+      "salesforce.com",
+      "slack.com",
+      "whatsapp.com",
+      "x.com",
+      "yahoo.co.jp",
+      "yahoo.com",
+      "youtube.com",
+      "zoom.us"
+    ]
+}
