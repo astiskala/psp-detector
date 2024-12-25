@@ -323,6 +323,13 @@
       "summary": "Shift4 is a payment processing company offering end-to-end solutions for businesses of all sizes. It provides payment technologies, including integrated POS systems, e-commerce solutions, and fraud prevention tools, catering to various industries like hospitality, retail, and food services."
     },
     {
+      "name": "Skrill",
+      "regex": "pay\\.skrill\\.com",
+      "url": "https://www.skrill.com",
+      "image": "skrill",
+      "summary": "Skrill is a digital wallet and online payment platform that allows businesses and individuals to send, receive, and store money securely. It supports multiple payment methods, including credit cards, bank transfers, and cryptocurrencies, catering to global e-commerce and personal transactions."
+    },
+    {
       "name": "Sony Payment Services",
       "regex": "e-scott\\.jp",
       "url": "https://www.sonypaymentservices.jp",

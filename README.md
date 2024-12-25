@@ -74,6 +74,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - SB Payment Service
 - Shift4
 - Shopify Payments
+- Skrill
 - Sony Payment Services
 - Square
 - Stripe
