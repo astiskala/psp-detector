@@ -97,7 +97,7 @@
       "url": "https://www.dlocal.com",
       "image": "dlocal",
       "summary": "dLocal is a payment platform focused on emerging markets, enabling global businesses to accept payments, send payouts, and settle funds locally. It supports multiple payment methods, including cards, bank transfers, and digital wallets, across Latin America, Africa, and Asia."
-    },    
+    },
     {
       "name": "EBANX",
       "regex": "ebanx-js\\.ebanx\\.com|ui-elements\\.ebanx\\.com",
@@ -265,13 +265,20 @@
       "url": "https://www.paysafe.com",
       "image": "paysafe",
       "summary": "Paysafe is a leading specialized payments platform that provides online payment processing, digital wallet solutions, and card issuing services. It supports a wide range of payment methods and offers fraud management and recurring billing solutions for businesses globally."
-    },    
+    },
     {
       "name": "PayU",
       "regex": "paymentsos\\.com|checkout\\.payulatam\\.com|api\\.payu\\.in|jssdk\\.payu\\.in|payudc\\.net",
       "url": "https://corporate.payu.com",
       "image": "payu",
       "summary": "PayU is a payment service provider operating in multiple markets, with a focus on emerging economies. It offers a variety of payment solutions including credit and debit cards, as well as alternative payment methods. PayU enables businesses to accept localized payments, providing solutions for e-commerce and mobile platforms."
+    },
+    {
+      "name": "Plastiq",
+      "regex": "connect\\.plastiq\\.com|connect\\.sandbox\\.plastiq\\.com",
+      "url": "https://www.plastiq.com",
+      "image": "plastiq",
+      "summary": "Plastiq is a payment platform and gateway that enables businesses to pay vendors and accept payments using credit cards, even if cards are not traditionally accepted. It provides a versatile solution for cash flow management, invoice payments, and global payment processing."
     },
     {
       "name": "Rapyd",
