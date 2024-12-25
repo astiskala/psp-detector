@@ -29,6 +29,13 @@
       "summary": "Airwallex is a payment platform offering a various financial services, including cross-border payments, multi-currency accounts, and virtual cards. It focuses on providing financial solutions for businesses looking to expand their operations with transparent payment options."
     },
     {
+      "name": "Amazon Payment Services (PayFort)",
+      "regex": "checkout\\.payfort\\.com",
+      "url": "https://paymentservices.amazon.com/",
+      "image": "amazon",
+      "summary": "Amazon Payment Services, formerly PayFort, provides secure and reliable online payment solutions for businesses across the Middle East and North Africa. It supports various payment methods, offers advanced fraud protection, and ensures seamless integration for e-commerce platforms."
+    },
+    {
       "name": "Authorize.net",
       "regex": "jstest\\.authorize\\.net|js\\.authorize\\.net",
       "url": "https://www.authorize.net",
