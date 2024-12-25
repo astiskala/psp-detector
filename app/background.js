@@ -188,6 +188,7 @@ function applyPspIcon(pspConfig) {
 setInterval(() => {
   if (currentTabId) {
     chrome.tabs.get(currentTabId, tab => {
+      const eligibleUrls = getEligibleUrls();
       if (tab && eligibleUrls.test(tab.url)) {
         // Re-run detection if no PSP is detected
         if (!tabPsps[currentTabId]) {
