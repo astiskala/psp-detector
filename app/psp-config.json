@@ -148,6 +148,13 @@
       "summary": "Eximbay is a payment gateway specializing in cross-border e-commerce, offering payment solutions and supporting a variety of international payment methods. It caters to businesses seeking and localized payment processing for markets."
     },
     {
+      "name": "FastSpring",
+      "regex": "sbl\\.onfastspring\\.com",
+      "url": "https://www.fastspring.com",
+      "image": "fastspring",
+      "summary": "FastSpring is an e-commerce and subscription management platform specializing in software, SaaS, and digital content sales. It provides end-to-end payment processing with features like global tax compliance, fraud prevention, and subscription management. The platform supports multiple payment methods, currencies, and languages, offering localized checkout experiences across worldwide markets."
+    },
+    {
       "name": "Fat Zebra",
       "regex": "pmnts\\.io|pmnts-sandbox\\.io",
       "url": "https://www.fatzebra.com",
