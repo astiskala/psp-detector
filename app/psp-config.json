@@ -281,6 +281,13 @@
       "summary": "Payletter specializes in payment solutions for digital content and online services, offering recurring billing, in-app purchases, and support for international payments."
     },
     {
+      "name": "Paymentwall",
+      "regex": "api\\.paymentwall\\.com",
+      "url": "https://www.paymentwall.com",
+      "image": "paymentwall",
+      "summary": "Paymentwall is a global payment platform that enables businesses to accept payments from users worldwide through 150+ local payment methods. It specializes in digital goods, online services, and gaming industries, offering features like subscription management, fraud prevention, and analytics. The platform supports various payment options including credit cards, bank transfers, e-wallets, mobile payments, and prepaid cards across 200+ countries."
+    },
+    {
       "name": "Payoneer",
       "regex": "integration\\.oscato\\.com",
       "url": "https://www.payoneer.com",
