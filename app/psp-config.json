@@ -64,6 +64,13 @@
       "summary": "BlueSnap is a payments provider that helps businesses accept payments online, on mobile, and via marketplaces. It offers built-in fraud prevention, supports over 100 payment methods, and helps businesses streamline payment processing with support for multiple currencies."
     },
     {
+      "name": "Cardknox",
+      "regex": "cdn\\.cardknox\\.com",
+      "url": "https://www.cardknox.com",
+      "image": "cardknox",
+      "summary": "Cardknox is a payment technology provider offering omnichannel payment processing solutions for both in-store and online transactions. It supports multiple payment methods including credit cards, ACH, and digital wallets, with features like tokenization, recurring billing, and fraud prevention."
+    },
+    {
       "name": "Chase Payment Solutions",
       "regex": "checkout-cat\\.merchant\\.jpmorgan.com|safetechpageencryption\\.chasepaymentech\\.com|safetechpageencryptionvar\\.chasepaymentech\\.com",
       "url": "https://www.chase.com/business/payments",

@@ -33,6 +33,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - BillDesk
 - BlueSnap
 - Braintree
+- Cardknox
 - Chase Payment Solutions
 - Checkout.com
 - Cielo
