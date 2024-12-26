@@ -50,6 +50,13 @@
       "summary": "Bambora, now part of Worldline, provides a various payment services for businesses, from e-commerce and mobile payments to in-store transactions. The company focuses on simplifying the payment process for small and medium-sized enterprises."
     },
     {
+      "name": "BillDesk",
+      "regex": "pay\\.billdesk\\.com|uat1\\.billdesk\\.com",
+      "url": "https://www.billdesk.com",
+      "image": "billdesk",
+      "summary": "BillDesk is one of India's pioneering payment gateways, specializing in electronic payment processing and bill payment solutions. It offers payment services including credit/debit cards, net banking, UPI, and various digital wallets. BillDesk provides secure payment aggregation services, recurring billing solutions, and serves various sectors including e-commerce, utilities, and financial institutions."
+    },
+    {
       "name": "BlueSnap",
       "regex": "pay\\.bluesnap\\.com",
       "url": "https://www.bluesnap.com",
