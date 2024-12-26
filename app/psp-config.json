@@ -253,6 +253,13 @@
       "summary": "Opn Payments, formerly known as Omise, is a payments platform in Asia, offering a suite of payment solutions. It supports online payments, recurring billing, and multi-currency transactions, catering to businesses of all sizes, with a focus on providing solutions."
     },
     {
+      "name": "PagBrasil",
+      "regex": "service\\.pagbrasil\\.com",
+      "url": "https://www.pagbrasil.com",
+      "image": "pagbrasil",
+      "summary": "PagBrasil is a specialized Brazilian payment service provider offering local payment methods and processing solutions. It supports various Brazilian payment methods including Boleto Bancário, PIX instant payments, credit cards with installments, and bank transfers. The platform provides local acquiring and processing capabilities."
+    },
+    {
       "name": "PayGent",
       "regex": "token\\.paygent\\.co\\.jp|service\\.paygent\\.co\\.jp|sandbox\\.paygent\\.co\\.jp",
       "url": "https://www.paygent.co.jp",

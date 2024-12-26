@@ -61,6 +61,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - NMI
 - Nuvei
 - Opn Payments (Omise)
+- PagBrasil
 - PayGent
 - Payletter
 - Payoneer
