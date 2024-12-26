@@ -450,6 +450,13 @@
       "summary": "PayPal is an online payment platform that allows individuals and businesses to make payments, transfer money, and complete online transactions. It supports a variety of payment methods, including credit cards, bank transfers, and PayPal account balances, making it a versatile choice for e-commerce and personal transactions."
     },
     {
+      "name": "Paytm",
+      "regex": "secure\\.paytmpayments\\.com|securestage\\.paytmpayments\\.com",
+      "url": "https://www.paytmpayments.com/payment-gateway",
+      "image": "paytm",
+      "summary": "Paytm is one of India's largest payment gateways, providing comprehensive payment solutions for businesses of all sizes. It supports multiple payment methods including UPI, credit/debit cards, net banking, and digital wallets. The platform offers features like recurring payments, payment links, and subscription management, with robust security measures and easy integration options."
+    },
+    {
       "name": "Braintree",
       "regex": "js\\.braintreegateway\\.com|assets\\.braintreegateway\\.com",
       "url": "https://www.braintreepayments.com",
