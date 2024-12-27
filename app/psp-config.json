@@ -134,6 +134,13 @@
       "summary": "Elavon is a provider of payment processing solutions, serving businesses across industries with , , and payment technologies. It supports a variety of payment methods and provides integrations for both in-store and online transactions."
     },
     {
+      "name": "EVO Payments",
+      "regex": "hp\\.evosnap\\.com|cashierui-api\\.evopaymentgateway\\.com|cashierui-apiuat\\.test\\.evopaymentgateway\\.com",
+      "url": "https://www.evopayments.com",
+      "image": "evo",
+      "summary": "EVO Payments is a global payment service provider offering secure and innovative solutions for in-store, online, and mobile payment processing. Their services are supported by developer-friendly APIs and integration tools, facilitating seamless payment acceptance for businesses worldwide."
+    },
+    {
       "name": "Eway",
       "regex": "secure\\.ewaypayments\\.com",
       "url": "https://eway.io",
