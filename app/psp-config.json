@@ -288,6 +288,13 @@
       "summary": "PagBrasil is a specialized Brazilian payment service provider offering local payment methods and processing solutions. It supports various Brazilian payment methods including Boleto Bancário, PIX instant payments, credit cards with installments, and bank transfers. The platform provides local acquiring and processing capabilities."
     },
     {
+      "name": "PagSeguro",
+      "regex": "payment\\.boacompra\\.com|pagamento\\.pagseguro\\.uol\\.com\\.br",
+      "url": "https://pagseguro.uol.com.br",
+      "image": "pagseguro",
+      "summary": "PagSeguro is a Brazilian payment processing platform providing online and in-person payment solutions, digital wallets, and financial services for businesses and consumers."
+    },
+    {
       "name": "PayGent",
       "regex": "token\\.paygent\\.co\\.jp|service\\.paygent\\.co\\.jp|sandbox\\.paygent\\.co\\.jp",
       "url": "https://www.paygent.co.jp",
@@ -320,7 +327,7 @@
       "regex": "hosted\\.paysafe\\.com|api\\.paysafe\\.com|api\\.qa\\.paysafe\\.com",
       "url": "https://www.paysafe.com",
       "image": "paysafe",
-      "summary": "Paysafe is a leading specialized payments platform that provides online payment processing, digital wallet solutions, and card issuing services. It supports a wide range of payment methods and offers fraud management and recurring billing solutions for businesses globally."
+      "summary": "Paysafe is a specialized payments platform that provides online payment processing, digital wallet solutions, and card issuing services. It supports a wide range of payment methods and offers fraud management and recurring billing solutions for businesses globally."
     },
     {
       "name": "PayU",
