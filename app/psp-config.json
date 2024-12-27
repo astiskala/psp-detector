@@ -232,6 +232,13 @@
       "summary": "Mollie is a European payment service provider offering businesses a way to accept online payments. It supports a various payment methods, including credit cards, PayPal, and local options like iDEAL and SEPA, making it across Europe."
     },
     {
+      "name": "Nexi Group (Nets)",
+      "regex": "checkout\\.dibspayment\\.eu",
+      "url": "https://www.nexigroup.com/en/",
+      "image": "nexi",
+      "summary": "Nexi Group (Nets) is a European PayTech company providing a wide range of digital payment solutions, including merchant services, issuing solutions, and digital banking services, enabling seamless and secure transactions across various channels and payment methods."
+    },
+    {
       "name": "NHN KCP",
       "regex": "pay\\.kcp\\.co\\.kr",
       "url": "https://www.kcp.co.kr",

@@ -58,6 +58,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Maya
 - MercadoPago
 - Mollie
+- Nexi Group (Nets)
 - NHN KCP
 - NICE Payments
 - NMI
