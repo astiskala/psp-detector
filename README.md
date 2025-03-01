@@ -37,6 +37,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Chase Payment Solutions
 - Checkout.com
 - Cielo
+- CSG Forte
 - CX Pay
 - Cybersource
 - DG Financial Technology

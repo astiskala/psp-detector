@@ -92,6 +92,13 @@
       "summary": "Cielo is one of Brazil's largest payment processors, providing solutions for both online and offline transactions. It supports credit and debit card payments, including installment options, making it a choice for e-commerce in Brazil."
     },
     {
+      "name": "CSG Forte",
+      "regex": "checkout\\.forte\\.net|api\\.forte\\.net|sandbox\\.forte\\.net",
+      "url": "https://www.forte.net",
+      "image": "forte",
+      "summary": "CSG Forte is a payment gateway that enables merchants to securely process card transactions for both ecommerce and in‑store environments. It offers integrated payment solutions, advanced fraud prevention, and seamless system integration."
+    },
+    {
       "name": "CX Pay",
       "regex": "cxpay\\.transactiongateway\\.com",
       "url": "https://cxpay.global",
@@ -485,7 +492,7 @@
     },
     {
       "name": "Shopify Payments",
-      "regex": "checkout\\.shopifycs\\.com",
+      "regex": "checkout\\.shopifycs\\.com|checkout\\.pci\\.shopifyinc\\.com",
       "url": "https://www.shopify.com",
       "image": "shopify",
       "summary": "Shopify Payments is an integrated payment processing solution for Shopify store owners. It allows businesses to accept payments directly through their Shopify platform, supporting major credit cards and offering checkout experiences for customers.",
