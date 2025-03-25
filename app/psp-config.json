@@ -71,6 +71,13 @@
       "summary": "Cardknox is a payment technology provider offering omnichannel payment processing solutions for both in-store and online transactions. It supports multiple payment methods including credit cards, ACH, and digital wallets, with features like tokenization, recurring billing, and fraud prevention."
     },
     {
+      "name": "Cashfree Payments",
+      "regex": "sdk\\.cashfree\\.com|payments\\.cashfree\\.com|sandbox\\.cashfree\\.com",
+      "url": "https://www.cashfree.com",
+      "image": "cashfree",
+      "summary": "Cashfree Payments is an Indian payment gateway and API banking solutions company that enables businesses to collect payments online and automate payouts. It supports various payment methods including UPI, net banking, credit/debit cards, and digital wallets. Cashfree provides tools for instant refunds, subscription payments, and marketplace settlements, catering to e-commerce, startups, and enterprises."
+    },
+    {
       "name": "Chase Payment Solutions",
       "regex": "checkout-cat\\.merchant\\.jpmorgan.com|safetechpageencryption\\.chasepaymentech\\.com|safetechpageencryptionvar\\.chasepaymentech\\.com",
       "url": "https://www.chase.com/business/payments",
