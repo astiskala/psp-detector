@@ -551,6 +551,14 @@
       "notice": "As an orchestration/proxy platform, IXOPAY obscures the underlying PSP processing the payment. It is not possible from the merchant's frontend to determine who is the underlying card processor."
     },
     {
+      "name": "Juspay",
+      "regex": "payments\\.juspay\\.in|api\\.juspay\\.in",
+      "url": "https://www.juspay.in",
+      "image": "juspay",
+      "summary": "Juspay is an Indian payment platform providing SDKs (like Express Checkout), payment gateway services, and orchestration features. It aims to simplify checkouts, enhance transaction success rates, and supports numerous local payment methods including UPI, wallets, and cards.",
+      "notice": "As an orchestration/proxy platform, Juspay obscures the underlying PSP processing the payment. It is not possible from the merchant's frontend to determine who is the underlying card processor."
+    },
+    {
       "name": "PCI Proxy",
       "regex": "pay\\.datatrans\\.com|pay\\.sandbox\\.datatrans\\.com|pci-proxy\\.com",
       "url": "https://www.pci-proxy.com",
