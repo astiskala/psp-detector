@@ -106,6 +106,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Juspay
 - PCI Proxy
 - PCI Vault
+- Primer
 - Spreedly
 - VGS (Very Good Security)
 

@@ -575,6 +575,14 @@
       "notice": "As an orchestration/proxy platform, PCI Vault obscures the underlying PSP processing the payment. It is not possible from the merchant's frontend to determine who is the underlying card processor."
     },
     {
+      "name": "Primer",
+      "regex": "sdk\\.primer\\.io||api\\.primer\\.io|sandbox\\.primer\\.io",
+      "url": "https://primer.io",
+      "image": "primer",
+      "summary": "Primer is a unified infrastructure and automation platform for payments and commerce. It provides merchants with a single integration to consolidate their payment stack, connect various payment services and third-party tools with minimal code, and build dynamic end-to-end payment flows. Primer aims to simplify payment integration and management, optimize payment performance (including authorization rates and routing), and supports a wide range of payment methods and services.",
+      "notice": "As an orchestration/proxy platform, Primer obscures the underlying PSP processing the payment. It is not possible from the merchant's frontend to determine who is the underlying card processor."
+    },
+    {
       "name": "Spreedly",
       "regex": "core\\.spreedly\\.com",
       "url": "https://www.spreedly.com",
