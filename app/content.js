@@ -1,42 +1,40 @@
 ;(() => {
   let cachedPspConfig = null;
   let pspDetected = false;
-  let exemptDomains = [];  // To store exempted domains
+  let eligibleUrlsRegex = null;
 
-  // Function to load exempt domains from the JSON file
-  const loadExemptDomains = async () => {
-    try {
-      const response = await fetch(chrome.runtime.getURL('exempt-domains.json'));
-      const data = await response.json();
-      exemptDomains = data.exemptDomains;
-    } catch (error) {
-      console.error('Failed to load exempt domains:', error);
-    }
+  // Get the exempt domains regex from the background script
+  const getExemptDomainsRegex = () => {
+    return new Promise((resolve) => {
+      chrome.runtime.sendMessage({ action: 'getExemptDomainsRegex' }, response => {
+        if (response && response.regex) {
+          eligibleUrlsRegex = new RegExp(response.regex);
+        }
+        resolve();
+      });
+    });
   };
 
-  // Update eligibleUrls regex dynamically based on exemptDomains
-  const getEligibleUrls = () => {
-    const domainPattern = exemptDomains.join('|');
-    return new RegExp(`^https://(?!.*(${domainPattern}))`);
-  };
-
-  // Precompile PSP regexes for performance
+  // Cache regex compilation results
   const precompileRegex = (config) => {
+    if (config.psps.every(psp => psp.compiledRegex)) return;
+    
     config.psps.forEach(psp => {
-      try {
-        psp.compiledRegex = new RegExp(psp.regex, 'i');
-      } catch (error) {
-        console.error(`Invalid regex pattern for PSP "${psp.name}":`, error);
-        psp.compiledRegex = null;
+      if (!psp.compiledRegex) {
+        try {
+          psp.compiledRegex = new RegExp(psp.regex, 'i');
+        } catch (error) {
+          console.error(`Invalid regex pattern for PSP "${psp.name}":`, error);
+          psp.compiledRegex = null;
+        }
       }
     });
   };
 
   // Detect PSP on the page using precompiled regexes
   const detectPsp = () => {
-    if (pspDetected) return;
-    const eligibleUrls = getEligibleUrls();
-    if (!eligibleUrls.test(document.URL)) return;
+    if (pspDetected || !eligibleUrlsRegex) return;
+    if (!eligibleUrlsRegex.test(document.URL)) return;
 
     const pageContent = `${document.URL}\n\n${document.documentElement.outerHTML}`;
     let detectedPsp = null;
@@ -67,6 +65,11 @@
   const initMutationObserver = () => {
     let debounceTimeout;
     observer = new MutationObserver(mutationsList => {
+      if (pspDetected) {
+        observer.disconnect();
+        return;
+      }
+      
       clearTimeout(debounceTimeout);
       debounceTimeout = setTimeout(() => {
         for (const mutation of mutationsList) {
@@ -81,11 +84,12 @@
   };
 
   const main = async () => {
-    await loadExemptDomains();  // Load exempt domains before running any other logic
+    await getExemptDomainsRegex();
+    
     chrome.runtime.sendMessage({ action: 'getPspConfig' }, response => {
       if (response && response.config) {
         cachedPspConfig = response.config;
-        precompileRegex(cachedPspConfig); // Precompile regexes for all PSPs
+        precompileRegex(cachedPspConfig);
         detectPsp();
         initMutationObserver();
       } else {

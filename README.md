@@ -35,6 +35,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Braintree
 - Cardknox
 - Cashfree Payments
+- Cellulant
 - Chase Payment Solutions
 - Checkout.com
 - Cielo
@@ -43,6 +44,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Cybersource
 - DG Financial Technology
 - dLocal
+- DPO Group
 - EBANX
 - Elavon
 - EVO Payments
@@ -52,6 +54,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Fat Zebra
 - Fiserv
 - Fiuu
+- Flutterwave
 - Global Payments
 - GMO Payment Gateway
 - Inicis
@@ -61,6 +64,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Maya
 - MercadoPago
 - Mollie
+- Network International
 - Nexi Group (Nets)
 - NHN KCP
 - NICE Payments
@@ -76,6 +80,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - PayPal
 - Paysafe
 - Paysera
+- Paystack
 - Paytm
 - PayU
 - Plastiq
@@ -107,6 +112,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - PCI Proxy
 - PCI Vault
 - Primer
+- ProcessOut
 - Spreedly
 - VGS (Very Good Security)
 

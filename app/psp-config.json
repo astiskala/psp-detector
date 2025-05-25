@@ -78,6 +78,13 @@
       "summary": "Cashfree Payments is an Indian payment gateway and API banking solutions company that enables businesses to collect payments online and automate payouts. It supports various payment methods including UPI, net banking, credit/debit cards, and digital wallets. Cashfree provides tools for instant refunds, subscription payments, and marketplace settlements, catering to e-commerce, startups, and enterprises."
     },
     {
+      "name": "Cellulant",
+      "regex": "checkout\\.tingg\\.africa|developer\\.tingg\\.africa|api\\.tingg\\.africa|api-dev\\.tingg\\.africa",
+      "url": "https://cellulant.io",
+      "image": "cellulant",
+      "summary": "Cellulant is a pan-African payments company that provides a single digital payments platform - Tingg - for businesses across Africa. It supports various payment methods including mobile money, cards, and bank transfers, offering solutions for both online and offline transactions with presence across multiple African countries."
+    },
+    {
       "name": "Chase Payment Solutions",
       "regex": "checkout-cat\\.merchant\\.jpmorgan.com|safetechpageencryption\\.chasepaymentech\\.com|safetechpageencryptionvar\\.chasepaymentech\\.com",
       "url": "https://www.chase.com/business/payments",
@@ -132,6 +139,13 @@
       "url": "https://www.dlocal.com",
       "image": "dlocal",
       "summary": "dLocal is a payment platform focused on emerging markets, enabling global businesses to accept payments, send payouts, and settle funds locally. It supports multiple payment methods, including cards, bank transfers, and digital wallets, across Latin America, Africa, and Asia."
+    },
+    {
+      "name": "DPO Group",
+      "regex": "dpopayments\\.com|secure\\.3gdirectpay\\.com",
+      "url": "https://www.dpogroup.com",
+      "image": "dpo",
+      "summary": "DPO Group (Direct Pay Online) is a leading African payment service provider offering online payment solutions across the continent. It supports multiple payment methods including cards, mobile money, and bank transfers, providing businesses with a secure platform for processing payments across Africa."
     },
     {
       "name": "EBANX",
@@ -197,6 +211,13 @@
       "summary": "Fiserv, formerly First Data, is a provider of financial services technology, including payment processing for businesses of all sizes. Its platform supports a variety of payment methods and offers solutions for both online and in-store payments."
     },
     {
+      "name": "Flutterwave",
+      "regex": "checkout\\.flutterwave\\.com|api\\.flutterwave\\.com",
+      "url": "https://flutterwave.com",
+      "image": "flutterwave",
+      "summary": "Flutterwave is a African payment technology company providing payment infrastructure for global merchants and payment service providers. It supports various payment methods including cards, mobile money, bank transfers, and offers features like recurring billing, virtual cards, and payment links."
+    },
+    {
       "name": "Global Payments",
       "regex": "js\\.globalpay\\.com|apis\\.globalpay\\.com|apis\\.sandbox\\.globalpay\\.com",
       "url": "https://www.globalpayments.com",
@@ -258,6 +279,13 @@
       "url": "https://www.nexigroup.com/en/",
       "image": "nexi",
       "summary": "Nexi Group (Nets) is a European PayTech company providing a wide range of digital payment solutions, including merchant services, issuing solutions, and digital banking services, enabling seamless and secure transactions across various channels and payment methods."
+    },
+    {
+      "name": "Network International",
+      "regex": "sandbox\\.ngenius-payments\\.com|paypage\\.ngenius-payments\\.com|cdnssl\\.ngenius-payments\\.com",
+      "url": "https://www.network.international",
+      "image": "networkint",
+      "summary": "Network International is a leading payment solutions provider in the Middle East and Africa. It offers a comprehensive range of payment solutions including online payment gateway services, point-of-sale terminals, and merchant acquiring services. The platform supports various payment methods and provides robust security features for secure transactions."
     },
     {
       "name": "NHN KCP",
@@ -491,6 +519,13 @@
       "summary": "Paysera is a European-based payment gateway offering international money transfers, online payment processing, and prepaid cards. It provides businesses with affordable payment solutions, focusing on cross-border transactions."
     },
     {
+      "name": "Paystack",
+      "regex": "js\\.paystack\\.co|api\\.paystack\\.co|checkout\\.paystack\\.com",
+      "url": "https://paystack.com",
+      "image": "paystack",
+      "summary": "Paystack, a Stripe company, is a payment processing platform that helps businesses in Africa accept payments from customers worldwide. It provides tools for online and offline payments, supporting various payment methods including cards, bank transfers, and mobile money, with features like recurring billing and payment pages."
+    },
+    {
       "name": "Mastercard Gateway (MPGS)",
       "regex": "gateway\\.mastercard\\.com",
       "url": "https://www.mastercard.com/gateway.html",
@@ -581,6 +616,13 @@
       "image": "primer",
       "summary": "Primer is a unified infrastructure and automation platform for payments and commerce. It provides merchants with a single integration to consolidate their payment stack, connect various payment services and third-party tools with minimal code, and build dynamic end-to-end payment flows. Primer aims to simplify payment integration and management, optimize payment performance (including authorization rates and routing), and supports a wide range of payment methods and services.",
       "notice": "As an orchestration/proxy platform, Primer obscures the underlying PSP processing the payment. It is not possible from the merchant's frontend to determine who is the underlying card processor."
+    },
+    {
+      "name": "ProcessOut",
+      "regex": "js\\.processout\\.com|static\\.processout\\.com",
+      "url": "https://www.processout.com",
+      "image": "processout",
+      "summary": "ProcessOut is a payment orchestration platform that helps businesses optimize their payment operations. It provides smart routing, analytics, and fraud prevention tools while supporting multiple payment providers and methods. The platform enables businesses to manage multiple PSPs, optimize payment success rates, and reduce costs through intelligent transaction routing."
     },
     {
       "name": "Spreedly",
