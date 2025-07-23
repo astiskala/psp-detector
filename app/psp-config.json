@@ -29,6 +29,13 @@
       "summary": "Airwallex is a payment platform offering a various financial services, including cross-border payments, multi-currency accounts, and virtual cards. It focuses on providing financial solutions for businesses looking to expand their operations with transparent payment options."
     },
     {
+      "name": "Allinpay International",
+      "regex": "ceshi\\.allinpay\\.com|oats\\.allinpay\\.com|service\\.allinpay\\.com|syb\\.allinpay\\.com|tlt\\.allinpay\\.com|vsp\\.allinpay\\.com|test\\.allinpay\\.com|test\\.allinpayhk\\.com",
+      "url": "https://www.allinpayintl.com",
+      "image": "allinpay",
+      "summary": "Allinpay International offers comprehensive cross-border payment solutions, including online and offline acquiring for major card schemes like Visa, Mastercard, and American Express, as well as alternative payment methods like WeChat Pay and Alipay. They provide services for e-commerce, retail, and various other industries, focusing on secure and efficient payment processing with support for multi-currency transactions."
+    },
+    {
       "name": "Amazon Payment Services (PayFort)",
       "regex": "checkout\\.payfort\\.com",
       "url": "https://paymentservices.amazon.com/",
