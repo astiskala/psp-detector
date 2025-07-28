@@ -1,24 +1,34 @@
-;(() => {
+(() => {
   let cachedPspConfig = null;
   let pspDetected = false;
   let eligibleUrlsRegex = null;
 
   // Get the exempt domains regex from the background script
   const getExemptDomainsRegex = () => {
-    return new Promise((resolve) => {
-      chrome.runtime.sendMessage({ action: 'getExemptDomainsRegex' }, response => {
-        if (response && response.regex) {
-          eligibleUrlsRegex = new RegExp(response.regex);
+    return new Promise(resolve => {
+      chrome.runtime.sendMessage(
+        { action: 'getExemptDomainsRegex' },
+        response => {
+          if (response && response.regex) {
+            eligibleUrlsRegex = new RegExp(response.regex);
+          }
+          resolve();
         }
-        resolve();
-      });
+      );
     });
   };
 
+  // Debounce utility for consistency
+  function debounce (func, wait) {
+    let timeout;
+    return function (...args) {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func(...args), wait);
+    };
+  }
+
   // Cache regex compilation results
-  const precompileRegex = (config) => {
-    if (config.psps.every(psp => psp.compiledRegex)) return;
-    
+  const precompileRegex = config => {
     config.psps.forEach(psp => {
       if (!psp.compiledRegex) {
         try {
@@ -69,23 +79,22 @@
         observer.disconnect();
         return;
       }
-      
       clearTimeout(debounceTimeout);
       debounceTimeout = setTimeout(() => {
         for (const mutation of mutationsList) {
           if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-            detectPsp(); // Re-run PSP detection on DOM changes
+            detectPsp();
             break;
           }
         }
-      }, 3000);
+      }, 2000);
     });
     observer.observe(document.body, { childList: true, subtree: true });
   };
 
   const main = async () => {
     await getExemptDomainsRegex();
-    
+
     chrome.runtime.sendMessage({ action: 'getPspConfig' }, response => {
       if (response && response.config) {
         cachedPspConfig = response.config;
