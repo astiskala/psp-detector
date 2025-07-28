@@ -1,29 +1,30 @@
 {
-  "name": "psp-detector",
-  "version": "2.20250728.2019",
-  "description": "Chrome extension to detect Payment Service Providers on web pages",
-  "private": true,
-  "scripts": {
-    "build": "node build.js",
-    "watch": "node build.js --watch",
-    "test": "jest",
-    "lint": "eslint .",
-    "format": "prettier --write ."
-  },
-  "devDependencies": {
-    "@types/chrome": "^0.0.260",
-    "@types/jest": "^29.5.11",
-    "@types/node": "^20.10.6",
-    "@typescript-eslint/eslint-plugin": "^6.18.1",
-    "@typescript-eslint/parser": "^6.18.1",
-    "esbuild": "^0.19.11",
-    "eslint": "^8.56.0",
-    "jest": "^29.7.0",
-    "prettier": "^3.2.1",
-    "ts-jest": "^29.1.1",
-    "typescript": "^5.3.3"
-  },
-  "dependencies": {
-    "fs-extra": "^11.3.0"
-  }
+    "name": "psp-detector",
+    "version": "2.20250728.2019",
+    "description": "Chrome extension to detect Payment Service Providers on web pages",
+    "private": true,
+    "scripts": {
+        "build": "node build.js",
+        "watch": "node build.js --watch",
+        "test": "jest",
+        "lint": "eslint .",
+        "format": "prettier --write ."
+    },
+    "devDependencies": {
+        "@types/chrome": "^0.0.260",
+        "@types/jest": "^29.5.11",
+        "@types/node": "^20.10.6",
+        "@typescript-eslint/eslint-plugin": "^6.18.1",
+        "@typescript-eslint/parser": "^6.18.1",
+        "esbuild": "^0.19.11",
+        "eslint": "^8.56.0",
+        "jest": "^29.7.0",
+        "jest-environment-jsdom": "^30.0.5",
+        "prettier": "^3.2.1",
+        "ts-jest": "^29.1.1",
+        "typescript": "^5.3.3"
+    },
+    "dependencies": {
+        "fs-extra": "^11.3.0"
+    }
 }
