@@ -1,0 +1,43 @@
+name: Build and Release Extension
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build extension
+        run: npm run build
+
+      - name: Get version from manifest
+        id: manifest
+        run: |
+          VERSION=$(jq -r .version app/manifest.json)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Archive dist folder
+        run: zip -r psp-detector-${{ steps.manifest.outputs.version }}.zip app/dist
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.manifest.outputs.version }}
+          name: psp-detector-${{ steps.manifest.outputs.version }}.zip
+          body: 'Automated build and release.'
+          files: psp-detector-${{ steps.manifest.outputs.version }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
