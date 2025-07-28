@@ -3,7 +3,7 @@
  * Handles messaging, tab events, icon updates, and content script injection.
  * @module background
  */
-import { MessageAction } from './types';
+import { MessageAction, PSP } from './types';
 import { logger } from './lib/utils';
 import type { BackgroundConfig } from './types/background';
 
@@ -45,7 +45,7 @@ class BackgroundService {
      * @private
      * @return {void}
      */
-    initializeListeners() {
+    initializeListeners(): void {
         chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             this.handleMessage(message, sender, sendResponse);
             return true; // Keep message channel open for async response
@@ -65,7 +65,7 @@ class BackgroundService {
      * @private
      * @return {Promise<void>}
      */
-    async loadExemptDomains() {
+    async loadExemptDomains(): Promise<void> {
         try {
             const response = await fetch(chrome.runtime.getURL('exempt-domains.json'));
             const data = await response.json();
@@ -85,7 +85,7 @@ class BackgroundService {
      * @param {function} sendResponse - Response callback
      * @return {Promise<void>}
      */
-    async handleMessage(message: any, sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void) {
+    async handleMessage(message: any, sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void): Promise<void> {
         try {
             switch (message.action) {
                 case MessageAction.GET_PSP_CONFIG:
@@ -143,7 +143,7 @@ class BackgroundService {
      * @param {function} sendResponse - Response callback
      * @return {void}
      */
-    handleDetectPsp(data: { psp?: string; tabId?: number }, sendResponse: (response?: any) => void) {
+    handleDetectPsp(data: { psp?: string; tabId?: number }, sendResponse: (response?: any) => void): void {
         if (data?.psp && this.config.currentTabId !== null) {
             this.config.detectedPsp = data.psp;
             if (data.tabId === this.config.currentTabId) {
@@ -162,7 +162,7 @@ class BackgroundService {
      * @param {function} sendResponse - Response callback
      * @return {void}
      */
-    handleGetPsp(sendResponse: (response?: any) => void) {
+    handleGetPsp(sendResponse: (response?: any) => void): void {
         const psp = this.config.currentTabId ?
             (this.config.detectedPsp || this.config.tabPsps.get(this.config.currentTabId)) :
             null;
@@ -172,10 +172,10 @@ class BackgroundService {
     /**
      * Handle tab activation
      * @private
-     * @param {chrome.tabs.TabActiveInfo} activeInfo - Tab activation info
+     * @param {{ tabId: number }} activeInfo - Tab activation info
      * @return {Promise<void>}
      */
-    async handleTabActivation(activeInfo: chrome.tabs.TabActiveInfo) {
+    async handleTabActivation(activeInfo: { tabId: number }): Promise<void> {
         this.config.currentTabId = activeInfo.tabId;
         this.config.detectedPsp = this.config.tabPsps.get(activeInfo.tabId) || null;
         try {
@@ -198,11 +198,11 @@ class BackgroundService {
      * Handle tab updates
      * @private
      * @param {number} tabId - Tab ID
-     * @param {chrome.tabs.TabChangeInfo} changeInfo - Change info
+     * @param {{ status?: string }} changeInfo - Change info
      * @param {chrome.tabs.Tab} tab - Tab object
      * @return {void}
      */
-    handleTabUpdate(tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab) {
+    handleTabUpdate(tabId: number, changeInfo: { status?: string }, tab: chrome.tabs.Tab): void {
         if (changeInfo.status === 'loading') {
             this.resetIcon();
             this.config.tabPsps.delete(tabId);
@@ -218,7 +218,7 @@ class BackgroundService {
      * @param {string} psp - PSP name
      * @return {void}
      */
-    updateIcon(psp: string) {
+    updateIcon(psp: string): void {
         const pspInfo = this.getPspInfo(psp);
         if (pspInfo) {
             chrome.action.setIcon({
@@ -236,7 +236,7 @@ class BackgroundService {
      * @private
      * @return {void}
      */
-    resetIcon() {
+    resetIcon(): void {
         chrome.action.setIcon({
             path: this.defaultIcons
         });
@@ -246,9 +246,9 @@ class BackgroundService {
      * Get PSP information from config
      * @private
      * @param {string} psp - PSP name
-     * @return {object|null} PSP info or null
+     * @return {PSP|null} PSP info or null
      */
-    getPspInfo(psp: string) {
+    getPspInfo(psp: string): PSP | null {
         if (!this.config.cachedPspConfig?.psps) return null;
         return this.config.cachedPspConfig.psps.find((p: { name: string; }) => p.name === psp) || null;
     }
@@ -259,7 +259,7 @@ class BackgroundService {
      * @param {number} tabId - Tab ID
      * @return {Promise<void>}
      */
-    async injectContentScript(tabId: number) {
+    async injectContentScript(tabId: number): Promise<void> {
         try {
             await chrome.scripting.executeScript({
                 target: { tabId },

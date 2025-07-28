@@ -2,8 +2,6 @@ const esbuild = require('esbuild');
 const fs = require('fs-extra');
 const path = require('path');
 const sharp = require('sharp');
-const { execFile } = require('child_process');
-const zopflipng = require('zopflipng-bin');
 
 const mainEntryPoints = {
   content: './app/js/content.ts',
@@ -23,16 +21,17 @@ const sharedConfig = {
   }
 };
 
-const zopflipngPath = zopflipng.default || zopflipng;
-
-// Utility to compress PNG with zopflipng
+// Utility to optimize PNG with Sharp (modern, secure alternative to zopflipng)
 async function compressPng (input, output) {
-  return new Promise((resolve, reject) => {
-    execFile(zopflipngPath, ['-y', '--lossless', input, output], err => {
-      if (err) reject(err);
-      else resolve();
-    });
-  });
+  await sharp(input)
+    .png({
+      compressionLevel: 9, // Maximum compression (0-9)
+      adaptiveFiltering: true, // Better compression for complex images
+      palette: true, // Use palette if beneficial
+      quality: 100, // Lossless quality
+      effort: 10 // Maximum effort (1-10)
+    })
+    .toFile(output);
 }
 
 // Generate resized and compressed PNGs for all PSP images
@@ -64,11 +63,17 @@ async function generatePspImages () {
       const outPath = path.join(distDir, `${base}_${size}.png`);
       await sharp(srcPath)
         .resize(size, size, { fit: 'contain' })
-        .png()
+        .png({
+          compressionLevel: 9, // Maximum compression
+          adaptiveFiltering: true, // Better compression
+          palette: true, // Use palette if beneficial
+          quality: 100, // Lossless quality
+          effort: 10 // Maximum effort
+        })
         .toFile(outPath);
-      console.log(`Resized ${file} to ${size}x${size} as ${base}_${size}.png`);
-      await compressPng(outPath, outPath);
-      console.log(`Compressed ${base}_${size}.png`);
+      console.log(
+        `Resized and compressed ${file} to ${size}x${size} as ${base}_${size}.png`
+      );
     }
   }
 }
