@@ -43,6 +43,13 @@
       "summary": "Amazon Payment Services, formerly PayFort, provides secure and reliable online payment solutions for businesses across the Middle East and North Africa. It supports various payment methods, offers advanced fraud protection, and ensures seamless integration for e-commerce platforms."
     },
     {
+      "name": "AsiaPay",
+      "regex": "paydollar\\.com/b2c2|bimopay\\.com/b2c2|pesopay\\.com/b2c2|siampay\\.com/b2c2",
+      "url": "https://www.asiapay.com",
+      "image": "asiapay",
+      "summary": "AsiaPay is a leading payment gateway provider in Asia, offering secure online payment solutions under brands like PayDollar, PesoPay, and SiamPay. It supports credit cards, e-wallets, and alternative payment methods for merchants across the region."
+    },
+    {
       "name": "Authorize.net",
       "regex": "jstest\\.authorize\\.net|js\\.authorize\\.net",
       "url": "https://www.authorize.net",
@@ -100,7 +107,7 @@
     },
     {
       "name": "Checkout.com",
-      "regex": "cdn\\.checkout\\.com|cdn\\.sandbox\\.checkout\\.com|js\\.checkout\\.com|js\\.sandbox\\.checkout\\.com",
+      "regex": "cdn\\.checkout\\.com|cdn\\.sandbox\\.checkout\\.com|js\\.checkout\\.com|checkout-web-components\\.checkout\\.com|sandbox\\.checkout\\.com",
       "url": "https://www.checkout.com",
       "image": "checkout",
       "summary": "Checkout.com is a payment solutions provider offering payment processing, including accepting online payments and fraud detection. It supports multiple currencies and payment methods, aiming to improve transaction speed and customer conversion for businesses worldwide."
@@ -132,6 +139,13 @@
       "url": "https://www.cybersource.com",
       "image": "cybersource",
       "summary": "Cybersource, a Visa company, provides a payment management platform that includes payment processing, fraud management, and security solutions. It helps businesses optimize their payment operations, offering reliability and scalability for enterprises handling complex transactions."
+    },
+    {
+      "name": "Debia",
+      "regex": "pgw\\.debiapay\\.com",
+      "url": "https://www.debia.co",
+      "image": "debia",
+      "summary": "Debia is a payment service provider offering secure online payment solutions. It supports various payment methods and provides tools for merchants to manage transactions efficiently."
     },
     {
       "name": "DG Financial Technology",
@@ -218,6 +232,13 @@
       "summary": "Fiserv, formerly First Data, is a provider of financial services technology, including payment processing for businesses of all sizes. Its platform supports a variety of payment methods and offers solutions for both online and in-store payments."
     },
     {
+      "name": "Flywire",
+      "regex": "app\\.flywire\\.com|demo\\.flywire\\.com",
+      "url": "https://www.flywire.com",
+      "image": "flywire",
+      "summary": "Flywire is a global payments platform specializing in international payments for education, healthcare, travel, and business. It offers secure payment processing, multi-currency support, and tools for managing cross-border transactions."
+    },
+    {
       "name": "Flutterwave",
       "regex": "checkout\\.flutterwave\\.com|api\\.flutterwave\\.com",
       "url": "https://flutterwave.com",
@@ -237,6 +258,13 @@
       "url": "https://www.gmo-pg.com",
       "image": "gmopayment",
       "summary": "GMO Payment Gateway is a payment service provider in Japan, offering a various solutions for online and in-store transactions. It supports credit cards, e-wallets, and various alternative payment methods, with a focus on security, fraud prevention, and payment processing for businesses of all sizes."
+    },
+    {
+      "name": "Judopay",
+      "regex": "web\\.judopay\\.com|pay\\.judopay\\.com|pay-sandbox\\.judopay\\.com",
+      "url": "https://www.judopay.com",
+      "image": "judopay",
+      "summary": "Judopay is a UK-based payment gateway and mobile payments provider, offering secure payment solutions for e-commerce and mobile apps. It supports card payments, digital wallets, and provides developer-friendly SDKs and APIs for seamless integration."
     },
     {
       "name": "KG Inicis",
@@ -281,6 +309,13 @@
       "summary": "Mollie is a European payment service provider offering businesses a way to accept online payments. It supports a various payment methods, including credit cards, PayPal, and local options like iDEAL and SEPA, making it across Europe."
     },
     {
+      "name": "Moneris",
+      "regex": "gatewayt\\.moneris\\.com|gateway\\.moneris\\.com",
+      "url": "https://www.moneris.com",
+      "image": "moneris",
+      "summary": "Moneris is a leading Canadian payment processor, providing secure and reliable payment solutions for businesses of all sizes. It supports card payments, e-commerce, and in-store transactions with advanced fraud protection and reporting tools."
+    },
+    {
       "name": "Nexi Group (Nets)",
       "regex": "checkout\\.dibspayment\\.eu",
       "url": "https://www.nexigroup.com/en/",
@@ -321,6 +356,13 @@
       "url": "https://www.nuvei.com",
       "image": "nuvei",
       "summary": "Nuvei is a payments technology company providing payment processing solutions for businesses of all sizes. Supporting credit cards, alternative payment methods, and cryptocurrency transactions, Nuvei's platform is designed for flexibility, scalability, and  integrations across multiple sectors."
+    },
+    {
+      "name": "Oceanpayment",
+      "regex": "secure\\.oceanpayment\\.com",
+      "url": "https://www.oceanpayment.com",
+      "image": "oceanpayment",
+      "summary": "Oceanpayment is a global payment service provider offering cross-border payment solutions for e-commerce merchants. It supports multiple payment methods, currencies, and provides fraud prevention and risk management tools."
     },
     {
       "name": "Opn Payments",
@@ -377,6 +419,13 @@
       "url": "https://www.paysafe.com",
       "image": "paysafe",
       "summary": "Paysafe is a specialized payments platform that provides online payment processing, digital wallet solutions, and card issuing services. It supports a wide range of payment methods and offers fraud management and recurring billing solutions for businesses globally."
+    },
+    {
+      "name": "PayTabs",
+      "regex": "secure\\.paytabs\\.com|secure\\.paytabs\\.sa|secure-egypt\\.paytabs\\.com|secure-oman\\.paytabs\\.com|secure-jordan\\.paytabs\\.com|secure-kuwait\\.paytabs\\.com|secure-global\\.paytabs\\.com",
+      "url": "https://www.paytabs.com",
+      "image": "paytabs",
+      "summary": "PayTabs is a Middle East-based payment gateway offering online payment solutions for businesses. It supports card payments, local payment methods, and provides easy integration for e-commerce platforms."
     },
     {
       "name": "PayU",
@@ -519,6 +568,14 @@
       "summary": "Zai, formerly known as Assembly Payments, is an Australian-based fintech company providing automated, real-time payment solutions for large-scale businesses. Specializing in complex financial flows, Zai leverages the New Payments Platform (NPP) for fast,  account-to-account payments. It supports industries like marketplaces, banking, and lending, supporting financial operations with tailored API-driven solutions."
     },
     {
+      "name": "Paydock",
+      "regex": "paydock\\.com/sdk|paydock\\.com/assets|cdn\\.paydock\\.com",
+      "url": "https://www.paydock.com",
+      "image": "paydock",
+      "summary": "Paydock is a payment orchestration platform that enables businesses to connect and manage multiple payment services through a single API. It provides features like smart routing, tokenization, and fraud prevention.",
+      "notice": "As an orchestration/proxy platform, Paydock may obscure the underlying PSP processing the payment. It is not always possible from the merchant's frontend to determine who is the underlying card processor."
+    },
+    {
       "name": "Paysera",
       "regex": "card-gateway-api\\.paysera\\.com|www\\.paysera\\.com/new/api",
       "url": "https://www.paysera.com",
@@ -575,6 +632,30 @@
       "image": "braintree",
       "summary": "Braintree, a PayPal service, offers a full-stack payment platform intended to make online payments for merchants. Its services include credit card processing, PayPal, Apple Pay, and subscription billing, with a focus on providing solutions for businesses.",
       "notice": "Because PayPal and Braintree are integrated, sometimes Braintree is misidentified as the PSP (even though a separate PSP may be used for card processing)."
+    },
+    {
+      "name": "ACI Worldwide",
+      "regex": "secure\\.aciworldwide\\.com|payments\\.aciworldwide\\.com|sdk\\.aciworldwide\\.com",
+      "url": "https://www.aciworldwide.com",
+      "image": "aciworldwide",
+      "summary": "ACI Worldwide provides payment processing and orchestration solutions for merchants, banks, and billers, supporting a wide range of payment methods and fraud prevention tools.",
+      "notice": "As an orchestration/proxy platform, ACI Worldwide may obscure the underlying PSP processing the payment. It is not always possible from the merchant's frontend to determine who is the underlying card processor."
+    },
+    {
+      "name": "BR-DGE",
+      "regex": "assets\\.comcarde\\.com|secure\\.comcarde\\.com|sandbox\\.comcarde\\.com",
+      "url": "https://br-dge.to",
+      "image": "brdge",
+      "summary": "BR-DGE is a payment orchestration platform that connects merchants to multiple payment providers, offering smart routing, tokenization, and analytics.",
+      "notice": "As an orchestration/proxy platform, BR-DGE may obscure the underlying PSP processing the payment. It is not always possible from the merchant's frontend to determine who is the underlying card processor."
+    },
+    {
+      "name": "CellPoint Digital",
+      "regex": "cellpointdigital\\.com/sdk|cellpointdigital\\.com/assets|cdn\\.cellpointdigital\\.com",
+      "url": "https://www.cellpointdigital.com",
+      "image": "cellpointdigital",
+      "summary": "CellPoint Digital provides payment orchestration and digital commerce solutions for travel, airlines, and retail, enabling merchants to optimize payment flows and connect to multiple PSPs.",
+      "notice": "As an orchestration/proxy platform, CellPoint Digital may obscure the underlying PSP processing the payment. It is not always possible from the merchant's frontend to determine who is the underlying card processor."
     },
     {
       "name": "Gr4vy",

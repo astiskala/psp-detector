@@ -22,13 +22,14 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 
 ## Supported PSPs:
 
-- 2Checkout (Verifone)
 - 2C2P
+- 2Checkout (Verifone)
 - Adyen
 - Airwallex
 - Alipay
 - Allinpay
 - Amazon Payment Services (PayFort)
+- AsiaPay
 - Authorize.net
 - Bambora
 - BillDesk
@@ -43,6 +44,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - CSG Forte
 - CX Pay
 - Cybersource
+- Debia
 - DG Financial Technology
 - dLocal
 - DPO Group
@@ -54,23 +56,27 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - FastSpring
 - Fat Zebra
 - Fiserv
+- Flywire
 - Fiuu
 - Flutterwave
 - Global Payments
 - GMO Payment Gateway
 - Inicis
+- Judopay
 - KSNET
 - Linkly
 - Mastercard Gateway (MPGS)
 - Maya
 - MercadoPago
 - Mollie
+- Moneris
 - Network International
 - Nexi Group (Nets)
 - NHN KCP
 - NICE Payments
 - NMI
 - Nuvei
+- Oceanpayment
 - Opn Payments (Omise)
 - PagBrasil
 - PagSeguro
@@ -82,6 +88,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Paysafe
 - Paysera
 - Paystack
+- PayTabs
 - Paytm
 - PayU
 - Plastiq
@@ -107,9 +114,13 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 
 ## Supported orchestrators / proxies
 
+- ACI Worldwide
+- BR-DGE
+- CellPoint Digital
 - Gr4vy
 - IXOPAY
 - Juspay
+- Paydock
 - PCI Proxy
 - PCI Vault
 - Primer
