@@ -1,0 +1,30 @@
+{
+    "compilerOptions": {
+        "target": "ES2020",
+        "module": "ES2020",
+        "strict": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "outDir": "./app/dist",
+        "rootDir": "./app/js",
+        "moduleResolution": "node",
+        "baseUrl": ".",
+        "types": [
+            "chrome",
+            "node"
+        ],
+        "paths": {
+            "@/*": [
+                "app/js/*"
+            ]
+        }
+    },
+    "include": [
+        "app/js/**/*"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist"
+    ]
+}

@@ -1,2 +1,3 @@
 .DS_Store
-/releases
+app/dist
+node_modules

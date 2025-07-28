@@ -1,50 +1,54 @@
 {
   "manifest_version": 3,
   "name": "PSP Detector",
-  "version": "1.18",
-  "description": "Detects which Payment Service Provider (PSP) is used on the webpage and displays its logo.",
+  "version": "2.20250728.2019",
+  "description": "Chrome extension to detect Payment Service Providers on web pages",
+  "permissions": [
+    "scripting",
+    "activeTab",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://*/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_end",
+      "all_frames": true
+    }
+  ],
   "action": {
+    "default_popup": "popup.html",
     "default_icon": {
       "16": "images/default_16.png",
       "48": "images/default_48.png",
       "128": "images/default_128.png"
-    },
-    "default_popup": "popup.html"
-  },
-  "background": {
-    "service_worker": "background.js"
-  },
-  "content_scripts": [
-    {
-      "all_frames": true,
-      "js": [
-        "content.js"
-      ],
-      "matches": [
-        "https://*/*"
-      ]
     }
-  ],
-  "host_permissions": [
-    "*://*/*"
-  ],
+  },
   "icons": {
     "16": "images/default_16.png",
     "48": "images/default_48.png",
     "128": "images/default_128.png"
   },
-  "permissions": [
-    "activeTab",
-    "scripting"
-  ],
   "web_accessible_resources": [
     {
-      "matches": [
-        "<all_urls>"
-      ],
       "resources": [
+        "images/*",
         "psp-config.json",
         "exempt-domains.json"
+      ],
+      "matches": [
+        "https://*/*"
       ]
     }
   ]
