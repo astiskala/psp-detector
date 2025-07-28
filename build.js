@@ -21,19 +21,6 @@ const sharedConfig = {
   }
 };
 
-// Utility to optimize PNG with Sharp (modern, secure alternative to zopflipng)
-async function compressPng (input, output) {
-  await sharp(input)
-    .png({
-      compressionLevel: 9, // Maximum compression (0-9)
-      adaptiveFiltering: true, // Better compression for complex images
-      palette: true, // Use palette if beneficial
-      quality: 100, // Lossless quality
-      effort: 10 // Maximum effort (1-10)
-    })
-    .toFile(output);
-}
-
 // Generate resized and compressed PNGs for all PSP images
 async function generatePspImages () {
   const srcDir = path.join(__dirname, 'app', 'images');
@@ -81,12 +68,18 @@ async function generatePspImages () {
 // Build each entry point separately
 async function buildFiles () {
   try {
-    // Generate version: 2.YYYYMMDD.HHMM
+    // ─── VERSION GENERATION ───────────────────────────────────────────────────────
+    // Format: 2.YYYY.MMDD.HHMM (four integers)
     const now = new Date();
-    const pad = n => n.toString().padStart(2, '0');
-    const version = `2.${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(
-      now.getDate()
-    )}.${pad(now.getHours())}${pad(now.getMinutes())}`;
+    const year = now.getFullYear();             // e.g. 2025
+    const month = now.getMonth() + 1;           // 1–12
+    const day = now.getDate();                  // 1–31
+    const hour = now.getHours();                // 0–23
+    const minute = now.getMinutes();            // 0–59
+    const mmdd = month * 100 + day;             // e.g. July 28 → 7*100 + 28 = 728
+    const hhmm = hour * 100 + minute;           // e.g. 14:42 → 14*100 + 42 = 1442
+    const version = `2.${year}.${mmdd}.${hhmm}`;
+    // ─────────────────────────────────────────────────────────────────────────────
 
     // Update package.json version
     const pkgPath = path.join(__dirname, 'package.json');
