@@ -41,6 +41,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Chase Payment Solutions
 - Checkout.com
 - Cielo
+- Conekta
 - CSG Forte
 - CX Pay
 - Cybersource
@@ -61,6 +62,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Flutterwave
 - Global Payments
 - GMO Payment Gateway
+- Helcim
 - Inicis
 - Judopay
 - KSNET
@@ -70,6 +72,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - MercadoPago
 - Mollie
 - Moneris
+- MyFatoorah
 - Network International
 - Nexi Group (Nets)
 - NHN KCP
@@ -103,6 +106,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Square
 - Stripe
 - SumUp
+- Tap Payments
 - Trust Payments
 - Tyro
 - WePay
@@ -110,6 +114,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Worldline
 - Worldpay
 - Xendit
+- Yoco
 - Zai (Assembly Payments)
 
 ## Supported orchestrators / proxies

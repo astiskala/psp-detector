@@ -1,6 +1,9 @@
 const esbuild = require('esbuild');
 const fs = require('fs-extra');
 const path = require('path');
+const sharp = require('sharp');
+const { execFile } = require('child_process');
+const zopflipng = require('zopflipng-bin');
 
 const mainEntryPoints = {
   content: './app/js/content.ts',
@@ -19,6 +22,56 @@ const sharedConfig = {
     'process.env.NODE_ENV': '"production"'
   }
 };
+
+const zopflipngPath = zopflipng.default || zopflipng;
+
+// Utility to compress PNG with zopflipng
+async function compressPng (input, output) {
+  return new Promise((resolve, reject) => {
+    execFile(zopflipngPath, ['-y', '--lossless', input, output], err => {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
+}
+
+// Generate resized and compressed PNGs for all PSP images
+async function generatePspImages () {
+  const srcDir = path.join(__dirname, 'app', 'images');
+  const distDir = path.join(__dirname, 'app', 'dist', 'images');
+  await fs.ensureDir(distDir);
+  const files = await fs.readdir(srcDir);
+  // Only .png files that do not have _16/_48/_128 suffix
+  const pspPngs = files.filter(
+    f => f.endsWith('.png') && !/_16\.png$|_48\.png$|_128\.png$/.test(f)
+  );
+  console.log(`Found ${pspPngs.length} PSP images in source.`);
+  // Remove any 16/48/128px PNGs from dist
+  let removed = 0;
+  for (const f of await fs.readdir(distDir)) {
+    if (/_16\.png$|_48\.png$|_128\.png$/.test(f)) {
+      await fs.remove(path.join(distDir, f));
+      removed++;
+    }
+  }
+  if (removed)
+    console.log(`Removed ${removed} old 16/48/128px images from dist.`);
+  for (const file of pspPngs) {
+    const base = file.replace(/\.png$/, '');
+    const srcPath = path.join(srcDir, file);
+    // Always resize to 128px, 48px, 16px (do not copy original as-is)
+    for (const size of [128, 48, 16]) {
+      const outPath = path.join(distDir, `${base}_${size}.png`);
+      await sharp(srcPath)
+        .resize(size, size, { fit: 'contain' })
+        .png()
+        .toFile(outPath);
+      console.log(`Resized ${file} to ${size}x${size} as ${base}_${size}.png`);
+      await compressPng(outPath, outPath);
+      console.log(`Compressed ${base}_${size}.png`);
+    }
+  }
+}
 
 // Build each entry point separately
 async function buildFiles () {
@@ -80,11 +133,9 @@ async function buildFiles () {
         path.join(__dirname, 'app', 'dist', file)
       );
     }
-    // Copy images directory
-    await fs.copy(
-      path.join(__dirname, 'app', 'images'),
-      path.join(__dirname, 'app', 'dist', 'images')
-    );
+    // Copy images directory (only 128px in src, generate all sizes in dist)
+    await fs.ensureDir(path.join(__dirname, 'app', 'dist', 'images'));
+    await generatePspImages();
     console.log('Build complete and assets copied');
   } catch (error) {
     console.error('Build failed:', error);

@@ -26,7 +26,7 @@
       "regex": "pay\\.airwallex\\.com|checkout\\.airwallex\\.com",
       "url": "https://www.airwallex.com",
       "image": "airwallex",
-      "summary": "Airwallex is a payment platform offering a various financial services, including cross-border payments, multi-currency accounts, and virtual cards. It focuses on providing financial solutions for businesses looking to expand their operations with transparent payment options."
+      "summary": "Airwallex is a payment platform offering various financial services, including cross-border payments, multi-currency accounts, and virtual cards. It focuses on providing financial solutions for businesses looking to expand their operations with transparent payment options."
     },
     {
       "name": "Allinpay International",
@@ -61,7 +61,7 @@
       "regex": "libs\\.na\\.bambora\\.com",
       "url": "https://www.bambora.com",
       "image": "bambora",
-      "summary": "Bambora, now part of Worldline, provides a various payment services for businesses, from e-commerce and mobile payments to in-store transactions. The company focuses on simplifying the payment process for small and medium-sized enterprises."
+      "summary": "Bambora, now part of Worldline, provides various payment services for businesses, from e-commerce and mobile payments to in-store transactions. The company focuses on simplifying the payment process for small and medium-sized enterprises."
     },
     {
       "name": "BillDesk",
@@ -103,7 +103,7 @@
       "regex": "checkout-cat\\.merchant\\.jpmorgan.com|safetechpageencryption\\.chasepaymentech\\.com|safetechpageencryptionvar\\.chasepaymentech\\.com",
       "url": "https://www.chase.com/business/payments",
       "image": "chase",
-      "summary": "Chase Payment Solutions offers payment processing solutions, including online, in-store, and mobile transactions. It provides businesses with payment processing, fraud prevention, and analytics, catering to a various industries and sizes."
+      "summary": "Chase Payment Solutions offers payment processing solutions, including online, in-store, and mobile transactions. It provides businesses with payment processing, fraud prevention, and analytics, catering to various industries and sizes."
     },
     {
       "name": "Checkout.com",
@@ -120,6 +120,13 @@
       "summary": "Cielo is one of Brazil's largest payment processors, providing solutions for both online and offline transactions. It supports credit and debit card payments, including installment options, making it a choice for e-commerce in Brazil."
     },
     {
+      "name": "Conekta",
+      "regex": "cdn\\.conekta\\.io",
+      "url": "https://www.conekta.com",
+      "image": "conekta",
+      "summary": "Conekta is a Mexican payment platform enabling card payments and local methods, tailored for businesses in Mexico and Latin America."
+    },
+    {
       "name": "CSG Forte",
       "regex": "checkout\\.forte\\.net|api\\.forte\\.net|sandbox\\.forte\\.net",
       "url": "https://www.forte.net",
@@ -131,7 +138,7 @@
       "regex": "cxpay\\.transactiongateway\\.com",
       "url": "https://cxpay.global",
       "image": "cxpay",
-      "summary": "CX Pay is a payment gateway specializing in solutions for the Dutch Caribbean, Latin America, and merchants. It supports a various payment methods, including Visa, Mastercard, iDeal, Giropay, and alternative payments like Paysafecard and Bitcoin. CX Pay offers a multi-channel integration, fraud protection, and tools for cross-border transactions, making it an partner for eCommerce businesses looking to expand."
+      "summary": "CX Pay is a payment gateway specializing in solutions for the Dutch Caribbean, Latin America, and merchants. It supports various payment methods, including Visa, Mastercard, iDeal, Giropay, and alternative payments like Paysafecard and Bitcoin. CX Pay offers a multi-channel integration, fraud protection, and tools for cross-border transactions, making it an partner for eCommerce businesses looking to expand."
     },
     {
       "name": "Cybersource",
@@ -152,7 +159,7 @@
       "regex": "pay\\.veritrans\\.co\\.jp|api\\.veritrans\\.co\\.jp",
       "url": "https://www.dgft.jp",
       "image": "dgft",
-      "summary": "DGFT (formerly VeriTrans), a service by Digital Garage in Japan, provides payment processing solutions. It offers services for online payments, including credit card and mobile payments, catering to a various businesses with fraud prevention and integration options."
+      "summary": "DGFT (formerly VeriTrans), a service by Digital Garage in Japan, provides payment processing solutions. It offers services for online payments, including credit card and mobile payments, catering to various businesses with fraud prevention and integration options."
     },
     {
       "name": "dLocal",
@@ -180,7 +187,7 @@
       "regex": "pay\\.elavonpaymentgateway\\.com|pay\\.sandbox\\.elavonpaymentgateway\\.com|rxp-js\\.js|pay\\.realexpayments\\.com|pay\\.sandbox\\.realexpayments\\.com",
       "url": "https://www.elavon.com",
       "image": "elavon",
-      "summary": "Elavon is a provider of payment processing solutions, serving businesses across industries with , , and payment technologies. It supports a variety of payment methods and provides integrations for both in-store and online transactions."
+      "summary": "Elavon is a provider of payment processing solutions, serving businesses across industries with payment technologies. It supports a variety of payment methods and provides integrations for both in-store and online transactions."
     },
     {
       "name": "EVO Payments",
@@ -222,7 +229,7 @@
       "regex": "onlinepayment\\.com\\.my",
       "url": "https://www.fiuu.com",
       "image": "fiuu",
-      "summary": "Fiuu, formerly known as Razer Merchant Services, is a payment service provider offering businesses in Southeast Asia and beyond a  platform for online, mobile, and in-store payments. With a focus on scalability, Fiuu supports various payment methods and currencies for   transactions."
+      "summary": "Fiuu, formerly known as Razer Merchant Services, is a payment service provider offering businesses in Southeast Asia and beyond a platform for online, mobile, and in-store payments. With a focus on scalability, Fiuu supports various payment methods and currencies for   transactions."
     },
     {
       "name": "Fiserv",
@@ -257,7 +264,14 @@
       "regex": "static\\.mul-pay\\.jp|p01\\.mul-pay\\.jp",
       "url": "https://www.gmo-pg.com",
       "image": "gmopayment",
-      "summary": "GMO Payment Gateway is a payment service provider in Japan, offering a various solutions for online and in-store transactions. It supports credit cards, e-wallets, and various alternative payment methods, with a focus on security, fraud prevention, and payment processing for businesses of all sizes."
+      "summary": "GMO Payment Gateway is a payment service provider in Japan, offering various solutions for online and in-store transactions. It supports credit cards, e-wallets, and various alternative payment methods, with a focus on security, fraud prevention, and payment processing for businesses of all sizes."
+    },
+    {
+      "name": "Helcim",
+      "regex": "secure\\.myhelcim\\.com",
+      "url": "https://www.helcim.com",
+      "image": "helcim",
+      "summary": "Helcim is an all-in-one payment platform offering merchant accounts, payment gateway services, and POS solutions for small- and medium-sized businesses."
     },
     {
       "name": "Judopay",
@@ -306,7 +320,7 @@
       "regex": "api\\.mollie\\.com|js\\.mollie\\.com",
       "url": "https://www.mollie.com",
       "image": "mollie",
-      "summary": "Mollie is a European payment service provider offering businesses a way to accept online payments. It supports a various payment methods, including credit cards, PayPal, and local options like iDEAL and SEPA, making it across Europe."
+      "summary": "Mollie is a European payment service provider offering businesses a way to accept online payments. It supports various payment methods, including credit cards, PayPal, and local options like iDEAL and SEPA, making it across Europe."
     },
     {
       "name": "Moneris",
@@ -314,6 +328,13 @@
       "url": "https://www.moneris.com",
       "image": "moneris",
       "summary": "Moneris is a leading Canadian payment processor, providing secure and reliable payment solutions for businesses of all sizes. It supports card payments, e-commerce, and in-store transactions with advanced fraud protection and reporting tools."
+    },
+    {
+      "name": "MyFatoorah",
+      "regex": "myfatoorah\\.com/payment",
+      "url": "https://www.myfatoorah.com",
+      "image": "myfatoorah",
+      "summary": "MyFatoorah is a Kuwait-based PSP offering embedded card payments and digital wallets like Apple Pay and STC Pay across the GCC region."
     },
     {
       "name": "Nexi Group (Nets)",
@@ -512,6 +533,13 @@
       "summary": "SumUp is a global fintech company offering payment solutions such as card readers, POS systems, and online payment services, enabling businesses to accept payments seamlessly across various channels."
     },
     {
+      "name": "Tap Payments",
+      "regex": "secure\\.gosell\\.io",
+      "url": "https://www.tap.company",
+      "image": "tap",
+      "summary": "Tap Payments (GoSell) enables businesses in the MENA region to accept card payments via a secure hosted SDK and supports local and global payment methods."
+    },
+    {
       "name": "Trust Payments",
       "regex": "payments\\.securetrading\\.net|webservices\\.securetrading\\.net|cdn\\.eu\\.trustpayments\\.com",
       "url": "https://www.trustpayments.com",
@@ -523,7 +551,7 @@
       "regex": "pay\\.connect\\.tyro\\.com",
       "url": "https://www.tyro.com",
       "image": "tyro",
-      "summary": "Tyro is an Australian fintech company specializing in EFTPOS (electronic funds transfer at point of sale) solutions for small and medium-sized businesses. It caters primarily to the healthcare, retail, and hospitality industries, providing , integrated payment solutions with competitive rates. Tyro also offers banking services, including business loans and term deposits."
+      "summary": "Tyro is an Australian fintech company specializing in EFTPOS (electronic funds transfer at point of sale) solutions for small and medium-sized businesses. It caters primarily to the healthcare, retail, and hospitality industries, providing integrated payment solutions with competitive rates. Tyro also offers banking services, including business loans and term deposits."
     },
     {
       "name": "WePay",
@@ -544,14 +572,14 @@
       "regex": "payment\\.direct\\.worldline-solutions\\.com|payment\\.preprod\\.direct\\.worldline-solutions\\.com",
       "url": "https://www.worldline.com",
       "image": "worldline",
-      "summary": "Worldline is a leader in payment services, providing businesses with , payment solutions. It offers a various services, from payment terminals to e-commerce processing, intended to optimize transactions and improve customer experience."
+      "summary": "Worldline is a leader in payment services, providing businesses with payment solutions. It offers various services, from payment terminals to e-commerce processing, intended to optimize transactions and improve customer experience."
     },
     {
       "name": "Worldpay",
       "regex": "access\\.worldpay\\.com|hpp\\.worldpay\\.com",
       "url": "https://www.worldpay.com",
       "image": "worldpay",
-      "summary": "Worldpay, part of FIS, is a payment processing company that provides solutions for online, in-store, and mobile transactions. It supports a various payment methods, offering security features and fraud management tools for businesses."
+      "summary": "Worldpay, part of FIS, is a payment processing company that provides solutions for online, in-store, and mobile transactions. It supports various payment methods, offering security features and fraud management tools for businesses."
     },
     {
       "name": "Xendit",
@@ -559,6 +587,13 @@
       "url": "https://www.xendit.co",
       "image": "xendit",
       "summary": "Xendit is a payment gateway in Southeast Asia, offering a range of digital payment solutions for businesses. It supports various payment methods including credit cards, e-wallets, direct bank transfers, and online invoicing, aiming to simplify payment processes across Indonesia, the Philippines, and beyond."
+    },
+    {
+      "name": "Yoco",
+      "regex": "js\\.yoco\\.com",
+      "url": "https://www.yoco.com",
+      "image": "yoco",
+      "summary": "Yoco is a South African payment provider that helps small businesses accept card payments through online checkout and in-person devices."
     },
     {
       "name": "Zai",

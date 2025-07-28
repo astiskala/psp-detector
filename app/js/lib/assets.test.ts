@@ -2,7 +2,8 @@ import fs from 'fs';
 import path from 'path';
 
 const configPath = path.resolve(__dirname, '../../psp-config.json');
-const imagesDir = path.resolve(__dirname, '../../images');
+const srcImagesDir = path.resolve(__dirname, '../../images');
+const distImagesDir = path.resolve(__dirname, '../../dist/images');
 
 describe('PSP image assets', () => {
     let config: any;
@@ -10,13 +11,34 @@ describe('PSP image assets', () => {
         config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
     });
 
-    it('should have images for every PSP in config', () => {
+    it('should have an image (pspname.png) for every PSP in source', () => {
+        const missing = [];
         for (const psp of config.psps) {
-            for (const size of [16, 48, 128]) {
-                const imgPath = path.join(imagesDir, `${psp.image}_${size}.png`);
-                expect(fs.existsSync(imgPath)).toBe(true);
+            const imgPath = path.join(srcImagesDir, `${psp.image}.png`);
+            if (!fs.existsSync(imgPath)) {
+                missing.push(`Missing source image for PSP: ${psp.name} (${imgPath})`);
             }
         }
+        if (missing.length) {
+            console.error('\n' + missing.join('\n'));
+        }
+        expect(missing.length).toBe(0);
+    });
+
+    it('should have 16, 48, and 128px images for every PSP in dist after build', () => {
+        const missing = [];
+        for (const psp of config.psps) {
+            for (const size of [16, 48, 128]) {
+                const imgPath = path.join(distImagesDir, `${psp.image}_${size}.png`);
+                if (!fs.existsSync(imgPath)) {
+                    missing.push(`Missing dist image for PSP: ${psp.name} (${imgPath})`);
+                }
+            }
+        }
+        if (missing.length) {
+            console.error('\n' + missing.join('\n'));
+        }
+        expect(missing.length).toBe(0);
     });
 
     it('should have valid regex for every PSP and not match every website', () => {
