@@ -1,6 +1,10 @@
 import type { PSP } from '../types';
 import { createSafeUrl, logger } from '../lib/utils';
 
+/**
+ * UI service for updating the popup with PSP information.
+ * @class
+ */
 export class UIService {
     private elements: Record<string, HTMLElement>;
 
@@ -11,6 +15,8 @@ export class UIService {
 
     /**
      * Initialize DOM element references
+     * @private
+     * @return {void}
      */
     private initializeDOMElements(): void {
         const elementIds = ['name', 'description', 'notice', 'url', 'image'];
@@ -25,20 +31,15 @@ export class UIService {
 
     /**
      * Update UI with PSP information
-     * @param psp - PSP configuration object
+     * @param {PSP} psp - PSP configuration object
+     * @return {void}
      */
     public updatePSPDisplay(psp: PSP): void {
         try {
             this.updateTextContent('name', psp.name);
             this.updateTextContent('description', psp.summary);
-
-            // Handle notice section
             this.updateNoticeSection(psp.notice);
-
-            // Update learn more link
             this.updateLearnMoreLink(psp.url);
-
-            // Update image
             this.updateImage(psp.image, psp.name);
         } catch (error) {
             logger.error('Failed to update PSP display:', error);
@@ -48,6 +49,7 @@ export class UIService {
 
     /**
      * Show no PSP detected state
+     * @return {void}
      */
     public showNoPSPDetected(): void {
         this.updateTextContent('name', 'No PSP detected');
@@ -55,20 +57,18 @@ export class UIService {
             'description',
             "The Payment Service Provider could not be determined. Please ensure you have navigated to the website's checkout page."
         );
-
         this.elements.notice.style.display = 'none';
         this.updateTextContent('notice', '');
-
         this.updateLearnMoreLink(
             'mailto:psp-detector@adamstiskala.com',
             'Suggest Improvement'
         );
-
         this.updateImage('default', 'No PSP detected');
     }
 
     /**
      * Show error state
+     * @return {void}
      */
     public showError(): void {
         this.updateTextContent('name', 'Error');
@@ -82,6 +82,10 @@ export class UIService {
 
     /**
      * Update text content of an element
+     * @private
+     * @param {string} elementId - Element ID
+     * @param {string} content - Text content
+     * @return {void}
      */
     private updateTextContent(elementId: string, content: string): void {
         if (this.elements[elementId]) {
@@ -91,6 +95,9 @@ export class UIService {
 
     /**
      * Update notice section visibility and content
+     * @private
+     * @param {string} [notice] - Notice text
+     * @return {void}
      */
     private updateNoticeSection(notice?: string): void {
         if (notice) {
@@ -104,6 +111,10 @@ export class UIService {
 
     /**
      * Update learn more link
+     * @private
+     * @param {string} url - URL for the link
+     * @param {string} [text='Learn More'] - Link text
+     * @return {void}
      */
     private updateLearnMoreLink(url: string, text = 'Learn More'): void {
         const anchor = document.createElement('a');
@@ -111,12 +122,15 @@ export class UIService {
         anchor.textContent = text;
         anchor.target = '_blank';
         anchor.rel = 'noopener noreferrer';
-
         this.elements.url.replaceChildren(anchor);
     }
 
     /**
      * Update PSP image
+     * @private
+     * @param {string} image - Image name
+     * @param {string} alt - Alt text
+     * @return {void}
      */
     private updateImage(image: string, alt: string): void {
         const imgElement = this.elements.image as HTMLImageElement;

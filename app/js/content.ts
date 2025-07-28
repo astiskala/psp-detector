@@ -1,3 +1,8 @@
+/**
+ * Content script for PSP Detector Chrome Extension.
+ * Handles DOM observation, PSP detection, and communication with background script.
+ * @module content
+ */
 import { PSPDetectorService } from './services/psp-detector';
 import { DOMObserverService } from './services/dom-observer';
 import { MessageAction, ChromeMessage } from './types';
@@ -15,6 +20,7 @@ class ContentScript {
 
     /**
      * Initialize the content script
+     * @return {Promise<void>}
      */
     public async initialize(): Promise<void> {
         try {
@@ -29,13 +35,14 @@ class ContentScript {
 
     /**
      * Initialize exempt domains configuration
+     * @private
+     * @return {Promise<void>}
      */
     private async initializeExemptDomains(): Promise<void> {
         try {
             const response = await this.sendMessage<{ regex: string }>({
                 action: MessageAction.GET_EXEMPT_DOMAINS_REGEX
             });
-
             if (response?.regex) {
                 this.pspDetector.setExemptDomainsPattern(response.regex);
             }
@@ -46,13 +53,14 @@ class ContentScript {
 
     /**
      * Initialize PSP configuration
+     * @private
+     * @return {Promise<void>}
      */
     private async initializePSPConfig(): Promise<void> {
         try {
-            const response = await this.sendMessage({
+            const response = await this.sendMessage<{ config: any }>({
                 action: MessageAction.GET_PSP_CONFIG
             });
-
             if (response?.config) {
                 this.pspDetector.initialize(response.config);
             }
@@ -63,6 +71,8 @@ class ContentScript {
 
     /**
      * Set up DOM observer
+     * @private
+     * @return {void}
      */
     private setupDOMObserver(): void {
         this.domObserver.initialize(() => this.detectPSP());
@@ -71,30 +81,28 @@ class ContentScript {
 
     /**
      * Detect PSP on the current page
+     * @private
+     * @return {Promise<void>}
      */
     private async detectPSP(): Promise<void> {
         if (this.pspDetected || !this.pspDetector.isInitialized()) {
             return;
         }
-
         const detectedPsp = this.pspDetector.detectPSP(
             document.URL,
             document.documentElement.outerHTML
         );
-
         if (detectedPsp) {
             try {
                 const tabResponse = await this.sendMessage<{ tabId: number }>({
                     action: MessageAction.GET_TAB_ID
                 });
-
                 if (tabResponse?.tabId) {
                     await this.sendMessage({
                         action: MessageAction.DETECT_PSP,
                         data: { psp: detectedPsp, tabId: tabResponse.tabId }
                     });
                 }
-
                 this.pspDetected = true;
                 this.domObserver.stopObserving();
             } catch (error) {
@@ -105,16 +113,24 @@ class ContentScript {
 
     /**
      * Send a message to the background script
+     * @private
+     * @template T
+     * @param {ChromeMessage} message - Message to send
+     * @return {Promise<T>} Response from background
      */
     private sendMessage<T = any>(message: ChromeMessage): Promise<T> {
         return new Promise((resolve, reject) => {
-            chrome.runtime.sendMessage(message, response => {
-                if (chrome.runtime.lastError) {
-                    reject(chrome.runtime.lastError);
-                } else {
-                    resolve(response);
-                }
-            });
+            try {
+                chrome.runtime.sendMessage(message, response => {
+                    if (chrome.runtime.lastError) {
+                        reject(chrome.runtime.lastError);
+                    } else {
+                        resolve(response);
+                    }
+                });
+            } catch (error) {
+                reject(error);
+            }
         });
     }
 }

@@ -1,13 +1,18 @@
 import type { PSP, PSPConfig } from '../types';
 import { safeCompileRegex, logger } from '../lib/utils';
 
+/**
+ * Service for detecting Payment Service Providers (PSPs) on a page.
+ * @class
+ */
 export class PSPDetectorService {
     private pspConfig: PSPConfig | null = null;
     private exemptDomainsRegex: RegExp | null = null;
 
     /**
      * Initialize the PSP detector with configuration
-     * @param config - PSP configuration
+     * @param {PSPConfig} config - PSP configuration
+     * @return {void}
      */
     public initialize(config: PSPConfig): void {
         this.pspConfig = config;
@@ -16,7 +21,8 @@ export class PSPDetectorService {
 
     /**
      * Set the exempt domains regex pattern
-     * @param pattern - Regex pattern for exempt domains
+     * @param {string} pattern - Regex pattern for exempt domains
+     * @return {void}
      */
     public setExemptDomainsPattern(pattern: string): void {
         try {
@@ -29,8 +35,9 @@ export class PSPDetectorService {
 
     /**
      * Detect PSP on the current page
-     * @param url - The URL to check
-     * @param content - The page content to scan
+     * @param {string} url - The URL to check
+     * @param {string} content - The page content to scan
+     * @return {string|null} PSP name or null
      */
     public detectPSP(url: string, content: string): string | null {
         if (!this.pspConfig || !this.exemptDomainsRegex) {
@@ -57,36 +64,36 @@ export class PSPDetectorService {
 
     /**
      * Precompile regex patterns for better performance
+     * @private
+     * @return {void}
      */
     private precompileRegexPatterns(): void {
-        if (!this.pspConfig) {
-            return;
-        }
+        if (!this.pspConfig) return;
 
-        this.pspConfig.psps.forEach((psp: PSP) => {
-            if (!psp.compiledRegex) {
-                const compiled = safeCompileRegex(psp.regex);
-                psp.compiledRegex = compiled === null ? undefined : compiled;
-            }
-        });
+        for (const psp of this.pspConfig.psps) {
+            const compiled = safeCompileRegex(psp.regex);
+            psp.compiledRegex = compiled === null ? undefined : compiled;
+        }
     }
 
     /**
-     * Get PSP configuration by name
-     * @param name - Name of the PSP
+     * Check if the detector is initialized
+     * @return {boolean} True if initialized, false otherwise
+     */
+    public isInitialized(): boolean {
+        return !!this.pspConfig && !!this.exemptDomainsRegex;
+    }
+
+    /**
+     * Get PSP by name
+     * @param {string} name - PSP name
+     * @return {PSP|null} PSP object or null
      */
     public getPSPByName(name: string): PSP | null {
         if (!this.pspConfig) {
             return null;
         }
 
-        return this.pspConfig.psps.find((psp: PSP) => psp.name === name) || null;
-    }
-
-    /**
-     * Check if detector is properly initialized
-     */
-    public isInitialized(): boolean {
-        return this.pspConfig !== null && this.exemptDomainsRegex !== null;
+        return this.pspConfig.psps.find(psp => psp.name === name) || null;
     }
 }

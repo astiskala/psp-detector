@@ -1,5 +1,9 @@
 import { debounce, logger } from '../lib/utils';
 
+/**
+ * Service for observing DOM mutations and triggering callbacks.
+ * @class
+ */
 export class DOMObserverService {
     private observer: MutationObserver | null = null;
     private onMutationCallback: (() => void) | null = null;
@@ -7,17 +11,14 @@ export class DOMObserverService {
 
     /**
      * Initialize the observer with a callback
-     * @param callback - Function to call when mutations are observed
-     * @param debounceMs - Debounce time in milliseconds
+     * @param {() => void} callback - Function to call when mutations are observed
+     * @param {number} [debounceMs=2000] - Debounce time in milliseconds
+     * @return {void}
      */
     public initialize(callback: () => void, debounceMs = 2000): void {
         this.onMutationCallback = debounce(callback, debounceMs);
-
         this.observer = new MutationObserver(mutations => {
-            if (!this.isObserving || !this.onMutationCallback) {
-                return;
-            }
-
+            if (!this.isObserving || !this.onMutationCallback) return;
             for (const mutation of mutations) {
                 if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
                     this.onMutationCallback();
@@ -29,12 +30,10 @@ export class DOMObserverService {
 
     /**
      * Start observing DOM mutations
+     * @return {void}
      */
     public startObserving(): void {
-        if (!this.observer || this.isObserving) {
-            return;
-        }
-
+        if (!this.observer || this.isObserving) return;
         const start = () => {
             if (!document.body) {
                 document.addEventListener('DOMContentLoaded', start, { once: true });
@@ -56,12 +55,10 @@ export class DOMObserverService {
 
     /**
      * Stop observing DOM mutations
+     * @return {void}
      */
     public stopObserving(): void {
-        if (!this.observer || !this.isObserving) {
-            return;
-        }
-
+        if (!this.observer || !this.isObserving) return;
         try {
             this.observer.disconnect();
             this.isObserving = false;
@@ -73,6 +70,7 @@ export class DOMObserverService {
 
     /**
      * Clean up the observer
+     * @return {void}
      */
     public cleanup(): void {
         this.stopObserving();
@@ -82,6 +80,7 @@ export class DOMObserverService {
 
     /**
      * Check if the observer is currently active
+     * @return {boolean} True if observing, false otherwise
      */
     public isActive(): boolean {
         return this.isObserving;
