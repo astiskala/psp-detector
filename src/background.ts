@@ -4,6 +4,7 @@
  * @module background
  */
 import { MessageAction, PSP } from "./types";
+import { DEFAULT_ICONS } from "./types/background";
 import { logger } from "./lib/utils";
 
 class BackgroundService {
@@ -23,15 +24,6 @@ class BackgroundService {
     tabPsps: new Map(),
     detectedPsp: null,
     currentTabId: null,
-  };
-
-  /**
-   * Default icon paths
-   */
-  defaultIcons = {
-    16: "images/default_16.png",
-    48: "images/default_48.png",
-    128: "images/default_128.png",
   };
 
   constructor() {
@@ -263,7 +255,7 @@ class BackgroundService {
    */
   resetIcon(): void {
     chrome.action.setIcon({
-      path: this.defaultIcons,
+      path: DEFAULT_ICONS,
     });
   }
 
