@@ -47,7 +47,7 @@ describe("PSP image assets", () => {
       let regex: RegExp | null = null;
       try {
         regex = new RegExp(psp.regex, "i");
-      } catch (e) {
+      } catch {
         throw new Error(`Invalid regex for PSP '${psp.name}': ${psp.regex}`);
       }
       // Should not match a generic URL like google.com or example.com
