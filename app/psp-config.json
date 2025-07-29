@@ -2,21 +2,21 @@
   "psps": [
     {
       "name": "2Checkout (Verifone)",
-      "regex": "2pay-js\\.2checkout\\.com",
+      "regex": "2pay-js\\.2checkout\\.com|2checkout\\.com/checkout/purchase",
       "url": "https://www.2checkout.com",
       "image": "verifone",
       "summary": "2Checkout, now part of Verifone, offers a payment platform for online businesses to accept payments. It supports multiple payment methods and currencies, with features like subscription billing, fraud detection, invoicing, and integration with e-commerce platforms."
     },
     {
       "name": "2C2P",
-      "regex": "pgw\\.2c2p\\.com|pgwid\\.2c2p\\.com|https://t\\.2c2p\\.com|demo2\\.2c2p\\.com",
+      "regex": "pgw\\.2c2p\\.com|pgwid\\.2c2p\\.com|pgw-ui\\.2c2p\\.com|https://t\\.2c2p\\.com|demo2\\.2c2p\\.com",
       "url": "https://www.2c2p.com",
       "image": "2c2p",
       "summary": "2C2P is a payment service provider in Southeast Asia, offering payment solutions for online, mobile, and in-store transactions. The platform supports multiple payment methods, including credit cards, digital wallets, and alternative payment channels, providing businesses with  tools for payments across the region."
     },
     {
       "name": "Adyen",
-      "regex": "checkoutshopper-live\\.adyen\\.com|checkoutshopper-live-apse\\.adyen\\.com|checkoutshopper-live-au\\.adyen\\.com|checkoutshopper-live-in\\.adyen\\.com|checkoutshopper-live-us\\.adyen\\.com|cdn\\.adyen\\.com|live\\.adyen\\.com",
+      "regex": "checkoutshopper-live\\.adyen\\.com|checkoutshopper-live-apse\\.adyen\\.com|checkoutshopper-live-au\\.adyen\\.com|checkoutshopper-live-in\\.adyen\\.com|checkoutshopper-live-us\\.adyen\\.com|checkoutshopper-test\\.adyen\\.com|cdn\\.adyen\\.com|live\\.adyen\\.com",
       "url": "https://www.adyen.com",
       "image": "adyen",
       "summary": "Adyen is a payment company offering businesses an end-to-end infrastructure for managing online, mobile, and in-store payments. Adyen provides solutions for risk management, analytics, and acquiring services, catering to enterprises with significant transaction volumes."
@@ -51,7 +51,7 @@
     },
     {
       "name": "Authorize.net",
-      "regex": "jstest\\.authorize\\.net|js\\.authorize\\.net",
+      "regex": "jstest\\.authorize\\.net|js\\.authorize\\.net|secure\\.authorize\\.net",
       "url": "https://www.authorize.net",
       "image": "authorize",
       "summary": "Authorize.net is a payment gateway service provider that enables merchants to accept credit card and electronic check payments. It offers fraud detection, recurring billing, and customer information management tools to businesses of all sizes."
@@ -212,7 +212,7 @@
     },
     {
       "name": "FastSpring",
-      "regex": "sbl\\.onfastspring\\.com",
+      "regex": "[^\\.]+\\.onfastspring\\.com",
       "url": "https://www.fastspring.com",
       "image": "fastspring",
       "summary": "FastSpring is an e-commerce and subscription management platform specializing in software, SaaS, and digital content sales. It provides end-to-end payment processing with features like global tax compliance, fraud prevention, and subscription management. The platform supports multiple payment methods, currencies, and languages, offering localized checkout experiences across worldwide markets."
@@ -373,7 +373,7 @@
     },
     {
       "name": "Nuvei",
-      "regex": "cdn\\.safecharge\\.com|gateway\\.tillpayments\\.com",
+      "regex": "cdn\\.safecharge\\.com|secure\\.safecharge\\.com|gateway\\.tillpayments\\.com",
       "url": "https://www.nuvei.com",
       "image": "nuvei",
       "summary": "Nuvei is a payments technology company providing payment processing solutions for businesses of all sizes. Supporting credit cards, alternative payment methods, and cryptocurrency transactions, Nuvei's platform is designed for flexibility, scalability, and  integrations across multiple sectors."
@@ -450,7 +450,7 @@
     },
     {
       "name": "PayU",
-      "regex": "paymentsos\\.com|checkout\\.payulatam\\.com|api\\.payu\\.in|jssdk\\.payu\\.in|payudc\\.net",
+      "regex": "paymentsos\\.com|checkout\\.payulatam\\.com|api\\.payu\\.in|jssdk\\.payu\\.in|payudc\\.net|secure\\.payu\\.com",
       "url": "https://corporate.payu.com",
       "image": "payu",
       "summary": "PayU is a payment service provider operating in multiple markets, with a focus on emerging economies. It offers a variety of payment solutions including credit and debit cards, as well as alternative payment methods. PayU enables businesses to accept localized payments, providing solutions for e-commerce and mobile platforms."
@@ -562,7 +562,7 @@
     },
     {
       "name": "Windcave",
-      "regex": "sec\\.windcave\\.com",
+      "regex": "sec\\.windcave\\.com|sec\\.paymentexpress\\.com",
       "url": "https://www.windcave.com",
       "image": "windcave",
       "summary": "Windcave is a payment solutions provider offering payment processing for both online and in-store transactions. With a focus on security and reliability, Windcave serves businesses in various industries with customizable payment solutions."
@@ -576,7 +576,7 @@
     },
     {
       "name": "Worldpay",
-      "regex": "access\\.worldpay\\.com|hpp\\.worldpay\\.com",
+      "regex": "access\\.worldpay\\.com|hpp\\.worldpay\\.com|secure\\.worldpay\\.com|secure-test\\.worldpay\\.com",
       "url": "https://www.worldpay.com",
       "image": "worldpay",
       "summary": "Worldpay, part of FIS, is a payment processing company that provides solutions for online, in-store, and mobile transactions. It supports various payment methods, offering security features and fraud management tools for businesses."
