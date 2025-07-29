@@ -28,7 +28,7 @@ async function generatePspImages() {
 
   const files = await fs.readdir(srcDir);
   const pspPngs = files.filter(
-    (f) => f.endsWith(".png") && !/_16\.png$|_48\.png$|_128\.png$/.test(f)
+    (f) => f.endsWith(".png") && !/_16\.png$|_48\.png$|_128\.png$/.test(f),
   );
 
   console.log(`Found ${pspPngs.length} PSP images in source.`);
@@ -93,10 +93,8 @@ async function buildFiles() {
     manifest.version = version;
     // adjust service_worker and content_scripts paths if needed:
     if (manifest.background?.service_worker) {
-      manifest.background.service_worker = manifest.background.service_worker.replace(
-        /^dist\//,
-        ""
-      );
+      manifest.background.service_worker =
+        manifest.background.service_worker.replace(/^dist\//, "");
     }
     if (Array.isArray(manifest.content_scripts)) {
       manifest.content_scripts.forEach((cs) => {
@@ -115,8 +113,8 @@ async function buildFiles() {
           ...sharedConfig,
           entryPoints: [entry],
           outfile: `dist/${name}.js`,
-        })
-      )
+        }),
+      ),
     );
 
     // 7) regenerate PSP images

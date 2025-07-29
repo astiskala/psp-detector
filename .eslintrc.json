@@ -1,13 +1,8 @@
 {
   "root": true,
   "parser": "@typescript-eslint/parser",
-  "plugins": [
-    "@typescript-eslint"
-  ],
-  "extends": [
-    "eslint:recommended",
-    "plugin:@typescript-eslint/recommended"
-  ],
+  "plugins": ["@typescript-eslint"],
+  "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
   "env": {
     "browser": true,
     "es2021": true,
@@ -20,10 +15,7 @@
   },
   "overrides": [
     {
-      "files": [
-        "build.js",
-        "jest.config.js"
-      ],
+      "files": ["build.js", "jest.config.js"],
       "env": {
         "node": true
       },
@@ -33,9 +25,7 @@
       }
     },
     {
-      "files": [
-        "src/**/*.ts"
-      ],
+      "files": ["src/**/*.ts"],
       "env": {
         "browser": true
       }
