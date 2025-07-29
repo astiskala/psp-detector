@@ -1,7 +1,6 @@
 import { PSPDetectorService } from "./psp-detector";
 import type { PSPConfig } from "../types";
-import { PSP_DETECTION_EXEMPT } from "../types";
-import { TypeConverters } from "../lib/utils";
+import { TypeConverters, PSPDetectionResult } from "../types";
 
 describe("PSPDetectorService", () => {
   const config: PSPConfig = {
@@ -45,37 +44,52 @@ describe("PSPDetectorService", () => {
   it("should detect Stripe PSP", () => {
     const url = "https://checkout.stripe.com";
     const content = '<script src="https://js.stripe.com/v3/"></script>';
-    expect(service.detectPSP(url, content)).toBe("Stripe");
+    const result = service.detectPSP(url, content);
+    expect(PSPDetectionResult.isDetected(result)).toBe(true);
+    if (PSPDetectionResult.isDetected(result)) {
+      expect(result.psp).toBe("Stripe");
+    }
   });
 
   it("should detect PayPal PSP", () => {
     const url = "https://www.paypal.com/checkout";
     const content = '<script src="https://www.paypal.com/sdk/js"></script>';
-    expect(service.detectPSP(url, content)).toBe("PayPal");
+    const result = service.detectPSP(url, content);
+    expect(PSPDetectionResult.isDetected(result)).toBe(true);
+    if (PSPDetectionResult.isDetected(result)) {
+      expect(result.psp).toBe("PayPal");
+    }
   });
 
-  it("should return null if no PSP matches", () => {
+  it("should return none result if no PSP matches", () => {
     const url = "https://unknown.com";
     const content = "<div>No PSP here</div>";
-    expect(service.detectPSP(url, content)).toBeNull();
+    const result = service.detectPSP(url, content);
+    expect(PSPDetectionResult.isNone(result)).toBe(true);
   });
 
-  it("should return null if not initialized", () => {
+  it("should return error result if not initialized", () => {
     const uninit = new PSPDetectorService();
-    expect(uninit.detectPSP("https://stripe.com", "stripe")).toBeNull();
+    const result = uninit.detectPSP("https://stripe.com", "stripe");
+    expect(PSPDetectionResult.isError(result)).toBe(true);
   });
 
-  it("should get PSP by name", () => {
-    expect(service.getPSPByName("Stripe")).toMatchObject({
+  it("should get PSP by PSPName", () => {
+    expect(
+      service.getPSPByPSPName(TypeConverters.toPSPName("Stripe")!),
+    ).toMatchObject({
       name: "Stripe",
       regex: "stripe\\.com",
     });
-    expect(service.getPSPByName("Unknown")).toBeNull();
+    expect(
+      service.getPSPByPSPName(TypeConverters.toPSPName("Unknown")!),
+    ).toBeNull();
   });
 
-  it("should return PSP_DETECTION_EXEMPT for exempt domains", () => {
+  it("should return exempt result for exempt domains", () => {
     const url = "https://example.com/checkout";
     const content = '<script src="https://js.stripe.com/v3/"></script>';
-    expect(service.detectPSP(url, content)).toBe(PSP_DETECTION_EXEMPT);
+    const result = service.detectPSP(url, content);
+    expect(PSPDetectionResult.isExempt(result)).toBe(true);
   });
 });

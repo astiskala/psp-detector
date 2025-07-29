@@ -5,14 +5,18 @@
  */
 import { PSPDetectorService } from "./services/psp-detector";
 import { DOMObserverService } from "./services/dom-observer";
-import { MessageAction, ChromeMessage, PSPConfigResponse } from "./types";
+import {
+  MessageAction,
+  ChromeMessage,
+  PSPConfigResponse,
+  TypeConverters,
+} from "./types";
 import { PSP_DETECTION_EXEMPT } from "./types";
 import {
   logger,
   reportError,
   createContextError,
   memoryUtils,
-  TypeConverters,
 } from "./lib/utils";
 
 class ContentScript {
@@ -126,29 +130,11 @@ class ContentScript {
   }
 
   /**
-   * Detect PSP on the current page (legacy method for backward compatibility)
+   * Detect PSP on the current page
    * @private
    * @return {Promise<void>}
    */
   private async detectPSP(): Promise<void> {
-    if (this.pspDetected || !this.pspDetector.isInitialized()) {
-      return;
-    }
-    const detectedPsp = this.pspDetector.detectPSP(
-      document.URL,
-      document.documentElement.outerHTML,
-    );
-    if (detectedPsp) {
-      await this.handlePSPDetection(detectedPsp);
-    }
-  }
-
-  /**
-   * Enhanced PSP detection using type-safe PSPDetectionResult
-   * @private
-   * @return {Promise<void>}
-   */
-  private async detectPSPEnhanced(): Promise<void> {
     if (this.pspDetected || !this.pspDetector.isInitialized()) {
       return;
     }
@@ -159,7 +145,7 @@ class ContentScript {
       return;
     }
 
-    const result = this.pspDetector.detectPSPEnhanced(
+    const result = this.pspDetector.detectPSP(
       url,
       document.documentElement.outerHTML,
     );

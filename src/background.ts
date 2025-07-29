@@ -12,10 +12,11 @@ import {
   PSPConfigResponse,
   PSPConfig,
   PSPResponse,
+  TypeConverters,
 } from "./types";
 import { PSP_DETECTION_EXEMPT } from "./types";
 import { DEFAULT_ICONS } from "./types/background";
-import { logger, TypeConverters } from "./lib/utils";
+import { logger } from "./lib/utils";
 
 class BackgroundService {
   /**

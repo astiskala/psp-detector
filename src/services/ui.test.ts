@@ -7,7 +7,7 @@ global.chrome = {
 
 import { UIService } from "./ui";
 import type { PSP } from "../types";
-import { TypeConverters } from "../lib/utils";
+import { TypeConverters } from "../types";
 
 describe("UIService", () => {
   let service: UIService;

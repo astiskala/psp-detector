@@ -1,4 +1,4 @@
-// Enhanced MutationObserver mock for Jest/JSDOM
+// MutationObserver mock for Jest/JSDOM
 global.MutationObserver = class {
   constructor(callback: MutationCallback) {
     this.callback = callback;

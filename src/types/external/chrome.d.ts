@@ -1,5 +1,5 @@
 /**
- * Chrome Extension API type definitions for enhanced type safety
+ * Chrome Extension API type definitions
  * These supplement the @types/chrome package with additional type safety
  */
 

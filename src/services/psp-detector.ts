@@ -1,6 +1,6 @@
 import type { PSP, PSPConfig, PSPName, URL } from "../types";
-import { PSP_DETECTION_EXEMPT, PSPDetectionResult } from "../types";
-import { safeCompileRegex, logger, TypeConverters } from "../lib/utils";
+import { PSPDetectionResult, TypeConverters } from "../types";
+import { safeCompileRegex, logger } from "../lib/utils";
 
 /**
  * Service for detecting Payment Service Providers (PSPs) on a page.
@@ -35,17 +35,17 @@ export class PSPDetectorService {
   }
 
   /**
-   * Detect PSP on the current page (enhanced version)
+   * Detect PSP on the current page
    * @param {string} url - The URL to check
    * @param {string} content - The page content to scan
-   * @return {PSPDetectionResult} Enhanced detection result with type safety
+   * @return {PSPDetectionResult} Detection result with type safety
    */
-  public detectPSPEnhanced(url: string, content: string): PSPDetectionResult {
+  public detectPSP(url: string, content: string): PSPDetectionResult {
     if (!this.pspConfig || !this.exemptDomainsRegex) {
       logger.warn("PSP detector not properly initialized");
       return PSPDetectionResult.error(
         new Error("PSP detector not properly initialized"),
-        "detectPSPEnhanced",
+        "detectPSP",
       );
     }
 
@@ -80,26 +80,6 @@ export class PSPDetectorService {
   }
 
   /**
-   * Detect PSP on the current page (legacy version for compatibility)
-   * @param {string} url - The URL to check
-   * @param {string} content - The page content to scan
-   * @return {string|null} PSP name, PSP_DETECTION_EXEMPT, or null
-   */
-  public detectPSP(url: string, content: string): string | null {
-    const result = this.detectPSPEnhanced(url, content);
-
-    if (PSPDetectionResult.isDetected(result)) {
-      return result.psp as string; // Type assertion for legacy compatibility
-    }
-
-    if (PSPDetectionResult.isExempt(result)) {
-      return PSP_DETECTION_EXEMPT;
-    }
-
-    return null;
-  }
-
-  /**
    * Precompile regex patterns for better performance
    * @private
    * @return {void}
@@ -122,20 +102,7 @@ export class PSPDetectorService {
   }
 
   /**
-   * Get PSP by name (legacy method for backward compatibility)
-   * @param {string} name - PSP name
-   * @return {PSP|null} PSP object or null
-   */
-  public getPSPByName(name: string): PSP | null {
-    if (!this.pspConfig) {
-      return null;
-    }
-
-    return this.pspConfig.psps.find((psp) => psp.name === name) || null;
-  }
-
-  /**
-   * Get PSP by branded PSP name (enhanced type-safe method)
+   * Get PSP by branded PSP name
    * @param {PSPName} pspName - Branded PSP name
    * @return {PSP|null} PSP object or null
    */

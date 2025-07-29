@@ -1,4 +1,5 @@
-import type { PSPConfig, PSPName, TabId } from "./index";
+import type { PSPConfig } from "./psp";
+import type { PSPName, TabId } from "./branded";
 
 /**
  * Background service configuration and types
