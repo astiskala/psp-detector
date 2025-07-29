@@ -6,7 +6,7 @@
 import { MessageAction, PSPConfig } from "./types";
 import { PSP_DETECTION_EXEMPT } from "./types";
 import { UIService } from "./services/ui";
-import { logger } from "./lib/utils";
+import { logger, reportError, createContextError } from "./lib/utils";
 
 class PopupManager {
   private ui: UIService;
@@ -41,10 +41,22 @@ class PopupManager {
       if (psp) {
         this.ui.updatePSPDisplay(psp);
       } else {
+        reportError(
+          createContextError("PSP config not found", {
+            component: "PopupManager",
+            action: "initialize",
+          }),
+        );
         logger.error("PSP config not found for:", detectedPsp);
         this.ui.showNoPSPDetected();
       }
     } catch (error) {
+      reportError(
+        createContextError("Failed to initialize popup", {
+          component: "PopupManager",
+          action: "initialize",
+        }),
+      );
       logger.error("Failed to initialize popup:", error);
       this.ui.showError();
     }
@@ -102,13 +114,33 @@ class PopupManager {
       }
     });
   }
+
+  /**
+   * Clean up resources when popup is closed
+   * @return {void}
+   */
+  public cleanup(): void {
+    // Popup cleanup - currently just logging
+    logger.debug("Popup manager cleaned up");
+  }
 }
 
 // Initialize popup
-
 document.addEventListener("DOMContentLoaded", () => {
   const popup = new PopupManager();
+
+  // Add cleanup on window unload
+  window.addEventListener("beforeunload", () => {
+    popup.cleanup();
+  });
+
   popup.initialize().catch((error) => {
+    reportError(
+      createContextError("Popup initialization failed", {
+        component: "PopupManager",
+        action: "documentReady",
+      }),
+    );
     logger.error("Popup initialization failed:", error);
   });
 });

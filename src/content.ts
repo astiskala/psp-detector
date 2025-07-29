@@ -7,7 +7,12 @@ import { PSPDetectorService } from "./services/psp-detector";
 import { DOMObserverService } from "./services/dom-observer";
 import { MessageAction, ChromeMessage, PSPConfigResponse } from "./types";
 import { PSP_DETECTION_EXEMPT } from "./types";
-import { logger } from "./lib/utils";
+import {
+  logger,
+  reportError,
+  createContextError,
+  memoryUtils,
+} from "./lib/utils";
 
 class ContentScript {
   private pspDetector: PSPDetectorService;
@@ -51,10 +56,14 @@ class ContentScript {
         );
         return;
       }
-      console.error(
-        "[PSP Detector] Failed to initialize content script:",
-        error,
+      const contextError = createContextError(
+        "Failed to initialize content script",
+        {
+          component: "ContentScript",
+          action: "initialize",
+        },
       );
+      reportError(contextError);
       logger.error("Failed to initialize content script:", error);
     }
   } /**
@@ -71,6 +80,12 @@ class ContentScript {
         this.pspDetector.setExemptDomainsPattern(response.regex);
       }
     } catch (error) {
+      reportError(
+        createContextError("Failed to initialize exempt domains", {
+          component: "ContentScript",
+          action: "initializeExemptDomains",
+        }),
+      );
       logger.error("Failed to initialize exempt domains:", error);
     }
   }
@@ -89,6 +104,12 @@ class ContentScript {
         this.pspDetector.initialize(response.config);
       }
     } catch (error) {
+      reportError(
+        createContextError("Failed to initialize PSP config", {
+          component: "ContentScript",
+          action: "initializePSPConfig",
+        }),
+      );
       logger.error("Failed to initialize PSP config:", error);
     }
   }
@@ -189,11 +210,32 @@ class ContentScript {
       }
     });
   }
+
+  /**
+   * Clean up resources when the content script is unloaded
+   * @return {void}
+   */
+  public cleanup(): void {
+    const cleanupFunctions = [
+      (): void => this.domObserver.cleanup(),
+      (): void => {
+        this.pspDetected = false;
+      },
+    ];
+
+    memoryUtils.cleanup(cleanupFunctions);
+  }
 }
 
 // Initialize content script
 const contentScript = new ContentScript();
-contentScript.initialize().catch((error) => {
+
+// Add cleanup on page unload
+window.addEventListener("beforeunload", (): void => {
+  contentScript.cleanup();
+});
+
+contentScript.initialize().catch((error): void => {
   // Don't log errors if extension context is invalidated (expected during reloads)
   if (
     error instanceof Error &&
@@ -201,6 +243,12 @@ contentScript.initialize().catch((error) => {
   ) {
     console.warn("[PSP Detector] Extension context invalidated during startup");
   } else {
+    reportError(
+      createContextError("Content script initialization failed", {
+        component: "ContentScript",
+        action: "startup",
+      }),
+    );
     logger.error("Content script initialization failed:", error);
   }
 });
