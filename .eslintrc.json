@@ -1,0 +1,44 @@
+{
+  "root": true,
+  "parser": "@typescript-eslint/parser",
+  "plugins": [
+    "@typescript-eslint"
+  ],
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended"
+  ],
+  "env": {
+    "browser": true,
+    "es2021": true,
+    "webextensions": true
+  },
+  "rules": {
+    "@typescript-eslint/explicit-function-return-type": "warn",
+    "@typescript-eslint/no-explicit-any": "warn",
+    "@typescript-eslint/no-unused-vars": "error"
+  },
+  "overrides": [
+    {
+      "files": [
+        "build.js",
+        "jest.config.js"
+      ],
+      "env": {
+        "node": true
+      },
+      "rules": {
+        "@typescript-eslint/no-var-requires": "off",
+        "no-undef": "off"
+      }
+    },
+    {
+      "files": [
+        "src/**/*.ts"
+      ],
+      "env": {
+        "browser": true
+      }
+    }
+  ]
+}

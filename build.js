@@ -21,117 +21,110 @@ const sharedConfig = {
   },
 };
 
-// Generate resized and compressed PNGs for all PSP images
 async function generatePspImages() {
   const srcDir = path.join(__dirname, "assets", "images");
   const distDir = path.join(__dirname, "dist", "images");
   await fs.ensureDir(distDir);
+
   const files = await fs.readdir(srcDir);
-  // Only .png files that do not have _16/_48/_128 suffix
   const pspPngs = files.filter(
-    (f) => f.endsWith(".png") && !/_16\.png$|_48\.png$|_128\.png$/.test(f),
+    (f) => f.endsWith(".png") && !/_16\.png$|_48\.png$|_128\.png$/.test(f)
   );
+
   console.log(`Found ${pspPngs.length} PSP images in source.`);
-  // Remove any 16/48/128px PNGs from dist
-  let removed = 0;
+  // cleanup old
   for (const f of await fs.readdir(distDir)) {
     if (/_16\.png$|_48\.png$|_128\.png$/.test(f)) {
       await fs.remove(path.join(distDir, f));
-      removed++;
     }
   }
-  if (removed)
-    console.log(`Removed ${removed} old 16/48/128px images from dist.`);
+  // regenerate
   for (const file of pspPngs) {
     const base = file.replace(/\.png$/, "");
     const srcPath = path.join(srcDir, file);
-    // Always resize to 128px, 48px, 16px (do not copy original as-is)
     for (const size of [128, 48, 16]) {
       const outPath = path.join(distDir, `${base}_${size}.png`);
       await sharp(srcPath)
         .resize(size, size, { fit: "contain" })
         .png({
-          compressionLevel: 9, // Maximum compression
-          adaptiveFiltering: true, // Better compression
-          palette: true, // Use palette if beneficial
-          quality: 100, // Lossless quality
-          effort: 10, // Maximum effort
+          compressionLevel: 9,
+          adaptiveFiltering: true,
+          palette: true,
+          quality: 100,
+          effort: 10,
         })
         .toFile(outPath);
-      console.log(
-        `Resized and compressed ${file} to ${size}x${size} as ${base}_${size}.png`,
-      );
+      console.log(`Resized ${file} → ${base}_${size}.png`);
     }
   }
 }
 
-// Build each entry point separately
 async function buildFiles() {
   try {
-    // ─── VERSION GENERATION ───────────────────────────────────────────────────────
-    // Format: 2.YYYY.MMDD.HHMM (four integers)
+    // 1) compute version
     const now = new Date();
-    const year = now.getFullYear(); // e.g. 2025
-    const month = now.getMonth() + 1; // 1–12
-    const day = now.getDate(); // 1–31
-    const hour = now.getHours(); // 0–23
-    const minute = now.getMinutes(); // 0–59
-    const mmdd = month * 100 + day; // e.g. July 28 → 7*100 + 28 = 728
-    const hhmm = hour * 100 + minute; // e.g. 14:42 → 14*100 + 42 = 1442
+    const year = now.getFullYear();
+    const mmdd = (now.getMonth() + 1) * 100 + now.getDate();
+    const hhmm = now.getHours() * 100 + now.getMinutes();
     const version = `2.${year}.${mmdd}.${hhmm}`;
-    // ─────────────────────────────────────────────────────────────────────────────
 
-    // Update package.json version
+    // 2) bump package.json in-place
     const pkgPath = path.join(__dirname, "package.json");
     const pkg = fs.readJsonSync(pkgPath);
     pkg.version = version;
     fs.writeJsonSync(pkgPath, pkg, { spaces: 2 });
 
-    // Update manifest.json version and sync fields
-    const manifestPath = path.join(__dirname, "assets", "manifest.json");
-    const manifest = fs.readJsonSync(manifestPath);
-    manifest.version = version;
-    manifest.name = "PSP Detector"; // Always use user-friendly name
-    manifest.description = pkg.description;
-    if (manifest.background && manifest.background.service_worker) {
-      manifest.background.service_worker =
-        manifest.background.service_worker.replace(/^dist\//, "");
+    // 3) prepare dist/
+    const distDir = path.join(__dirname, "dist");
+    await fs.remove(distDir);
+    await fs.ensureDir(distDir);
+
+    // 4) copy all public/ → dist/
+    const publicDir = path.join(__dirname, "public");
+    if (await fs.pathExists(publicDir)) {
+      await fs.copy(publicDir, distDir);
+      console.log("Copied public/ → dist/");
     }
-    if (manifest.content_scripts) {
+
+    // 5) inject and write manifest.json
+    const manifestSrc = path.join(__dirname, "assets", "manifest.json");
+    const manifestDst = path.join(distDir, "manifest.json");
+    const manifest = fs.readJsonSync(manifestSrc);
+    manifest.version = version;
+    // adjust service_worker and content_scripts paths if needed:
+    if (manifest.background?.service_worker) {
+      manifest.background.service_worker = manifest.background.service_worker.replace(
+        /^dist\//,
+        ""
+      );
+    }
+    if (Array.isArray(manifest.content_scripts)) {
       manifest.content_scripts.forEach((cs) => {
         if (cs.js) {
-          cs.js = cs.js.map((jsPath) => jsPath.replace(/^dist\//, ""));
+          cs.js = cs.js.map((js) => js.replace(/^dist\//, ""));
         }
       });
     }
-    fs.writeJsonSync(manifestPath, manifest, { spaces: 2 });
-    console.log(`manifest.json and package.json version set to ${version}`);
+    fs.writeJsonSync(manifestDst, manifest, { spaces: 2 });
+    console.log(`Wrote dist/manifest.json @ version ${version}`);
 
-    const buildPromises = Object.entries(mainEntryPoints).map(
-      ([name, entry]) => {
-        return esbuild.build({
+    // 6) bundle JS
+    await Promise.all(
+      Object.entries(mainEntryPoints).map(([name, entry]) =>
+        esbuild.build({
           ...sharedConfig,
           entryPoints: [entry],
-          outfile: `./dist/${name}.js`,
-        });
-      },
+          outfile: `dist/${name}.js`,
+        })
+      )
     );
 
-    await Promise.all(buildPromises);
-    // Copy static assets after build
-    const assets = ["manifest.json"];
-    for (const file of assets) {
-      await fs.copy(
-        path.join(__dirname, "assets", file),
-        path.join(__dirname, "dist", file),
-      );
-    }
-    // Copy images directory (only 128px in src, generate all sizes in dist)
-    await fs.ensureDir(path.join(__dirname, "dist", "images"));
+    // 7) regenerate PSP images
     await generatePspImages();
-    console.log("Build complete and assets copied");
-  } catch (error) {
-    console.error("Build failed:", error);
+
+    console.log("🛠 Build complete");
+  } catch (err) {
+    console.error("Build failed:", err);
     process.exit(1);
   }
 }

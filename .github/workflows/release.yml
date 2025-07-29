@@ -29,11 +29,11 @@ jobs:
       - name: Get version from manifest
         id: manifest
         run: |
-          VERSION=$(jq -r .version app/manifest.json)
+          VERSION=$(jq -r .version dist/manifest.json)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Archive dist folder
-        run: zip -r psp-detector-${{ steps.manifest.outputs.version }}.zip app/dist
+        run: zip -r psp-detector-${{ steps.manifest.outputs.version }}.zip dist
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

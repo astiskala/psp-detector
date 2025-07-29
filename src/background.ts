@@ -5,7 +5,6 @@
  */
 import { MessageAction, PSP } from "./types";
 import { logger } from "./lib/utils";
-import type { BackgroundConfig } from "./types/background";
 
 class BackgroundService {
   /**
