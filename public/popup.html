@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PSP Detector</title>
+    <style>
+      body {
+        min-width: 300px;
+        max-width: 100%;
+        text-align: center;
+        font-family: Arial, sans-serif;
+        padding: 15px;
+        background-color: #f7f7f7;
+        color: #244c3c;
+        box-sizing: border-box;
+      }
+
+      h2#psp-name {
+        margin: 0 0 10px;
+        font-size: 18px;
+        color: #244c3c;
+      }
+
+      #psp-description {
+        margin: 10px 0;
+        font-size: 13px;
+        line-height: 1.4;
+      }
+
+      #psp-notice {
+        margin: 20px 0 0 0;
+        padding: 10px;
+        font-size: 13px;
+        line-height: 1.4;
+        border: solid #ffc107;
+        border-width: 1px;
+        background-color: #ffffcc;
+        display: none;
+      }
+
+      #psp-url {
+        margin: 10px 0;
+        font-size: 13px;
+        font-weight: bold;
+        color: #244c3c;
+      }
+
+      #psp-url a {
+        text-decoration: none;
+        color: inherit;
+      }
+
+      #psp-url a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+
+  <body>
+    <img
+      id="psp-image"
+      alt="PSP logo"
+      style="width: 64px; max-width: 100%; height: auto; margin-bottom: 10px"
+    />
+    <h2 id="psp-name">Detecting PSP...</h2>
+    <div id="psp-description">
+      Please wait while we identify the Payment Service Provider.
+    </div>
+    <div id="psp-url"><a href="#" target="_blank">Learn more</a></div>
+    <div id="psp-notice"></div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

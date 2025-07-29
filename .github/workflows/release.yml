@@ -40,7 +40,7 @@ jobs:
         with:
           tag_name: ${{ steps.manifest.outputs.version }}
           name: psp-detector-${{ steps.manifest.outputs.version }}.zip
-          body: 'Automated build and release.'
+          body: "Automated build and release."
           files: psp-detector-${{ steps.manifest.outputs.version }}.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
