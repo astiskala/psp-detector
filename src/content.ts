@@ -12,6 +12,7 @@ import {
   reportError,
   createContextError,
   memoryUtils,
+  TypeConverters,
 } from "./lib/utils";
 
 class ContentScript {
@@ -125,7 +126,7 @@ class ContentScript {
   }
 
   /**
-   * Detect PSP on the current page
+   * Detect PSP on the current page (legacy method for backward compatibility)
    * @private
    * @return {Promise<void>}
    */
@@ -138,35 +139,96 @@ class ContentScript {
       document.documentElement.outerHTML,
     );
     if (detectedPsp) {
-      try {
-        const tabResponse = await this.sendMessage<{ tabId: number }>({
-          action: MessageAction.GET_TAB_ID,
-        });
-        if (tabResponse?.tabId) {
+      await this.handlePSPDetection(detectedPsp);
+    }
+  }
+
+  /**
+   * Enhanced PSP detection using type-safe PSPDetectionResult
+   * @private
+   * @return {Promise<void>}
+   */
+  private async detectPSPEnhanced(): Promise<void> {
+    if (this.pspDetected || !this.pspDetector.isInitialized()) {
+      return;
+    }
+
+    const url = TypeConverters.toURL(document.URL);
+    if (!url) {
+      logger.warn("Invalid URL for PSP detection:", document.URL);
+      return;
+    }
+
+    const result = this.pspDetector.detectPSPEnhanced(
+      url,
+      document.documentElement.outerHTML,
+    );
+
+    switch (result.type) {
+      case "detected":
+        await this.handlePSPDetection(result.psp);
+        break;
+      case "exempt":
+        await this.handlePSPDetection(PSP_DETECTION_EXEMPT);
+        break;
+      case "none":
+        // No PSP detected, continue monitoring
+        break;
+      case "error":
+        logger.error("PSP detection error:", result.error);
+        break;
+      default: {
+        // Type safety: ensure all cases are handled
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const _exhaustive: never = result;
+        break;
+      }
+    }
+  }
+
+  /**
+   * Handle PSP detection result (shared logic)
+   * @private
+   * @param {string} detectedPsp - The detected PSP name or exempt marker
+   * @return {Promise<void>}
+   */
+  private async handlePSPDetection(detectedPsp: string): Promise<void> {
+    try {
+      const tabResponse = await this.sendMessage<{ tabId: number }>({
+        action: MessageAction.GET_TAB_ID,
+      });
+      if (tabResponse?.tabId) {
+        const tabId = TypeConverters.toTabId(tabResponse.tabId);
+        const pspName =
+          detectedPsp === PSP_DETECTION_EXEMPT
+            ? detectedPsp
+            : TypeConverters.toPSPName(detectedPsp);
+
+        if (tabId && pspName) {
           await this.sendMessage({
             action: MessageAction.DETECT_PSP,
-            data: { psp: detectedPsp, tabId: tabResponse.tabId },
+            data: { psp: pspName, tabId: tabId },
           });
         }
-        // Only mark as detected and stop observing for actual PSPs, not exempt domains
-        if (detectedPsp !== PSP_DETECTION_EXEMPT) {
-          this.pspDetected = true;
-          this.domObserver.stopObserving();
-        }
-      } catch (error) {
-        // Handle extension context invalidation gracefully
-        if (
-          error instanceof Error &&
-          error.message.includes("Extension context invalidated")
-        ) {
-          console.warn(
-            "[PSP Detector] Extension context invalidated, stopping content script",
-          );
-          this.domObserver.stopObserving();
-          return;
-        }
-        logger.error("Failed to report detected PSP:", error);
       }
+      // Only mark as detected and stop observing for actual PSPs, not exempt domains
+      if (detectedPsp !== PSP_DETECTION_EXEMPT) {
+        this.pspDetected = true;
+        this.domObserver.stopObserving();
+      }
+    } catch (error) {
+      // Handle extension context invalidation gracefully
+      if (
+        error instanceof Error &&
+        error.message.includes("Extension context invalidated")
+      ) {
+        console.warn(
+          "[PSP Detector] Extension context invalidated, stopping content script",
+        );
+        this.domObserver.stopObserving();
+        return;
+      }
+      logger.error("Failed to report detected PSP:", error);
     }
   }
 
@@ -202,7 +264,7 @@ class ContentScript {
               reject(chrome.runtime.lastError);
             }
           } else {
-            resolve(response);
+            resolve(response as T);
           }
         });
       } catch (error) {

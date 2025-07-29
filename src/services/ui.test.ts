@@ -7,6 +7,7 @@ global.chrome = {
 
 import { UIService } from "./ui";
 import type { PSP } from "../types";
+import { TypeConverters } from "../lib/utils";
 
 describe("UIService", () => {
   let service: UIService;
@@ -32,9 +33,9 @@ describe("UIService", () => {
 
   it("should update PSP display", () => {
     const psp: PSP = {
-      name: "TestPSP",
-      regex: "test",
-      url: "https://test.com",
+      name: TypeConverters.toPSPName("TestPSP")!,
+      regex: TypeConverters.toRegexPattern("test")!,
+      url: TypeConverters.toURL("https://test.com")!,
       image: "test",
       summary: "summary",
       notice: "notice",

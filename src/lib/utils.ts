@@ -3,6 +3,8 @@
  * @param func - The function to debounce
  * @param wait - The number of milliseconds to wait
  */
+import type { PSP } from "../types";
+
 export function debounce<T extends (...args: unknown[]) => unknown>(
   func: T,
   wait: number,
@@ -29,7 +31,7 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
  */
 export function createSafeUrl(url: string): string {
   try {
-    return new URL(url).toString();
+    return new globalThis.URL(url).toString();
   } catch (e) {
     console.error("Invalid URL:", e);
     return "#";
@@ -243,6 +245,94 @@ export const memoryUtils = {
         inThrottle = true;
         setTimeout(() => (inThrottle = false), limit);
       }
+    };
+  },
+};
+
+/**
+ * Type conversion utilities for working with branded types
+ */
+import type { PSPName, TabId, URL as BrandedURL, RegexPattern } from "../types";
+import {
+  PSPName as PSPNameHelpers,
+  TabId as TabIdHelpers,
+  URL as URLHelpers,
+  RegexPattern as RegexPatternHelpers,
+} from "../types";
+
+export const TypeConverters = {
+  /**
+   * Safely convert string to PSPName
+   */
+  toPSPName: (name: string): PSPName | null => {
+    try {
+      return PSPNameHelpers.create(name);
+    } catch {
+      return null;
+    }
+  },
+
+  /**
+   * Safely convert number to TabId
+   */
+  toTabId: (id: number): TabId | null => {
+    try {
+      return TabIdHelpers.create(id);
+    } catch {
+      return null;
+    }
+  },
+
+  /**
+   * Safely convert string to URL
+   */
+  toURL: (url: string): BrandedURL | null => {
+    try {
+      return URLHelpers.create(url);
+    } catch {
+      return null;
+    }
+  },
+
+  /**
+   * Safely convert string to RegexPattern
+   */
+  toRegexPattern: (pattern: string): RegexPattern | null => {
+    try {
+      return RegexPatternHelpers.create(pattern);
+    } catch {
+      return null;
+    }
+  },
+
+  /**
+   * Convert legacy PSP data to new typed format
+   */
+  migratePSPData: (legacyPSP: {
+    name: string;
+    regex: string;
+    url: string;
+    image: string;
+    summary: string;
+    notice?: string;
+    compiledRegex?: RegExp;
+  }): PSP => {
+    const name = TypeConverters.toPSPName(legacyPSP.name);
+    const regex = TypeConverters.toRegexPattern(legacyPSP.regex);
+    const url = TypeConverters.toURL(legacyPSP.url);
+
+    if (!name || !regex || !url) {
+      throw new Error(`Invalid PSP data: ${JSON.stringify(legacyPSP)}`);
+    }
+
+    return {
+      name,
+      regex,
+      url,
+      image: legacyPSP.image,
+      summary: legacyPSP.summary,
+      notice: legacyPSP.notice,
+      compiledRegex: legacyPSP.compiledRegex,
     };
   },
 };

@@ -15,7 +15,7 @@ import {
 } from "./types";
 import { PSP_DETECTION_EXEMPT } from "./types";
 import { DEFAULT_ICONS } from "./types/background";
-import { logger } from "./lib/utils";
+import { logger, TypeConverters } from "./lib/utils";
 
 class BackgroundService {
   /**
@@ -156,14 +156,19 @@ class BackgroundService {
     sendResponse: (response?: null) => void,
   ): void {
     if (data?.psp && this.config.currentTabId !== null) {
-      this.config.detectedPsp = data.psp;
-      if (data.tabId === this.config.currentTabId) {
-        this.config.tabPsps.set(this.config.currentTabId, data.psp);
-        // Handle different PSP detection states
-        if (data.psp === PSP_DETECTION_EXEMPT) {
-          this.showExemptDomainIcon();
-        } else {
-          this.updateIcon(data.psp);
+      const pspName = data.psp;
+      const tabId = data.tabId;
+
+      if (pspName && tabId) {
+        this.config.detectedPsp = pspName;
+        if (tabId === this.config.currentTabId) {
+          this.config.tabPsps.set(this.config.currentTabId, pspName);
+          // Handle different PSP detection states
+          if (String(data.psp) === PSP_DETECTION_EXEMPT) {
+            this.showExemptDomainIcon();
+          } else {
+            this.updateIcon(String(data.psp));
+          }
         }
       }
     } else {
@@ -194,26 +199,29 @@ class BackgroundService {
    * @return {Promise<void>}
    */
   async handleTabActivation(activeInfo: { tabId: number }): Promise<void> {
-    this.config.currentTabId = activeInfo.tabId;
-    this.config.detectedPsp = this.config.tabPsps.get(activeInfo.tabId) || null;
-    try {
-      const tab = await chrome.tabs.get(activeInfo.tabId);
-      if (this.config.detectedPsp) {
-        // Handle different PSP detection states
-        if (this.config.detectedPsp === PSP_DETECTION_EXEMPT) {
-          this.showExemptDomainIcon();
+    const tabId = TypeConverters.toTabId(activeInfo.tabId);
+    if (tabId) {
+      this.config.currentTabId = tabId;
+      this.config.detectedPsp = this.config.tabPsps.get(tabId) || null;
+      try {
+        const tab = await chrome.tabs.get(activeInfo.tabId);
+        if (this.config.detectedPsp) {
+          // Handle different PSP detection states
+          if (this.config.detectedPsp === PSP_DETECTION_EXEMPT) {
+            this.showExemptDomainIcon();
+          } else {
+            this.updateIcon(this.config.detectedPsp);
+          }
         } else {
-          this.updateIcon(this.config.detectedPsp);
+          this.resetIcon();
+          if (tab?.url && this.config.exemptDomainsRegex?.test(tab.url)) {
+            await this.injectContentScript(activeInfo.tabId);
+          }
         }
-      } else {
+      } catch (error) {
+        logger.warn("Tab access error:", error);
         this.resetIcon();
-        if (tab?.url && this.config.exemptDomainsRegex?.test(tab.url)) {
-          await this.injectContentScript(activeInfo.tabId);
-        }
       }
-    } catch (error) {
-      logger.warn("Tab access error:", error);
-      this.resetIcon();
     }
   }
 
@@ -230,9 +238,10 @@ class BackgroundService {
     changeInfo: { status?: string },
     tab: chrome.tabs.Tab,
   ): void {
-    if (changeInfo.status === "loading") {
+    const brandedTabId = TypeConverters.toTabId(tabId);
+    if (brandedTabId && changeInfo.status === "loading") {
       this.resetIcon();
-      this.config.tabPsps.delete(tabId);
+      this.config.tabPsps.delete(brandedTabId);
     }
     if (
       changeInfo.status === "complete" &&

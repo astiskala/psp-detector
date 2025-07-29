@@ -1,6 +1,6 @@
 {
   "name": "psp-detector",
-  "version": "2.2025.729.2251",
+  "version": "2.2025.729.2315",
   "description": "Chrome extension to detect Payment Service Providers on web pages",
   "private": true,
   "scripts": {

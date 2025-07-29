@@ -1,4 +1,4 @@
-import type { PSPConfig } from "./index";
+import type { PSPConfig, PSPName, TabId } from "./index";
 
 /**
  * Background service configuration and types
@@ -6,9 +6,9 @@ import type { PSPConfig } from "./index";
 export interface BackgroundConfig {
   cachedPspConfig: PSPConfig | null;
   exemptDomainsRegex: RegExp | null;
-  tabPsps: Map<number, string>;
-  detectedPsp: string | null;
-  currentTabId: number | null;
+  tabPsps: Map<TabId, PSPName>;
+  detectedPsp: PSPName | null;
+  currentTabId: TabId | null;
 }
 
 /**
@@ -16,8 +16,8 @@ export interface BackgroundConfig {
  */
 export interface MessageResponse {
   config?: PSPConfig;
-  psp?: string | null;
-  tabId?: number;
+  psp?: PSPName | null;
+  tabId?: TabId;
   regex?: string;
 }
 

@@ -1,28 +1,29 @@
 import { PSPDetectorService } from "./psp-detector";
 import type { PSPConfig } from "../types";
 import { PSP_DETECTION_EXEMPT } from "../types";
+import { TypeConverters } from "../lib/utils";
 
 describe("PSPDetectorService", () => {
   const config: PSPConfig = {
     psps: [
       {
-        name: "Stripe",
-        regex: "stripe\\.com",
-        url: "https://stripe.com",
+        name: TypeConverters.toPSPName("Stripe")!,
+        regex: TypeConverters.toRegexPattern("stripe\\.com")!,
+        url: TypeConverters.toURL("https://stripe.com")!,
         image: "stripe",
         summary: "Stripe summary",
       },
       {
-        name: "PayPal",
-        regex: "paypal\\.com",
-        url: "https://paypal.com",
+        name: TypeConverters.toPSPName("PayPal")!,
+        regex: TypeConverters.toRegexPattern("paypal\\.com")!,
+        url: TypeConverters.toURL("https://paypal.com")!,
         image: "paypal",
         summary: "PayPal summary",
       },
       {
-        name: "Adyen",
-        regex: "adyen\\.com",
-        url: "https://adyen.com",
+        name: TypeConverters.toPSPName("Adyen")!,
+        regex: TypeConverters.toRegexPattern("adyen\\.com")!,
+        url: TypeConverters.toURL("https://adyen.com")!,
         image: "adyen",
         summary: "Adyen summary",
       },
