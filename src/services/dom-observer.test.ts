@@ -6,9 +6,10 @@ global.MutationObserver = class {
       // Simulate mutation when observe is called
       const mutation = {
         type: "childList",
-        addedNodes: [{}],
+        addedNodes: [document.createElement("div")], // Add a real node
       } as unknown as MutationRecord;
-      setTimeout(() => this.callback([mutation], this), 0);
+      // Use a small delay to ensure async behavior
+      setTimeout(() => this.callback([mutation], this), 5);
     });
     this.disconnect = jest.fn();
   }
@@ -35,10 +36,10 @@ describe("DOMObserverService", () => {
   it("should initialize and start observing mutations", () => {
     service.initialize(callback, 0); // no debounce for test
     service.startObserving();
-    const newNode = document.createElement("div");
-    document.body.appendChild(newNode);
-    // MutationObserver is async, so we use setTimeout
-    return new Promise((resolve) => setTimeout(resolve, 10)).then(() => {
+
+    // The mock will trigger the callback when observe() is called
+    // We need to wait for both the mock's setTimeout(0) and any debounce
+    return new Promise((resolve) => setTimeout(resolve, 50)).then(() => {
       expect(callback).toHaveBeenCalled();
       expect(service.isActive()).toBe(true);
     });

@@ -42,7 +42,7 @@ class BackgroundService {
    */
   initializeListeners(): void {
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-      this.handleMessage(message, sender, sendResponse);
+      this.handleMessage(message as ChromeMessage, sender, sendResponse);
       return true; // Keep message channel open for async response
     });
 

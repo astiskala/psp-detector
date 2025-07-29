@@ -106,7 +106,7 @@ class PopupManager {
           if (chrome.runtime.lastError) {
             reject(chrome.runtime.lastError);
           } else {
-            resolve(response);
+            resolve(response as T);
           }
         });
       } catch (error) {
