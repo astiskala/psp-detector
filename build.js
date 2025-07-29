@@ -28,13 +28,13 @@ async function generatePspImages() {
 
   const files = await fs.readdir(srcDir);
   const pspPngs = files.filter(
-    (f) => f.endsWith(".png") && !/_16\.png$|_48\.png$|_128\.png$/.test(f),
+    (f) => f.endsWith(".png") && !/_48\.png$|_128\.png$/.test(f),
   );
 
   console.log(`Found ${pspPngs.length} PSP images in source.`);
   // cleanup old
   for (const f of await fs.readdir(distDir)) {
-    if (/_16\.png$|_48\.png$|_128\.png$/.test(f)) {
+    if (/_48\.png$|_128\.png$/.test(f)) {
       await fs.remove(path.join(distDir, f));
     }
   }
@@ -42,7 +42,7 @@ async function generatePspImages() {
   for (const file of pspPngs) {
     const base = file.replace(/\.png$/, "");
     const srcPath = path.join(srcDir, file);
-    for (const size of [128, 48, 16]) {
+    for (const size of [128, 48]) {
       const outPath = path.join(distDir, `${base}_${size}.png`);
       await sharp(srcPath)
         .resize(size, size, { fit: "contain" })

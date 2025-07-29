@@ -20,13 +20,11 @@
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
-      "16": "images/default_16.png",
       "48": "images/default_48.png",
       "128": "images/default_128.png"
     }
   },
   "icons": {
-    "16": "images/default_16.png",
     "48": "images/default_48.png",
     "128": "images/default_128.png"
   },

@@ -240,7 +240,6 @@ class BackgroundService {
     if (pspInfo) {
       chrome.action.setIcon({
         path: {
-          16: `images/${pspInfo.image}_16.png`,
           48: `images/${pspInfo.image}_48.png`,
           128: `images/${pspInfo.image}_128.png`,
         },

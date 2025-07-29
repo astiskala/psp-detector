@@ -25,10 +25,10 @@ describe("PSP image assets", () => {
     expect(missing.length).toBe(0);
   });
 
-  it("should have 16, 48, and 128px images for every PSP in dist after build", () => {
+  it("should have 48px and 128px images for every PSP in dist after build", () => {
     const missing = [];
     for (const psp of config.psps) {
-      for (const size of [16, 48, 128]) {
+      for (const size of [48, 128]) {
         const imgPath = path.join(distImagesDir, `${psp.image}_${size}.png`);
         if (!fs.existsSync(imgPath)) {
           missing.push(`Missing dist image for PSP: ${psp.name} (${imgPath})`);

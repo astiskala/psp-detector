@@ -25,7 +25,6 @@ export interface MessageResponse {
  * Default icons configuration
  */
 export const DEFAULT_ICONS = {
-  16: "images/default_16.png",
   48: "images/default_48.png",
   128: "images/default_128.png",
 } as const;
