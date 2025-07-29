@@ -6,6 +6,7 @@
 import { PSPDetectorService } from "./services/psp-detector";
 import { DOMObserverService } from "./services/dom-observer";
 import { MessageAction, ChromeMessage } from "./types";
+import { PSP_DETECTION_EXEMPT } from "./types";
 import { logger } from "./lib/utils";
 
 class ContentScript {
@@ -23,17 +24,40 @@ class ContentScript {
    * @return {Promise<void>}
    */
   public async initialize(): Promise<void> {
+    console.log("[PSP Detector] Initializing content script");
+
+    // Check if extension context is still valid before proceeding
+    if (!chrome.runtime?.id) {
+      console.warn(
+        "[PSP Detector] Extension context invalidated, skipping initialization",
+      );
+      return;
+    }
+
     try {
       await this.initializeExemptDomains();
       await this.initializePSPConfig();
       this.setupDOMObserver();
       this.detectPSP();
+      console.log("[PSP Detector] Content script initialized successfully");
     } catch (error) {
+      // Handle extension context invalidation during initialization
+      if (
+        error instanceof Error &&
+        error.message.includes("Extension context invalidated")
+      ) {
+        console.warn(
+          "[PSP Detector] Extension context invalidated during initialization",
+        );
+        return;
+      }
+      console.error(
+        "[PSP Detector] Failed to initialize content script:",
+        error,
+      );
       logger.error("Failed to initialize content script:", error);
     }
-  }
-
-  /**
+  } /**
    * Initialize exempt domains configuration
    * @private
    * @return {Promise<void>}
@@ -103,9 +127,23 @@ class ContentScript {
             data: { psp: detectedPsp, tabId: tabResponse.tabId },
           });
         }
-        this.pspDetected = true;
-        this.domObserver.stopObserving();
+        // Only mark as detected and stop observing for actual PSPs, not exempt domains
+        if (detectedPsp !== PSP_DETECTION_EXEMPT) {
+          this.pspDetected = true;
+          this.domObserver.stopObserving();
+        }
       } catch (error) {
+        // Handle extension context invalidation gracefully
+        if (
+          error instanceof Error &&
+          error.message.includes("Extension context invalidated")
+        ) {
+          console.warn(
+            "[PSP Detector] Extension context invalidated, stopping content script",
+          );
+          this.domObserver.stopObserving();
+          return;
+        }
         logger.error("Failed to report detected PSP:", error);
       }
     }
@@ -121,9 +159,27 @@ class ContentScript {
   private sendMessage<T = any>(message: ChromeMessage): Promise<T> {
     return new Promise((resolve, reject) => {
       try {
+        // Check if extension context is still valid
+        if (!chrome.runtime?.id) {
+          reject(new Error("Extension context invalidated"));
+          return;
+        }
+
         chrome.runtime.sendMessage(message, (response) => {
           if (chrome.runtime.lastError) {
-            reject(chrome.runtime.lastError);
+            // Handle specific case of extension context invalidation
+            if (
+              chrome.runtime.lastError.message?.includes(
+                "Extension context invalidated",
+              )
+            ) {
+              console.warn(
+                "[PSP Detector] Extension was reloaded, stopping content script",
+              );
+              reject(new Error("Extension context invalidated"));
+            } else {
+              reject(chrome.runtime.lastError);
+            }
           } else {
             resolve(response);
           }
@@ -138,5 +194,13 @@ class ContentScript {
 // Initialize content script
 const contentScript = new ContentScript();
 contentScript.initialize().catch((error) => {
-  logger.error("Content script initialization failed:", error);
+  // Don't log errors if extension context is invalidated (expected during reloads)
+  if (
+    error instanceof Error &&
+    error.message.includes("Extension context invalidated")
+  ) {
+    console.warn("[PSP Detector] Extension context invalidated during startup");
+  } else {
+    logger.error("Content script initialization failed:", error);
+  }
 });

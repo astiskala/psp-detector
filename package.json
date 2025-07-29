@@ -1,10 +1,11 @@
 {
   "name": "psp-detector",
-  "version": "2.2025.729.1817",
+  "version": "2.2025.729.2159",
   "description": "Chrome extension to detect Payment Service Providers on web pages",
   "private": true,
   "scripts": {
     "build": "node build.js",
+    "build:debug": "DEBUG=true NO_SOURCEMAP=true node build.js",
     "test": "jest",
     "lint": "eslint .",
     "format": "prettier --write ."

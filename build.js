@@ -11,13 +11,15 @@ const mainEntryPoints = {
 
 const sharedConfig = {
   bundle: true,
-  minify: true,
-  sourcemap: true,
+  minify: !process.env.DEBUG,
+  sourcemap: process.env.NO_SOURCEMAP ? false : true,
   target: "es2020",
   format: "esm",
   platform: "browser",
   define: {
-    "process.env.NODE_ENV": '"production"',
+    "process.env.NODE_ENV": process.env.DEBUG
+      ? '"development"'
+      : '"production"',
   },
 };
 

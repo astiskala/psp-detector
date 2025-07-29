@@ -67,6 +67,25 @@ export class UIService {
   }
 
   /**
+   * Show PSP detection disabled state for exempt domains
+   * @return {void}
+   */
+  public showPSPDetectionDisabled(): void {
+    this.updateTextContent("name", "PSP detection disabled");
+    this.updateTextContent(
+      "description",
+      "PSP detection has been disabled on this website for performance or compatibility reasons.",
+    );
+    this.elements.notice.style.display = "none";
+    this.updateTextContent("notice", "");
+    this.updateLearnMoreLink(
+      "mailto:psp-detector@adamstiskala.com",
+      "Suggest Improvement",
+    );
+    this.updateImage("default", "PSP detection disabled");
+  }
+
+  /**
    * Show error state
    * @return {void}
    */

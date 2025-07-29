@@ -19,6 +19,11 @@ export interface PSPConfig {
 }
 
 /**
+ * Special return values for PSP detection
+ */
+export const PSP_DETECTION_EXEMPT = "__PSP_DETECTION_EXEMPT__";
+
+/**
  * Message actions for communication between extension components
  */
 export enum MessageAction {

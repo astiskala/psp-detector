@@ -4,6 +4,7 @@
  * @module popup
  */
 import { MessageAction } from "./types";
+import { PSP_DETECTION_EXEMPT } from "./types";
 import { UIService } from "./services/ui";
 import { logger } from "./lib/utils";
 
@@ -21,10 +22,18 @@ class PopupManager {
   public async initialize(): Promise<void> {
     try {
       const detectedPsp = await this.getDetectedPSP();
+
+      // Handle exempt domain case
+      if (detectedPsp === PSP_DETECTION_EXEMPT) {
+        this.ui.showPSPDetectionDisabled();
+        return;
+      }
+
       if (!detectedPsp) {
         this.ui.showNoPSPDetected();
         return;
       }
+
       const pspConfig = await this.getPSPConfig();
       const psp = pspConfig.psps.find(
         (p: { name: string }) => p.name === detectedPsp,

@@ -1,4 +1,5 @@
 import type { PSP, PSPConfig } from "../types";
+import { PSP_DETECTION_EXEMPT } from "../types";
 import { safeCompileRegex, logger } from "../lib/utils";
 
 /**
@@ -37,7 +38,7 @@ export class PSPDetectorService {
    * Detect PSP on the current page
    * @param {string} url - The URL to check
    * @param {string} content - The page content to scan
-   * @return {string|null} PSP name or null
+   * @return {string|null} PSP name, PSP_DETECTION_EXEMPT, or null
    */
   public detectPSP(url: string, content: string): string | null {
     if (!this.pspConfig || !this.exemptDomainsRegex) {
@@ -47,7 +48,7 @@ export class PSPDetectorService {
 
     if (!this.exemptDomainsRegex.test(url)) {
       logger.debug("URL is exempt from PSP detection:", url);
-      return null;
+      return PSP_DETECTION_EXEMPT;
     }
 
     const pageContent = `${url}\n\n${content}`;

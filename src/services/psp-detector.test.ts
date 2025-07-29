@@ -1,5 +1,6 @@
 import { PSPDetectorService } from "./psp-detector";
 import type { PSPConfig } from "../types";
+import { PSP_DETECTION_EXEMPT } from "../types";
 
 describe("PSPDetectorService", () => {
   const config: PSPConfig = {
@@ -69,5 +70,11 @@ describe("PSPDetectorService", () => {
       regex: "stripe\\.com",
     });
     expect(service.getPSPByName("Unknown")).toBeNull();
+  });
+
+  it("should return PSP_DETECTION_EXEMPT for exempt domains", () => {
+    const url = "https://example.com/checkout";
+    const content = '<script src="https://js.stripe.com/v3/"></script>';
+    expect(service.detectPSP(url, content)).toBe(PSP_DETECTION_EXEMPT);
   });
 });

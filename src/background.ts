@@ -4,6 +4,7 @@
  * @module background
  */
 import { MessageAction, PSP } from "./types";
+import { PSP_DETECTION_EXEMPT } from "./types";
 import { DEFAULT_ICONS } from "./types/background";
 import { logger } from "./lib/utils";
 
@@ -156,7 +157,12 @@ class BackgroundService {
       this.config.detectedPsp = data.psp;
       if (data.tabId === this.config.currentTabId) {
         this.config.tabPsps.set(this.config.currentTabId, data.psp);
-        this.updateIcon(data.psp);
+        // Handle different PSP detection states
+        if (data.psp === PSP_DETECTION_EXEMPT) {
+          this.showExemptDomainIcon();
+        } else {
+          this.updateIcon(data.psp);
+        }
       }
     } else {
       this.resetIcon();
@@ -190,7 +196,12 @@ class BackgroundService {
     try {
       const tab = await chrome.tabs.get(activeInfo.tabId);
       if (this.config.detectedPsp) {
-        this.updateIcon(this.config.detectedPsp);
+        // Handle different PSP detection states
+        if (this.config.detectedPsp === PSP_DETECTION_EXEMPT) {
+          this.showExemptDomainIcon();
+        } else {
+          this.updateIcon(this.config.detectedPsp);
+        }
       } else {
         this.resetIcon();
         if (tab?.url && this.config.exemptDomainsRegex?.test(tab.url)) {
@@ -245,6 +256,24 @@ class BackgroundService {
         },
       });
     }
+    // Clear any badge when showing PSP icon
+    chrome.action.setBadgeText({ text: "" });
+  }
+
+  /**
+   * Show exempt domain icon with warning badge
+   * @private
+   * @return {void}
+   */
+  showExemptDomainIcon(): void {
+    // Set default icon
+    chrome.action.setIcon({
+      path: DEFAULT_ICONS,
+    });
+    // Add warning badge
+    chrome.action.setBadgeText({ text: "!" });
+    chrome.action.setBadgeBackgroundColor({ color: "#d3d3d3" });
+    logger.debug("Showing exempt domain icon with warning badge");
   }
 
   /**
@@ -256,6 +285,8 @@ class BackgroundService {
     chrome.action.setIcon({
       path: DEFAULT_ICONS,
     });
+    // Clear any badge
+    chrome.action.setBadgeText({ text: "" });
   }
 
   /**
