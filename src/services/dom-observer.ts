@@ -34,7 +34,7 @@ export class DOMObserverService {
    */
   public startObserving(): void {
     if (!this.observer || this.isObserving) return;
-    const start = () => {
+    const start = (): void => {
       if (!document.body) {
         document.addEventListener("DOMContentLoaded", start, { once: true });
         return;

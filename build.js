@@ -23,6 +23,10 @@ const sharedConfig = {
   },
 };
 
+/**
+ * Generate PSP images in different sizes
+ * @returns {Promise<void>}
+ */
 async function generatePspImages() {
   const srcDir = path.join(__dirname, "assets", "images");
   const distDir = path.join(__dirname, "dist", "images");
@@ -61,6 +65,10 @@ async function generatePspImages() {
   }
 }
 
+/**
+ * Build extension files
+ * @returns {Promise<void>}
+ */
 async function buildFiles() {
   try {
     // 1) compute version

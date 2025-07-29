@@ -1,18 +1,21 @@
 // Enhanced MutationObserver mock for Jest/JSDOM
 global.MutationObserver = class {
-  constructor(callback: any) {
+  constructor(callback: MutationCallback) {
     this.callback = callback;
     this.observe = jest.fn(() => {
       // Simulate mutation when observe is called
-      const mutation = { type: "childList", addedNodes: [{}] };
+      const mutation = {
+        type: "childList",
+        addedNodes: [{}],
+      } as unknown as MutationRecord;
       setTimeout(() => this.callback([mutation], this), 0);
     });
     this.disconnect = jest.fn();
   }
-  callback: any;
+  callback: MutationCallback;
   observe: jest.Mock;
   disconnect: jest.Mock;
-  takeRecords() {
+  takeRecords(): MutationRecord[] {
     return [];
   }
 };

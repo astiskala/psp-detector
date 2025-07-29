@@ -41,7 +41,7 @@ describe("utils", () => {
   it("createContextError attaches context", () => {
     const err = createContextError("msg", { foo: 1 });
     expect(err).toBeInstanceOf(Error);
-    expect((err as any).context).toEqual({ foo: 1 });
+    expect((err as Error & { context: unknown }).context).toEqual({ foo: 1 });
   });
 
   it("logger methods do not throw", () => {

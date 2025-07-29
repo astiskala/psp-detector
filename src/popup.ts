@@ -3,7 +3,7 @@
  * Handles UI updates and communication with background script.
  * @module popup
  */
-import { MessageAction } from "./types";
+import { MessageAction, PSPConfig } from "./types";
 import { PSP_DETECTION_EXEMPT } from "./types";
 import { UIService } from "./services/ui";
 import { logger } from "./lib/utils";
@@ -70,9 +70,9 @@ class PopupManager {
   /**
    * Get PSP configuration from extension resource
    * @private
-   * @return {Promise<any>} PSP config object
+   * @return {Promise<PSPConfig>} PSP config object
    */
-  private async getPSPConfig(): Promise<any> {
+  private async getPSPConfig(): Promise<PSPConfig> {
     const response = await fetch(chrome.runtime.getURL("psp-config.json"));
     if (!response.ok) {
       throw new Error(`Failed to fetch PSP config: ${response.status}`);

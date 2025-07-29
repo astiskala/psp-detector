@@ -3,7 +3,7 @@ global.chrome = {
   runtime: {
     getURL: (path: string) => path,
   },
-} as any;
+} as unknown as typeof chrome;
 
 import { UIService } from "./ui";
 import type { PSP } from "../types";

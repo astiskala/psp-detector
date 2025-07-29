@@ -3,7 +3,16 @@
  * Handles messaging, tab events, icon updates, and content script injection.
  * @module background
  */
-import { MessageAction, PSP } from "./types";
+import {
+  MessageAction,
+  PSP,
+  BackgroundConfig,
+  ChromeMessage,
+  PSPDetectionData,
+  PSPConfigResponse,
+  PSPConfig,
+  PSPResponse,
+} from "./types";
 import { PSP_DETECTION_EXEMPT } from "./types";
 import { DEFAULT_ICONS } from "./types/background";
 import { logger } from "./lib/utils";
@@ -11,15 +20,8 @@ import { logger } from "./lib/utils";
 class BackgroundService {
   /**
    * Extension state/configuration
-   * @type {BackgroundConfig}
    */
-  config: {
-    cachedPspConfig: any;
-    exemptDomainsRegex: RegExp | null;
-    tabPsps: Map<any, any>;
-    detectedPsp: any;
-    currentTabId: number | null;
-  } = {
+  config: BackgroundConfig = {
     cachedPspConfig: null,
     exemptDomainsRegex: null,
     tabPsps: new Map(),
@@ -84,9 +86,9 @@ class BackgroundService {
    * @return {Promise<void>}
    */
   async handleMessage(
-    message: any,
+    message: ChromeMessage,
     sender: chrome.runtime.MessageSender,
-    sendResponse: (response?: any) => void,
+    sendResponse: (response?: unknown) => void,
   ): Promise<void> {
     try {
       switch (message.action) {
@@ -94,7 +96,7 @@ class BackgroundService {
           await this.handleGetPspConfig(sendResponse);
           break;
         case MessageAction.DETECT_PSP:
-          this.handleDetectPsp(message.data, sendResponse);
+          this.handleDetectPsp(message.data as PSPDetectionData, sendResponse);
           break;
         case MessageAction.GET_PSP:
           this.handleGetPsp(sendResponse);
@@ -124,7 +126,7 @@ class BackgroundService {
    * @return {Promise<void>}
    */
   async handleGetPspConfig(
-    sendResponse: (response?: { config: any } | null) => void,
+    sendResponse: (response?: PSPConfigResponse | null) => void,
   ): Promise<void> {
     if (this.config.cachedPspConfig) {
       sendResponse({ config: this.config.cachedPspConfig });
@@ -134,7 +136,7 @@ class BackgroundService {
       const response: Response = await fetch(
         chrome.runtime.getURL("psp-config.json"),
       );
-      this.config.cachedPspConfig = await response.json();
+      this.config.cachedPspConfig = (await response.json()) as PSPConfig;
       sendResponse({ config: this.config.cachedPspConfig });
     } catch (error) {
       logger.error("Failed to load PSP config:", error);
@@ -150,8 +152,8 @@ class BackgroundService {
    * @return {void}
    */
   handleDetectPsp(
-    data: { psp?: string; tabId?: number },
-    sendResponse: (response?: any) => void,
+    data: PSPDetectionData,
+    sendResponse: (response?: null) => void,
   ): void {
     if (data?.psp && this.config.currentTabId !== null) {
       this.config.detectedPsp = data.psp;
@@ -176,10 +178,11 @@ class BackgroundService {
    * @param {function} sendResponse - Response callback
    * @return {void}
    */
-  handleGetPsp(sendResponse: (response?: any) => void): void {
+  handleGetPsp(sendResponse: (response?: PSPResponse) => void): void {
     const psp = this.config.currentTabId
       ? this.config.detectedPsp ||
-        this.config.tabPsps.get(this.config.currentTabId)
+        this.config.tabPsps.get(this.config.currentTabId) ||
+        null
       : null;
     sendResponse({ psp });
   }

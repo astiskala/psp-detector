@@ -1,12 +1,13 @@
 import fs from "fs";
 import path from "path";
+import type { PSPConfig } from "../types";
 
 const configPath = path.resolve(__dirname, "../../public/psp-config.json");
 const srcImagesDir = path.resolve(__dirname, "../../assets/images");
 const distImagesDir = path.resolve(__dirname, "../../dist/images");
 
 describe("PSP image assets", () => {
-  let config: any;
+  let config: PSPConfig;
   beforeAll(() => {
     config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
   });

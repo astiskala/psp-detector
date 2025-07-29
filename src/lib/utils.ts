@@ -3,14 +3,14 @@
  * @param func - The function to debounce
  * @param wait - The number of milliseconds to wait
  */
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (...args: unknown[]) => unknown>(
   func: T,
   wait: number,
 ): (...args: Parameters<T>) => void {
   let timeout: NodeJS.Timeout | null = null;
 
   return (...args: Parameters<T>): void => {
-    const later = () => {
+    const later = (): void => {
       timeout = null;
       func(...args);
     };
@@ -83,18 +83,18 @@ export function createContextError(
  * Logger utility with different log levels
  */
 export const logger = {
-  debug: (message: string, ...args: any[]): void => {
+  debug: (message: string, ...args: unknown[]): void => {
     if (process.env.NODE_ENV === "development") {
       console.debug(message, ...args);
     }
   },
-  info: (message: string, ...args: any[]): void => {
+  info: (message: string, ...args: unknown[]): void => {
     console.log(message, ...args);
   },
-  warn: (message: string, ...args: any[]): void => {
+  warn: (message: string, ...args: unknown[]): void => {
     console.warn(message, ...args);
   },
-  error: (message: string, ...args: any[]): void => {
+  error: (message: string, ...args: unknown[]): void => {
     console.error(message, ...args);
   },
 };

@@ -5,7 +5,7 @@
  */
 import { PSPDetectorService } from "./services/psp-detector";
 import { DOMObserverService } from "./services/dom-observer";
-import { MessageAction, ChromeMessage } from "./types";
+import { MessageAction, ChromeMessage, PSPConfigResponse } from "./types";
 import { PSP_DETECTION_EXEMPT } from "./types";
 import { logger } from "./lib/utils";
 
@@ -82,7 +82,7 @@ class ContentScript {
    */
   private async initializePSPConfig(): Promise<void> {
     try {
-      const response = await this.sendMessage<{ config: any }>({
+      const response = await this.sendMessage<PSPConfigResponse>({
         action: MessageAction.GET_PSP_CONFIG,
       });
       if (response?.config) {
@@ -156,7 +156,7 @@ class ContentScript {
    * @param {ChromeMessage} message - Message to send
    * @return {Promise<T>} Response from background
    */
-  private sendMessage<T = any>(message: ChromeMessage): Promise<T> {
+  private sendMessage<T>(message: ChromeMessage): Promise<T> {
     return new Promise((resolve, reject) => {
       try {
         // Check if extension context is still valid

@@ -19,6 +19,17 @@ export interface PSPConfig {
 }
 
 /**
+ * Background service configuration
+ */
+export interface BackgroundConfig {
+  cachedPspConfig: PSPConfig | null;
+  exemptDomainsRegex: RegExp | null;
+  tabPsps: Map<number, string>;
+  detectedPsp: string | null;
+  currentTabId: number | null;
+}
+
+/**
  * Special return values for PSP detection
  */
 export const PSP_DETECTION_EXEMPT = "__PSP_DETECTION_EXEMPT__";
@@ -47,5 +58,27 @@ export interface PSPDetectionResponse {
  */
 export interface ChromeMessage {
   action: MessageAction;
-  data?: any;
+  data?: unknown;
+}
+
+/**
+ * PSP detection message data
+ */
+export interface PSPDetectionData {
+  psp?: string;
+  tabId?: number;
+}
+
+/**
+ * PSP config response
+ */
+export interface PSPConfigResponse {
+  config: PSPConfig;
+}
+
+/**
+ * PSP response
+ */
+export interface PSPResponse {
+  psp: string | null;
 }
