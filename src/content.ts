@@ -60,9 +60,17 @@ class ContentScript {
       this.setupDOMObserver();
       logger.timeEnd("setupDOMObserver");
 
-      logger.time("detectPSP");
-      this.detectPSP();
-      logger.timeEnd("detectPSP");
+      // Defer PSP detection to avoid blocking page load
+      const scheduleDetection = (): void => {
+        logger.time("detectPSP");
+        this.detectPSP();
+        logger.timeEnd("detectPSP");
+      };
+      if (typeof window.requestIdleCallback === "function") {
+        window.requestIdleCallback(scheduleDetection);
+      } else {
+        setTimeout(scheduleDetection, 0);
+      }
 
       logger.info("Content script initialized successfully");
     } catch (error) {
