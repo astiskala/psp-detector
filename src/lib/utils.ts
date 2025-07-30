@@ -145,17 +145,27 @@ export function createContextError(
 export const logger = {
   debug: (message: string, ...args: unknown[]): void => {
     if (process.env.NODE_ENV === "development") {
-      console.debug(message, ...args);
+      console.debug("[PSP Detector] " + message, ...args);
     }
   },
   info: (message: string, ...args: unknown[]): void => {
-    console.log(message, ...args);
+    console.log("[PSP Detector] " + message, ...args);
   },
   warn: (message: string, ...args: unknown[]): void => {
-    console.warn(message, ...args);
+    console.warn("[PSP Detector] " + message, ...args);
   },
   error: (message: string, ...args: unknown[]): void => {
-    console.error(message, ...args);
+    console.error("[PSP Detector] " + message, ...args);
+  },
+  time: (label: string): void => {
+    if (process.env.NODE_ENV === "development") {
+      console.time("[PSP Detector] " + label);
+    }
+  },
+  timeEnd: (label: string): void => {
+    if (process.env.NODE_ENV === "development") {
+      console.timeEnd("[PSP Detector] " + label);
+    }
   },
 };
 

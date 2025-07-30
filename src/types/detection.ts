@@ -11,7 +11,6 @@ export type PSPDetectionResult =
   | {
       readonly type: "detected";
       readonly psp: PSPName;
-      readonly confidence: number;
     }
   | { readonly type: "exempt"; readonly reason: string; readonly url: URL }
   | { readonly type: "none"; readonly scannedPatterns: number }
@@ -28,10 +27,9 @@ export const PSPDetectionResult = {
   /**
    * Create a detected result
    */
-  detected: (psp: PSPName, confidence: number = 1.0): PSPDetectionResult => ({
+  detected: (psp: PSPName): PSPDetectionResult => ({
     type: "detected",
     psp,
-    confidence: Math.max(0, Math.min(1, confidence)),
   }),
 
   /**

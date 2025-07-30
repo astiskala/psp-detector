@@ -57,24 +57,48 @@ export class PSPDetectorService {
       );
     }
 
+    logger.time("exemptDomainsCheck");
     if (!this.exemptDomainsRegex.test(url)) {
+      logger.timeEnd("exemptDomainsCheck");
       logger.debug("URL is exempt from PSP detection:", url);
       return PSPDetectionResult.exempt(
         "URL matches exempt domains pattern",
         brandedURL,
       );
     }
+    logger.timeEnd("exemptDomainsCheck");
 
-    const pageContent = `${url}\n\n${content}`;
+    logger.time("hostnameScanning");
     let scannedPatterns = 0;
+    const pageContent = `${url}\n\n${content}`;
 
+    // First, check hostname arrays (much faster)
     for (const psp of this.pspConfig.psps) {
       scannedPatterns++;
-      if (psp.compiledRegex && psp.compiledRegex.test(pageContent)) {
-        logger.info("PSP detected:", psp.name);
-        return PSPDetectionResult.detected(psp.name, 1.0);
+
+      if (psp.hostnames && psp.hostnames.length > 0) {
+        for (const hostname of psp.hostnames) {
+          if (pageContent.includes(hostname)) {
+            logger.timeEnd("hostnameScanning");
+            logger.info("PSP detected via hostname:", psp.name);
+            return PSPDetectionResult.detected(psp.name);
+          }
+        }
       }
     }
+    logger.timeEnd("hostnameScanning");
+
+    logger.time("regexScanning");
+
+    // Then, check regex patterns for PSPs that still use them
+    for (const psp of this.pspConfig.psps) {
+      if (psp.compiledRegex && psp.compiledRegex.test(pageContent)) {
+        logger.timeEnd("regexScanning");
+        logger.info("PSP detected via regex:", psp.name);
+        return PSPDetectionResult.detected(psp.name);
+      }
+    }
+    logger.timeEnd("regexScanning");
 
     return PSPDetectionResult.none(scannedPatterns);
   }
@@ -88,8 +112,10 @@ export class PSPDetectorService {
     if (!this.pspConfig) return;
 
     for (const psp of this.pspConfig.psps) {
-      const compiled = safeCompileRegex(psp.regex);
-      psp.compiledRegex = compiled === null ? undefined : compiled;
+      if (psp.regex) {
+        const compiled = safeCompileRegex(psp.regex);
+        psp.compiledRegex = compiled === null ? undefined : compiled;
+      }
     }
   }
 

@@ -12,6 +12,39 @@ describe("PSP image assets", () => {
     config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
   });
 
+  it("should have unique PSP names and images", () => {
+    const names = new Set();
+    const images = new Set();
+    for (const psp of config.psps) {
+      if (names.has(psp.name)) {
+        throw new Error(`Duplicate PSP name found: ${psp.name}`);
+      }
+      if (images.has(psp.image)) {
+        throw new Error(`Duplicate PSP image found: ${psp.image}`);
+      }
+      names.add(psp.name);
+      images.add(psp.image);
+    }
+  });
+
+  it("should have all required fields for each PSP", () => {
+    const requiredFields: (keyof PSPConfig["psps"][number])[] = [
+      "name",
+      "url",
+      "image",
+      "summary",
+    ];
+    for (const psp of config.psps) {
+      for (const field of requiredFields) {
+        if (!psp[field]) {
+          throw new Error(
+            `Missing required field '${field}' for PSP: ${JSON.stringify(psp)}`,
+          );
+        }
+      }
+    }
+  });
+
   it("should have an image (pspname.png) for every PSP in source", () => {
     const missing = [];
     for (const psp of config.psps) {
@@ -42,8 +75,13 @@ describe("PSP image assets", () => {
     expect(missing.length).toBe(0);
   });
 
-  it("should have valid regex for every PSP and not match every website", () => {
+  it("should have valid regex for every PSP with regex pattern and not match every website", () => {
     for (const psp of config.psps) {
+      // Skip PSPs that use hostname arrays instead of regex
+      if (!psp.regex) {
+        continue;
+      }
+
       let regex: RegExp | null = null;
       try {
         regex = new RegExp(psp.regex, "i");
