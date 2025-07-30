@@ -85,7 +85,7 @@ class PopupManager {
    * @return {Promise<PSPConfig>} PSP config object
    */
   private async getPSPConfig(): Promise<PSPConfig> {
-    const response = await fetch(chrome.runtime.getURL("psp-config.json"));
+    const response = await fetch(chrome.runtime.getURL("psps.json"));
     if (!response.ok) {
       throw new Error(`Failed to fetch PSP config: ${response.status}`);
     }

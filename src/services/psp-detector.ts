@@ -68,29 +68,26 @@ export class PSPDetectorService {
     }
     logger.timeEnd("exemptDomainsCheck");
 
-    logger.time("hostnameScanning");
+    logger.time("matchStringsScanning");
     let scannedPatterns = 0;
     const pageContent = `${url}\n\n${content}`;
 
-    // First, check hostname arrays (much faster)
     for (const psp of this.pspConfig.psps) {
       scannedPatterns++;
 
-      if (psp.hostnames && psp.hostnames.length > 0) {
-        for (const hostname of psp.hostnames) {
-          if (pageContent.includes(hostname)) {
-            logger.timeEnd("hostnameScanning");
-            logger.info("PSP detected via hostname:", psp.name);
+      if (psp.matchStrings && psp.matchStrings.length > 0) {
+        for (const matchString of psp.matchStrings) {
+          if (pageContent.includes(matchString)) {
+            logger.timeEnd("matchStringsScanning");
+            logger.info("PSP detected via matchStrings:", psp.name);
             return PSPDetectionResult.detected(psp.name);
           }
         }
       }
     }
-    logger.timeEnd("hostnameScanning");
+    logger.timeEnd("matchStringsScanning");
 
     logger.time("regexScanning");
-
-    // Then, check regex patterns for PSPs that still use them
     for (const psp of this.pspConfig.psps) {
       if (psp.compiledRegex && psp.compiledRegex.test(pageContent)) {
         logger.timeEnd("regexScanning");

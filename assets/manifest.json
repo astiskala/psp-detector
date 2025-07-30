@@ -33,7 +33,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["images/*", "psp-config.json", "exempt-domains.json"],
+      "resources": ["images/*", "psps.json", "exempt-domains.json"],
       "matches": ["https://*/*"]
     }
   ]

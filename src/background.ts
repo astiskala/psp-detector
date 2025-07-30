@@ -135,7 +135,7 @@ class BackgroundService {
     }
     try {
       const response: Response = await fetch(
-        chrome.runtime.getURL("psp-config.json"),
+        chrome.runtime.getURL("psps.json"),
       );
       this.config.cachedPspConfig = (await response.json()) as PSPConfig;
       sendResponse({ config: this.config.cachedPspConfig });

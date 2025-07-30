@@ -93,19 +93,19 @@ describe("PSPDetectorService", () => {
     expect(PSPDetectionResult.isExempt(result)).toBe(true);
   });
 
-  it("should detect PSP using hostname arrays", () => {
-    const configWithHostnames: PSPConfig = {
+  it("should detect PSP using string arrays", () => {
+    const configWithMatchStrings: PSPConfig = {
       psps: [
         {
           name: TypeConverters.toPSPName("Stripe")!,
-          hostnames: ["checkout.stripe.com", "js.stripe.com"],
+          matchStrings: ["checkout.stripe.com", "js.stripe.com"],
           url: TypeConverters.toURL("https://stripe.com")!,
           image: "stripe",
           summary: "Stripe summary",
         },
         {
           name: TypeConverters.toPSPName("Adyen")!,
-          hostnames: ["checkoutshopper-live.adyen.com", "cdn.adyen.com"],
+          matchStrings: ["checkoutshopper-live.adyen.com", "cdn.adyen.com"],
           url: TypeConverters.toURL("https://adyen.com")!,
           image: "adyen",
           summary: "Adyen summary",
@@ -113,17 +113,17 @@ describe("PSPDetectorService", () => {
       ],
     };
 
-    const hostnameService = new PSPDetectorService();
-    hostnameService.initialize(configWithHostnames);
+    const pspDetectorService = new PSPDetectorService();
+    pspDetectorService.initialize(configWithMatchStrings);
     // Simulate the exempt domains pattern that excludes common sites but allows payment processors
-    hostnameService.setExemptDomainsPattern(
+    pspDetectorService.setExemptDomainsPattern(
       "^https://(?!.*(example\\.com|google\\.com))",
     );
 
     // Test direct hostname match
     const stripeUrl = "https://checkout.stripe.com/session/pay_123";
     const stripeContent = "<div>Stripe checkout</div>";
-    const stripeResult = hostnameService.detectPSP(stripeUrl, stripeContent);
+    const stripeResult = pspDetectorService.detectPSP(stripeUrl, stripeContent);
     expect(PSPDetectionResult.isDetected(stripeResult)).toBe(true);
     if (PSPDetectionResult.isDetected(stripeResult)) {
       expect(stripeResult.psp).toBe("Stripe");
@@ -132,7 +132,7 @@ describe("PSPDetectorService", () => {
     // Test subdomain match
     const adyenUrl = "https://checkoutshopper-live.adyen.com/checkout";
     const adyenContent = "<div>Adyen checkout</div>";
-    const adyenResult = hostnameService.detectPSP(adyenUrl, adyenContent);
+    const adyenResult = pspDetectorService.detectPSP(adyenUrl, adyenContent);
     expect(PSPDetectionResult.isDetected(adyenResult)).toBe(true);
     if (PSPDetectionResult.isDetected(adyenResult)) {
       expect(adyenResult.psp).toBe("Adyen");
@@ -141,19 +141,19 @@ describe("PSPDetectorService", () => {
     // Test no match (should be exempt due to example.com being in exempt domains)
     const nonMatchUrl = "https://example.com/checkout";
     const nonMatchContent = "<div>Generic checkout</div>";
-    const nonMatchResult = hostnameService.detectPSP(
+    const nonMatchResult = pspDetectorService.detectPSP(
       nonMatchUrl,
       nonMatchContent,
     );
     expect(PSPDetectionResult.isExempt(nonMatchResult)).toBe(true);
   });
 
-  it("should detect PSP hostnames in page content (not just URL)", () => {
-    const configWithHostnames: PSPConfig = {
+  it("should detect PSP matchString in page content (not just URL)", () => {
+    const configWithMatchStrings: PSPConfig = {
       psps: [
         {
           name: TypeConverters.toPSPName("Stripe")!,
-          hostnames: ["js.stripe.com", "checkout.stripe.com"],
+          matchStrings: ["js.stripe.com", "checkout.stripe.com"],
           url: TypeConverters.toURL("https://stripe.com")!,
           image: "stripe",
           summary: "Stripe summary",
@@ -161,15 +161,17 @@ describe("PSPDetectorService", () => {
       ],
     };
 
-    const hostnameService = new PSPDetectorService();
-    hostnameService.initialize(configWithHostnames);
-    hostnameService.setExemptDomainsPattern("^https://(?!.*(example\\.com))");
+    const pspDetectorService = new PSPDetectorService();
+    pspDetectorService.initialize(configWithMatchStrings);
+    pspDetectorService.setExemptDomainsPattern(
+      "^https://(?!.*(example\\.com))",
+    );
 
     // Test hostname detection in script tag
     const shopUrl = "https://shop.merchant.com/checkout";
     const stripeScriptContent =
       '<script src="https://js.stripe.com/v3/"></script><div>Payment form</div>';
-    const scriptResult = hostnameService.detectPSP(
+    const scriptResult = pspDetectorService.detectPSP(
       shopUrl,
       stripeScriptContent,
     );
@@ -182,7 +184,10 @@ describe("PSPDetectorService", () => {
     const merchantUrl = "https://ecommerce.site.com/payment";
     const iframeContent =
       '<iframe src="https://checkout.stripe.com/sessions/pay_123"></iframe>';
-    const iframeResult = hostnameService.detectPSP(merchantUrl, iframeContent);
+    const iframeResult = pspDetectorService.detectPSP(
+      merchantUrl,
+      iframeContent,
+    );
     expect(PSPDetectionResult.isDetected(iframeResult)).toBe(true);
     if (PSPDetectionResult.isDetected(iframeResult)) {
       expect(iframeResult.psp).toBe("Stripe");
@@ -192,7 +197,7 @@ describe("PSPDetectorService", () => {
     const checkoutUrl = "https://store.example.org/pay";
     const formContent =
       '<form action="https://checkout.stripe.com/submit" method="post"></form>';
-    const formResult = hostnameService.detectPSP(checkoutUrl, formContent);
+    const formResult = pspDetectorService.detectPSP(checkoutUrl, formContent);
     expect(PSPDetectionResult.isDetected(formResult)).toBe(true);
     if (PSPDetectionResult.isDetected(formResult)) {
       expect(formResult.psp).toBe("Stripe");

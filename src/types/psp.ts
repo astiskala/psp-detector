@@ -9,7 +9,7 @@ import type { PSPName, RegexPattern, URL } from "./branded";
 export interface PSP {
   name: PSPName;
   regex?: RegexPattern;
-  hostnames?: string[];
+  matchStrings?: string[];
   url: URL;
   image: string;
   summary: string;

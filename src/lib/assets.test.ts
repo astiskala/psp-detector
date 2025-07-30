@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import type { PSPConfig } from "../types";
 
-const configPath = path.resolve(__dirname, "../../public/psp-config.json");
+const configPath = path.resolve(__dirname, "../../public/psps.json");
 const srcImagesDir = path.resolve(__dirname, "../../assets/images");
 const distImagesDir = path.resolve(__dirname, "../../dist/images");
 
