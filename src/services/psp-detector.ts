@@ -154,18 +154,4 @@ export class PSPDetectorService {
       return false;
     }
   }
-
-  /**
-   * Validate and convert a string to PSPName
-   * @param {string} name - String to validate
-   * @return {PSPName|null} Branded PSPName or null if invalid
-   */
-  public validatePSPName(name: string): PSPName | null {
-    if (!this.pspConfig) {
-      return null;
-    }
-
-    const psp = this.pspConfig.psps.find((p) => p.name === name);
-    return psp ? TypeConverters.toPSPName(name) : null;
-  }
 }

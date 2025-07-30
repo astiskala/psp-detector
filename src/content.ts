@@ -47,50 +47,61 @@ class ContentScript {
       return;
     }
 
-    try {
-      logger.time("initializeExemptDomains");
-      await this.initializeExemptDomains();
-      logger.timeEnd("initializeExemptDomains");
+    // Defer configuration and observer setup to idle time
+    const setup = async (): Promise<void> => {
+      try {
+        logger.time("initializeExemptDomains");
+        await this.initializeExemptDomains();
+        logger.timeEnd("initializeExemptDomains");
 
-      logger.time("initializePSPConfig");
-      await this.initializePSPConfig();
-      logger.timeEnd("initializePSPConfig");
+        logger.time("initializePSPConfig");
+        await this.initializePSPConfig();
+        logger.timeEnd("initializePSPConfig");
 
-      logger.time("setupDOMObserver");
-      this.setupDOMObserver();
-      logger.timeEnd("setupDOMObserver");
+        logger.time("setupDOMObserver");
+        this.setupDOMObserver();
+        logger.timeEnd("setupDOMObserver");
 
-      // Defer PSP detection to avoid blocking page load
-      const scheduleDetection = (): void => {
-        logger.time("detectPSP");
-        this.detectPSP();
-        logger.timeEnd("detectPSP");
-      };
-      if (typeof window.requestIdleCallback === "function") {
-        window.requestIdleCallback(scheduleDetection);
-      } else {
-        setTimeout(scheduleDetection, 0);
+        // Schedule initial detection
+        if (typeof window.requestIdleCallback === "function") {
+          window.requestIdleCallback((): void => {
+            void this.detectPSP();
+          });
+        } else {
+          setTimeout((): void => {
+            void this.detectPSP();
+          }, 0);
+        }
+
+        logger.info("Content script initialized successfully");
+      } catch (error) {
+        if (
+          error instanceof Error &&
+          error.message.includes("Extension context invalidated")
+        ) {
+          logger.warn("Extension context invalidated during initialization");
+          return;
+        }
+        const contextError = createContextError(
+          "Failed to initialize content script",
+          {
+            component: "ContentScript",
+            action: "initialize",
+          },
+        );
+        reportError(contextError);
+        logger.error("Failed to initialize content script:", error);
       }
+    };
 
-      logger.info("Content script initialized successfully");
-    } catch (error) {
-      // Handle extension context invalidation during initialization
-      if (
-        error instanceof Error &&
-        error.message.includes("Extension context invalidated")
-      ) {
-        logger.warn("Extension context invalidated during initialization");
-        return;
-      }
-      const contextError = createContextError(
-        "Failed to initialize content script",
-        {
-          component: "ContentScript",
-          action: "initialize",
-        },
-      );
-      reportError(contextError);
-      logger.error("Failed to initialize content script:", error);
+    if (typeof window.requestIdleCallback === "function") {
+      window.requestIdleCallback((): void => {
+        void setup();
+      });
+    } else {
+      setTimeout((): void => {
+        void setup();
+      }, 0);
     }
   } /**
    * Initialize exempt domains configuration
@@ -166,10 +177,25 @@ class ContentScript {
       return;
     }
 
-    const result = this.pspDetector.detectPSP(
-      url,
-      document.documentElement.outerHTML,
-    );
+    // Collect relevant URLs to scan instead of full HTML
+    const scriptSrcs = Array.from(document.scripts)
+      .map((s) => s.src)
+      .filter(Boolean);
+    const iframeSrcs = Array.from(document.querySelectorAll("iframe"))
+      .map((i) => (i as HTMLIFrameElement).src)
+      .filter(Boolean);
+    const formActions = Array.from(document.forms)
+      .map((f) => (f as HTMLFormElement).action)
+      .filter(Boolean);
+
+    const scanContent = [
+      document.URL,
+      ...scriptSrcs,
+      ...iframeSrcs,
+      ...formActions,
+    ].join("\n");
+
+    const result = this.pspDetector.detectPSP(url, scanContent);
 
     switch (result.type) {
       case "detected":
