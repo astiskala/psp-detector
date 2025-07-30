@@ -42,6 +42,11 @@ class ContentScript {
       return;
     }
 
+    if (this.pspDetected) {
+      logger.info("PSP already detected, skipping initialization");
+      return;
+    }
+
     try {
       logger.time("initializeExemptDomains");
       await this.initializeExemptDomains();
@@ -205,9 +210,9 @@ class ContentScript {
           });
         }
       }
-      // Only mark as detected and stop observing for actual PSPs, not exempt domains
+      // Mark as detected for all PSPs, including exempt domains
+      this.pspDetected = true;
       if (detectedPsp !== PSP_DETECTION_EXEMPT) {
-        this.pspDetected = true;
         this.domObserver.stopObserving();
       }
     } catch (error) {
