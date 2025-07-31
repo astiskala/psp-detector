@@ -70,19 +70,23 @@ export interface ContextualError extends Error {
 }
 
 /**
- * Check if a URL should be excluded from PSP detection
- * @param url - The URL to check
- * @param exemptDomains - Array of exempt domain strings
+ * Error context interface for debugging
  */
-export function isUrlExempt(url: string, exemptDomains: string[]): boolean {
-  try {
-    // Simple check: if the URL contains any of the exempt domain strings,
-    // it's exempt
-    return exemptDomains.some((domain) => url.includes(domain));
-  } catch (error) {
-    console.error('Error checking URL exemption:', error);
-    return false; // If error, assume not exempt to be safe
-  }
+export interface ErrorContext {
+  timestamp: number;
+  url?: string;
+  userAgent?: string;
+  tabId?: number;
+  pspName?: string;
+  elementCount?: number;
+  mutationCount?: number;
+}
+
+/**
+ * Enhanced error interface with context
+ */
+export interface ContextualError extends Error {
+  context?: ErrorContext;
 }
 
 /**

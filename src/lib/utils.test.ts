@@ -2,7 +2,6 @@ import {
   debounce,
   createSafeUrl,
   safeCompileRegex,
-  isUrlExempt,
   createContextError,
   logger,
   reportError,
@@ -33,14 +32,6 @@ describe('utils', () => {
   it('safeCompileRegex returns RegExp or null', () => {
     expect(safeCompileRegex('abc')).toBeInstanceOf(RegExp);
     expect(safeCompileRegex('[')).toBeNull();
-  });
-
-  it('isUrlExempt returns correct boolean', () => {
-    const exemptDomains = ['example.com', 'test.org'];
-    expect(isUrlExempt('https://example.com/page', exemptDomains)).toBe(true);
-    expect(isUrlExempt('https://test.org/path', exemptDomains)).toBe(true);
-    expect(isUrlExempt('https://other.com', exemptDomains)).toBe(false);
-    expect(isUrlExempt('https://different.net', exemptDomains)).toBe(false);
   });
 
   it('createContextError attaches context', () => {
