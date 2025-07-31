@@ -6,7 +6,7 @@ import type { PSPName, TabId } from "./branded";
  */
 export interface BackgroundConfig {
   cachedPspConfig: PSPConfig | null;
-  exemptDomainsRegex: RegExp | null;
+  exemptDomains: string[];
   tabPsps: Map<TabId, PSPName>;
   detectedPsp: PSPName | null;
   currentTabId: TabId | null;
@@ -19,7 +19,7 @@ export interface MessageResponse {
   config?: PSPConfig;
   psp?: PSPName | null;
   tabId?: TabId;
-  regex?: string;
+  exemptDomains?: string[];
 }
 
 /**

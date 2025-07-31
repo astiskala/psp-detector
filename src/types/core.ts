@@ -16,5 +16,5 @@ export enum MessageAction {
   DETECT_PSP = "detectPsp",
   GET_PSP = "getPsp",
   GET_TAB_ID = "getTabId",
-  GET_EXEMPT_DOMAINS_REGEX = "getExemptDomainsRegex",
+  GET_EXEMPT_DOMAINS = "getExemptDomains",
 }

@@ -34,7 +34,7 @@ describe("PSPDetectorService", () => {
   beforeEach(() => {
     service = new PSPDetectorService();
     service.initialize(config);
-    service.setExemptDomainsPattern("^https://(?!.*(example.com))");
+    service.setExemptDomains(["example.com", "test.org"]);
   });
 
   it("should initialize with config", () => {
@@ -115,10 +115,8 @@ describe("PSPDetectorService", () => {
 
     const pspDetectorService = new PSPDetectorService();
     pspDetectorService.initialize(configWithMatchStrings);
-    // Simulate the exempt domains pattern that excludes common sites but allows payment processors
-    pspDetectorService.setExemptDomainsPattern(
-      "^https://(?!.*(example\\.com|google\\.com))",
-    );
+    // Set exempt domains
+    pspDetectorService.setExemptDomains(["example.com", "google.com"]);
 
     // Test direct hostname match
     const stripeUrl = "https://checkout.stripe.com/session/pay_123";
@@ -163,9 +161,7 @@ describe("PSPDetectorService", () => {
 
     const pspDetectorService = new PSPDetectorService();
     pspDetectorService.initialize(configWithMatchStrings);
-    pspDetectorService.setExemptDomainsPattern(
-      "^https://(?!.*(example\\.com))",
-    );
+    pspDetectorService.setExemptDomains(["example.com"]);
 
     // Test hostname detection in script tag
     const shopUrl = "https://shop.merchant.com/checkout";

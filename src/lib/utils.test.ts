@@ -36,9 +36,11 @@ describe("utils", () => {
   });
 
   it("isUrlExempt returns correct boolean", () => {
-    const pattern = /example/;
-    expect(isUrlExempt("https://example.com", pattern)).toBe(false);
-    expect(isUrlExempt("https://test.com", pattern)).toBe(true);
+    const exemptDomains = ["example.com", "test.org"];
+    expect(isUrlExempt("https://example.com/page", exemptDomains)).toBe(true);
+    expect(isUrlExempt("https://test.org/path", exemptDomains)).toBe(true);
+    expect(isUrlExempt("https://other.com", exemptDomains)).toBe(false);
+    expect(isUrlExempt("https://different.net", exemptDomains)).toBe(false);
   });
 
   it("createContextError attaches context", () => {

@@ -24,7 +24,7 @@ class BackgroundService {
    */
   config: BackgroundConfig = {
     cachedPspConfig: null,
-    exemptDomainsRegex: null,
+    exemptDomains: [],
     tabPsps: new Map(),
     detectedPsp: null,
     currentTabId: null,
@@ -66,16 +66,26 @@ class BackgroundService {
         chrome.runtime.getURL("exempt-domains.json"),
       );
       const data = await response.json();
-      const domainPattern = Array.isArray(data.exemptDomains)
-        ? data.exemptDomains.join("|")
-        : "";
-      this.config.exemptDomainsRegex = new RegExp(
-        `^https://(?!.*(${domainPattern}))`,
-      );
+      this.config.exemptDomains = Array.isArray(data.exemptDomains)
+        ? data.exemptDomains
+        : [];
     } catch (error) {
       logger.error("Failed to load exempt domains:", error);
-      this.config.exemptDomainsRegex = null;
+      this.config.exemptDomains = [];
     }
+  }
+
+  /**
+   * Check if a URL is exempt from PSP detection
+   * @private
+   * @param {string} url - URL to check
+   * @return {boolean} True if URL is exempt
+   */
+  private isUrlExempt(url: string): boolean {
+    if (!url || this.config.exemptDomains.length === 0) {
+      return false;
+    }
+    return this.config.exemptDomains.some((domain) => url.includes(domain));
   }
 
   /**
@@ -107,8 +117,8 @@ class BackgroundService {
             sendResponse({ tabId: sender.tab.id });
           }
           break;
-        case MessageAction.GET_EXEMPT_DOMAINS_REGEX:
-          sendResponse({ regex: this.config.exemptDomainsRegex?.source });
+        case MessageAction.GET_EXEMPT_DOMAINS:
+          sendResponse({ exemptDomains: this.config.exemptDomains });
           break;
         default:
           logger.warn("Unknown message action:", message.action);
@@ -215,7 +225,7 @@ class BackgroundService {
           }
         } else {
           this.resetIcon();
-          if (tab?.url && this.config.exemptDomainsRegex?.test(tab.url)) {
+          if (tab?.url && !this.isUrlExempt(tab.url)) {
             await this.injectContentScript(activeInfo.tabId);
           }
         }
@@ -247,7 +257,7 @@ class BackgroundService {
     if (
       changeInfo.status === "complete" &&
       tab.url &&
-      this.config.exemptDomainsRegex?.test(tab.url)
+      !this.isUrlExempt(tab.url)
     ) {
       this.injectContentScript(tabId);
     }

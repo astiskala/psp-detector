@@ -110,11 +110,11 @@ class ContentScript {
    */
   private async initializeExemptDomains(): Promise<void> {
     try {
-      const response = await this.sendMessage<{ regex: string }>({
-        action: MessageAction.GET_EXEMPT_DOMAINS_REGEX,
+      const response = await this.sendMessage<{ exemptDomains: string[] }>({
+        action: MessageAction.GET_EXEMPT_DOMAINS,
       });
-      if (response?.regex) {
-        this.pspDetector.setExemptDomainsPattern(response.regex);
+      if (response?.exemptDomains) {
+        this.pspDetector.setExemptDomains(response.exemptDomains);
       }
     } catch (error) {
       reportError(
