@@ -6,10 +6,10 @@
 /**
  * Branded type definitions
  */
-export type PSPName = string & { readonly __brand: "PSPName" };
-export type TabId = number & { readonly __brand: "TabId" };
-export type URL = string & { readonly __brand: "URL" };
-export type RegexPattern = string & { readonly __brand: "RegexPattern" };
+export type PSPName = string & { readonly __brand: 'PSPName' };
+export type TabId = number & { readonly __brand: 'TabId' };
+export type URL = string & { readonly __brand: 'URL' };
+export type RegexPattern = string & { readonly __brand: 'RegexPattern' };
 
 /**
  * Branded type creation and validation helpers
@@ -17,7 +17,7 @@ export type RegexPattern = string & { readonly __brand: "RegexPattern" };
 export const PSPNameHelpers = {
   create: (name: string): PSPName => {
     if (!name || name.trim().length === 0) {
-      throw new Error("PSP name cannot be empty");
+      throw new Error('PSP name cannot be empty');
     }
     return name as PSPName;
   },
@@ -29,7 +29,7 @@ export const PSPNameHelpers = {
 export const TabIdHelpers = {
   create: (id: number): TabId => {
     if (!Number.isInteger(id) || id < 0) {
-      throw new Error("Tab ID must be a non-negative integer");
+      throw new Error('Tab ID must be a non-negative integer');
     }
     return id as TabId;
   },

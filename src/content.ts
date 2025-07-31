@@ -1,23 +1,24 @@
 /**
  * Content script for PSP Detector Chrome Extension.
- * Handles DOM observation, PSP detection, and communication with background script.
+ * Handles DOM observation, PSP detection, and communication with
+ * background script.
  * @module content
  */
-import { PSPDetectorService } from "./services/psp-detector";
-import { DOMObserverService } from "./services/dom-observer";
+import {PSPDetectorService} from './services/psp-detector';
+import {DOMObserverService} from './services/dom-observer';
 import {
   MessageAction,
   ChromeMessage,
   PSPConfigResponse,
   TypeConverters,
-} from "./types";
-import { PSP_DETECTION_EXEMPT } from "./types";
+} from './types';
+import {PSP_DETECTION_EXEMPT} from './types';
 import {
   logger,
   reportError,
   createContextError,
   memoryUtils,
-} from "./lib/utils";
+} from './lib/utils';
 
 class ContentScript {
   private pspDetector: PSPDetectorService;
@@ -34,36 +35,36 @@ class ContentScript {
    * @return {Promise<void>}
    */
   public async initialize(): Promise<void> {
-    logger.info("Initializing content script");
+    logger.info('Initializing content script');
 
     // Check if extension context is still valid before proceeding
     if (!chrome.runtime?.id) {
-      logger.warn("Extension context invalidated, skipping initialization");
+      logger.warn('Extension context invalidated, skipping initialization');
       return;
     }
 
     if (this.pspDetected) {
-      logger.info("PSP already detected, skipping initialization");
+      logger.info('PSP already detected, skipping initialization');
       return;
     }
 
     // Defer configuration and observer setup to idle time
-    const setup = async (): Promise<void> => {
+    const setup = async(): Promise<void> => {
       try {
-        logger.time("initializeExemptDomains");
+        logger.time('initializeExemptDomains');
         await this.initializeExemptDomains();
-        logger.timeEnd("initializeExemptDomains");
+        logger.timeEnd('initializeExemptDomains');
 
-        logger.time("initializePSPConfig");
+        logger.time('initializePSPConfig');
         await this.initializePSPConfig();
-        logger.timeEnd("initializePSPConfig");
+        logger.timeEnd('initializePSPConfig');
 
-        logger.time("setupDOMObserver");
+        logger.time('setupDOMObserver');
         this.setupDOMObserver();
-        logger.timeEnd("setupDOMObserver");
+        logger.timeEnd('setupDOMObserver');
 
         // Schedule initial detection
-        if (typeof window.requestIdleCallback === "function") {
+        if (typeof window.requestIdleCallback === 'function') {
           window.requestIdleCallback((): void => {
             void this.detectPSP();
           });
@@ -73,28 +74,28 @@ class ContentScript {
           }, 0);
         }
 
-        logger.info("Content script initialized successfully");
+        logger.info('Content script initialized successfully');
       } catch (error) {
         if (
           error instanceof Error &&
-          error.message.includes("Extension context invalidated")
+          error.message.includes('Extension context invalidated')
         ) {
-          logger.warn("Extension context invalidated during initialization");
+          logger.warn('Extension context invalidated during initialization');
           return;
         }
         const contextError = createContextError(
-          "Failed to initialize content script",
+          'Failed to initialize content script',
           {
-            component: "ContentScript",
-            action: "initialize",
+            component: 'ContentScript',
+            action: 'initialize',
           },
         );
         reportError(contextError);
-        logger.error("Failed to initialize content script:", error);
+        logger.error('Failed to initialize content script:', error);
       }
     };
 
-    if (typeof window.requestIdleCallback === "function") {
+    if (typeof window.requestIdleCallback === 'function') {
       window.requestIdleCallback((): void => {
         void setup();
       });
@@ -118,12 +119,12 @@ class ContentScript {
       }
     } catch (error) {
       reportError(
-        createContextError("Failed to initialize exempt domains", {
-          component: "ContentScript",
-          action: "initializeExemptDomains",
+        createContextError('Failed to initialize exempt domains', {
+          component: 'ContentScript',
+          action: 'initializeExemptDomains',
         }),
       );
-      logger.error("Failed to initialize exempt domains:", error);
+      logger.error('Failed to initialize exempt domains:', error);
     }
   }
 
@@ -142,12 +143,12 @@ class ContentScript {
       }
     } catch (error) {
       reportError(
-        createContextError("Failed to initialize PSP config", {
-          component: "ContentScript",
-          action: "initializePSPConfig",
+        createContextError('Failed to initialize PSP config', {
+          component: 'ContentScript',
+          action: 'initializePSPConfig',
         }),
       );
-      logger.error("Failed to initialize PSP config:", error);
+      logger.error('Failed to initialize PSP config:', error);
     }
   }
 
@@ -173,7 +174,7 @@ class ContentScript {
 
     const url = TypeConverters.toURL(document.URL);
     if (!url) {
-      logger.warn("Invalid URL for PSP detection:", document.URL);
+      logger.warn('Invalid URL for PSP detection:', document.URL);
       return;
     }
 
@@ -181,7 +182,7 @@ class ContentScript {
     const scriptSrcs = Array.from(document.scripts)
       .map((s) => s.src)
       .filter(Boolean);
-    const iframeSrcs = Array.from(document.querySelectorAll("iframe"))
+    const iframeSrcs = Array.from(document.querySelectorAll('iframe'))
       .map((i) => (i as HTMLIFrameElement).src)
       .filter(Boolean);
     const formActions = Array.from(document.forms)
@@ -193,29 +194,29 @@ class ContentScript {
       ...scriptSrcs,
       ...iframeSrcs,
       ...formActions,
-    ].join("\n");
+    ].join('\n');
 
     const result = this.pspDetector.detectPSP(url, scanContent);
 
     switch (result.type) {
-      case "detected":
-        await this.handlePSPDetection(result.psp);
-        break;
-      case "exempt":
-        await this.handlePSPDetection(PSP_DETECTION_EXEMPT);
-        break;
-      case "none":
-        // No PSP detected, continue monitoring
-        break;
-      case "error":
-        logger.error("PSP detection error:", result.error);
-        break;
-      default: {
-        // Type safety: ensure all cases are handled
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const _exhaustive: never = result;
-        break;
-      }
+    case 'detected':
+      await this.handlePSPDetection(result.psp);
+      break;
+    case 'exempt':
+      await this.handlePSPDetection(PSP_DETECTION_EXEMPT);
+      break;
+    case 'none':
+      // No PSP detected, continue monitoring
+      break;
+    case 'error':
+      logger.error('PSP detection error:', result.error);
+      break;
+    default: {
+      // Type safety: ensure all cases are handled
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const _exhaustive: never = result;
+      break;
+    }
     }
   }
 
@@ -240,7 +241,7 @@ class ContentScript {
         if (tabId && pspName) {
           await this.sendMessage({
             action: MessageAction.DETECT_PSP,
-            data: { psp: pspName, tabId: tabId },
+            data: {psp: pspName, tabId: tabId},
           });
         }
       }
@@ -253,13 +254,13 @@ class ContentScript {
       // Handle extension context invalidation gracefully
       if (
         error instanceof Error &&
-        error.message.includes("Extension context invalidated")
+        error.message.includes('Extension context invalidated')
       ) {
-        logger.warn("Extension context invalidated, stopping content script");
+        logger.warn('Extension context invalidated, stopping content script');
         this.domObserver.stopObserving();
         return;
       }
-      logger.error("Failed to report detected PSP:", error);
+      logger.error('Failed to report detected PSP:', error);
     }
   }
 
@@ -275,7 +276,7 @@ class ContentScript {
       try {
         // Check if extension context is still valid
         if (!chrome.runtime?.id) {
-          reject(new Error("Extension context invalidated"));
+          reject(new Error('Extension context invalidated'));
           return;
         }
 
@@ -284,11 +285,11 @@ class ContentScript {
             // Handle specific case of extension context invalidation
             if (
               chrome.runtime.lastError.message?.includes(
-                "Extension context invalidated",
+                'Extension context invalidated',
               )
             ) {
-              logger.warn("Extension was reloaded, stopping content script");
-              reject(new Error("Extension context invalidated"));
+              logger.warn('Extension was reloaded, stopping content script');
+              reject(new Error('Extension context invalidated'));
             } else {
               reject(chrome.runtime.lastError);
             }
@@ -322,24 +323,25 @@ class ContentScript {
 const contentScript = new ContentScript();
 
 // Add cleanup on page unload
-window.addEventListener("beforeunload", (): void => {
+window.addEventListener('beforeunload', (): void => {
   contentScript.cleanup();
 });
 
 contentScript.initialize().catch((error): void => {
-  // Don't log errors if extension context is invalidated (expected during reloads)
+  // Don't log errors if extension context is invalidated
+  // (expected during reloads)
   if (
     error instanceof Error &&
-    error.message.includes("Extension context invalidated")
+    error.message.includes('Extension context invalidated')
   ) {
-    logger.warn("Extension context invalidated during startup");
+    logger.warn('Extension context invalidated during startup');
   } else {
     reportError(
-      createContextError("Content script initialization failed", {
-        component: "ContentScript",
-        action: "startup",
+      createContextError('Content script initialization failed', {
+        component: 'ContentScript',
+        action: 'startup',
       }),
     );
-    logger.error("Content script initialization failed:", error);
+    logger.error('Content script initialization failed:', error);
   }
 });

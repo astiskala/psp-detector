@@ -1,6 +1,6 @@
-import type { PSP, PSPConfig, PSPName, URL } from "../types";
-import { PSPDetectionResult, TypeConverters } from "../types";
-import { safeCompileRegex, logger } from "../lib/utils";
+import type {PSP, PSPConfig, PSPName, URL} from '../types';
+import {PSPDetectionResult, TypeConverters} from '../types';
+import {safeCompileRegex, logger} from '../lib/utils';
 
 /**
  * Service for detecting Payment Service Providers (PSPs) on a page.
@@ -37,10 +37,10 @@ export class PSPDetectorService {
    */
   public detectPSP(url: string, content: string): PSPDetectionResult {
     if (!this.pspConfig) {
-      logger.warn("PSP detector not properly initialized");
+      logger.warn('PSP detector not properly initialized');
       return PSPDetectionResult.error(
-        new Error("PSP detector not properly initialized"),
-        "detectPSP",
+        new Error('PSP detector not properly initialized'),
+        'detectPSP',
       );
     }
 
@@ -48,19 +48,19 @@ export class PSPDetectorService {
     if (!brandedURL) {
       return PSPDetectionResult.error(
         new Error(`Invalid URL: ${url}`),
-        "url_validation",
+        'url_validation',
       );
     }
 
-    logger.time("exemptDomainsCheck");
+    logger.time('exemptDomainsCheck');
     // Check if the top-level window URL contains any exempt domains
     let urlToCheck = url;
     try {
-      // In browser context, use window.top.location.href as specified in requirements
-      // But only if it's not localhost (test environment)
-      if (typeof window !== "undefined" && window.top && window.top.location) {
+      // In browser context, use window.top.location.href as specified in
+      // requirements. But only if it's not localhost (test environment)
+      if (typeof window !== 'undefined' && window.top && window.top.location) {
         const topUrl = window.top.location.href;
-        if (!topUrl.includes("localhost")) {
+        if (!topUrl.includes('localhost')) {
           urlToCheck = topUrl;
         }
       }
@@ -70,16 +70,16 @@ export class PSPDetectorService {
     }
 
     if (this.exemptDomains.some((domain) => urlToCheck.includes(domain))) {
-      logger.timeEnd("exemptDomainsCheck");
-      logger.debug("URL is exempt from PSP detection:", urlToCheck);
+      logger.timeEnd('exemptDomainsCheck');
+      logger.debug('URL is exempt from PSP detection:', urlToCheck);
       return PSPDetectionResult.exempt(
-        "URL contains exempt domain",
+        'URL contains exempt domain',
         brandedURL,
       );
     }
-    logger.timeEnd("exemptDomainsCheck");
+    logger.timeEnd('exemptDomainsCheck');
 
-    logger.time("matchStringsScanning");
+    logger.time('matchStringsScanning');
     let scannedPatterns = 0;
     const pageContent = `${url}\n\n${content}`;
 
@@ -89,24 +89,24 @@ export class PSPDetectorService {
       if (psp.matchStrings && psp.matchStrings.length > 0) {
         for (const matchString of psp.matchStrings) {
           if (pageContent.includes(matchString)) {
-            logger.timeEnd("matchStringsScanning");
-            logger.info("PSP detected via matchStrings:", psp.name);
+            logger.timeEnd('matchStringsScanning');
+            logger.info('PSP detected via matchStrings:', psp.name);
             return PSPDetectionResult.detected(psp.name);
           }
         }
       }
     }
-    logger.timeEnd("matchStringsScanning");
+    logger.timeEnd('matchStringsScanning');
 
-    logger.time("regexScanning");
+    logger.time('regexScanning');
     for (const psp of this.pspConfig.psps) {
       if (psp.compiledRegex && psp.compiledRegex.test(pageContent)) {
-        logger.timeEnd("regexScanning");
-        logger.info("PSP detected via regex:", psp.name);
+        logger.timeEnd('regexScanning');
+        logger.info('PSP detected via regex:', psp.name);
         return PSPDetectionResult.detected(psp.name);
       }
     }
-    logger.timeEnd("regexScanning");
+    logger.timeEnd('regexScanning');
 
     return PSPDetectionResult.none(scannedPatterns);
   }

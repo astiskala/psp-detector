@@ -1,5 +1,5 @@
-import type { PSPConfig } from "./psp";
-import type { PSPName, TabId } from "./branded";
+import type {PSPConfig} from './psp';
+import type {PSPName, TabId} from './branded';
 
 /**
  * Background service configuration and types
@@ -26,6 +26,6 @@ export interface MessageResponse {
  * Default icons configuration
  */
 export const DEFAULT_ICONS = {
-  48: "images/default_48.png",
-  128: "images/default_128.png",
+  48: 'images/default_48.png',
+  128: 'images/default_128.png',
 } as const;

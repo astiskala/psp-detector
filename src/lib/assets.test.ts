@@ -1,18 +1,18 @@
-import fs from "fs";
-import path from "path";
-import type { PSPConfig } from "../types";
+import * as fs from 'fs';
+import * as path from 'path';
+import type {PSPConfig} from '../types';
 
-const configPath = path.resolve(__dirname, "../../public/psps.json");
-const srcImagesDir = path.resolve(__dirname, "../../assets/images");
-const distImagesDir = path.resolve(__dirname, "../../dist/images");
+const configPath = path.resolve(__dirname, '../../public/psps.json');
+const srcImagesDir = path.resolve(__dirname, '../../assets/images');
+const distImagesDir = path.resolve(__dirname, '../../dist/images');
 
-describe("PSP image assets", () => {
+describe('PSP image assets', () => {
   let config: PSPConfig;
   beforeAll(() => {
-    config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+    config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
   });
 
-  it("should have unique PSP names and images", () => {
+  it('should have unique PSP names and images', () => {
     const names = new Set();
     const images = new Set();
     for (const psp of config.psps) {
@@ -27,12 +27,12 @@ describe("PSP image assets", () => {
     }
   });
 
-  it("should have all required fields for each PSP", () => {
-    const requiredFields: (keyof PSPConfig["psps"][number])[] = [
-      "name",
-      "url",
-      "image",
-      "summary",
+  it('should have all required fields for each PSP', () => {
+    const requiredFields: (keyof PSPConfig['psps'][number])[] = [
+      'name',
+      'url',
+      'image',
+      'summary',
     ];
     for (const psp of config.psps) {
       for (const field of requiredFields) {
@@ -45,7 +45,7 @@ describe("PSP image assets", () => {
     }
   });
 
-  it("should have an image (pspname.png) for every PSP in source", () => {
+  it('should have an image (pspname.png) for every PSP in source', () => {
     const missing = [];
     for (const psp of config.psps) {
       const imgPath = path.join(srcImagesDir, `${psp.image}.png`);
@@ -54,12 +54,12 @@ describe("PSP image assets", () => {
       }
     }
     if (missing.length) {
-      console.error("\n" + missing.join("\n"));
+      console.error('\n' + missing.join('\n'));
     }
     expect(missing.length).toBe(0);
   });
 
-  it("should have 48px and 128px images for every PSP in dist after build", () => {
+  it('should have 48px and 128px images for every PSP in dist after build', () => {
     const missing = [];
     for (const psp of config.psps) {
       for (const size of [48, 128]) {
@@ -70,12 +70,12 @@ describe("PSP image assets", () => {
       }
     }
     if (missing.length) {
-      console.error("\n" + missing.join("\n"));
+      console.error('\n' + missing.join('\n'));
     }
     expect(missing.length).toBe(0);
   });
 
-  it("should have valid regex for every PSP with regex pattern and not match every website", () => {
+  it('should have valid regex for every PSP with regex pattern and not match every website', () => {
     for (const psp of config.psps) {
       // Skip PSPs that use hostname arrays instead of regex
       if (!psp.regex) {
@@ -84,15 +84,15 @@ describe("PSP image assets", () => {
 
       let regex: RegExp | null = null;
       try {
-        regex = new RegExp(psp.regex, "i");
+        regex = new RegExp(psp.regex, 'i');
       } catch {
         throw new Error(`Invalid regex for PSP '${psp.name}': ${psp.regex}`);
       }
       // Should not match a generic URL like google.com or example.com
-      expect(regex.test("https://google.com")).toBe(false);
-      expect(regex.test("https://example.com")).toBe(false);
+      expect(regex.test('https://google.com')).toBe(false);
+      expect(regex.test('https://example.com')).toBe(false);
       // Should not match empty string
-      expect(regex.test("")).toBe(false);
+      expect(regex.test('')).toBe(false);
     }
   });
 });

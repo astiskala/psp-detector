@@ -13,10 +13,10 @@ import {
   PSPConfig,
   PSPResponse,
   TypeConverters,
-} from "./types";
-import { PSP_DETECTION_EXEMPT } from "./types";
-import { DEFAULT_ICONS } from "./types/background";
-import { logger } from "./lib/utils";
+} from './types';
+import {PSP_DETECTION_EXEMPT} from './types';
+import {DEFAULT_ICONS} from './types/background';
+import {logger} from './lib/utils';
 
 class BackgroundService {
   /**
@@ -46,7 +46,7 @@ class BackgroundService {
       return true; // Keep message channel open for async response
     });
 
-    chrome.tabs.onActivated.addListener(async (activeInfo) => {
+    chrome.tabs.onActivated.addListener(async(activeInfo) => {
       await this.handleTabActivation(activeInfo);
     });
 
@@ -63,14 +63,14 @@ class BackgroundService {
   async loadExemptDomains(): Promise<void> {
     try {
       const response = await fetch(
-        chrome.runtime.getURL("exempt-domains.json"),
+        chrome.runtime.getURL('exempt-domains.json'),
       );
-      const data = await response.json();
+      const data = (await response.json()) as { exemptDomains?: string[] };
       this.config.exemptDomains = Array.isArray(data.exemptDomains)
         ? data.exemptDomains
         : [];
     } catch (error) {
-      logger.error("Failed to load exempt domains:", error);
+      logger.error('Failed to load exempt domains:', error);
       this.config.exemptDomains = [];
     }
   }
@@ -103,29 +103,29 @@ class BackgroundService {
   ): Promise<void> {
     try {
       switch (message.action) {
-        case MessageAction.GET_PSP_CONFIG:
-          await this.handleGetPspConfig(sendResponse);
-          break;
-        case MessageAction.DETECT_PSP:
-          this.handleDetectPsp(message.data as PSPDetectionData, sendResponse);
-          break;
-        case MessageAction.GET_PSP:
-          this.handleGetPsp(sendResponse);
-          break;
-        case MessageAction.GET_TAB_ID:
-          if (sender.tab?.id) {
-            sendResponse({ tabId: sender.tab.id });
-          }
-          break;
-        case MessageAction.GET_EXEMPT_DOMAINS:
-          sendResponse({ exemptDomains: this.config.exemptDomains });
-          break;
-        default:
-          logger.warn("Unknown message action:", message.action);
-          sendResponse(null);
+      case MessageAction.GET_PSP_CONFIG:
+        await this.handleGetPspConfig(sendResponse);
+        break;
+      case MessageAction.DETECT_PSP:
+        this.handleDetectPsp(message.data as PSPDetectionData, sendResponse);
+        break;
+      case MessageAction.GET_PSP:
+        this.handleGetPsp(sendResponse);
+        break;
+      case MessageAction.GET_TAB_ID:
+        if (sender.tab?.id) {
+          sendResponse({tabId: sender.tab.id});
+        }
+        break;
+      case MessageAction.GET_EXEMPT_DOMAINS:
+        sendResponse({exemptDomains: this.config.exemptDomains});
+        break;
+      default:
+        logger.warn('Unknown message action:', message.action);
+        sendResponse(null);
       }
     } catch (error) {
-      logger.error("Error handling message:", error);
+      logger.error('Error handling message:', error);
       sendResponse(null);
     }
   }
@@ -140,17 +140,17 @@ class BackgroundService {
     sendResponse: (response?: PSPConfigResponse | null) => void,
   ): Promise<void> {
     if (this.config.cachedPspConfig) {
-      sendResponse({ config: this.config.cachedPspConfig });
+      sendResponse({config: this.config.cachedPspConfig});
       return;
     }
     try {
       const response: Response = await fetch(
-        chrome.runtime.getURL("psps.json"),
+        chrome.runtime.getURL('psps.json'),
       );
       this.config.cachedPspConfig = (await response.json()) as PSPConfig;
-      sendResponse({ config: this.config.cachedPspConfig });
+      sendResponse({config: this.config.cachedPspConfig});
     } catch (error) {
-      logger.error("Failed to load PSP config:", error);
+      logger.error('Failed to load PSP config:', error);
       sendResponse(null);
     }
   }
@@ -200,7 +200,7 @@ class BackgroundService {
         this.config.tabPsps.get(this.config.currentTabId) ||
         null
       : null;
-    sendResponse({ psp });
+    sendResponse({psp});
   }
 
   /**
@@ -230,7 +230,7 @@ class BackgroundService {
           }
         }
       } catch (error) {
-        logger.warn("Tab access error:", error);
+        logger.warn('Tab access error:', error);
         this.resetIcon();
       }
     }
@@ -250,12 +250,12 @@ class BackgroundService {
     tab: chrome.tabs.Tab,
   ): void {
     const brandedTabId = TypeConverters.toTabId(tabId);
-    if (brandedTabId && changeInfo.status === "loading") {
+    if (brandedTabId && changeInfo.status === 'loading') {
       this.resetIcon();
       this.config.tabPsps.delete(brandedTabId);
     }
     if (
-      changeInfo.status === "complete" &&
+      changeInfo.status === 'complete' &&
       tab.url &&
       !this.isUrlExempt(tab.url)
     ) {
@@ -280,7 +280,7 @@ class BackgroundService {
       });
     }
     // Clear any badge when showing PSP icon
-    chrome.action.setBadgeText({ text: "" });
+    chrome.action.setBadgeText({text: ''});
   }
 
   /**
@@ -294,9 +294,9 @@ class BackgroundService {
       path: DEFAULT_ICONS,
     });
     // Add warning badge
-    chrome.action.setBadgeText({ text: "!" });
-    chrome.action.setBadgeBackgroundColor({ color: "#d3d3d3" });
-    logger.debug("Showing exempt domain icon with warning badge");
+    chrome.action.setBadgeText({text: '!'});
+    chrome.action.setBadgeBackgroundColor({color: '#d3d3d3'});
+    logger.debug('Showing exempt domain icon with warning badge');
   }
 
   /**
@@ -309,7 +309,7 @@ class BackgroundService {
       path: DEFAULT_ICONS,
     });
     // Clear any badge
-    chrome.action.setBadgeText({ text: "" });
+    chrome.action.setBadgeText({text: ''});
   }
 
   /**
@@ -336,8 +336,8 @@ class BackgroundService {
   async injectContentScript(tabId: number): Promise<void> {
     try {
       await chrome.scripting.executeScript({
-        target: { tabId },
-        files: ["content.js"],
+        target: {tabId},
+        files: ['content.js'],
       });
     } catch (error) {
       logger.error(`Failed to inject content script into tab ${tabId}:`, error);

@@ -4,7 +4,7 @@ import {
   createContextError,
   debouncedMutation,
   memoryUtils,
-} from "../lib/utils";
+} from '../lib/utils';
 
 /**
  * Service for observing DOM mutations and triggering callbacks.
@@ -30,7 +30,7 @@ export class DOMObserverService {
         try {
           for (const mutation of mutations) {
             if (
-              mutation.type === "childList" &&
+              mutation.type === 'childList' &&
               mutation.addedNodes.length > 0
             ) {
               this.onMutationCallback();
@@ -38,21 +38,21 @@ export class DOMObserverService {
             }
           }
         } catch (mutationError) {
-          console.error("DOM mutation error:", mutationError);
+          console.error('DOM mutation error:', mutationError);
           reportError(
-            createContextError("DOM mutation processing failed", {
-              component: "DOMObserverService",
-              action: "processMutations",
+            createContextError('DOM mutation processing failed', {
+              component: 'DOMObserverService',
+              action: 'processMutations',
             }),
           );
         }
       });
     } catch (initError) {
-      console.error("DOM observer init error:", initError);
+      console.error('DOM observer init error:', initError);
       reportError(
-        createContextError("DOM observer initialization failed", {
-          component: "DOMObserverService",
-          action: "initialize",
+        createContextError('DOM observer initialization failed', {
+          component: 'DOMObserverService',
+          action: 'initialize',
         }),
       );
     }
@@ -66,7 +66,7 @@ export class DOMObserverService {
     if (!this.observer || this.isObserving) return;
     const start = (): void => {
       if (!document.body) {
-        document.addEventListener("DOMContentLoaded", start, { once: true });
+        document.addEventListener('DOMContentLoaded', start, {once: true});
         return;
       }
       try {
@@ -75,13 +75,13 @@ export class DOMObserverService {
           subtree: true,
         });
         this.isObserving = true;
-        logger.debug("DOM observer started");
+        logger.debug('DOM observer started');
       } catch (startError) {
-        console.error("DOM observer start error:", startError);
+        console.error('DOM observer start error:', startError);
         reportError(
-          createContextError("Failed to start DOM observer", {
-            component: "DOMObserverService",
-            action: "startObserving",
+          createContextError('Failed to start DOM observer', {
+            component: 'DOMObserverService',
+            action: 'startObserving',
           }),
         );
       }
@@ -98,13 +98,13 @@ export class DOMObserverService {
     try {
       this.observer.disconnect();
       this.isObserving = false;
-      logger.debug("DOM observer stopped");
+      logger.debug('DOM observer stopped');
     } catch (stopError) {
-      console.error("DOM observer stop error:", stopError);
+      console.error('DOM observer stop error:', stopError);
       reportError(
-        createContextError("Failed to stop DOM observer", {
-          component: "DOMObserverService",
-          action: "stopObserving",
+        createContextError('Failed to stop DOM observer', {
+          component: 'DOMObserverService',
+          action: 'stopObserving',
         }),
       );
     }

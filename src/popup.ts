@@ -3,10 +3,10 @@
  * Handles UI updates and communication with background script.
  * @module popup
  */
-import { MessageAction, PSPConfig } from "./types";
-import { PSP_DETECTION_EXEMPT } from "./types";
-import { UIService } from "./services/ui";
-import { logger, reportError, createContextError } from "./lib/utils";
+import {MessageAction, PSPConfig} from './types';
+import {PSP_DETECTION_EXEMPT} from './types';
+import {UIService} from './services/ui';
+import {logger, reportError, createContextError} from './lib/utils';
 
 class PopupManager {
   private ui: UIService;
@@ -42,22 +42,22 @@ class PopupManager {
         this.ui.updatePSPDisplay(psp);
       } else {
         reportError(
-          createContextError("PSP config not found", {
-            component: "PopupManager",
-            action: "initialize",
+          createContextError('PSP config not found', {
+            component: 'PopupManager',
+            action: 'initialize',
           }),
         );
-        logger.error("PSP config not found for:", detectedPsp);
+        logger.error('PSP config not found for:', detectedPsp);
         this.ui.showNoPSPDetected();
       }
     } catch (error) {
       reportError(
-        createContextError("Failed to initialize popup", {
-          component: "PopupManager",
-          action: "initialize",
+        createContextError('Failed to initialize popup', {
+          component: 'PopupManager',
+          action: 'initialize',
         }),
       );
-      logger.error("Failed to initialize popup:", error);
+      logger.error('Failed to initialize popup:', error);
       this.ui.showError();
     }
   }
@@ -74,7 +74,7 @@ class PopupManager {
       });
       return response.psp;
     } catch (error) {
-      logger.error("Failed to get detected PSP:", error);
+      logger.error('Failed to get detected PSP:', error);
       return null;
     }
   }
@@ -85,7 +85,7 @@ class PopupManager {
    * @return {Promise<PSPConfig>} PSP config object
    */
   private async getPSPConfig(): Promise<PSPConfig> {
-    const response = await fetch(chrome.runtime.getURL("psps.json"));
+    const response = await fetch(chrome.runtime.getURL('psps.json'));
     if (!response.ok) {
       throw new Error(`Failed to fetch PSP config: ${response.status}`);
     }
@@ -121,26 +121,26 @@ class PopupManager {
    */
   public cleanup(): void {
     // Popup cleanup - currently just logging
-    logger.debug("Popup manager cleaned up");
+    logger.debug('Popup manager cleaned up');
   }
 }
 
 // Initialize popup
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener('DOMContentLoaded', () => {
   const popup = new PopupManager();
 
   // Add cleanup on window unload
-  window.addEventListener("beforeunload", () => {
+  window.addEventListener('beforeunload', () => {
     popup.cleanup();
   });
 
   popup.initialize().catch((error) => {
     reportError(
-      createContextError("Popup initialization failed", {
-        component: "PopupManager",
-        action: "documentReady",
+      createContextError('Popup initialization failed', {
+        component: 'PopupManager',
+        action: 'documentReady',
       }),
     );
-    logger.error("Popup initialization failed:", error);
+    logger.error('Popup initialization failed:', error);
   });
 });

@@ -1,5 +1,5 @@
-import type { PSP } from "../types";
-import { createSafeUrl, logger } from "../lib/utils";
+import type {PSP} from '../types';
+import {createSafeUrl, logger} from '../lib/utils';
 
 /**
  * UI service for updating the popup with PSP information.
@@ -19,7 +19,7 @@ export class UIService {
    * @return {void}
    */
   private initializeDOMElements(): void {
-    const elementIds = ["name", "description", "notice", "url", "image"];
+    const elementIds = ['name', 'description', 'notice', 'url', 'image'];
     elementIds.forEach((id) => {
       const element = document.getElementById(`psp-${id}`);
       if (!element) {
@@ -36,13 +36,13 @@ export class UIService {
    */
   public updatePSPDisplay(psp: PSP): void {
     try {
-      this.updateTextContent("name", psp.name);
-      this.updateTextContent("description", psp.summary);
+      this.updateTextContent('name', psp.name);
+      this.updateTextContent('description', psp.summary);
       this.updateNoticeSection(psp.notice);
       this.updateLearnMoreLink(psp.url);
       this.updateImage(psp.image, psp.name);
     } catch (error) {
-      logger.error("Failed to update PSP display:", error);
+      logger.error('Failed to update PSP display:', error);
       this.showError();
     }
   }
@@ -52,18 +52,18 @@ export class UIService {
    * @return {void}
    */
   public showNoPSPDetected(): void {
-    this.updateTextContent("name", "No PSP detected");
+    this.updateTextContent('name', 'No PSP detected');
     this.updateTextContent(
-      "description",
-      "The Payment Service Provider could not be determined. Please ensure you have navigated to the website's checkout page.",
+      'description',
+      'The Payment Service Provider could not be determined. Please ensure you have navigated to the website\'s checkout page.',
     );
-    this.elements.notice.style.display = "none";
-    this.updateTextContent("notice", "");
+    this.elements.notice.style.display = 'none';
+    this.updateTextContent('notice', '');
     this.updateLearnMoreLink(
-      "mailto:psp-detector@adamstiskala.com",
-      "Suggest Improvement",
+      'mailto:psp-detector@adamstiskala.com',
+      'Suggest Improvement',
     );
-    this.updateImage("default", "No PSP detected");
+    this.updateImage('default', 'No PSP detected');
   }
 
   /**
@@ -71,18 +71,18 @@ export class UIService {
    * @return {void}
    */
   public showPSPDetectionDisabled(): void {
-    this.updateTextContent("name", "PSP detection disabled");
+    this.updateTextContent('name', 'PSP detection disabled');
     this.updateTextContent(
-      "description",
-      "PSP detection has been disabled on this website for performance or compatibility reasons.",
+      'description',
+      'PSP detection has been disabled on this website for performance or compatibility reasons.',
     );
-    this.elements.notice.style.display = "none";
-    this.updateTextContent("notice", "");
+    this.elements.notice.style.display = 'none';
+    this.updateTextContent('notice', '');
     this.updateLearnMoreLink(
-      "mailto:psp-detector@adamstiskala.com",
-      "Suggest Improvement",
+      'mailto:psp-detector@adamstiskala.com',
+      'Suggest Improvement',
     );
-    this.updateImage("default", "PSP detection disabled");
+    this.updateImage('default', 'PSP detection disabled');
   }
 
   /**
@@ -90,13 +90,13 @@ export class UIService {
    * @return {void}
    */
   public showError(): void {
-    this.updateTextContent("name", "Error");
+    this.updateTextContent('name', 'Error');
     this.updateTextContent(
-      "description",
-      "An error occurred while loading PSP information. Please try again later.",
+      'description',
+      'An error occurred while loading PSP information. Please try again later.',
     );
-    this.elements.notice.style.display = "none";
-    this.updateImage("default", "Error");
+    this.elements.notice.style.display = 'none';
+    this.updateImage('default', 'Error');
   }
 
   /**
@@ -120,11 +120,11 @@ export class UIService {
    */
   private updateNoticeSection(notice?: string): void {
     if (notice) {
-      this.elements.notice.style.display = "block";
-      this.updateTextContent("notice", notice);
+      this.elements.notice.style.display = 'block';
+      this.updateTextContent('notice', notice);
     } else {
-      this.elements.notice.style.display = "none";
-      this.updateTextContent("notice", "");
+      this.elements.notice.style.display = 'none';
+      this.updateTextContent('notice', '');
     }
   }
 
@@ -135,12 +135,12 @@ export class UIService {
    * @param {string} [text='Learn More'] - Link text
    * @return {void}
    */
-  private updateLearnMoreLink(url: string, text = "Learn More"): void {
-    const anchor = document.createElement("a");
+  private updateLearnMoreLink(url: string, text = 'Learn More'): void {
+    const anchor = document.createElement('a');
     anchor.href = createSafeUrl(url);
     anchor.textContent = text;
-    anchor.target = "_blank";
-    anchor.rel = "noopener noreferrer";
+    anchor.target = '_blank';
+    anchor.rel = 'noopener noreferrer';
     this.elements.url.replaceChildren(anchor);
   }
 

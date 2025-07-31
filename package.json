@@ -1,14 +1,15 @@
 {
   "name": "psp-detector",
-  "version": "2.2025.731.2140",
+  "version": "2.2025.731.2200",
   "description": "Chrome extension to detect Payment Service Providers on web pages",
   "private": true,
   "scripts": {
     "build": "node build.js",
     "build:debug": "DEBUG=true NO_SOURCEMAP=true node build.js",
     "test": "jest",
-    "lint": "eslint .",
-    "format": "prettier --write ."
+    "lint": "gts lint",
+    "format": "gts fix",
+    "clean": "gts clean"
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",
@@ -16,19 +17,20 @@
     "@eslint/markdown": "^7.1.0",
     "@types/chrome": "^0.1.1",
     "@types/jest": "^30.0.0",
-    "@types/node": "^24.1.0",
+    "@types/node": "^22.7.5",
     "@typescript-eslint/eslint-plugin": "^8.38.0",
     "@typescript-eslint/parser": "^8.38.0",
     "esbuild": "^0.25.8",
     "eslint": "^9.32.0",
     "globals": "^16.3.0",
+    "gts": "^6.0.2",
     "jest": "^30.0.5",
     "jest-environment-jsdom": "^30.0.5",
     "jiti": "^2.5.1",
     "prettier": "^3.6.2",
     "sharp": "^0.34.3",
     "ts-jest": "^29.4.0",
-    "typescript": "^5.8.3",
+    "typescript": "^5.6.3",
     "typescript-eslint": "^8.38.0"
   },
   "overrides": {

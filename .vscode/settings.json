@@ -1,0 +1,62 @@
+{
+  // TypeScript/JavaScript formatting
+  "typescript.format.enable": false,
+  "javascript.format.enable": false,
+
+  // Default formatter settings - use ESLint for all formatting
+  "editor.defaultFormatter": null,
+  "[typescript]": {
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+    "editor.formatOnSave": false,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit"
+    }
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+    "editor.formatOnSave": false,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit"
+    }
+  },
+  "[json]": {
+    "editor.defaultFormatter": "vscode.json-language-features",
+    "editor.formatOnSave": false,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit"
+    }
+  },
+
+  // ESLint configuration
+  "eslint.enable": true,
+  "eslint.format.enable": true,
+  "eslint.run": "onType",
+  "eslint.validate": [
+    "javascript",
+    "typescript",
+    "json"
+  ],
+
+  // Prettier configuration (disable)
+  "prettier.enable": false,
+  "prettier.disableLanguages": [
+    "typescript",
+    "javascript",
+    "json"
+  ],
+
+  // Editor settings that align with gts
+  "editor.insertSpaces": true,
+  "editor.tabSize": 2,
+  "editor.detectIndentation": false,
+  "editor.trimAutoWhitespace": true,
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.trimFinalNewlines": true,
+
+  // Save actions
+  "editor.formatOnSave": false,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  }
+}

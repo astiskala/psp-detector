@@ -1,7 +1,7 @@
 /**
  * Union types
  */
-import type { PSPName, URL } from "./branded";
+import type {PSPName, URL} from './branded';
 
 /**
  * PSP detection result union type
@@ -9,13 +9,13 @@ import type { PSPName, URL } from "./branded";
  */
 export type PSPDetectionResult =
   | {
-      readonly type: "detected";
+      readonly type: 'detected';
       readonly psp: PSPName;
     }
-  | { readonly type: "exempt"; readonly reason: string; readonly url: URL }
-  | { readonly type: "none"; readonly scannedPatterns: number }
+  | { readonly type: 'exempt'; readonly reason: string; readonly url: URL }
+  | { readonly type: 'none'; readonly scannedPatterns: number }
   | {
-      readonly type: "error";
+      readonly type: 'error';
       readonly error: Error;
       readonly context?: string;
     };
@@ -28,7 +28,7 @@ export const PSPDetectionResult = {
    * Create a detected result
    */
   detected: (psp: PSPName): PSPDetectionResult => ({
-    type: "detected",
+    type: 'detected',
     psp,
   }),
 
@@ -36,7 +36,7 @@ export const PSPDetectionResult = {
    * Create an exempt result
    */
   exempt: (reason: string, url: URL): PSPDetectionResult => ({
-    type: "exempt",
+    type: 'exempt',
     reason,
     url,
   }),
@@ -45,7 +45,7 @@ export const PSPDetectionResult = {
    * Create a none result
    */
   none: (scannedPatterns: number): PSPDetectionResult => ({
-    type: "none",
+    type: 'none',
     scannedPatterns,
   }),
 
@@ -53,7 +53,7 @@ export const PSPDetectionResult = {
    * Create an error result
    */
   error: (error: Error, context?: string): PSPDetectionResult => ({
-    type: "error",
+    type: 'error',
     error,
     context,
   }),
@@ -63,25 +63,25 @@ export const PSPDetectionResult = {
    */
   isDetected: (
     result: PSPDetectionResult,
-  ): result is Extract<PSPDetectionResult, { type: "detected" }> => {
-    return result.type === "detected";
+  ): result is Extract<PSPDetectionResult, { type: 'detected' }> => {
+    return result.type === 'detected';
   },
 
   isExempt: (
     result: PSPDetectionResult,
-  ): result is Extract<PSPDetectionResult, { type: "exempt" }> => {
-    return result.type === "exempt";
+  ): result is Extract<PSPDetectionResult, { type: 'exempt' }> => {
+    return result.type === 'exempt';
   },
 
   isNone: (
     result: PSPDetectionResult,
-  ): result is Extract<PSPDetectionResult, { type: "none" }> => {
-    return result.type === "none";
+  ): result is Extract<PSPDetectionResult, { type: 'none' }> => {
+    return result.type === 'none';
   },
 
   isError: (
     result: PSPDetectionResult,
-  ): result is Extract<PSPDetectionResult, { type: "error" }> => {
-    return result.type === "error";
+  ): result is Extract<PSPDetectionResult, { type: 'error' }> => {
+    return result.type === 'error';
   },
 };

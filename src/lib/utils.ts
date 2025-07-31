@@ -4,7 +4,7 @@
  * @param wait - The number of milliseconds to wait
  */
 
-export function debounce<T extends (...args: unknown[]) => unknown>(
+export function debounce<T extends(...args: unknown[]) => unknown>(
   func: T,
   wait: number,
 ): (...args: Parameters<T>) => void {
@@ -32,8 +32,8 @@ export function createSafeUrl(url: string): string {
   try {
     return new globalThis.URL(url).toString();
   } catch (e) {
-    console.error("Invalid URL:", e);
-    return "#";
+    console.error('Invalid URL:', e);
+    return '#';
   }
 }
 
@@ -43,7 +43,7 @@ export function createSafeUrl(url: string): string {
  */
 export function safeCompileRegex(pattern: string): RegExp | null {
   try {
-    return new RegExp(pattern, "i");
+    return new RegExp(pattern, 'i');
   } catch (error) {
     console.error(`Invalid regex pattern: ${pattern}`, error);
     return null;
@@ -76,10 +76,11 @@ export interface ContextualError extends Error {
  */
 export function isUrlExempt(url: string, exemptDomains: string[]): boolean {
   try {
-    // Simple check: if the URL contains any of the exempt domain strings, it's exempt
+    // Simple check: if the URL contains any of the exempt domain strings,
+    // it's exempt
     return exemptDomains.some((domain) => url.includes(domain));
   } catch (error) {
-    console.error("Error checking URL exemption:", error);
+    console.error('Error checking URL exemption:', error);
     return false; // If error, assume not exempt to be safe
   }
 }
@@ -102,15 +103,15 @@ export function reportError(
   };
 
   // Error logging with structured data
-  console.error("[PSP Detector Error]", {
+  console.error('[PSP Detector Error]', {
     message: error.message,
     stack: error.stack,
     context: errorContext,
   });
 
   // In development, also log to the logger
-  if (process.env.NODE_ENV === "development") {
-    logger.error("Structured error report:", {
+  if (process.env.NODE_ENV === 'development') {
+    logger.error('Structured error report:', {
       error: error.message,
       context: errorContext,
     });
@@ -145,42 +146,44 @@ export function createContextError(
  */
 export const logger = {
   debug: (message: string, ...args: unknown[]): void => {
-    if (process.env.NODE_ENV === "development") {
-      console.debug("[PSP Detector] " + message, ...args);
+    if (process.env.NODE_ENV === 'development') {
+      console.debug('[PSP Detector] ' + message, ...args);
     }
   },
   info: (message: string, ...args: unknown[]): void => {
-    console.log("[PSP Detector] " + message, ...args);
+    console.log('[PSP Detector] ' + message, ...args);
   },
   warn: (message: string, ...args: unknown[]): void => {
-    console.warn("[PSP Detector] " + message, ...args);
+    console.warn('[PSP Detector] ' + message, ...args);
   },
   error: (message: string, ...args: unknown[]): void => {
-    console.error("[PSP Detector] " + message, ...args);
+    console.error('[PSP Detector] ' + message, ...args);
   },
   time: (label: string): void => {
-    if (process.env.NODE_ENV === "development") {
-      console.time("[PSP Detector] " + label);
+    if (process.env.NODE_ENV === 'development') {
+      console.time('[PSP Detector] ' + label);
     }
   },
   timeEnd: (label: string): void => {
-    if (process.env.NODE_ENV === "development") {
-      console.timeEnd("[PSP Detector] " + label);
+    if (process.env.NODE_ENV === 'development') {
+      console.timeEnd('[PSP Detector] ' + label);
     }
   },
 };
 
 /**
- * Create a debounced function that delays invoking func until after wait milliseconds
- * have elapsed since the last time the debounced function was invoked
+ * Create a debounced function that delays invoking func until after wait
+ * milliseconds have elapsed since the last time the debounced function was
+ * invoked
  * @param func - Function to debounce
  * @param wait - Wait time in milliseconds
- * @param immediate - If true, trigger function on leading edge instead of trailing
+ * @param immediate - If true, trigger function on leading edge instead of
+ * trailing
  */
-export function debouncedMutation<T extends (...args: unknown[]) => unknown>(
+export function debouncedMutation<T extends(...args: unknown[]) => unknown>(
   func: T,
-  wait: number = 100,
-  immediate: boolean = false,
+  wait = 100,
+  immediate = false,
 ): (...args: Parameters<T>) => void {
   let timeout: NodeJS.Timeout | null = null;
 
@@ -211,11 +214,11 @@ export const memoryUtils = {
       try {
         fn();
       } catch (cleanupError) {
-        console.error("Cleanup error:", cleanupError);
+        console.error('Cleanup error:', cleanupError);
         reportError(
-          createContextError("Cleanup function failed", {
-            component: "memoryUtils",
-            action: "cleanup",
+          createContextError('Cleanup function failed', {
+            component: 'memoryUtils',
+            action: 'cleanup',
           }),
         );
       }

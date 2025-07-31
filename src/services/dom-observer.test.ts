@@ -5,8 +5,8 @@ global.MutationObserver = class {
     this.observe = jest.fn(() => {
       // Simulate mutation when observe is called
       const mutation = {
-        type: "childList",
-        addedNodes: [document.createElement("div")], // Add a real node
+        type: 'childList',
+        addedNodes: [document.createElement('div')], // Add a real node
       } as unknown as MutationRecord;
       // Use a small delay to ensure async behavior
       setTimeout(() => this.callback([mutation], this), 5);
@@ -21,9 +21,9 @@ global.MutationObserver = class {
   }
 };
 
-import { DOMObserverService } from "./dom-observer";
+import {DOMObserverService} from './dom-observer';
 
-describe("DOMObserverService", () => {
+describe('DOMObserverService', () => {
   let service: DOMObserverService;
   let callback: jest.Mock;
 
@@ -33,7 +33,7 @@ describe("DOMObserverService", () => {
     document.body.innerHTML = '<div id="root"></div>';
   });
 
-  it("should initialize and start observing mutations", () => {
+  it('should initialize and start observing mutations', () => {
     service.initialize(callback, 0); // no debounce for test
     service.startObserving();
 
@@ -45,11 +45,11 @@ describe("DOMObserverService", () => {
     });
   });
 
-  it("should stop observing mutations", () => {
+  it('should stop observing mutations', () => {
     service.initialize(callback, 0);
     service.startObserving();
     service.stopObserving();
-    const newNode = document.createElement("div");
+    const newNode = document.createElement('div');
     document.body.appendChild(newNode);
     return new Promise((resolve) => setTimeout(resolve, 10)).then(() => {
       expect(callback).not.toHaveBeenCalled();
@@ -57,7 +57,7 @@ describe("DOMObserverService", () => {
     });
   });
 
-  it("should cleanup observer", () => {
+  it('should cleanup observer', () => {
     service.initialize(callback, 0);
     service.startObserving();
     service.cleanup();
