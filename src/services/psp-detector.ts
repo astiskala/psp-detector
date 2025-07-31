@@ -53,6 +53,7 @@ export class PSPDetectorService {
     }
 
     logger.time('exemptDomainsCheck');
+
     // Check if the top-level window URL contains any exempt domains
     let urlToCheck = url;
     try {

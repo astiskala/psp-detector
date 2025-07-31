@@ -115,6 +115,7 @@ describe('PSPDetectorService', () => {
 
     const pspDetectorService = new PSPDetectorService();
     pspDetectorService.initialize(configWithMatchStrings);
+
     // Set exempt domains
     pspDetectorService.setExemptDomains(['example.com', 'google.com']);
 

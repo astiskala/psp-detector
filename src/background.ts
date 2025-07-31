@@ -174,6 +174,7 @@ class BackgroundService {
         this.config.detectedPsp = pspName;
         if (tabId === this.config.currentTabId) {
           this.config.tabPsps.set(this.config.currentTabId, pspName);
+
           // Handle different PSP detection states
           if (String(data.psp) === PSP_DETECTION_EXEMPT) {
             this.showExemptDomainIcon();
@@ -217,6 +218,7 @@ class BackgroundService {
       try {
         const tab = await chrome.tabs.get(activeInfo.tabId);
         if (this.config.detectedPsp) {
+
           // Handle different PSP detection states
           if (this.config.detectedPsp === PSP_DETECTION_EXEMPT) {
             this.showExemptDomainIcon();
@@ -279,6 +281,7 @@ class BackgroundService {
         },
       });
     }
+
     // Clear any badge when showing PSP icon
     chrome.action.setBadgeText({text: ''});
   }
@@ -293,6 +296,7 @@ class BackgroundService {
     chrome.action.setIcon({
       path: DEFAULT_ICONS,
     });
+
     // Add warning badge
     chrome.action.setBadgeText({text: '!'});
     chrome.action.setBadgeBackgroundColor({color: '#d3d3d3'});
@@ -308,6 +312,7 @@ class BackgroundService {
     chrome.action.setIcon({
       path: DEFAULT_ICONS,
     });
+
     // Clear any badge
     chrome.action.setBadgeText({text: ''});
   }

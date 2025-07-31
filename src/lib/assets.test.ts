@@ -88,9 +88,11 @@ describe('PSP image assets', () => {
       } catch {
         throw new Error(`Invalid regex for PSP '${psp.name}': ${psp.regex}`);
       }
+
       // Should not match a generic URL like google.com or example.com
       expect(regex.test('https://google.com')).toBe(false);
       expect(regex.test('https://example.com')).toBe(false);
+
       // Should not match empty string
       expect(regex.test('')).toBe(false);
     }

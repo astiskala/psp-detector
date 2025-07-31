@@ -245,6 +245,7 @@ class ContentScript {
           });
         }
       }
+
       // Mark as detected for all PSPs, including exempt domains
       this.pspDetected = true;
       if (detectedPsp !== PSP_DETECTION_EXEMPT) {

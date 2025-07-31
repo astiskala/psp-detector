@@ -8,6 +8,7 @@ global.MutationObserver = class {
         type: 'childList',
         addedNodes: [document.createElement('div')], // Add a real node
       } as unknown as MutationRecord;
+
       // Use a small delay to ensure async behavior
       setTimeout(() => this.callback([mutation], this), 5);
     });

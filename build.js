@@ -38,12 +38,14 @@ async function generatePspImages() {
   );
 
   console.log(`Found ${pspPngs.length} PSP images in source.`);
+
   // cleanup old
   for (const f of await fs.readdir(distDir)) {
     if (/_48\.png$|_128\.png$/.test(f)) {
       await fs.remove(path.join(distDir, f));
     }
   }
+
   // regenerate
   for (const file of pspPngs) {
     const base = file.replace(/\.png$/, '');
@@ -101,6 +103,7 @@ async function buildFiles() {
     const manifestDst = path.join(distDir, 'manifest.json');
     const manifest = fs.readJsonSync(manifestSrc);
     manifest.version = version;
+
     // adjust service_worker and content_scripts paths if needed:
     if (manifest.background?.service_worker) {
       manifest.background.service_worker =
