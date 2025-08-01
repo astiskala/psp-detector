@@ -53,7 +53,7 @@ async function generatePspImages() {
     for (const size of [128, 48]) {
       const outPath = path.join(distDir, `${base}_${size}.png`);
       await sharp(srcPath)
-        .resize(size, size, {fit: 'contain'})
+        .resize(size, size, { fit: 'contain' })
         .png({
           compressionLevel: 9,
           adaptiveFiltering: true,
@@ -84,7 +84,7 @@ async function buildFiles() {
     const pkgPath = path.join(__dirname, 'package.json');
     const pkg = fs.readJsonSync(pkgPath);
     pkg.version = version;
-    fs.writeJsonSync(pkgPath, pkg, {spaces: 2});
+    fs.writeJsonSync(pkgPath, pkg, { spaces: 2 });
 
     // 3) prepare dist/
     const distDir = path.join(__dirname, 'dist');
@@ -109,6 +109,7 @@ async function buildFiles() {
       manifest.background.service_worker =
         manifest.background.service_worker.replace(/^dist\//, '');
     }
+
     if (Array.isArray(manifest.content_scripts)) {
       manifest.content_scripts.forEach((cs) => {
         if (cs.js) {
@@ -116,7 +117,8 @@ async function buildFiles() {
         }
       });
     }
-    fs.writeJsonSync(manifestDst, manifest, {spaces: 2});
+
+    fs.writeJsonSync(manifestDst, manifest, { spaces: 2 });
     console.log(`Wrote dist/manifest.json @ version ${version}`);
 
     // 6) bundle JS

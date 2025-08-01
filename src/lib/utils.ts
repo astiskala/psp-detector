@@ -3,7 +3,6 @@
  * @param func - The function to debounce
  * @param wait - The number of milliseconds to wait
  */
-
 export function debounce<T extends(...args: unknown[]) => unknown>(
   func: T,
   wait: number,

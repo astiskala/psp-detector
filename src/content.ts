@@ -4,15 +4,15 @@
  * background script.
  * @module content
  */
-import {PSPDetectorService} from './services/psp-detector';
-import {DOMObserverService} from './services/dom-observer';
+import { PSPDetectorService } from './services/psp-detector';
+import { DOMObserverService } from './services/dom-observer';
 import {
   MessageAction,
   ChromeMessage,
   PSPConfigResponse,
   TypeConverters,
 } from './types';
-import {PSP_DETECTION_EXEMPT} from './types';
+import { PSP_DETECTION_EXEMPT } from './types';
 import {
   logger,
   reportError,
@@ -83,6 +83,7 @@ class ContentScript {
           logger.warn('Extension context invalidated during initialization');
           return;
         }
+
         const contextError = createContextError(
           'Failed to initialize content script',
           {
@@ -241,7 +242,7 @@ class ContentScript {
         if (tabId && pspName) {
           await this.sendMessage({
             action: MessageAction.DETECT_PSP,
-            data: {psp: pspName, tabId: tabId},
+            data: { psp: pspName, tabId: tabId },
           });
         }
       }
@@ -261,6 +262,7 @@ class ContentScript {
         this.domObserver.stopObserving();
         return;
       }
+
       logger.error('Failed to report detected PSP:', error);
     }
   }

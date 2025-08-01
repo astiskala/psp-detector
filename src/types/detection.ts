@@ -1,7 +1,7 @@
 /**
  * Union types
  */
-import type {PSPName, URL} from './branded';
+import type { PSPName, URL } from './branded';
 
 /**
  * PSP detection result union type

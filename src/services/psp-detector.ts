@@ -1,6 +1,6 @@
-import type {PSP, PSPConfig, PSPName, URL} from '../types';
-import {PSPDetectionResult, TypeConverters} from '../types';
-import {safeCompileRegex, logger} from '../lib/utils';
+import type { PSP, PSPConfig, PSPName, URL } from '../types';
+import { PSPDetectionResult, TypeConverters } from '../types';
+import { safeCompileRegex, logger } from '../lib/utils';
 
 /**
  * Service for detecting Payment Service Providers (PSPs) on a page.
@@ -78,6 +78,7 @@ export class PSPDetectorService {
         brandedURL,
       );
     }
+
     logger.timeEnd('exemptDomainsCheck');
 
     logger.time('matchStringsScanning');
@@ -97,6 +98,7 @@ export class PSPDetectorService {
         }
       }
     }
+
     logger.timeEnd('matchStringsScanning');
 
     logger.time('regexScanning');
@@ -107,6 +109,7 @@ export class PSPDetectorService {
         return PSPDetectionResult.detected(psp.name);
       }
     }
+
     logger.timeEnd('regexScanning');
 
     return PSPDetectionResult.none(scannedPatterns);

@@ -1,7 +1,7 @@
 /**
  * Core PSP types using branded types
  */
-import type {PSPName, RegexPattern, URL} from './branded';
+import type { PSPName, RegexPattern, URL } from './branded';
 
 /**
  * Payment Service Provider interface

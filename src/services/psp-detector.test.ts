@@ -1,6 +1,6 @@
-import {PSPDetectorService} from './psp-detector';
-import type {PSPConfig} from '../types';
-import {TypeConverters, PSPDetectionResult} from '../types';
+import { PSPDetectorService } from './psp-detector';
+import type { PSPConfig } from '../types';
+import { TypeConverters, PSPDetectionResult } from '../types';
 
 describe('PSPDetectorService', () => {
   const config: PSPConfig = {

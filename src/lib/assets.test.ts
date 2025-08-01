@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import type {PSPConfig} from '../types';
+import type { PSPConfig } from '../types';
 
 const configPath = path.resolve(__dirname, '../../public/psps.json');
 const srcImagesDir = path.resolve(__dirname, '../../assets/images');
@@ -19,9 +19,11 @@ describe('PSP image assets', () => {
       if (names.has(psp.name)) {
         throw new Error(`Duplicate PSP name found: ${psp.name}`);
       }
+
       if (images.has(psp.image)) {
         throw new Error(`Duplicate PSP image found: ${psp.image}`);
       }
+
       names.add(psp.name);
       images.add(psp.image);
     }
@@ -53,9 +55,11 @@ describe('PSP image assets', () => {
         missing.push(`Missing source image for PSP: ${psp.name} (${imgPath})`);
       }
     }
+
     if (missing.length) {
       console.error('\n' + missing.join('\n'));
     }
+
     expect(missing.length).toBe(0);
   });
 
@@ -69,9 +73,11 @@ describe('PSP image assets', () => {
         }
       }
     }
+
     if (missing.length) {
       console.error('\n' + missing.join('\n'));
     }
+
     expect(missing.length).toBe(0);
   });
 

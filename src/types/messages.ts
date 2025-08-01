@@ -1,9 +1,9 @@
 /**
  * Message types for Chrome extension communication
  */
-import type {PSPName, TabId} from './branded';
-import type {PSPConfig} from './psp';
-import type {MessageAction} from './core';
+import type { PSPName, TabId } from './branded';
+import type { PSPConfig } from './psp';
+import type { MessageAction } from './core';
 
 /**
  * Chrome runtime message structure

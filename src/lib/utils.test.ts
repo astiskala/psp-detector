@@ -65,7 +65,7 @@ describe('utils', () => {
       // No-op for testing
     });
 
-    expect(() => reportError(error, {component: 'test'})).not.toThrow();
+    expect(() => reportError(error, { component: 'test' })).not.toThrow();
     expect(consoleSpy).toHaveBeenCalled();
 
     consoleSpy.mockRestore();

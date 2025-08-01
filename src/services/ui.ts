@@ -1,5 +1,5 @@
-import type {PSP} from '../types';
-import {createSafeUrl, logger} from '../lib/utils';
+import type { PSP } from '../types';
+import { createSafeUrl, logger } from '../lib/utils';
 
 /**
  * UI service for updating the popup with PSP information.
@@ -25,6 +25,7 @@ export class UIService {
       if (!element) {
         throw new Error(`Element psp-${id} not found`);
       }
+
       this.elements[id] = element;
     });
   }

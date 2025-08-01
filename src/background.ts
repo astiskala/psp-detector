@@ -14,9 +14,9 @@ import {
   PSPResponse,
   TypeConverters,
 } from './types';
-import {PSP_DETECTION_EXEMPT} from './types';
-import {DEFAULT_ICONS} from './types/background';
-import {logger} from './lib/utils';
+import { PSP_DETECTION_EXEMPT } from './types';
+import { DEFAULT_ICONS } from './types/background';
+import { logger } from './lib/utils';
 
 class BackgroundService {
   /**
@@ -85,6 +85,7 @@ class BackgroundService {
     if (!url || this.config.exemptDomains.length === 0) {
       return false;
     }
+
     return this.config.exemptDomains.some((domain) => url.includes(domain));
   }
 
@@ -114,11 +115,12 @@ class BackgroundService {
         break;
       case MessageAction.GET_TAB_ID:
         if (sender.tab?.id) {
-          sendResponse({tabId: sender.tab.id});
+          sendResponse({ tabId: sender.tab.id });
         }
+
         break;
       case MessageAction.GET_EXEMPT_DOMAINS:
-        sendResponse({exemptDomains: this.config.exemptDomains});
+        sendResponse({ exemptDomains: this.config.exemptDomains });
         break;
       default:
         logger.warn('Unknown message action:', message.action);
@@ -140,15 +142,16 @@ class BackgroundService {
     sendResponse: (response?: PSPConfigResponse | null) => void,
   ): Promise<void> {
     if (this.config.cachedPspConfig) {
-      sendResponse({config: this.config.cachedPspConfig});
+      sendResponse({ config: this.config.cachedPspConfig });
       return;
     }
+
     try {
       const response: Response = await fetch(
         chrome.runtime.getURL('psps.json'),
       );
       this.config.cachedPspConfig = (await response.json()) as PSPConfig;
-      sendResponse({config: this.config.cachedPspConfig});
+      sendResponse({ config: this.config.cachedPspConfig });
     } catch (error) {
       logger.error('Failed to load PSP config:', error);
       sendResponse(null);
@@ -186,6 +189,7 @@ class BackgroundService {
     } else {
       this.resetIcon();
     }
+
     sendResponse(null);
   }
 
@@ -201,7 +205,7 @@ class BackgroundService {
         this.config.tabPsps.get(this.config.currentTabId) ||
         null
       : null;
-    sendResponse({psp});
+    sendResponse({ psp });
   }
 
   /**
@@ -256,6 +260,7 @@ class BackgroundService {
       this.resetIcon();
       this.config.tabPsps.delete(brandedTabId);
     }
+
     if (
       changeInfo.status === 'complete' &&
       tab.url &&
@@ -283,7 +288,7 @@ class BackgroundService {
     }
 
     // Clear any badge when showing PSP icon
-    chrome.action.setBadgeText({text: ''});
+    chrome.action.setBadgeText({ text: '' });
   }
 
   /**
@@ -298,8 +303,8 @@ class BackgroundService {
     });
 
     // Add warning badge
-    chrome.action.setBadgeText({text: '!'});
-    chrome.action.setBadgeBackgroundColor({color: '#d3d3d3'});
+    chrome.action.setBadgeText({ text: '!' });
+    chrome.action.setBadgeBackgroundColor({ color: '#d3d3d3' });
     logger.debug('Showing exempt domain icon with warning badge');
   }
 
@@ -314,7 +319,7 @@ class BackgroundService {
     });
 
     // Clear any badge
-    chrome.action.setBadgeText({text: ''});
+    chrome.action.setBadgeText({ text: '' });
   }
 
   /**
@@ -341,7 +346,7 @@ class BackgroundService {
   async injectContentScript(tabId: number): Promise<void> {
     try {
       await chrome.scripting.executeScript({
-        target: {tabId},
+        target: { tabId },
         files: ['content.js'],
       });
     } catch (error) {

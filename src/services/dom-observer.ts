@@ -66,9 +66,10 @@ export class DOMObserverService {
     if (!this.observer || this.isObserving) return;
     const start = (): void => {
       if (!document.body) {
-        document.addEventListener('DOMContentLoaded', start, {once: true});
+        document.addEventListener('DOMContentLoaded', start, { once: true });
         return;
       }
+
       try {
         this.observer!.observe(document.body, {
           childList: true,
@@ -86,6 +87,7 @@ export class DOMObserverService {
         );
       }
     };
+
     start();
   }
 

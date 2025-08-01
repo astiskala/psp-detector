@@ -5,9 +5,9 @@ global.chrome = {
   },
 } as unknown as typeof chrome;
 
-import {UIService} from './ui';
-import type {PSP} from '../types';
-import {TypeConverters} from '../types';
+import { UIService } from './ui';
+import type { PSP } from '../types';
+import { TypeConverters } from '../types';
 
 describe('UIService', () => {
   let service: UIService;

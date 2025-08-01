@@ -19,6 +19,7 @@ export const PSPNameHelpers = {
     if (!name || name.trim().length === 0) {
       throw new Error('PSP name cannot be empty');
     }
+
     return name as PSPName;
   },
   isValid: (name: string): name is PSPName => {
@@ -31,6 +32,7 @@ export const TabIdHelpers = {
     if (!Number.isInteger(id) || id < 0) {
       throw new Error('Tab ID must be a non-negative integer');
     }
+
     return id as TabId;
   },
   isValid: (id: number): id is TabId => {

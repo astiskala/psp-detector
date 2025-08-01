@@ -3,10 +3,10 @@
  * Handles UI updates and communication with background script.
  * @module popup
  */
-import {MessageAction, PSPConfig} from './types';
-import {PSP_DETECTION_EXEMPT} from './types';
-import {UIService} from './services/ui';
-import {logger, reportError, createContextError} from './lib/utils';
+import { MessageAction, PSPConfig } from './types';
+import { PSP_DETECTION_EXEMPT } from './types';
+import { UIService } from './services/ui';
+import { logger, reportError, createContextError } from './lib/utils';
 
 class PopupManager {
   private ui: UIService;
@@ -89,6 +89,7 @@ class PopupManager {
     if (!response.ok) {
       throw new Error(`Failed to fetch PSP config: ${response.status}`);
     }
+
     return response.json();
   }
 

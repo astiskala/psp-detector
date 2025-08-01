@@ -22,7 +22,7 @@ global.MutationObserver = class {
   }
 };
 
-import {DOMObserverService} from './dom-observer';
+import { DOMObserverService } from './dom-observer';
 
 describe('DOMObserverService', () => {
   let service: DOMObserverService;
