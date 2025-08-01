@@ -12,6 +12,7 @@ global.MutationObserver = class {
       // Use a small delay to ensure async behavior
       setTimeout(() => this.callback([mutation], this), 5);
     });
+
     this.disconnect = jest.fn();
   }
   callback: MutationCallback;

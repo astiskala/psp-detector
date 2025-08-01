@@ -81,6 +81,7 @@ describe('PSPDetectorService', () => {
       name: 'Stripe',
       regex: 'stripe\\.com',
     });
+
     expect(
       service.getPSPByPSPName(TypeConverters.toPSPName('Unknown')!),
     ).toBeNull();

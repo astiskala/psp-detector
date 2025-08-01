@@ -105,7 +105,9 @@ class ContentScript {
         void setup();
       }, 0);
     }
-  } /**
+  }
+
+  /**
    * Initialize exempt domains configuration
    * @private
    * @return {Promise<void>}
@@ -125,6 +127,7 @@ class ContentScript {
           action: 'initializeExemptDomains',
         }),
       );
+
       logger.error('Failed to initialize exempt domains:', error);
     }
   }
@@ -149,6 +152,7 @@ class ContentScript {
           action: 'initializePSPConfig',
         }),
       );
+
       logger.error('Failed to initialize PSP config:', error);
     }
   }
@@ -232,6 +236,7 @@ class ContentScript {
       const tabResponse = await this.sendMessage<{ tabId: number }>({
         action: MessageAction.GET_TAB_ID,
       });
+
       if (tabResponse?.tabId) {
         const tabId = TypeConverters.toTabId(tabResponse.tabId);
         const pspName =
@@ -345,6 +350,7 @@ contentScript.initialize().catch((error): void => {
         action: 'startup',
       }),
     );
+
     logger.error('Content script initialization failed:', error);
   }
 });

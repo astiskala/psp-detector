@@ -21,6 +21,7 @@ describe('UIService', () => {
       <div id="psp-url"></div>
       <img id="psp-image" />
     `;
+
     service = new UIService();
     elements = {
       name: document.getElementById('psp-name')!,

@@ -62,6 +62,7 @@ async function generatePspImages() {
           effort: 10,
         })
         .toFile(outPath);
+
       console.log(`Resized ${file} → ${base}_${size}.png`);
     }
   }

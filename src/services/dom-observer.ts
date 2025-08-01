@@ -75,6 +75,7 @@ export class DOMObserverService {
           childList: true,
           subtree: true,
         });
+
         this.isObserving = true;
         logger.debug('DOM observer started');
       } catch (startError) {

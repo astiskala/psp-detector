@@ -47,6 +47,7 @@ class PopupManager {
             action: 'initialize',
           }),
         );
+
         logger.error('PSP config not found for:', detectedPsp);
         this.ui.showNoPSPDetected();
       }
@@ -57,6 +58,7 @@ class PopupManager {
           action: 'initialize',
         }),
       );
+
       logger.error('Failed to initialize popup:', error);
       this.ui.showError();
     }
@@ -142,6 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
         action: 'documentReady',
       }),
     );
+
     logger.error('Popup initialization failed:', error);
   });
 });

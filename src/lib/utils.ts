@@ -241,6 +241,7 @@ export const memoryUtils = {
       eventMap.forEach((listener, event) => {
         element.removeEventListener(event, listener);
       });
+
       eventMap.clear();
     };
   },
