@@ -6,31 +6,36 @@
 import {
   MessageAction,
   PSP,
-  BackgroundConfig,
   ChromeMessage,
   PSPDetectionData,
   PSPConfigResponse,
   PSPConfig,
   PSPResponse,
   TypeConverters,
+  PSPDetectionResult,
 } from './types';
 import { PSP_DETECTION_EXEMPT } from './types';
 import { DEFAULT_ICONS } from './types/background';
 import { logger } from './lib/utils';
 
 class BackgroundService {
-  /**
-   * Extension state/configuration
-   */
-  config: BackgroundConfig = {
-    cachedPspConfig: null,
-    exemptDomains: [],
-    tabPsps: new Map(),
-    detectedPsp: null,
-    currentTabId: null,
+  private config: {
+    currentTabId: number | null;
+    detectedPsp: PSPDetectionResult | null;
+    tabPsps: Map<number, PSPDetectionResult>;
+    exemptDomains: string[];
+    cachedPspConfig: PSPConfig | null;
   };
 
   constructor() {
+    this.config = {
+      currentTabId: null,
+      detectedPsp: null,
+      tabPsps: new Map(),
+      exemptDomains: [],
+      cachedPspConfig: null,
+    };
+
     this.initializeListeners();
     this.loadExemptDomains();
   }
@@ -87,6 +92,30 @@ class BackgroundService {
     }
 
     return this.config.exemptDomains.some((domain) => url.includes(domain));
+  }
+
+  /**
+   * Check if a URL is a special URL that doesn't support content scripts
+   * @private
+   * @param {string} url - URL to check
+   * @return {boolean} True if URL is special (chrome://, chrome-extension://, etc.)
+   */
+  private isSpecialUrl(url: string): boolean {
+    if (!url) {
+      return false;
+    }
+
+    const specialProtocols = [
+      'chrome://',
+      'chrome-extension://',
+      'edge://',
+      'about:',
+      'moz-extension://',
+      'safari-extension://',
+      'file://',
+    ];
+
+    return specialProtocols.some((protocol) => url.startsWith(protocol));
   }
 
   /**
@@ -172,11 +201,30 @@ class BackgroundService {
     if (data?.psp && this.config.currentTabId !== null) {
       const pspName = data.psp;
       const tabId = data.tabId;
+      const detectionInfo = data.detectionInfo;
+      const url = data.url;
 
       if (pspName && tabId) {
-        this.config.detectedPsp = pspName;
+        // Create a detection result object
+        let detectionResult: PSPDetectionResult;
+
+        if (String(data.psp) === PSP_DETECTION_EXEMPT) {
+          // Create exempt result for exempt domains
+          detectionResult = PSPDetectionResult.exempt(
+            'Domain is exempt from PSP detection',
+            (url || 'unknown') as import('./types/branded').URL,
+          );
+        } else {
+          // Create detected result for actual PSPs
+          detectionResult = PSPDetectionResult.detected(
+            pspName,
+            detectionInfo,
+          );
+        }
+
+        this.config.detectedPsp = detectionResult;
         if (tabId === this.config.currentTabId) {
-          this.config.tabPsps.set(this.config.currentTabId, pspName);
+          this.config.tabPsps.set(this.config.currentTabId, detectionResult);
 
           // Handle different PSP detection states
           if (String(data.psp) === PSP_DETECTION_EXEMPT) {
@@ -200,12 +248,13 @@ class BackgroundService {
    * @return {void}
    */
   handleGetPsp(sendResponse: (response?: PSPResponse) => void): void {
-    const psp = this.config.currentTabId
+    const pspResult = this.config.currentTabId
       ? this.config.detectedPsp ||
         this.config.tabPsps.get(this.config.currentTabId) ||
         null
       : null;
-    sendResponse({ psp });
+
+    sendResponse({ psp: pspResult });
   }
 
   /**
@@ -224,15 +273,26 @@ class BackgroundService {
         if (this.config.detectedPsp) {
 
           // Handle different PSP detection states
-          if (this.config.detectedPsp === PSP_DETECTION_EXEMPT) {
+          if (this.config.detectedPsp.type === 'exempt') {
             this.showExemptDomainIcon();
-          } else {
-            this.updateIcon(this.config.detectedPsp);
+          } else if (this.config.detectedPsp.type === 'detected') {
+            this.updateIcon(this.config.detectedPsp.psp);
           }
         } else {
           this.resetIcon();
-          if (tab?.url && !this.isUrlExempt(tab.url)) {
-            await this.injectContentScript(activeInfo.tabId);
+          if (tab?.url) {
+            if (this.isUrlExempt(tab.url) || this.isSpecialUrl(tab.url)) {
+              // Create exempt result for exempt domains or special URLs
+              const exemptResult = PSPDetectionResult.exempt(
+                'PSP detection is disabled for this domain',
+                (tab.url || 'unknown') as import('./types/branded').URL,
+              );
+              this.config.detectedPsp = exemptResult;
+              this.config.tabPsps.set(tabId, exemptResult);
+              this.showExemptDomainIcon();
+            } else {
+              await this.injectContentScript(activeInfo.tabId);
+            }
           }
         }
       } catch (error) {
@@ -259,14 +319,29 @@ class BackgroundService {
     if (brandedTabId && changeInfo.status === 'loading') {
       this.resetIcon();
       this.config.tabPsps.delete(brandedTabId);
+
+      // Clear cached PSP result when page starts loading
+      if (brandedTabId === this.config.currentTabId) {
+        this.config.detectedPsp = null;
+      }
     }
 
-    if (
-      changeInfo.status === 'complete' &&
-      tab.url &&
-      !this.isUrlExempt(tab.url)
-    ) {
-      this.injectContentScript(tabId);
+    if (changeInfo.status === 'complete' && tab.url) {
+      if (this.isUrlExempt(tab.url) || this.isSpecialUrl(tab.url)) {
+        // Create exempt result for exempt domains or special URLs
+        const exemptResult = PSPDetectionResult.exempt(
+          'PSP detection is disabled for this domain',
+          (tab.url || 'unknown') as import('./types/branded').URL,
+        );
+        if (brandedTabId && brandedTabId === this.config.currentTabId) {
+          this.config.detectedPsp = exemptResult;
+          this.config.tabPsps.set(brandedTabId, exemptResult);
+          this.showExemptDomainIcon();
+        }
+      } else {
+        // For regular websites, inject content script for detection
+        this.injectContentScript(tabId);
+      }
     }
   }
 

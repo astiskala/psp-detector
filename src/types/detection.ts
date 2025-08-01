@@ -11,6 +11,10 @@ export type PSPDetectionResult =
   | {
       readonly type: 'detected';
       readonly psp: PSPName;
+      readonly detectionInfo?: {
+        readonly method: 'matchString' | 'regex';
+        readonly value: string;
+      };
     }
   | { readonly type: 'exempt'; readonly reason: string; readonly url: URL }
   | { readonly type: 'none'; readonly scannedPatterns: number }
@@ -27,9 +31,13 @@ export const PSPDetectionResult = {
   /**
    * Create a detected result
    */
-  detected: (psp: PSPName): PSPDetectionResult => ({
+  detected: (
+    psp: PSPName,
+    detectionInfo?: { method: 'matchString' | 'regex'; value: string },
+  ): PSPDetectionResult => ({
     type: 'detected',
     psp,
+    detectionInfo,
   }),
 
   /**

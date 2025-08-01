@@ -11,6 +11,7 @@ import {
   ChromeMessage,
   PSPConfigResponse,
   TypeConverters,
+  PSPDetectionResult,
 } from './types';
 import { PSP_DETECTION_EXEMPT } from './types';
 import {
@@ -205,10 +206,10 @@ class ContentScript {
 
     switch (result.type) {
     case 'detected':
-      await this.handlePSPDetection(result.psp);
+      await this.handlePSPDetection(result);
       break;
     case 'exempt':
-      await this.handlePSPDetection(PSP_DETECTION_EXEMPT);
+      await this.handlePSPDetection({ type: 'exempt', reason: result.reason, url: result.url });
       break;
     case 'none':
       // No PSP detected, continue monitoring
@@ -228,10 +229,10 @@ class ContentScript {
   /**
    * Handle PSP detection result (shared logic)
    * @private
-   * @param {string} detectedPsp - The detected PSP name or exempt marker
+   * @param {PSPDetectionResult} result - The detection result
    * @return {Promise<void>}
    */
-  private async handlePSPDetection(detectedPsp: string): Promise<void> {
+  private async handlePSPDetection(result: PSPDetectionResult): Promise<void> {
     try {
       const tabResponse = await this.sendMessage<{ tabId: number }>({
         action: MessageAction.GET_TAB_ID,
@@ -239,22 +240,35 @@ class ContentScript {
 
       if (tabResponse?.tabId) {
         const tabId = TypeConverters.toTabId(tabResponse.tabId);
-        const pspName =
-          detectedPsp === PSP_DETECTION_EXEMPT
-            ? detectedPsp
-            : TypeConverters.toPSPName(detectedPsp);
+
+        let pspName: string | null = null;
+        let detectionInfo: { method: 'matchString' | 'regex'; value: string } | undefined;
+        let url: string | undefined;
+
+        if (result.type === 'detected') {
+          pspName = result.psp;
+          detectionInfo = result.detectionInfo;
+        } else if (result.type === 'exempt') {
+          pspName = PSP_DETECTION_EXEMPT;
+          url = result.url;
+        }
 
         if (tabId && pspName) {
           await this.sendMessage({
             action: MessageAction.DETECT_PSP,
-            data: { psp: pspName, tabId: tabId },
+            data: {
+              psp: TypeConverters.toPSPName(pspName),
+              tabId: tabId,
+              detectionInfo,
+              url,
+            },
           });
         }
       }
 
       // Mark as detected for all PSPs, including exempt domains
       this.pspDetected = true;
-      if (detectedPsp !== PSP_DETECTION_EXEMPT) {
+      if (result.type === 'detected' || result.type === 'exempt') {
         this.domObserver.stopObserving();
       }
     } catch (error) {

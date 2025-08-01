@@ -3,8 +3,7 @@
  * Handles UI updates and communication with background script.
  * @module popup
  */
-import { MessageAction, PSPConfig } from './types';
-import { PSP_DETECTION_EXEMPT } from './types';
+import { MessageAction, PSPConfig, PSPResponse, PSPDetectionResult } from './types';
 import { UIService } from './services/ui';
 import { logger, reportError, createContextError } from './lib/utils';
 
@@ -21,25 +20,26 @@ class PopupManager {
    */
   public async initialize(): Promise<void> {
     try {
-      const detectedPsp = await this.getDetectedPSP();
+      const detectedPspResult = await this.getDetectedPSP();
 
       // Handle exempt domain case
-      if (detectedPsp === PSP_DETECTION_EXEMPT) {
+      if (detectedPspResult?.type === 'exempt') {
         this.ui.showPSPDetectionDisabled();
         return;
       }
 
-      if (!detectedPsp) {
+      if (!detectedPspResult || detectedPspResult.type !== 'detected') {
+        // No PSP detection result - PSP detection ran but found nothing
         this.ui.showNoPSPDetected();
         return;
       }
 
       const pspConfig = await this.getPSPConfig();
       const psp = pspConfig.psps.find(
-        (p: { name: string }) => p.name === detectedPsp,
+        (p: { name: string }) => p.name === detectedPspResult.psp,
       );
       if (psp) {
-        this.ui.updatePSPDisplay(psp);
+        this.ui.updatePSPDisplay(psp, detectedPspResult.detectionInfo);
       } else {
         reportError(
           createContextError('PSP config not found', {
@@ -48,7 +48,7 @@ class PopupManager {
           }),
         );
 
-        logger.error('PSP config not found for:', detectedPsp);
+        logger.error('PSP config not found for:', detectedPspResult.psp);
         this.ui.showNoPSPDetected();
       }
     } catch (error) {
@@ -67,11 +67,11 @@ class PopupManager {
   /**
    * Get the detected PSP from the background script
    * @private
-   * @return {Promise<string|null>} PSP name or null
+   * @return {Promise<PSPDetectionResult|null>} PSP detection result or null
    */
-  private async getDetectedPSP(): Promise<string | null> {
+  private async getDetectedPSP(): Promise<PSPDetectionResult | null> {
     try {
-      const response = await this.sendMessage<{ psp: string | null }>({
+      const response = await this.sendMessage<PSPResponse>({
         action: MessageAction.GET_PSP,
       });
       return response.psp;

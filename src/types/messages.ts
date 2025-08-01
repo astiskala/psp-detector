@@ -4,6 +4,7 @@
 import type { PSPName, TabId } from './branded';
 import type { PSPConfig } from './psp';
 import type { MessageAction } from './core';
+import type { PSPDetectionResult } from './detection';
 
 /**
  * Chrome runtime message structure
@@ -27,6 +28,11 @@ export interface PSPDetectionResponse {
 export interface PSPDetectionData {
   psp?: PSPName;
   tabId?: TabId;
+  detectionInfo?: {
+    method: 'matchString' | 'regex';
+    value: string;
+  };
+  url?: string; // URL for exempt domains
 }
 
 /**
@@ -40,5 +46,5 @@ export interface PSPConfigResponse {
  * PSP response
  */
 export interface PSPResponse {
-  psp: PSPName | null;
+  psp: PSPDetectionResult | null;
 }

@@ -45,12 +45,12 @@
         "secure.worldpay.com"
       ],
       "image": "worldpay",
-      "summary": "Worldpay, part of FIS, is a payment processing company that provides solutions for online, in-store, and mobile transactions. It supports various payment methods, offering security features and fraud management tools for businesses.",
+      "summary": "Worldpay is a payment processing company that provides solutions for online, in-store, and mobile transactions. It supports various payment methods, offering security features and fraud management tools for businesses.",
       "url": "https://www.worldpay.com"
     },
     {
       "name": "PayPal",
-      "regex": "paypalobjects\\.com/webstatic/.+/developer/docs/css/cardfields\\.css",
+      "regex": "paypalobjects\\.com/webstatic/.+/developer/docs/css/cardfields\\.css|paypal\\.com/smart/card-fields",
       "image": "paypal",
       "summary": "PayPal is an online payment platform that allows individuals and businesses to make payments, transfer money, and complete online transactions. It supports a variety of payment methods, including credit cards, bank transfers, and PayPal account balances, making it a versatile choice for e-commerce and personal transactions.",
       "url": "https://www.paypal.com"

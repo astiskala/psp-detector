@@ -28,20 +28,67 @@ export class UIService {
 
       this.elements[id] = element;
     });
+
+    // Detection details elements
+    const detectionElement = document.getElementById('psp-detected-domain');
+    const detectionDetailsElement = document.getElementById('psp-detection-details');
+    if (detectionElement && detectionDetailsElement) {
+      this.elements.detectedDomain = detectionElement;
+      this.elements.detectionDetails = detectionDetailsElement;
+    }
+
+    // Additional elements for the new UI (optional for backward compatibility)
+    const optionalElements = [
+      'container',
+      'loadingState',
+      'contentState',
+      'statusIcon',
+    ];
+    const optionalSelectors = [
+      '.popup-container',
+      '#loading-state',
+      '#content-state',
+      '#status-icon',
+    ];
+
+    optionalElements.forEach((id, index) => {
+      const element = document.querySelector(optionalSelectors[index]);
+      if (element) {
+        this.elements[id] = element as HTMLElement;
+      }
+    });
   }
 
   /**
    * Update UI with PSP information
    * @param {PSP} psp - PSP configuration object
+   * @param {Object} detectionInfo - Optional detection information
+   * @param {string} detectionInfo.method - Detection method
+   * @param {string} detectionInfo.value - The value that matched
    * @return {void}
    */
-  public updatePSPDisplay(psp: PSP): void {
+  public updatePSPDisplay(
+    psp: PSP,
+    detectionInfo?: { method: string; value: string },
+  ): void {
     try {
+      this.hideLoadingState();
+      this.showContentState();
+      this.setUIState('success');
+
       this.updateTextContent('name', psp.name);
       this.updateTextContent('description', psp.summary);
       this.updateNoticeSection(psp.notice);
-      this.updateLearnMoreLink(psp.url);
+      this.updateLearnMoreLink(psp.url, `Learn more about ${psp.name}`);
       this.updateImage(psp.image, psp.name);
+      this.showPSPImage();
+
+      // Update detection details if provided
+      if (detectionInfo) {
+        this.updateDetectionDetails(detectionInfo);
+      } else {
+        this.hideDetectionDetails();
+      }
     } catch (error) {
       logger.error('Failed to update PSP display:', error);
       this.showError();
@@ -53,6 +100,12 @@ export class UIService {
    * @return {void}
    */
   public showNoPSPDetected(): void {
+    this.hideLoadingState();
+    this.showContentState();
+    this.setUIState('no-psp');
+    this.showStatusIcon('🔍');
+    this.hideDetectionDetails();
+
     this.updateTextContent('name', 'No PSP detected');
     this.updateTextContent(
       'description',
@@ -74,6 +127,12 @@ export class UIService {
    * @return {void}
    */
   public showPSPDetectionDisabled(): void {
+    this.hideLoadingState();
+    this.showContentState();
+    this.setUIState('disabled');
+    this.showStatusIcon('🚫');
+    this.hideDetectionDetails();
+
     this.updateTextContent('name', 'PSP detection disabled');
     this.updateTextContent(
       'description',
@@ -95,6 +154,12 @@ export class UIService {
    * @return {void}
    */
   public showError(): void {
+    this.hideLoadingState();
+    this.showContentState();
+    this.setUIState('error');
+    this.showStatusIcon('⚠️');
+    this.hideDetectionDetails();
+
     this.updateTextContent('name', 'Error');
     this.updateTextContent(
       'description',
@@ -127,9 +192,11 @@ export class UIService {
   private updateNoticeSection(notice?: string): void {
     if (notice) {
       this.elements.notice.style.display = 'block';
+      this.elements.notice.classList.add('show');
       this.updateTextContent('notice', notice);
     } else {
       this.elements.notice.style.display = 'none';
+      this.elements.notice.classList.remove('show');
       this.updateTextContent('notice', '');
     }
   }
@@ -161,5 +228,118 @@ export class UIService {
     const imgElement = this.elements.image as HTMLImageElement;
     imgElement.src = chrome.runtime.getURL(`images/${image}_128.png`);
     imgElement.alt = `${alt} logo`;
+  }
+
+  /**
+   * Hide loading state and show content
+   * @private
+   * @return {void}
+   */
+  private hideLoadingState(): void {
+    if (this.elements.loadingState) {
+      this.elements.loadingState.style.display = 'none';
+    }
+  }
+
+  /**
+   * Show content state
+   * @private
+   * @return {void}
+   */
+  private showContentState(): void {
+    if (this.elements.contentState) {
+      this.elements.contentState.style.display = 'block';
+    }
+  }
+
+  /**
+   * Set UI state by adding appropriate CSS class
+   * @private
+   * @param {string} state - State type (success, error, no-psp, disabled)
+   * @return {void}
+   */
+  private setUIState(state: string): void {
+    if (!this.elements.container) return;
+
+    // Remove existing state classes
+    this.elements.container.classList.remove('error-state', 'no-psp-state', 'disabled-state');
+
+    // Add new state class
+    if (state !== 'success') {
+      this.elements.container.classList.add(`${state}-state`);
+    }
+  }
+
+  /**
+   * Show status icon instead of PSP image
+   * @private
+   * @param {string} icon - Emoji icon to display
+   * @return {void}
+   */
+  private showStatusIcon(icon: string): void {
+    if (this.elements.image) {
+      this.elements.image.style.display = 'none';
+    }
+
+    if (this.elements.statusIcon) {
+      this.elements.statusIcon.style.display = 'flex';
+      this.elements.statusIcon.textContent = icon;
+    }
+  }
+
+  /**
+   * Show PSP image and hide status icon
+   * @private
+   * @return {void}
+   */
+  private showPSPImage(): void {
+    if (this.elements.statusIcon) {
+      this.elements.statusIcon.style.display = 'none';
+    }
+
+    if (this.elements.image) {
+      this.elements.image.style.display = 'block';
+    }
+  }
+
+  /**
+   * Update detection details section
+   * @private
+   * @param {Object} detectionInfo - Detection information
+   * @param {string} detectionInfo.method - Detection method
+   * @param {string} detectionInfo.value - The value that matched
+   * @return {void}
+   */
+  private updateDetectionDetails(detectionInfo: {
+    method: string;
+    value: string;
+  }): void {
+    if (!this.elements.detectedDomain || !this.elements.detectionDetails) {
+      return;
+    }
+
+    const methodLabel = detectionInfo.method === 'matchString'
+      ? 'Match String'
+      : 'Regex Pattern';
+
+    this.elements.detectionDetails.textContent = detectionInfo.value;
+    this.elements.detectedDomain.style.display = 'block';
+
+    // Update the header if needed
+    const header = this.elements.detectedDomain.querySelector('h3');
+    if (header) {
+      header.textContent = `Detected via ${methodLabel}`;
+    }
+  }
+
+  /**
+   * Hide detection details section
+   * @private
+   * @return {void}
+   */
+  private hideDetectionDetails(): void {
+    if (this.elements.detectedDomain) {
+      this.elements.detectedDomain.style.display = 'none';
+    }
   }
 }

@@ -1,5 +1,6 @@
 import type { PSPConfig } from './psp';
 import type { PSPName, TabId } from './branded';
+import type { PSPDetectionResult } from './detection';
 
 /**
  * Background service configuration and types
@@ -7,8 +8,8 @@ import type { PSPName, TabId } from './branded';
 export interface BackgroundConfig {
   cachedPspConfig: PSPConfig | null;
   exemptDomains: string[];
-  tabPsps: Map<TabId, PSPName>;
-  detectedPsp: PSPName | null;
+  tabPsps: Map<TabId, PSPDetectionResult>;
+  detectedPsp: PSPDetectionResult | null;
   currentTabId: TabId | null;
 }
 

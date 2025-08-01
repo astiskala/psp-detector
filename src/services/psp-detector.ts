@@ -93,7 +93,10 @@ export class PSPDetectorService {
           if (pageContent.includes(matchString)) {
             logger.timeEnd('matchStringsScanning');
             logger.info('PSP detected via matchStrings:', psp.name);
-            return PSPDetectionResult.detected(psp.name);
+            return PSPDetectionResult.detected(psp.name, {
+              method: 'matchString',
+              value: matchString,
+            });
           }
         }
       }
@@ -106,7 +109,10 @@ export class PSPDetectorService {
       if (psp.compiledRegex && psp.compiledRegex.test(pageContent)) {
         logger.timeEnd('regexScanning');
         logger.info('PSP detected via regex:', psp.name);
-        return PSPDetectionResult.detected(psp.name);
+        return PSPDetectionResult.detected(psp.name, {
+          method: 'regex',
+          value: psp.regex || 'unknown',
+        });
       }
     }
 
