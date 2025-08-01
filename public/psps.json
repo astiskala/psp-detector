@@ -205,7 +205,9 @@
       "matchStrings": [
         "apis.globalpay.com",
         "apis.sandbox.globalpay.com",
-        "js.globalpay.com"
+        "js.globalpay.com",
+        "pay.realexpayments.com",
+        "pay.sandbox.realexpayments.com"
       ],
       "image": "globalpayments",
       "summary": "Global Payments is a provider of payment technology services, offering solutions for in-store, online, and mobile transactions. It serves businesses worldwide with tools for payment processing, fraud prevention, and data analytics.",

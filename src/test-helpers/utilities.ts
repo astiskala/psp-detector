@@ -11,10 +11,12 @@ export class MockMutationObserver {
   constructor(callback: MutationCallback) {
     this.callback = callback;
     this.observe = jest.fn(() => {
-      // Simulate mutation when observe is called
+      // Simulate mutation when observe is called - use iframe for testing
+      const iframe = document.createElement('iframe');
+      iframe.src = 'https://js.checkout.com/test';
       const mutation = {
         type: 'childList',
-        addedNodes: [document.createElement('div')],
+        addedNodes: [iframe],
       } as unknown as MutationRecord;
 
       // Use a small delay to ensure async behavior

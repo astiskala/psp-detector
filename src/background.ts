@@ -198,11 +198,19 @@ class BackgroundService {
     data: PSPDetectionData,
     sendResponse: (response?: null) => void,
   ): void {
+    logger.debug('Background: Received PSP detection message:', data);
+    logger.debug('Background: Current tab ID:', this.config.currentTabId);
+
     if (data?.psp && this.config.currentTabId !== null) {
       const pspName = data.psp;
       const tabId = data.tabId;
       const detectionInfo = data.detectionInfo;
       const url = data.url;
+
+      logger.debug(
+        `Background: Processing PSP detection - PSP: ${pspName}, ` +
+        `TabID: ${tabId}, CurrentTabID: ${this.config.currentTabId}`,
+      );
 
       if (pspName && tabId) {
         // Create a detection result object
@@ -214,11 +222,17 @@ class BackgroundService {
             'Domain is exempt from PSP detection',
             (url || 'unknown') as import('./types/branded').URL,
           );
+
+          logger.debug('Background: Created exempt domain result');
         } else {
           // Create detected result for actual PSPs
           detectionResult = PSPDetectionResult.detected(
             pspName,
             detectionInfo,
+          );
+
+          logger.debug(
+            `Background: Created PSP detection result for ${pspName}`,
           );
         }
 
@@ -226,15 +240,28 @@ class BackgroundService {
         if (tabId === this.config.currentTabId) {
           this.config.tabPsps.set(this.config.currentTabId, detectionResult);
 
+          logger.debug(
+            'Background: Stored PSP result for current tab ' +
+            `${this.config.currentTabId}`,
+          );
+
           // Handle different PSP detection states
           if (String(data.psp) === PSP_DETECTION_EXEMPT) {
+            logger.debug('Background: Updating icon for exempt domain');
             this.showExemptDomainIcon();
           } else {
+            logger.debug(`Background: Updating icon for PSP ${data.psp}`);
             this.updateIcon(String(data.psp));
           }
+        } else {
+          logger.warn(
+            `Background: Tab ID mismatch - detection for ${tabId}, ` +
+            `current ${this.config.currentTabId}`,
+          );
         }
       }
     } else {
+      logger.debug('Background: Invalid PSP data or no current tab, resetting icon');
       this.resetIcon();
     }
 
@@ -266,8 +293,15 @@ class BackgroundService {
   async handleTabActivation(activeInfo: { tabId: number }): Promise<void> {
     const tabId = TypeConverters.toTabId(activeInfo.tabId);
     if (tabId) {
+      logger.debug(`Background: Tab activated - ID: ${tabId}`);
       this.config.currentTabId = tabId;
       this.config.detectedPsp = this.config.tabPsps.get(tabId) || null;
+
+      logger.debug(
+        `Background: Retrieved PSP for tab ${tabId}:`,
+        this.config.detectedPsp,
+      );
+
       try {
         const tab = await chrome.tabs.get(activeInfo.tabId);
         if (this.config.detectedPsp) {

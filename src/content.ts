@@ -25,6 +25,10 @@ class ContentScript {
   private pspDetector: PSPDetectorService;
   private domObserver: DOMObserverService;
   private pspDetected = false;
+  private reportedPSPs = new Set<string>();
+  private processedIframes = new Set<string>();
+  private lastDetectionTime = 0;
+  private detectionCooldown = 500; // 500ms cooldown between detections
 
   constructor() {
     this.pspDetector = new PSPDetectorService();
@@ -164,7 +168,7 @@ class ContentScript {
    * @return {void}
    */
   private setupDOMObserver(): void {
-    this.domObserver.initialize(() => this.detectPSP());
+    this.domObserver.initialize(() => this.detectPSP(), 3000);
     this.domObserver.startObserving();
   }
 
@@ -174,6 +178,16 @@ class ContentScript {
    * @return {Promise<void>}
    */
   private async detectPSP(): Promise<void> {
+    const now = Date.now();
+
+    // Implement cooldown to prevent excessive detection calls
+    if (now - this.lastDetectionTime < this.detectionCooldown) {
+      logger.debug('Detection skipped - cooldown active');
+      return;
+    }
+
+    this.lastDetectionTime = now;
+
     if (this.pspDetected || !this.pspDetector.isInitialized()) {
       return;
     }
@@ -195,11 +209,15 @@ class ContentScript {
       .map((f) => (f as HTMLFormElement).action)
       .filter(Boolean);
 
+    // Get additional content from accessible iframes
+    const iframeContent = await this.getIframeContent();
+
     const scanContent = [
       document.URL,
       ...scriptSrcs,
       ...iframeSrcs,
       ...formActions,
+      ...iframeContent,
     ].join('\n');
 
     const result = this.pspDetector.detectPSP(url, scanContent);
@@ -234,6 +252,25 @@ class ContentScript {
    */
   private async handlePSPDetection(result: PSPDetectionResult): Promise<void> {
     try {
+      // Early duplicate detection check
+      let pspName: string | null = null;
+      if (result.type === 'detected') {
+        pspName = result.psp;
+      } else if (result.type === 'exempt') {
+        pspName = PSP_DETECTION_EXEMPT;
+      }
+
+      // Check for duplicate detection
+      if (pspName && this.reportedPSPs.has(pspName)) {
+        logger.debug(`PSP ${pspName} already reported, skipping duplicate`);
+        return;
+      }
+
+      // Mark as reported
+      if (pspName) {
+        this.reportedPSPs.add(pspName);
+      }
+
       const tabResponse = await this.sendMessage<{ tabId: number }>({
         action: MessageAction.GET_TAB_ID,
       });
@@ -241,15 +278,12 @@ class ContentScript {
       if (tabResponse?.tabId) {
         const tabId = TypeConverters.toTabId(tabResponse.tabId);
 
-        let pspName: string | null = null;
         let detectionInfo: { method: 'matchString' | 'regex'; value: string } | undefined;
         let url: string | undefined;
 
         if (result.type === 'detected') {
-          pspName = result.psp;
           detectionInfo = result.detectionInfo;
         } else if (result.type === 'exempt') {
-          pspName = PSP_DETECTION_EXEMPT;
           url = result.url;
         }
 
@@ -338,6 +372,111 @@ class ContentScript {
     ];
 
     memoryUtils.cleanup(cleanupFunctions);
+  }
+
+  /**
+   * Get iframe content for PSP detection (optimized with caching)
+   * @return {Promise<string[]>} Array of iframe content URLs
+   */
+  private async getIframeContent(): Promise<string[]> {
+    const iframeContent: string[] = [];
+    const iframes = document.querySelectorAll('iframe');
+
+    for (const iframe of iframes) {
+      const htmlIframe = iframe as HTMLIFrameElement;
+      const src = htmlIframe.src;
+
+      // Skip if already processed
+      if (src && this.processedIframes.has(src)) {
+        continue;
+      }
+
+      // Only scan iframes we can access (same-origin or allowed domains)
+      if (src && this.canAccessIframe(src)) {
+        this.processedIframes.add(src);
+
+        try {
+          // Wait a bit for iframe to load
+          await new Promise(resolve => setTimeout(resolve, 500));
+
+          const iframeDoc = htmlIframe.contentDocument ||
+                           htmlIframe.contentWindow?.document;
+          if (iframeDoc) {
+            // Get nested iframe sources
+            const nestedIframes = iframeDoc.querySelectorAll('iframe');
+            if (nestedIframes.length > 0) {
+              logger.debug(
+                `Found ${nestedIframes.length} nested iframes in: ${src}`,
+              );
+            }
+
+            nestedIframes.forEach(nestedIframe => {
+              const nestedSrc = (nestedIframe as HTMLIFrameElement).src;
+              if (nestedSrc && !this.processedIframes.has(nestedSrc)) {
+                iframeContent.push(nestedSrc);
+                this.processedIframes.add(nestedSrc);
+              }
+            });
+
+            // Get script sources from iframe
+            const nestedScripts = iframeDoc.querySelectorAll('script[src]');
+            nestedScripts.forEach(script => {
+              const scriptSrc = (script as HTMLScriptElement).src;
+              if (scriptSrc) {
+                iframeContent.push(scriptSrc);
+              }
+            });
+
+            // Get form actions from iframe
+            const nestedForms = iframeDoc.querySelectorAll('form[action]');
+            nestedForms.forEach(form => {
+              const action = (form as HTMLFormElement).action;
+              if (action) {
+                iframeContent.push(action);
+              }
+            });
+          }
+        } catch {
+          // Silently handle cross-origin errors
+        }
+      }
+    }
+
+    return iframeContent;
+  }
+
+  /**
+   * Check if we can access iframe content based on same-origin policy
+   * @param {string} src - The iframe source URL
+   * @return {boolean} Whether we can access the iframe content
+   */
+  private canAccessIframe(src: string): boolean {
+    try {
+      // Same-origin iframes are always accessible
+      if (src.startsWith(window.location.origin)) {
+        return true;
+      }
+
+      // Some PSPs allow cross-origin access in specific scenarios
+      // This is determined by actual runtime testing rather than hardcoding
+      const url = new URL(src);
+
+      // Common PSP domains that often allow iframe access
+      const accessibleDomains = [
+        'checkout.com',
+        'js.checkout.com',
+        'stripe.com',
+        'js.stripe.com',
+        'paypal.com',
+        'braintreepayments.com',
+      ];
+
+      return accessibleDomains.some(domain =>
+        url.hostname === domain || url.hostname.endsWith('.' + domain),
+      );
+    } catch {
+      return false;
+    }
   }
 }
 
