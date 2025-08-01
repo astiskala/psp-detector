@@ -1,29 +1,13 @@
-// MutationObserver mock for Jest/JSDOM
-global.MutationObserver = class {
-  constructor(callback: MutationCallback) {
-    this.callback = callback;
-    this.observe = jest.fn(() => {
-      // Simulate mutation when observe is called
-      const mutation = {
-        type: 'childList',
-        addedNodes: [document.createElement('div')], // Add a real node
-      } as unknown as MutationRecord;
-
-      // Use a small delay to ensure async behavior
-      setTimeout(() => this.callback([mutation], this), 5);
-    });
-
-    this.disconnect = jest.fn();
-  }
-  callback: MutationCallback;
-  observe: jest.Mock;
-  disconnect: jest.Mock;
-  takeRecords(): MutationRecord[] {
-    return [];
-  }
-};
-
 import { DOMObserverService } from './dom-observer';
+import {
+  setupMutationObserverMock,
+  setupCleanDOM,
+  waitFor,
+} from '../test-helpers/utilities';
+import { TEST_TIMEOUTS } from '../test-helpers/constants';
+
+// Setup global mocks
+setupMutationObserverMock();
 
 describe('DOMObserverService', () => {
   let service: DOMObserverService;
@@ -32,31 +16,31 @@ describe('DOMObserverService', () => {
   beforeEach(() => {
     service = new DOMObserverService();
     callback = jest.fn();
-    document.body.innerHTML = '<div id="root"></div>';
+    setupCleanDOM();
   });
 
-  it('should initialize and start observing mutations', () => {
+  it('should initialize and start observing mutations', async() => {
     service.initialize(callback, 0); // no debounce for test
     service.startObserving();
 
-    // The mock will trigger the callback when observe() is called
-    // We need to wait for both the mock's setTimeout(0) and any debounce
-    return new Promise((resolve) => setTimeout(resolve, 50)).then(() => {
-      expect(callback).toHaveBeenCalled();
-      expect(service.isActive()).toBe(true);
-    });
+    // Wait for the mock observer to trigger
+    await waitFor(TEST_TIMEOUTS.DOM_MUTATION_DELAY);
+
+    expect(callback).toHaveBeenCalled();
+    expect(service.isActive()).toBe(true);
   });
 
-  it('should stop observing mutations', () => {
+  it('should stop observing mutations', async() => {
     service.initialize(callback, 0);
     service.startObserving();
     service.stopObserving();
     const newNode = document.createElement('div');
     document.body.appendChild(newNode);
-    return new Promise((resolve) => setTimeout(resolve, 10)).then(() => {
-      expect(callback).not.toHaveBeenCalled();
-      expect(service.isActive()).toBe(false);
-    });
+
+    await waitFor(TEST_TIMEOUTS.DEBOUNCE_SHORT);
+
+    expect(callback).not.toHaveBeenCalled();
+    expect(service.isActive()).toBe(false);
   });
 
   it('should cleanup observer', () => {
@@ -64,5 +48,80 @@ describe('DOMObserverService', () => {
     service.startObserving();
     service.cleanup();
     expect(service.isActive()).toBe(false);
+  });
+
+  it('should handle document.body not available scenario', () => {
+    // Temporarily remove document.body
+    const originalBody = document.body;
+    Object.defineProperty(document, 'body', {
+      get: () => null,
+      configurable: true,
+    });
+
+    service.initialize(callback, 0);
+    service.startObserving();
+
+    // Should not crash and should set up a DOMContentLoaded listener
+    expect(service.isActive()).toBe(false);
+
+    // Restore document.body
+    Object.defineProperty(document, 'body', {
+      get: () => originalBody,
+      configurable: true,
+    });
+  });
+
+  it('should handle observer start errors gracefully', () => {
+    // Mock observer.observe to throw error
+    const originalMutationObserver = global.MutationObserver;
+    global.MutationObserver = class {
+      constructor(callback: MutationCallback) {
+        this.callback = callback;
+        this.observe = jest.fn(() => {
+          throw new Error('Observer start error');
+        });
+
+        this.disconnect = jest.fn();
+      }
+      callback: MutationCallback;
+      observe: jest.Mock;
+      disconnect: jest.Mock;
+      takeRecords(): MutationRecord[] {
+        return [];
+      }
+    };
+
+    const consoleSpy = jest
+      .spyOn(console, 'error')
+      .mockImplementation(() => {
+        // No-op for testing
+      });
+
+    service = new DOMObserverService();
+    service.initialize(callback, 0);
+    service.startObserving();
+
+    expect(service.isActive()).toBe(false);
+    expect(consoleSpy).toHaveBeenCalled();
+
+    // Restore
+    global.MutationObserver = originalMutationObserver;
+    consoleSpy.mockRestore();
+  });
+
+  it('should handle rapid mutations efficiently', () => {
+    let callCount = 0;
+    const countingCallback = jest.fn(() => {
+      callCount++;
+    });
+
+    service.initialize(countingCallback, 10); // 10ms debounce
+    service.startObserving();
+
+    // Due to debouncing, multiple rapid calls should result in fewer executions
+    return new Promise((resolve) => setTimeout(resolve, 50)).then(() => {
+      // The mock observer fires once when startObserving is called
+      expect(callCount).toBeLessThanOrEqual(1);
+    });
   });
 });

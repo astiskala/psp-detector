@@ -1,25 +1,26 @@
-// Mock chrome.runtime.getURL for Jest
-global.chrome = {
-  runtime: {
-    getURL: (path: string) => path,
-  },
-} as unknown as typeof chrome;
-
 import { UIService } from './ui';
 import type { PSP } from '../types';
 import { TypeConverters } from '../types';
+import { setupChromeRuntimeMock, setupCleanDOM } from '../test-helpers/utilities';
+
+// Mock chrome.runtime.getURL
+setupChromeRuntimeMock();
 
 describe('UIService', () => {
   let service: UIService;
   let elements: Record<string, HTMLElement>;
 
   beforeEach(() => {
+    setupCleanDOM();
     document.body.innerHTML = `
       <div id="psp-name"></div>
       <div id="psp-description"></div>
       <div id="psp-notice"></div>
       <div id="psp-url"></div>
-      <img id="psp-image" />
+      <div id="psp-image"></div>
+      <div id="loading-indicator"></div>
+      <div id="no-psp-detected"></div>
+      <div id="error-message"></div>
     `;
 
     service = new UIService();
@@ -29,6 +30,9 @@ describe('UIService', () => {
       notice: document.getElementById('psp-notice')!,
       url: document.getElementById('psp-url')!,
       image: document.getElementById('psp-image')!,
+      loading: document.getElementById('loading-indicator')!,
+      noPsp: document.getElementById('no-psp-detected')!,
+      error: document.getElementById('error-message')!,
     };
   });
 
@@ -60,5 +64,33 @@ describe('UIService', () => {
     service.showError();
     expect(elements.name.textContent).toBe('Error');
     expect(elements.notice.style.display).toBe('none');
+  });
+
+  it('should show PSP detection disabled', () => {
+    service.showPSPDetectionDisabled();
+    expect(elements.name.textContent).toBe('PSP detection disabled');
+    expect(elements.description.textContent).toBe(
+      'PSP detection has been disabled on this website for performance or compatibility reasons.',
+    );
+
+    expect(elements.notice.style.display).toBe('none');
+    expect(elements.url.querySelector('a')?.textContent).toBe(
+      'Suggest Improvement',
+    );
+
+    expect(elements.url.querySelector('a')?.href).toBe(
+      'mailto:psp-detector@adamstiskala.com',
+    );
+
+    expect((elements.image as HTMLImageElement).alt).toBe(
+      'PSP detection disabled logo',
+    );
+  });
+
+  it('should handle missing DOM elements gracefully', () => {
+    // Remove all elements to simulate missing DOM
+    document.body.innerHTML = '';
+
+    expect(() => new UIService()).toThrow('Element psp-name not found');
   });
 });
