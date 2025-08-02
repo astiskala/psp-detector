@@ -412,8 +412,7 @@ class BackgroundService {
     });
 
     // Add warning badge
-    chrome.action.setBadgeText({ text: '!' });
-    chrome.action.setBadgeBackgroundColor({ color: '#d3d3d3' });
+    chrome.action.setBadgeText({ text: '🚫' });
     logger.debug('Showing exempt domain icon with warning badge');
   }
 
@@ -427,8 +426,8 @@ class BackgroundService {
       path: DEFAULT_ICONS,
     });
 
-    // Clear any badge
-    chrome.action.setBadgeText({ text: '' });
+    // Add searching badge
+    chrome.action.setBadgeText({ text: '🔍' });
   }
 
   /**
@@ -459,7 +458,39 @@ class BackgroundService {
         files: ['content.js'],
       });
     } catch (error) {
-      logger.error(`Failed to inject content script into tab ${tabId}:`, error);
+      // Handle specific common error cases more gracefully
+      if (error instanceof Error) {
+        if (error.message.includes('error page') ||
+            error.message.includes('Frame with ID 0 is showing error page')) {
+          logger.debug(
+            `Skipping content script injection for tab ${tabId}: ` +
+            'Tab is showing an error page',
+          );
+
+          return;
+        }
+
+        if (error.message.includes('Cannot access contents of the page')) {
+          logger.debug(
+            `Skipping content script injection for tab ${tabId}: ` +
+            'Cannot access page contents (likely a restricted page)',
+          );
+
+          return;
+        }
+
+        if (error.message.includes('The extensions gallery cannot be scripted')) {
+          logger.debug(
+            `Skipping content script injection for tab ${tabId}: ` +
+            'Chrome Web Store page',
+          );
+
+          return;
+        }
+      }
+
+      // Log other errors as warnings since they might be actionable
+      logger.warn(`Failed to inject content script into tab ${tabId}:`, error);
     }
   }
 }

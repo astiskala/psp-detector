@@ -56,17 +56,18 @@ class ContentScript {
     // Defer configuration and observer setup to idle time
     const setup = async(): Promise<void> => {
       try {
-        logger.time('initializeExemptDomains');
+        const timestamp = Date.now();
+        logger.time(`initializeExemptDomains-${timestamp}`);
         await this.initializeExemptDomains();
-        logger.timeEnd('initializeExemptDomains');
+        logger.timeEnd(`initializeExemptDomains-${timestamp}`);
 
-        logger.time('initializePSPConfig');
+        logger.time(`initializePSPConfig-${timestamp}`);
         await this.initializePSPConfig();
-        logger.timeEnd('initializePSPConfig');
+        logger.timeEnd(`initializePSPConfig-${timestamp}`);
 
-        logger.time('setupDOMObserver');
+        logger.time(`setupDOMObserver-${timestamp}`);
         this.setupDOMObserver();
-        logger.timeEnd('setupDOMObserver');
+        logger.timeEnd(`setupDOMObserver-${timestamp}`);
 
         // Schedule initial detection
         if (typeof window.requestIdleCallback === 'function') {
@@ -480,30 +481,44 @@ class ContentScript {
   }
 }
 
-// Initialize content script
-const contentScript = new ContentScript();
+// Prevent multiple content script instances
+interface WindowWithPSPDetector {
+  pspDetectorContentScript?: boolean;
+}
+const windowExt = window as WindowWithPSPDetector;
 
-// Add cleanup on page unload
-window.addEventListener('beforeunload', (): void => {
-  contentScript.cleanup();
-});
+if (windowExt.pspDetectorContentScript) {
+  logger.debug('Content script already initialized, skipping');
+} else {
+  // Mark as initialized
+  windowExt.pspDetectorContentScript = true;
 
-contentScript.initialize().catch((error): void => {
-  // Don't log errors if extension context is invalidated
-  // (expected during reloads)
-  if (
-    error instanceof Error &&
-    error.message.includes('Extension context invalidated')
-  ) {
-    logger.warn('Extension context invalidated during startup');
-  } else {
-    reportError(
-      createContextError('Content script initialization failed', {
-        component: 'ContentScript',
-        action: 'startup',
-      }),
-    );
+  // Initialize content script
+  const contentScript = new ContentScript();
 
-    logger.error('Content script initialization failed:', error);
-  }
-});
+  // Add cleanup on page unload
+  window.addEventListener('beforeunload', (): void => {
+    contentScript.cleanup();
+    windowExt.pspDetectorContentScript = false;
+  });
+
+  contentScript.initialize().catch((error): void => {
+    // Don't log errors if extension context is invalidated
+    // (expected during reloads)
+    if (
+      error instanceof Error &&
+      error.message.includes('Extension context invalidated')
+    ) {
+      logger.warn('Extension context invalidated during startup');
+    } else {
+      reportError(
+        createContextError('Content script initialization failed', {
+          component: 'ContentScript',
+          action: 'startup',
+        }),
+      );
+
+      logger.error('Content script initialization failed:', error);
+    }
+  });
+}

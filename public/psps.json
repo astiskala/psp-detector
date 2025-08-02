@@ -2,7 +2,10 @@
   "psps": [
     {
       "name": "Stripe",
-      "matchStrings": ["checkout.stripe.com", "js.stripe.com"],
+      "matchStrings": [
+        "checkout.stripe.com",
+        "js.stripe.com"
+      ],
       "image": "stripe",
       "summary": "Stripe is a payments infrastructure provider that powers online transactions for internet businesses. With a focus on developer-friendly APIs, Stripe supports multiple currencies and offers tools for subscription management, invoicing, and fraud prevention.",
       "url": "https://www.stripe.com"
@@ -57,7 +60,9 @@
     },
     {
       "name": "Amazon Payment Services (PayFort)",
-      "matchStrings": ["checkout.payfort.com"],
+      "matchStrings": [
+        "checkout.payfort.com"
+      ],
       "image": "amazon",
       "summary": "Amazon Payment Services, formerly PayFort, provides secure and reliable online payment solutions for businesses across the Middle East and North Africa. It supports various payment methods, offers advanced fraud protection, and ensures seamless integration for e-commerce platforms.",
       "url": "https://paymentservices.amazon.com/"
@@ -102,7 +107,9 @@
     },
     {
       "name": "Skrill",
-      "matchStrings": ["pay.skrill.com"],
+      "matchStrings": [
+        "pay.skrill.com"
+      ],
       "image": "skrill",
       "summary": "Skrill is a digital wallet and online payment platform that allows businesses and individuals to send, receive, and store money securely. It supports multiple payment methods, including credit cards, bank transfers, and cryptocurrencies, catering to global e-commerce and personal transactions.",
       "url": "https://www.skrill.com"
@@ -131,14 +138,21 @@
     },
     {
       "name": "WePay",
-      "matchStrings": ["cdn.wepay.com", "staging.wepayapi.com", "wepayapi.com"],
+      "matchStrings": [
+        "cdn.wepay.com",
+        "staging.wepayapi.com",
+        "wepayapi.com"
+      ],
       "image": "wepay",
       "summary": "WePay, a Chase company, provides integrated payment solutions for platforms and marketplaces. It offers payments, fraud protection, and risk management with the ability to integrate payments into partner platforms.",
       "url": "https://go.wepay.com"
     },
     {
       "name": "Rapyd",
-      "matchStrings": ["checkout.rapyd.net", "checkouttoolkit.rapyd.net"],
+      "matchStrings": [
+        "checkout.rapyd.net",
+        "checkouttoolkit.rapyd.net"
+      ],
       "image": "rapyd",
       "summary": "Rapyd is a Fintech-as-a-Service platform offering payment solutions, including online payments, digital wallets, and remittance services. It supports various payment methods across multiple markets, enabling businesses to accept local and cross-border payments with ease.",
       "url": "https://www.rapyd.net"
@@ -157,14 +171,20 @@
     },
     {
       "name": "Flutterwave",
-      "matchStrings": ["api.flutterwave.com", "checkout.flutterwave.com"],
+      "matchStrings": [
+        "api.flutterwave.com",
+        "checkout.flutterwave.com"
+      ],
       "image": "flutterwave",
       "summary": "Flutterwave is a African payment technology company providing payment infrastructure for global merchants and payment service providers. It supports various payment methods including cards, mobile money, bank transfers, and offers features like recurring billing, virtual cards, and payment links.",
       "url": "https://flutterwave.com"
     },
     {
       "name": "Xendit",
-      "matchStrings": ["checkout.xendit.co", "js.xendit.co"],
+      "matchStrings": [
+        "checkout.xendit.co",
+        "js.xendit.co"
+      ],
       "image": "xendit",
       "summary": "Xendit is a payment gateway in Southeast Asia, offering a range of digital payment solutions for businesses. It supports various payment methods including credit cards, e-wallets, direct bank transfers, and online invoicing, aiming to simplify payment processes across Indonesia, the Philippines, and beyond.",
       "url": "https://www.xendit.co"
@@ -181,21 +201,28 @@
     },
     {
       "name": "Mollie",
-      "matchStrings": ["api.mollie.com", "js.mollie.com"],
+      "matchStrings": [
+        "api.mollie.com",
+        "js.mollie.com"
+      ],
       "image": "mollie",
       "summary": "Mollie is a European payment service provider offering businesses a way to accept online payments. It supports various payment methods, including credit cards, PayPal, and local options like iDEAL and SEPA, making it across Europe.",
       "url": "https://www.mollie.com"
     },
     {
       "name": "Alipay",
-      "matchStrings": ["itscenter.alipay.com"],
+      "matchStrings": [
+        "itscenter.alipay.com"
+      ],
       "image": "alipay",
       "summary": "Alipay is a mobile and online payment platform in China, operated by Ant Group. It offers a range of financial services including payment processing, money transfers, and investment options, catering primarily to consumers and businesses looking for digital transactions.",
       "url": "https://www.alipay.com"
     },
     {
       "name": "Mastercard Gateway (MPGS)",
-      "matchStrings": ["gateway.mastercard.com"],
+      "matchStrings": [
+        "gateway.mastercard.com"
+      ],
       "image": "mastercard",
       "summary": "Mastercard Payment Gateway Services (MPGS) offers businesses a platform for accepting online payments with reach. It supports multiple payment methods, including credit cards and digital wallets, providing fraud detection and security features for merchants.",
       "url": "https://www.mastercard.com/gateway.html"
@@ -247,7 +274,10 @@
     },
     {
       "name": "EBANX",
-      "matchStrings": ["ebanx-js.ebanx.com", "ui-elements.ebanx.com"],
+      "matchStrings": [
+        "ebanx-js.ebanx.com",
+        "ui-elements.ebanx.com"
+      ],
       "image": "ebanx",
       "summary": "EBANX is a payment gateway tailored for the Latin American market, supporting local payment methods in Brazil, Mexico, Argentina, and more. It enables international businesses to reach LATAM consumers with local payment solutions.",
       "url": "https://www.ebanx.com"
@@ -266,21 +296,28 @@
     },
     {
       "name": "Red Dot Payment",
-      "matchStrings": ["secure.reddotpayment.com"],
+      "matchStrings": [
+        "secure.reddotpayment.com"
+      ],
       "image": "reddotpayment",
       "summary": "Red Dot Payment, a member of PayU, is an online payment gateway in Southeast Asia, offering customized payment solutions for businesses across sectors like retail, hospitality, and airlines. With fraud detection, multi-currency support, and integration, Red Dot Payment provides businesses with tools to manage online transactions effectively.",
       "url": "https://www.reddotpayment.com"
     },
     {
       "name": "Fat Zebra",
-      "matchStrings": ["pmnts-sandbox.io", "pmnts.io"],
+      "matchStrings": [
+        "pmnts-sandbox.io",
+        "pmnts.io"
+      ],
       "image": "fatzebra",
       "summary": "Fat Zebra is an Australian-based payment gateway that specializes in providing payment solutions for businesses. It focuses on delivering a  platform for e-commerce, supporting multiple payment methods and currencies to streamline transactions.",
       "url": "https://www.fatzebra.com"
     },
     {
       "name": "Eway",
-      "matchStrings": ["secure.ewaypayments.com"],
+      "matchStrings": [
+        "secure.ewaypayments.com"
+      ],
       "image": "eway",
       "summary": "Eway is a widely-used payment gateway in Australia and beyond, known for offering payment processing. It supports all major credit cards, is PCI-DSS compliant, and integrates with various e-commerce platforms. eWay also provides 24/7 technical support and flat-rate transaction fees, making it for small to medium businesses.",
       "url": "https://eway.io"
@@ -314,7 +351,9 @@
     },
     {
       "name": "Fiuu",
-      "matchStrings": ["onlinepayment.com.my"],
+      "matchStrings": [
+        "onlinepayment.com.my"
+      ],
       "image": "fiuu",
       "summary": "Fiuu, formerly known as Razer Merchant Services, is a payment service provider offering businesses in Southeast Asia and beyond a platform for online, mobile, and in-store payments. With a focus on scalability, Fiuu supports various payment methods and currencies for   transactions.",
       "url": "https://www.fiuu.com"
@@ -333,7 +372,9 @@
     },
     {
       "name": "MercadoPago",
-      "matchStrings": ["api-static.mercadopago.com"],
+      "matchStrings": [
+        "api-static.mercadopago.com"
+      ],
       "image": "mercadopago",
       "summary": "MercadoPago is a payment platform in Latin America, offering a range of payment solutions including credit and debit cards, bank transfers, and cash-based payments. It operates in countries like Argentina, Brazil, and Mexico.",
       "url": "https://www.mercadopago.com"
@@ -351,14 +392,20 @@
     },
     {
       "name": "BlueSnap",
-      "matchStrings": ["pay.bluesnap.com"],
+      "matchStrings": [
+        "checkout.bluesnapdemo.com",
+        "pay.bluesnap.com"
+      ],
       "image": "bluesnap",
       "summary": "BlueSnap is a payments provider that helps businesses accept payments online, on mobile, and via marketplaces. It offers built-in fraud prevention, supports over 100 payment methods, and helps businesses streamline payment processing with support for multiple currencies.",
       "url": "https://www.bluesnap.com"
     },
     {
       "name": "BillDesk",
-      "matchStrings": ["pay.billdesk.com", "uat1.billdesk.com"],
+      "matchStrings": [
+        "pay.billdesk.com",
+        "uat1.billdesk.com"
+      ],
       "image": "billdesk",
       "summary": "BillDesk is one of India's pioneering payment gateways, specializing in electronic payment processing and bill payment solutions. It offers payment services including credit/debit cards, net banking, UPI, and various digital wallets. BillDesk provides secure payment aggregation services, recurring billing solutions, and serves various sectors including e-commerce, utilities, and financial institutions.",
       "url": "https://www.billdesk.com"
@@ -376,7 +423,9 @@
     },
     {
       "name": "Conekta",
-      "matchStrings": ["cdn.conekta.io"],
+      "matchStrings": [
+        "cdn.conekta.io"
+      ],
       "image": "conekta",
       "summary": "Conekta is a Mexican payment platform enabling card payments and local methods, tailored for businesses in Mexico and Latin America.",
       "url": "https://www.conekta.com"
@@ -394,7 +443,9 @@
     },
     {
       "name": "MyFatoorah",
-      "matchStrings": ["myfatoorah.com/payment"],
+      "matchStrings": [
+        "myfatoorah.com/payment"
+      ],
       "image": "myfatoorah",
       "summary": "MyFatoorah is a Kuwait-based PSP offering embedded card payments and digital wallets like Apple Pay and STC Pay across the GCC region.",
       "url": "https://www.myfatoorah.com"
@@ -416,7 +467,9 @@
     },
     {
       "name": "Cielo",
-      "matchStrings": ["cieloecommerce.cielo.com.br"],
+      "matchStrings": [
+        "cieloecommerce.cielo.com.br"
+      ],
       "image": "cielo",
       "summary": "Cielo is one of Brazil's largest payment processors, providing solutions for both online and offline transactions. It supports credit and debit card payments, including installment options, making it a choice for e-commerce in Brazil.",
       "url": "https://www.cielo.com.br"
@@ -447,35 +500,47 @@
     },
     {
       "name": "Opn Payments",
-      "matchStrings": ["cdn.omise.co"],
+      "matchStrings": [
+        "cdn.omise.co"
+      ],
       "image": "opn",
       "summary": "Opn Payments, formerly known as Omise, is a payments platform in Asia, offering a suite of payment solutions. It supports online payments, recurring billing, and multi-currency transactions, catering to businesses of all sizes, with a focus on providing solutions.",
       "url": "https://www.opn.ooo"
     },
     {
       "name": "Windcave",
-      "matchStrings": ["sec.paymentexpress.com", "sec.windcave.com"],
+      "matchStrings": [
+        "sec.paymentexpress.com",
+        "sec.windcave.com"
+      ],
       "image": "windcave",
       "summary": "Windcave is a payment solutions provider offering payment processing for both online and in-store transactions. With a focus on security and reliability, Windcave serves businesses in various industries with customizable payment solutions.",
       "url": "https://www.windcave.com"
     },
     {
       "name": "Helcim",
-      "matchStrings": ["secure.myhelcim.com"],
+      "matchStrings": [
+        "secure.myhelcim.com"
+      ],
       "image": "helcim",
       "summary": "Helcim is an all-in-one payment platform offering merchant accounts, payment gateway services, and POS solutions for small- and medium-sized businesses.",
       "url": "https://www.helcim.com"
     },
     {
       "name": "Tyro",
-      "matchStrings": ["pay.connect.tyro.com"],
+      "matchStrings": [
+        "pay.connect.tyro.com"
+      ],
       "image": "tyro",
       "summary": "Tyro is an Australian fintech company specializing in EFTPOS (electronic funds transfer at point of sale) solutions for small and medium-sized businesses. It caters primarily to the healthcare, retail, and hospitality industries, providing integrated payment solutions with competitive rates. Tyro also offers banking services, including business loans and term deposits.",
       "url": "https://www.tyro.com"
     },
     {
       "name": "Bambora",
-      "matchStrings": ["libs.na.bambora.com"],
+      "matchStrings": [
+        "checkout.bambora.com",
+        "libs.na.bambora.com"
+      ],
       "image": "bambora",
       "summary": "Bambora, now part of Worldline, provides various payment services for businesses, from e-commerce and mobile payments to in-store transactions. The company focuses on simplifying the payment process for small and medium-sized enterprises.",
       "url": "https://www.bambora.com"
@@ -493,7 +558,9 @@
     },
     {
       "name": "Sony Payment Services",
-      "matchStrings": ["e-scott.jp"],
+      "matchStrings": [
+        "e-scott.jp"
+      ],
       "image": "sonypaymentservices",
       "summary": "Sony Payment Services offers a payment processing solution designed for businesses. It provides a range of payment methods, including credit cards, e-wallets, and mobile payments, with a focus on integration and significant security.",
       "url": "https://www.sonypaymentservices.jp"
@@ -511,21 +578,27 @@
     },
     {
       "name": "NHN KCP",
-      "matchStrings": ["pay.kcp.co.kr"],
+      "matchStrings": [
+        "pay.kcp.co.kr"
+      ],
       "image": "kcp",
       "summary": "KCP is a prominent payment gateway in South Korea, offering payment processing solutions for businesses across various industries. It supports multiple payment methods, including credit cards, bank transfers, and alternative payment channels, with a strong focus on security and integration.",
       "url": "https://www.kcp.co.kr"
     },
     {
       "name": "NICE Payments",
-      "matchStrings": ["web.nicepay.co.kr"],
+      "matchStrings": [
+        "web.nicepay.co.kr"
+      ],
       "image": "nicepay",
       "summary": "NICE Payments provides payment gateway services in South Korea, supporting credit card processing, virtual accounts, and alternative payment methods for online transactions.",
       "url": "https://www.nicepay.co.kr"
     },
     {
       "name": "KSNET",
-      "matchStrings": ["kspay.ksnet.to"],
+      "matchStrings": [
+        "kspay.ksnet.to"
+      ],
       "image": "ksnet",
       "summary": "KSNET is a prominent South Korean payment service provider offering VAN (Value-Added Network) services and payment gateway solutions. Established in 1994, it supports credit card processing, bank transfers, and alternative payment methods for online and in-store transactions.",
       "url": "https://www.ksnet.co.kr"
@@ -543,21 +616,29 @@
     },
     {
       "name": "PagBrasil",
-      "matchStrings": ["service.pagbrasil.com"],
+      "matchStrings": [
+        "service.pagbrasil.com"
+      ],
       "image": "pagbrasil",
       "summary": "PagBrasil is a specialized Brazilian payment service provider offering local payment methods and processing solutions. It supports various Brazilian payment methods including Boleto Bancário, PIX instant payments, credit cards with installments, and bank transfers. The platform provides local acquiring and processing capabilities.",
       "url": "https://www.pagbrasil.com"
     },
     {
       "name": "DPO Group",
-      "matchStrings": ["dpopayments.com", "secure.3gdirectpay.com"],
+      "matchStrings": [
+        "dpopayments.com",
+        "secure.3gdirectpay.com"
+      ],
       "image": "dpo",
       "summary": "DPO Group (Direct Pay Online) is a leading African payment service provider offering online payment solutions across the continent. It supports multiple payment methods including cards, mobile money, and bank transfers, providing businesses with a secure platform for processing payments across Africa.",
       "url": "https://www.dpogroup.com"
     },
     {
       "name": "GMO Payment Gateway",
-      "matchStrings": ["p01.mul-pay.jp", "static.mul-pay.jp"],
+      "matchStrings": [
+        "p01.mul-pay.jp",
+        "static.mul-pay.jp"
+      ],
       "image": "gmopayment",
       "summary": "GMO Payment Gateway is a payment service provider in Japan, offering various solutions for online and in-store transactions. It supports credit cards, e-wallets, and various alternative payment methods, with a focus on security, fraud prevention, and payment processing for businesses of all sizes.",
       "url": "https://www.gmo-pg.com"
@@ -575,77 +656,106 @@
     },
     {
       "name": "Linkly",
-      "matchStrings": ["merchantsuite.com/api"],
+      "matchStrings": [
+        "merchantsuite.com/api"
+      ],
       "image": "linkly",
       "summary": "Linkly, formerly known as PC-EFTPOS, is an Australian-based payment solutions provider focused on , integrated point-of-sale (POS) systems. Linkly offers EFTPOS services, supporting thousands of businesses with payment processing and in-depth reporting tools to streamline transaction management.",
       "url": "https://www.linkly.com.au"
     },
     {
       "name": "Maya",
-      "matchStrings": ["payments-web-sandbox.maya.ph", "payments.maya.ph"],
+      "matchStrings": [
+        "payments-web-sandbox.maya.ph",
+        "payments.maya.ph"
+      ],
       "image": "paymaya",
       "summary": "Maya is a Philippine-based digital payment platform offering payment processing solutions for online and offline businesses. It supports various payment methods, including credit cards, debit cards, and e-wallets, with a focus on transactions for the Southeast Asian market.",
       "url": "https://www.paymaya.com"
     },
     {
       "name": "SumUp",
-      "matchStrings": ["api.sumup.com", "gateway.sumup.com"],
+      "matchStrings": [
+        "api.sumup.com",
+        "gateway.sumup.com"
+      ],
       "image": "sumup",
       "summary": "SumUp is a global fintech company offering payment solutions such as card readers, POS systems, and online payment services, enabling businesses to accept payments seamlessly across various channels.",
       "url": "https://sumup.com"
     },
     {
       "name": "Moneris",
-      "matchStrings": ["gateway.moneris.com", "gatewayt.moneris.com"],
+      "matchStrings": [
+        "gateway.moneris.com",
+        "gatewayt.moneris.com"
+      ],
       "image": "moneris",
       "summary": "Moneris is a leading Canadian payment processor, providing secure and reliable payment solutions for businesses of all sizes. It supports card payments, e-commerce, and in-store transactions with advanced fraud protection and reporting tools.",
       "url": "https://www.moneris.com"
     },
     {
       "name": "Cardknox",
-      "matchStrings": ["cdn.cardknox.com"],
+      "matchStrings": [
+        "cdn.cardknox.com"
+      ],
       "image": "cardknox",
       "summary": "Cardknox is a payment technology provider offering omnichannel payment processing solutions for both in-store and online transactions. It supports multiple payment methods including credit cards, ACH, and digital wallets, with features like tokenization, recurring billing, and fraud prevention.",
       "url": "https://www.cardknox.com"
     },
     {
       "name": "CX Pay",
-      "matchStrings": ["cxpay.transactiongateway.com"],
+      "matchStrings": [
+        "cxpay.transactiongateway.com"
+      ],
       "image": "cxpay",
       "summary": "CX Pay is a payment gateway specializing in solutions for the Dutch Caribbean, Latin America, and merchants. It supports various payment methods, including Visa, Mastercard, iDeal, Giropay, and alternative payments like Paysafecard and Bitcoin. CX Pay offers a multi-channel integration, fraud protection, and tools for cross-border transactions, making it an partner for eCommerce businesses looking to expand.",
       "url": "https://cxpay.global"
     },
     {
       "name": "Eximbay",
-      "matchStrings": ["api-test.eximbay.com", "secureapi.eximbay.com"],
+      "matchStrings": [
+        "api-test.eximbay.com",
+        "secureapi.eximbay.com"
+      ],
       "image": "eximbay",
       "summary": "Eximbay is a payment gateway specializing in cross-border e-commerce, offering payment solutions and supporting a variety of international payment methods. It caters to businesses seeking and localized payment processing for markets.",
       "url": "https://www.eximbay.com"
     },
     {
       "name": "Flywire",
-      "matchStrings": ["app.flywire.com", "demo.flywire.com"],
+      "matchStrings": [
+        "app.flywire.com",
+        "demo.flywire.com"
+      ],
       "image": "flywire",
       "summary": "Flywire is a global payments platform specializing in international payments for education, healthcare, travel, and business. It offers secure payment processing, multi-currency support, and tools for managing cross-border transactions.",
       "url": "https://www.flywire.com"
     },
     {
       "name": "ProcessOut",
-      "matchStrings": ["js.processout.com", "static.processout.com"],
+      "matchStrings": [
+        "js.processout.com",
+        "static.processout.com"
+      ],
       "image": "processout",
       "summary": "ProcessOut is a payment orchestration platform that helps businesses optimize their payment operations. It provides smart routing, analytics, and fraud prevention tools while supporting multiple payment providers and methods. The platform enables businesses to manage multiple PSPs, optimize payment success rates, and reduce costs through intelligent transaction routing.",
       "url": "https://www.processout.com"
     },
     {
       "name": "Debia",
-      "matchStrings": ["pgw.debiapay.com"],
+      "matchStrings": [
+        "pgw.debiapay.com"
+      ],
       "image": "debia",
       "summary": "Debia is a payment service provider offering secure online payment solutions. It supports various payment methods and provides tools for merchants to manage transactions efficiently.",
       "url": "https://www.debia.co"
     },
     {
       "name": "DG Financial Technology",
-      "matchStrings": ["api.veritrans.co.jp", "pay.veritrans.co.jp"],
+      "matchStrings": [
+        "api.veritrans.co.jp",
+        "pay.veritrans.co.jp"
+      ],
       "image": "dgft",
       "summary": "DGFT (formerly VeriTrans), a service by Digital Garage in Japan, provides payment processing solutions. It offers services for online payments, including credit card and mobile payments, catering to various businesses with fraud prevention and integration options.",
       "url": "https://www.dgft.jp"
@@ -659,7 +769,9 @@
     },
     {
       "name": "Payoneer",
-      "matchStrings": ["integration.oscato.com"],
+      "matchStrings": [
+        "integration.oscato.com"
+      ],
       "image": "payoneer",
       "summary": "Payoneer offers cross-border payment solutions for freelancers, marketplaces, and large enterprises. It supports multi-currency transactions and allows businesses to send and receive funds. The platform includes services like billing, transfers, and integrated payment solutions.",
       "url": "https://www.payoneer.com"
@@ -677,35 +789,47 @@
     },
     {
       "name": "Paymentwall",
-      "matchStrings": ["api.paymentwall.com"],
+      "matchStrings": [
+        "api.paymentwall.com"
+      ],
       "image": "paymentwall",
       "summary": "Paymentwall is a global payment platform that enables businesses to accept payments from users worldwide through 150+ local payment methods. It specializes in digital goods, online services, and gaming industries, offering features like subscription management, fraud prevention, and analytics. The platform supports various payment options including credit cards, bank transfers, e-wallets, mobile payments, and prepaid cards across 200+ countries.",
       "url": "https://www.paymentwall.com"
     },
     {
       "name": "Plastiq",
-      "matchStrings": ["connect.plastiq.com", "connect.sandbox.plastiq.com"],
+      "matchStrings": [
+        "connect.plastiq.com",
+        "connect.sandbox.plastiq.com"
+      ],
       "image": "plastiq",
       "summary": "Plastiq is a payment platform and gateway that enables businesses to pay vendors and accept payments using credit cards, even if cards are not traditionally accepted. It provides a versatile solution for cash flow management, invoice payments, and global payment processing.",
       "url": "https://www.plastiq.com"
     },
     {
       "name": "Zai",
-      "matchStrings": ["hosted-fields.assemblypay.com"],
+      "matchStrings": [
+        "hosted-fields.assemblypay.com"
+      ],
       "image": "zai",
       "summary": "Zai, formerly known as Assembly Payments, is an Australian-based fintech company providing automated, real-time payment solutions for large-scale businesses. Specializing in complex financial flows, Zai leverages the New Payments Platform (NPP) for fast,  account-to-account payments. It supports industries like marketplaces, banking, and lending, supporting financial operations with tailored API-driven solutions.",
       "url": "https://www.hellozai.com"
     },
     {
       "name": "Yoco",
-      "matchStrings": ["js.yoco.com"],
+      "matchStrings": [
+        "js.yoco.com"
+      ],
       "image": "yoco",
       "summary": "Yoco is a South African payment provider that helps small businesses accept card payments through online checkout and in-person devices.",
       "url": "https://www.yoco.com"
     },
     {
       "name": "NMI",
-      "matchStrings": ["secure.networkmerchants.com", "www.usaepay.com"],
+      "matchStrings": [
+        "secure.networkmerchants.com",
+        "www.usaepay.com"
+      ],
       "image": "nmi",
       "summary": "NMI (Network Merchants Inc) is a payment gateway provider offering a platform for in-person, online, and mobile transactions. NMI specializes in omnichannel payment solutions, enabling businesses to streamline their payment processing with a focus on security and scalability across multiple sales channels.",
       "url": "https://www.nmi.com"
@@ -745,49 +869,66 @@
     },
     {
       "name": "Airwallex",
-      "matchStrings": ["checkout.airwallex.com", "pay.airwallex.com"],
+      "matchStrings": [
+        "checkout.airwallex.com",
+        "pay.airwallex.com"
+      ],
       "image": "airwallex",
       "summary": "Airwallex is a payment platform offering various financial services, including cross-border payments, multi-currency accounts, and virtual cards. It focuses on providing financial solutions for businesses looking to expand their operations with transparent payment options.",
       "url": "https://www.airwallex.com"
     },
     {
       "name": "Fiserv",
-      "matchStrings": ["api.firstdata.com", "ipg-online.com"],
+      "matchStrings": [
+        "api.firstdata.com",
+        "ipg-online.com"
+      ],
       "image": "fiserv",
       "summary": "Fiserv, formerly First Data, is a provider of financial services technology, including payment processing for businesses of all sizes. Its platform supports a variety of payment methods and offers solutions for both online and in-store payments.",
       "url": "https://www.fiserv.com"
     },
     {
       "name": "Nexi Group (Nets)",
-      "matchStrings": ["checkout.dibspayment.eu"],
+      "matchStrings": [
+        "checkout.dibspayment.eu"
+      ],
       "image": "nexi",
       "summary": "Nexi Group (Nets) is a European PayTech company providing a wide range of digital payment solutions, including merchant services, issuing solutions, and digital banking services, enabling seamless and secure transactions across various channels and payment methods.",
       "url": "https://www.nexigroup.com/en/"
     },
     {
       "name": "Oceanpayment",
-      "matchStrings": ["secure.oceanpayment.com"],
+      "matchStrings": [
+        "secure.oceanpayment.com"
+      ],
       "image": "oceanpayment",
       "summary": "Oceanpayment is a global payment service provider offering cross-border payment solutions for e-commerce merchants. It supports multiple payment methods, currencies, and provides fraud prevention and risk management tools.",
       "url": "https://www.oceanpayment.com"
     },
     {
       "name": "SB Payment Service",
-      "matchStrings": ["stbfep.sps-system.com", "zz.fep.sbps.jp"],
+      "matchStrings": [
+        "stbfep.sps-system.com",
+        "zz.fep.sbps.jp"
+      ],
       "image": "sbpayment",
       "summary": "SB Payment Service, a part of SoftBank Group, provides a payment solution for Japan-based businesses. The platform supports credit card processing, convenience store payments, carrier billing, and electronic money, offering both online and in-store payment options with a strong focus on security and integration.",
       "url": "https://www.sbpayment.jp"
     },
     {
       "name": "Shift4",
-      "matchStrings": ["js.dev.shift4.com"],
+      "matchStrings": [
+        "js.dev.shift4.com"
+      ],
       "image": "shift4",
       "summary": "Shift4 is a payment processing company offering end-to-end solutions for businesses of all sizes. It provides payment technologies, including integrated POS systems, e-commerce solutions, and fraud prevention tools, catering to various industries like hospitality, retail, and food services.",
       "url": "https://www.shift4.com"
     },
     {
       "name": "Tap Payments",
-      "matchStrings": ["secure.gosell.io"],
+      "matchStrings": [
+        "secure.gosell.io"
+      ],
       "image": "tap",
       "summary": "Tap Payments (GoSell) enables businesses in the MENA region to accept card payments via a secure hosted SDK and supports local and global payment methods.",
       "url": "https://www.tap.company"
@@ -826,7 +967,10 @@
     },
     {
       "name": "Shopify Payments",
-      "matchStrings": ["checkout.pci.shopifyinc.com", "checkout.shopifycs.com"],
+      "matchStrings": [
+        "checkout.pci.shopifyinc.com",
+        "checkout.shopifycs.com"
+      ],
       "image": "shopify",
       "summary": "Shopify Payments is an integrated payment processing solution for Shopify store owners. It allows businesses to accept payments directly through their Shopify platform, supporting major credit cards and offering checkout experiences for customers.",
       "url": "https://www.shopify.com",
@@ -834,7 +978,11 @@
     },
     {
       "name": "Primer",
-      "matchStrings": ["api.primer.io", "sandbox.primer.io", "sdk.primer.io"],
+      "matchStrings": [
+        "api.primer.io",
+        "sandbox.primer.io",
+        "sdk.primer.io"
+      ],
       "image": "primer",
       "summary": "Primer is a unified infrastructure and automation platform for payments and commerce. It provides merchants with a single integration to consolidate their payment stack, connect various payment services and third-party tools with minimal code, and build dynamic end-to-end payment flows. Primer aims to simplify payment integration and management, optimize payment performance (including authorization rates and routing), and supports a wide range of payment methods and services.",
       "url": "https://primer.io",
@@ -854,7 +1002,9 @@
     },
     {
       "name": "Spreedly",
-      "matchStrings": ["core.spreedly.com"],
+      "matchStrings": [
+        "core.spreedly.com"
+      ],
       "image": "spreedly",
       "summary": "Spreedly is a payment orchestration platform allowing businesses to securely tokenize, store, and optimize payment data. It supports connections to multiple gateways and payment services, enabling greater flexibility and scalability.",
       "url": "https://www.spreedly.com",
@@ -862,7 +1012,10 @@
     },
     {
       "name": "IXOPAY",
-      "matchStrings": ["gateway.ixopay.com"],
+      "matchStrings": [
+        "gateway.ixopay.com",
+        "htp.tokenex.com"
+      ],
       "image": "ixopay",
       "summary": "IXOPAY is a payment orchestration platform providing centralized payment management, dynamic routing, and tokenization. It supports global payment methods and offers fraud prevention tools, making it a comprehensive solution for large enterprises.",
       "url": "https://www.ixopay.com",
@@ -870,7 +1023,9 @@
     },
     {
       "name": "Gr4vy",
-      "matchStrings": ["gr4vy.app"],
+      "matchStrings": [
+        "gr4vy.app"
+      ],
       "image": "gr4vy",
       "summary": "Gr4vy is a cloud-native payment orchestration platform offering businesses the ability to deploy their payment infrastructure on the cloud. It simplifies the integration and management of multiple payment methods and gateways, providing features like tokenization, routing, and failover.",
       "url": "https://www.gr4vy.com",
@@ -890,7 +1045,9 @@
     },
     {
       "name": "PCI Vault",
-      "matchStrings": ["api.pcivault.io"],
+      "matchStrings": [
+        "api.pcivault.io"
+      ],
       "image": "pci-vault",
       "summary": "PCI Vault offers secure tokenization services for storing and managing sensitive payment data. It focuses on compliance with PCI standards and provides robust APIs for seamless integration with eCommerce platforms.",
       "url": "https://www.pcivault.com",
@@ -934,7 +1091,9 @@
     },
     {
       "name": "VGS (Very Good Security)",
-      "matchStrings": ["js.verygoodvault.com"],
+      "matchStrings": [
+        "js.verygoodvault.com"
+      ],
       "image": "vgs",
       "summary": "Very Good Security (VGS) is a data security and tokenization platform that simplifies PCI compliance by replacing sensitive data with tokens. It offers seamless integration with payment systems while maintaining privacy and security.",
       "url": "https://www.verygoodsecurity.com",
@@ -942,7 +1101,10 @@
     },
     {
       "name": "Juspay",
-      "matchStrings": ["api.juspay.in", "payments.juspay.in"],
+      "matchStrings": [
+        "api.juspay.in",
+        "payments.juspay.in"
+      ],
       "image": "juspay",
       "summary": "Juspay is an Indian payment platform providing SDKs (like Express Checkout), payment gateway services, and orchestration features. It aims to simplify checkouts, enhance transaction success rates, and supports numerous local payment methods including UPI, wallets, and cards.",
       "url": "https://www.juspay.in",
@@ -950,7 +1112,9 @@
     },
     {
       "name": "Amadeus Hospitality (TravelClick)",
-      "matchStrings": ["static.travelclick.com"],
+      "matchStrings": [
+        "static.travelclick.com"
+      ],
       "image": "amadeus",
       "summary": "Amadeus Hospitality (TravelClick) enables hotels to validate credit cards and capture deposit payments for bookings. It integrates with third-party Payment Service Providers to facilitate secure and efficient payment management.",
       "url": "https://www.amadeus-hospitality.com/",
@@ -958,7 +1122,9 @@
     },
     {
       "name": "Sabre SynXis",
-      "matchStrings": ["synxis.com"],
+      "matchStrings": [
+        "synxis.com"
+      ],
       "image": "sabre",
       "summary": "Sabre SynXis provides secure handling of payments for hotels, enabling seamless transactions across booking channels. It supports credit card validation, tokenization, and integration with multiple payment service providers to streamline the payment process and enhance guest experiences.",
       "url": "https://www.sabre.com/products/travel-agency-solutions/synxis-platform/",
