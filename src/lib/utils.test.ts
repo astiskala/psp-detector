@@ -2,9 +2,7 @@ import {
   debounce,
   createSafeUrl,
   safeCompileRegex,
-  createContextError,
   logger,
-  reportError,
   debouncedMutation,
   memoryUtils,
 } from './utils';
@@ -95,41 +93,11 @@ describe('utils', () => {
     });
   });
 
-  it('createContextError attaches context', () => {
-    const context = {
-      component: 'test',
-      action: 'testing',
-      extensionVersion: '1.0.0',
-    };
-    const err = createContextError('msg', context);
-    expect(err).toBeInstanceOf(Error);
-    expect(err.context).toEqual(
-      expect.objectContaining({
-        component: 'test',
-        action: 'testing',
-        extensionVersion: '1.0.0',
-        timestamp: expect.any(Number),
-      }),
-    );
-  });
-
   it('logger methods do not throw', () => {
     expect(() => logger.debug('debug')).not.toThrow();
     expect(() => logger.info('info')).not.toThrow();
     expect(() => logger.warn('warn')).not.toThrow();
     expect(() => logger.error('error')).not.toThrow();
-  });
-
-  it('reportError handles errors gracefully', () => {
-    const error = new Error('test error');
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {
-      // No-op for testing
-    });
-
-    expect(() => reportError(error, { component: 'test' })).not.toThrow();
-    expect(consoleSpy).toHaveBeenCalled();
-
-    consoleSpy.mockRestore();
   });
 
   it('debouncedMutation delays function calls', (done) => {
@@ -244,24 +212,6 @@ describe('utils', () => {
     timeSpy.mockRestore();
     timeEndSpy.mockRestore();
     process.env.NODE_ENV = originalEnv;
-  });
-
-  it('createContextError handles invalid context gracefully', () => {
-    const context = {
-      component: 'test',
-    };
-
-    const err = createContextError('test message', context);
-    expect(err).toBeInstanceOf(Error);
-    expect(err.message).toBe('test message');
-    expect(err.context).toEqual(
-      expect.objectContaining({
-        component: 'test',
-
-        // Should always have a valid timestamp
-        timestamp: expect.any(Number),
-      }),
-    );
   });
 
   it('memoryUtils.throttle limits function calls', (done) => {

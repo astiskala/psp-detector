@@ -37,31 +37,20 @@ export class UIService {
       this.elements.detectionDetails = detectionDetailsElement;
     }
 
-    // Additional elements for the new UI (optional for backward compatibility)
-    const optionalElements = [
-      'container',
-      'loadingState',
-      'contentState',
-      'statusIcon',
-    ];
-    const optionalSelectors = [
-      '.popup-container',
-      '#loading-state',
-      '#content-state',
-      '#status-icon',
-    ];
+    // Required UI elements
+    const uiElements = {
+      container: '.popup-container',
+      loadingState: '#loading-state',
+      contentState: '#content-state',
+      statusIcon: '#status-icon',
+    } as const satisfies Record<string, string>;
 
-    optionalElements.forEach((id, index) => {
-      const selector = optionalSelectors[index];
-      if (!selector) {
-        throw new Error(`Selector for ${id} is undefined`);
-      }
-
+    for (const [id, selector] of Object.entries(uiElements)) {
       const element = document.querySelector(selector);
       if (element) {
         this.elements[id] = element as HTMLElement;
       }
-    });
+    }
   }
 
   /**

@@ -16,8 +16,6 @@ import {
 import { PSP_DETECTION_EXEMPT } from './types';
 import {
   logger,
-  reportError,
-  createContextError,
   memoryUtils,
 } from './lib/utils';
 
@@ -90,14 +88,6 @@ class ContentScript {
           return;
         }
 
-        const contextError = createContextError(
-          'Failed to initialize content script',
-          {
-            component: 'ContentScript',
-            action: 'initialize',
-          },
-        );
-        reportError(contextError);
         logger.error('Failed to initialize content script:', error);
       }
     };
@@ -127,13 +117,6 @@ class ContentScript {
         this.pspDetector.setExemptDomains(response.exemptDomains);
       }
     } catch (error) {
-      reportError(
-        createContextError('Failed to initialize exempt domains', {
-          component: 'ContentScript',
-          action: 'initializeExemptDomains',
-        }),
-      );
-
       logger.error('Failed to initialize exempt domains:', error);
     }
   }
@@ -152,13 +135,6 @@ class ContentScript {
         this.pspDetector.initialize(response.config);
       }
     } catch (error) {
-      reportError(
-        createContextError('Failed to initialize PSP config', {
-          component: 'ContentScript',
-          action: 'initializePSPConfig',
-        }),
-      );
-
       logger.error('Failed to initialize PSP config:', error);
     }
   }
@@ -238,8 +214,8 @@ class ContentScript {
       break;
     default: {
       // Type safety: ensure all cases are handled
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const _exhaustive: never = result;
+      // Exhaustive check for switch statement
+      void result;
       break;
     }
     }
@@ -511,13 +487,6 @@ if (windowExt.pspDetectorContentScript) {
     ) {
       logger.warn('Extension context invalidated during startup');
     } else {
-      reportError(
-        createContextError('Content script initialization failed', {
-          component: 'ContentScript',
-          action: 'startup',
-        }),
-      );
-
       logger.error('Content script initialization failed:', error);
     }
   });

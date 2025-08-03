@@ -2,7 +2,7 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     // Overrides for testing
-    "target": "ES2022",
+    "target": "esnext",
     "module": "CommonJS",
     "moduleResolution": "node",
     "isolatedModules": false,
@@ -12,11 +12,11 @@
     "declarationMap": false,
     "sourceMap": true,
     "removeComments": false,
-    
+
     // Jest-specific
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    
+
     // Relaxed type checking for tests
     "noUnusedLocals": false,
     "noUnusedParameters": false,

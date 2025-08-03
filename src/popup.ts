@@ -5,7 +5,7 @@
  */
 import { MessageAction, PSPConfig, PSPResponse, PSPDetectionResult } from './types';
 import { UIService } from './services/ui';
-import { logger, reportError, createContextError, getAllProviders } from './lib/utils';
+import { logger, getAllProviders } from './lib/utils';
 
 class PopupManager {
   private ui: UIService;
@@ -54,31 +54,17 @@ class PopupManager {
         // Prefer group-level notice if present
         const displayPsp = {
           ...psp,
-          notice: groupNotice || psp.notice,
+          notice: groupNotice ?? psp.notice ?? '',
         };
         this.ui.updatePSPDisplay(
           displayPsp,
           detectedPspResult.detectionInfo,
         );
       } else {
-        reportError(
-          createContextError('PSP config not found', {
-            component: 'PopupManager',
-            action: 'initialize',
-          }),
-        );
-
         logger.error('PSP config not found for:', detectedPspResult.psp);
         this.ui.showNoPSPDetected();
       }
     } catch (error) {
-      reportError(
-        createContextError('Failed to initialize popup', {
-          component: 'PopupManager',
-          action: 'initialize',
-        }),
-      );
-
       logger.error('Failed to initialize popup:', error);
       this.ui.showError();
     }
@@ -158,13 +144,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   popup.initialize().catch((error) => {
-    reportError(
-      createContextError('Popup initialization failed', {
-        component: 'PopupManager',
-        action: 'documentReady',
-      }),
-    );
-
     logger.error('Popup initialization failed:', error);
   });
 });

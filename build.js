@@ -13,7 +13,7 @@ const sharedConfig = {
   bundle: true,
   minify: !process.env.DEBUG,
   sourcemap: process.env.NO_SOURCEMAP ? false : true,
-  target: 'es2022',
+  target: 'esnext',
   format: 'esm',
   platform: 'browser',
   supported: {

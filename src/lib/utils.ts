@@ -50,101 +50,6 @@ export function safeCompileRegex(pattern: string): RegExp | null {
 }
 
 /**
- * Error context for structured error reporting
- */
-export interface ErrorContext {
-  url?: string;
-  userAgent?: string;
-  timestamp: number;
-  extensionVersion?: string;
-  component?: string;
-  action?: string;
-}
-
-/**
- * Error with context information
- */
-export interface ContextualError extends Error {
-  context?: ErrorContext;
-}
-
-/**
- * Error context interface for debugging
- */
-export interface ErrorContext {
-  timestamp: number;
-  url?: string;
-  userAgent?: string;
-  tabId?: number;
-  pspName?: string;
-  elementCount?: number;
-  mutationCount?: number;
-}
-
-/**
- * Enhanced error interface with context
- */
-export interface ContextualError extends Error {
-  context?: ErrorContext;
-}
-
-/**
- * Report structured error for debugging and monitoring
- * @param error - Error to report
- * @param context - Additional context
- */
-export function reportError(
-  error: Error,
-  context?: Partial<ErrorContext>,
-): void {
-  const errorContext: ErrorContext = {
-    timestamp: Date.now(),
-    url: window?.location?.href,
-    userAgent: navigator?.userAgent,
-    ...(error as ContextualError).context,
-    ...context,
-  };
-
-  // Error logging with structured data
-  console.error('[PSP Detector Error]', {
-    message: error.message,
-    stack: error.stack,
-    context: errorContext,
-  });
-
-  // In development, also log to the logger
-  if (process.env.NODE_ENV === 'development') {
-    logger.error('Structured error report:', {
-      error: error.message,
-      context: errorContext,
-    });
-  }
-}
-
-/**
- * Create error with context for better debugging
- * @param message - Error message
- * @param context - Additional context for the error
- */
-export function createContextError(
-  message: string,
-  context?: Partial<ErrorContext>,
-): ContextualError {
-  const error = new Error(message) as ContextualError;
-
-  // Build comprehensive error context
-  const errorContext: ErrorContext = {
-    timestamp: Date.now(),
-    url: window?.location?.href,
-    userAgent: navigator?.userAgent,
-    ...context,
-  };
-
-  error.context = errorContext;
-  return error;
-}
-
-/**
  * Logger utility with different log levels
  */
 export const logger = {
@@ -217,13 +122,7 @@ export const memoryUtils = {
       try {
         fn();
       } catch (cleanupError) {
-        console.error('Cleanup error:', cleanupError);
-        reportError(
-          createContextError('Cleanup function failed', {
-            component: 'memoryUtils',
-            action: 'cleanup',
-          }),
-        );
+        logger.error('Cleanup function failed:', cleanupError);
       }
     });
   },
