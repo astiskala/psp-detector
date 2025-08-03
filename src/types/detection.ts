@@ -37,7 +37,7 @@ export const PSPDetectionResult = {
   ): PSPDetectionResult => ({
     type: 'detected',
     psp,
-    detectionInfo,
+    ...(detectionInfo !== undefined && { detectionInfo }),
   }),
 
   /**
@@ -63,7 +63,7 @@ export const PSPDetectionResult = {
   error: (error: Error, context?: string): PSPDetectionResult => ({
     type: 'error',
     error,
-    context,
+    ...(context !== undefined && { context }),
   }),
 
   /**

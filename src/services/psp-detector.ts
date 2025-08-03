@@ -12,8 +12,6 @@ export class PSPDetectorService {
 
   /**
    * Initialize the PSP detector with configuration
-   * @param {PSPConfig} config - PSP configuration
-   * @return {void}
    */
   public initialize(config: PSPConfig): void {
     this.pspConfig = config;
@@ -22,8 +20,6 @@ export class PSPDetectorService {
 
   /**
    * Set the exempt domains list
-   * @param {string[]} domains - Array of exempt domain strings
-   * @return {void}
    */
   public setExemptDomains(domains: string[]): void {
     this.exemptDomains = domains || [];
@@ -31,9 +27,6 @@ export class PSPDetectorService {
 
   /**
    * Detect PSP on the current page
-   * @param {string} url - The URL to check
-   * @param {string} content - The page content to scan
-   * @return {PSPDetectionResult} Detection result with type safety
    */
   public detectPSP(url: string, content: string): PSPDetectionResult {
     if (!this.pspConfig) {
@@ -111,7 +104,6 @@ export class PSPDetectorService {
   /**
    * Precompile regex patterns for better performance
    * @private
-   * @return {void}
    */
   private precompileRegexPatterns(): void {
     if (!this.pspConfig) return;
@@ -128,7 +120,6 @@ export class PSPDetectorService {
 
   /**
    * Check if the detector is initialized
-   * @return {boolean} True if initialized, false otherwise
    */
   public isInitialized(): boolean {
     return !!this.pspConfig && this.exemptDomains.length > 0;

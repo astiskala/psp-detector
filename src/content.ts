@@ -35,7 +35,6 @@ class ContentScript {
 
   /**
    * Reset detection state for new page navigation
-   * @return {void}
    */
   public resetForNewPage(): void {
     this.pspDetected = false;
@@ -47,7 +46,6 @@ class ContentScript {
 
   /**
    * Initialize the content script
-   * @return {Promise<void>}
    */
   public async initialize(): Promise<void> {
     logger.info('Initializing content script');
@@ -109,7 +107,6 @@ class ContentScript {
   /**
    * Initialize exempt domains configuration
    * @private
-   * @return {Promise<void>}
    */
   private async initializeExemptDomains(): Promise<void> {
     try {
@@ -127,7 +124,6 @@ class ContentScript {
   /**
    * Initialize PSP configuration
    * @private
-   * @return {Promise<void>}
    */
   private async initializePSPConfig(): Promise<void> {
     try {
@@ -145,7 +141,6 @@ class ContentScript {
   /**
    * Set up DOM observer
    * @private
-   * @return {void}
    */
   private setupDOMObserver(): void {
     this.domObserver.initialize(() => this.detectPSP(), 3000);
@@ -155,7 +150,6 @@ class ContentScript {
   /**
    * Detect PSP on the current page
    * @private
-   * @return {Promise<void>}
    */
   private async detectPSP(): Promise<void> {
     const now = Date.now();
@@ -227,8 +221,6 @@ class ContentScript {
   /**
    * Handle PSP detection result (shared logic)
    * @private
-   * @param {PSPDetectionResult} result - The detection result
-   * @return {Promise<void>}
    */
   private async handlePSPDetection(result: PSPDetectionResult): Promise<void> {
     try {
@@ -324,8 +316,6 @@ class ContentScript {
    * Send a message to the background script
    * @private
    * @template T
-   * @param {ChromeMessage} message - Message to send
-   * @return {Promise<T>} Response from background
    */
   private sendMessage<T>(message: ChromeMessage): Promise<T> {
     return new Promise((resolve, reject) => {
@@ -361,7 +351,6 @@ class ContentScript {
 
   /**
    * Clean up resources when the content script is unloaded
-   * @return {void}
    */
   public cleanup(): void {
     const cleanupFunctions = [
@@ -376,7 +365,6 @@ class ContentScript {
 
   /**
    * Get iframe content for PSP detection (optimized with caching)
-   * @return {Promise<string[]>} Array of iframe content URLs
    */
   private async getIframeContent(): Promise<string[]> {
     const iframeContent: string[] = [];
@@ -447,8 +435,6 @@ class ContentScript {
 
   /**
    * Check if we can access iframe content based on same-origin policy
-   * @param {string} src - The iframe source URL
-   * @return {boolean} Whether we can access the iframe content
    */
   private canAccessIframe(src: string): boolean {
     try {

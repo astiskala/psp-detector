@@ -15,9 +15,6 @@ export class DOMObserverService {
 
   /**
    * Initialize the observer with a callback
-   * @param {() => void} callback - Function to call when mutations are observed
-   * @param {number} [debounceMs=2000] - Debounce time in milliseconds
-   * @return {void}
    */
   public initialize(callback: () => void, debounceMs = 2000): void {
     try {
@@ -46,7 +43,6 @@ export class DOMObserverService {
 
   /**
    * Start observing DOM mutations
-   * @return {void}
    */
   public startObserving(): void {
     if (!this.observer || this.isObserving) return;
@@ -74,7 +70,6 @@ export class DOMObserverService {
 
   /**
    * Stop observing DOM mutations
-   * @return {void}
    */
   public stopObserving(): void {
     if (!this.observer || !this.isObserving) return;
@@ -89,7 +84,6 @@ export class DOMObserverService {
 
   /**
    * Clean up the observer
-   * @return {void}
    */
   public cleanup(): void {
     const cleanupFunctions = [
@@ -107,7 +101,6 @@ export class DOMObserverService {
 
   /**
    * Check if the observer is currently active
-   * @return {boolean} True if observing, false otherwise
    */
   public isActive(): boolean {
     return this.isObserving;

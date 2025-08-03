@@ -16,7 +16,6 @@ export class UIService {
   /**
    * Initialize DOM element references
    * @private
-   * @return {void}
    */
   private initializeDOMElements(): void {
     const elementIds = ['name', 'description', 'notice', 'url', 'image'];
@@ -55,11 +54,6 @@ export class UIService {
 
   /**
    * Update UI with PSP information
-   * @param {PSP} psp - PSP configuration object
-   * @param {Object} detectionInfo - Optional detection information
-   * @param {string} detectionInfo.method - Detection method
-   * @param {string} detectionInfo.value - The value that matched
-   * @return {void}
    */
   public updatePSPDisplay(
     psp: PSP,
@@ -91,7 +85,6 @@ export class UIService {
 
   /**
    * Show no PSP detected state
-   * @return {void}
    */
   public showNoPSPDetected(): void {
     this.hideLoadingState();
@@ -121,7 +114,7 @@ export class UIService {
 
   /**
    * Show PSP detection disabled state for exempt domains
-   * @return {void}
+   *
    */
   public showPSPDetectionDisabled(): void {
     this.hideLoadingState();
@@ -151,7 +144,7 @@ export class UIService {
 
   /**
    * Show error state
-   * @return {void}
+   *
    */
   public showError(): void {
     this.hideLoadingState();
@@ -176,9 +169,7 @@ export class UIService {
   /**
    * Update text content of an element
    * @private
-   * @param {string} elementId - Element ID
-   * @param {string} content - Text content
-   * @return {void}
+   *
    */
   private updateTextContent(elementId: string, content: string): void {
     if (this.elements[elementId]) {
@@ -189,8 +180,7 @@ export class UIService {
   /**
    * Update notice section visibility and content
    * @private
-   * @param {string} [notice] - Notice text
-   * @return {void}
+   *
    */
   private updateNoticeSection(notice?: string): void {
     if (!this.elements.notice) {
@@ -211,9 +201,7 @@ export class UIService {
   /**
    * Update learn more link
    * @private
-   * @param {string} url - URL for the link
-   * @param {string} [text='Learn More'] - Link text
-   * @return {void}
+   *
    */
   private updateLearnMoreLink(url: string, text = 'Learn More'): void {
     if (!this.elements.url) {
@@ -231,9 +219,7 @@ export class UIService {
   /**
    * Update PSP image
    * @private
-   * @param {string} image - Image name
-   * @param {string} alt - Alt text
-   * @return {void}
+   *
    */
   private updateImage(image: string, alt: string): void {
     const imgElement = this.elements.image as HTMLImageElement;
@@ -244,7 +230,7 @@ export class UIService {
   /**
    * Hide loading state and show content
    * @private
-   * @return {void}
+   *
    */
   private hideLoadingState(): void {
     if (this.elements.loadingState) {
@@ -255,7 +241,7 @@ export class UIService {
   /**
    * Show content state
    * @private
-   * @return {void}
+   *
    */
   private showContentState(): void {
     if (this.elements.contentState) {
@@ -266,8 +252,7 @@ export class UIService {
   /**
    * Set UI state by adding appropriate CSS class
    * @private
-   * @param {string} state - State type (success, error, no-psp, disabled)
-   * @return {void}
+   *
    */
   private setUIState(state: string): void {
     if (!this.elements.container) return;
@@ -284,8 +269,7 @@ export class UIService {
   /**
    * Show status icon instead of PSP image
    * @private
-   * @param {string} icon - Emoji icon to display
-   * @return {void}
+   *
    */
   private showStatusIcon(icon: string): void {
     if (this.elements.image) {
@@ -301,7 +285,7 @@ export class UIService {
   /**
    * Show PSP image and hide status icon
    * @private
-   * @return {void}
+   *
    */
   private showPSPImage(): void {
     if (this.elements.statusIcon) {
@@ -316,10 +300,7 @@ export class UIService {
   /**
    * Update detection details section
    * @private
-   * @param {Object} detectionInfo - Detection information
-   * @param {string} detectionInfo.method - Detection method
-   * @param {string} detectionInfo.value - The value that matched
-   * @return {void}
+   *
    */
   private updateDetectionDetails(detectionInfo: {
     method: string;
@@ -346,7 +327,7 @@ export class UIService {
   /**
    * Hide detection details section
    * @private
-   * @return {void}
+   *
    */
   private hideDetectionDetails(): void {
     if (this.elements.detectedDomain) {

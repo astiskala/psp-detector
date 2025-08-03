@@ -16,7 +16,6 @@ class PopupManager {
 
   /**
    * Initialize the popup
-   * @return {Promise<void>}
    */
   public async initialize(): Promise<void> {
     try {
@@ -73,7 +72,6 @@ class PopupManager {
   /**
    * Get the detected PSP from the background script
    * @private
-   * @return {Promise<PSPDetectionResult|null>} PSP detection result or null
    */
   private async getDetectedPSP(): Promise<PSPDetectionResult | null> {
     try {
@@ -90,7 +88,6 @@ class PopupManager {
   /**
    * Get PSP configuration from extension resource
    * @private
-   * @return {Promise<PSPConfig>} PSP config object
    */
   private async getPSPConfig(): Promise<PSPConfig> {
     const response = await fetch(chrome.runtime.getURL('psps.json'));
@@ -105,8 +102,6 @@ class PopupManager {
    * Send a message to the background script
    * @private
    * @template T
-   * @param {object} message - Message to send
-   * @return {Promise<T>} Response from background
    */
   private sendMessage<T>(message: { action: MessageAction }): Promise<T> {
     return new Promise((resolve, reject) => {
@@ -126,7 +121,6 @@ class PopupManager {
 
   /**
    * Clean up resources when popup is closed
-   * @return {void}
    */
   public cleanup(): void {
     // Popup cleanup - currently just logging

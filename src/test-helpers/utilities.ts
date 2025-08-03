@@ -112,6 +112,7 @@ export function createCrossOriginWindowMock(): Window & typeof globalThis {
  */
 import type { PSP, PSPConfig, PSPName, URL } from '../types';
 import { PSPDetectorService } from '../services/psp-detector';
+import { getAllProviders } from '../lib/utils';
 
 /**
  * Interface for accessing private members of PSPDetectorService in tests
@@ -122,29 +123,29 @@ interface PSPDetectorServiceInternal {
 }
 
 /**
- * Get PSP by branded PSP name - test helper version
- * @param {PSPDetectorService} service - PSP detector service instance
- * @param {PSPName} pspName - Branded PSP name
- * @return {PSP|null} PSP object or null
+ * Get PSP by PSP name using type-safe access to internal methods
  */
 export function getPSPByPSPName(
   service: PSPDetectorService,
   pspName: PSPName,
 ): PSP | null {
-  // Access private pspConfig through type assertion for testing
-  const config = (service as unknown as PSPDetectorServiceInternal).pspConfig;
-  if (!config) {
+  try {
+    // Access private pspConfig through type assertion for testing
+    const config = (service as unknown as PSPDetectorServiceInternal).pspConfig;
+
+    if (!config) {
+      return null;
+    }
+
+    const providers = getAllProviders(config);
+    return providers.find(psp => psp.name === pspName) || null;
+  } catch {
     return null;
   }
-
-  return config.psps.find((psp: PSP) => psp.name === pspName) || null;
 }
 
 /**
  * Check if a URL matches exempt domains - test helper version
- * @param {PSPDetectorService} service - PSP detector service instance
- * @param {URL} url - Branded URL to check
- * @return {boolean} True if URL is exempt, false otherwise
  */
 export function isURLExempt(
   service: PSPDetectorService,

@@ -43,7 +43,6 @@ class BackgroundService {
   /**
    * Initialize all extension message and tab listeners
    * @private
-   * @return {void}
    */
   initializeListeners(): void {
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -63,7 +62,6 @@ class BackgroundService {
   /**
    * Load exempt domains configuration from extension resource
    * @private
-   * @return {Promise<void>}
    */
   async loadExemptDomains(): Promise<void> {
     try {
@@ -83,8 +81,6 @@ class BackgroundService {
   /**
    * Check if a URL is exempt from PSP detection
    * @private
-   * @param {string} url - URL to check
-   * @return {boolean} True if URL is exempt
    */
   private isUrlExempt(url: string): boolean {
     if (!url || this.config.exemptDomains.length === 0) {
@@ -97,8 +93,6 @@ class BackgroundService {
   /**
    * Check if a URL is a special URL that doesn't support content scripts
    * @private
-   * @param {string} url - URL to check
-   * @return {boolean} True if URL is special (chrome://, chrome-extension://, etc.)
    */
   private isSpecialUrl(url: string): boolean {
     if (!url) {
@@ -121,10 +115,6 @@ class BackgroundService {
   /**
    * Handle incoming extension messages
    * @private
-   * @param {object} message - Message object
-   * @param {chrome.runtime.MessageSender} sender - Sender
-   * @param {function} sendResponse - Response callback
-   * @return {Promise<void>}
    */
   async handleMessage(
     message: ChromeMessage,
@@ -164,8 +154,6 @@ class BackgroundService {
   /**
    * Handle PSP configuration request
    * @private
-   * @param {function} sendResponse - Response callback
-   * @return {Promise<void>}
    */
   async handleGetPspConfig(
     sendResponse: (response?: PSPConfigResponse | null) => void,
@@ -190,9 +178,6 @@ class BackgroundService {
   /**
    * Handle PSP detection
    * @private
-   * @param {object} data - Detection data
-   * @param {function} sendResponse - Response callback
-   * @return {void}
    */
   handleDetectPsp(
     data: PSPDetectionData,
@@ -271,8 +256,6 @@ class BackgroundService {
   /**
    * Handle get PSP request
    * @private
-   * @param {function} sendResponse - Response callback
-   * @return {void}
    */
   handleGetPsp(sendResponse: (response?: PSPResponse) => void): void {
     const pspResult = this.config.currentTabId
@@ -287,8 +270,6 @@ class BackgroundService {
   /**
    * Handle tab activation
    * @private
-   * @param {{ tabId: number }} activeInfo - Tab activation info
-   * @return {Promise<void>}
    */
   async handleTabActivation(activeInfo: { tabId: number }): Promise<void> {
     const tabId = TypeConverters.toTabId(activeInfo.tabId);
@@ -339,10 +320,6 @@ class BackgroundService {
   /**
    * Handle tab updates
    * @private
-   * @param {number} tabId - Tab ID
-   * @param {{ status?: string }} changeInfo - Change info
-   * @param {chrome.tabs.Tab} tab - Tab object
-   * @return {void}
    */
   handleTabUpdate(
     tabId: number,
@@ -382,8 +359,6 @@ class BackgroundService {
   /**
    * Update extension icon
    * @private
-   * @param {string} psp - PSP name
-   * @return {void}
    */
   updateIcon(psp: string): void {
     logger.debug(`Background: Attempting to update icon for PSP: ${psp}`);
@@ -419,7 +394,6 @@ class BackgroundService {
   /**
    * Show exempt domain icon with warning badge
    * @private
-   * @return {void}
    */
   showExemptDomainIcon(): void {
     // Set default icon
@@ -435,7 +409,6 @@ class BackgroundService {
   /**
    * Reset extension icon to default
    * @private
-   * @return {void}
    */
   resetIcon(): void {
     chrome.action.setIcon({
@@ -449,8 +422,6 @@ class BackgroundService {
   /**
    * Get PSP information from config
    * @private
-   * @param {string} psp - PSP name
-   * @return {PSP|null} PSP info or null
    */
   getPspInfo(psp: string): PSP | null {
     if (!this.config.cachedPspConfig) return null;
@@ -471,8 +442,6 @@ class BackgroundService {
   /**
    * Inject content script into tab
    * @private
-   * @param {number} tabId - Tab ID
-   * @return {Promise<void>}
    */
   async injectContentScript(tabId: number): Promise<void> {
     try {
