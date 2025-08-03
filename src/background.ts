@@ -386,14 +386,30 @@ class BackgroundService {
    * @return {void}
    */
   updateIcon(psp: string): void {
+    logger.debug(`Background: Attempting to update icon for PSP: ${psp}`);
     const pspInfo = this.getPspInfo(psp);
+    logger.debug('Background: PSP info lookup result:', pspInfo);
+
     if (pspInfo) {
+      const iconPaths = {
+        48: `images/${pspInfo.image}_48.png`,
+        128: `images/${pspInfo.image}_128.png`,
+      };
+      logger.debug('Background: Setting icon paths:', iconPaths);
+
       chrome.action.setIcon({
-        path: {
-          48: `images/${pspInfo.image}_48.png`,
-          128: `images/${pspInfo.image}_128.png`,
-        },
+        path: iconPaths,
+      }, () => {
+        if (chrome.runtime.lastError) {
+          logger.error('Background: Failed to set icon:', chrome.runtime.lastError);
+        } else {
+          logger.debug(`Background: Successfully updated icon for ${psp}`);
+        }
       });
+    } else {
+      logger.warn(`Background: No PSP info found for: ${psp}`);
+      const availablePsps = this.config.cachedPspConfig?.psps?.map(p => p.name);
+      logger.debug('Background: Available PSPs:', availablePsps);
     }
 
     // Clear any badge when showing PSP icon

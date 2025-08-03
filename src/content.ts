@@ -34,6 +34,18 @@ class ContentScript {
   }
 
   /**
+   * Reset detection state for new page navigation
+   * @return {void}
+   */
+  public resetForNewPage(): void {
+    this.pspDetected = false;
+    this.reportedPSPs.clear();
+    this.processedIframes.clear();
+    this.lastDetectionTime = 0;
+    logger.debug('Content script state reset for new page');
+  }
+
+  /**
    * Initialize the content script
    * @return {Promise<void>}
    */
@@ -265,7 +277,12 @@ class ContentScript {
         }
 
         if (tabId && pspName) {
-          await this.sendMessage({
+          logger.debug(
+            'Content: Sending PSP detection to background - ' +
+            `PSP: ${pspName}, TabID: ${tabId}`,
+          );
+
+          const messageData = {
             action: MessageAction.DETECT_PSP,
             data: {
               psp: TypeConverters.toPSPName(pspName),
@@ -273,7 +290,22 @@ class ContentScript {
               detectionInfo,
               url,
             },
-          });
+          };
+
+          logger.debug('Content: Message data:', messageData);
+
+          try {
+            await this.sendMessage(messageData);
+            logger.debug('Content: Successfully sent PSP detection message to background');
+          } catch (error) {
+            logger.error('Content: Failed to send PSP detection message:', error);
+            throw error; // Re-throw to be caught by outer try-catch
+          }
+        } else {
+          logger.warn(
+            `Content: Invalid tabId (${tabId}) or pspName (${pspName}), ` +
+            'cannot send message',
+          );
         }
       }
 
@@ -429,53 +461,59 @@ class ContentScript {
    */
   private canAccessIframe(src: string): boolean {
     try {
-      // Same-origin iframes are always accessible
-      if (src.startsWith(window.location.origin)) {
-        return true;
-      }
-
-      // Some PSPs allow cross-origin access in specific scenarios
-      // This is determined by actual runtime testing rather than hardcoding
-      const url = new URL(src);
-
-      // Common PSP domains that often allow iframe access
-      const accessibleDomains = [
-        'checkout.com',
-        'js.checkout.com',
-        'stripe.com',
-        'js.stripe.com',
-        'paypal.com',
-        'braintreepayments.com',
-      ];
-
-      return accessibleDomains.some(domain =>
-        url.hostname === domain || url.hostname.endsWith('.' + domain),
-      );
+      const srcOrigin = new URL(src, document.baseURI).origin;
+      return srcOrigin === window.location.origin;
     } catch {
       return false;
     }
   }
 }
 
-// Prevent multiple content script instances
+// Prevent multiple content script instances on the same page
 interface WindowWithPSPDetector {
-  pspDetectorContentScript?: boolean;
+  pspDetectorContentScript?: {
+    initialized: boolean;
+    url: string;
+  } | undefined;
 }
 const windowExt = window as WindowWithPSPDetector;
 
-if (windowExt.pspDetectorContentScript) {
-  logger.debug('Content script already initialized, skipping');
+const currentUrl = document.URL;
+const existingScript = windowExt.pspDetectorContentScript;
+
+// Allow re-initialization if URL has changed (new page navigation)
+if (existingScript?.initialized && existingScript.url === currentUrl) {
+  logger.debug('Content script already initialized for this page, skipping');
 } else {
-  // Mark as initialized
-  windowExt.pspDetectorContentScript = true;
+  if (existingScript?.initialized) {
+    logger.debug(
+      `Content script URL changed from ${existingScript.url} to ` +
+      `${currentUrl}, re-initializing`,
+    );
+  } else {
+    logger.debug(`Content script initializing for new page: ${currentUrl}`);
+  }
+
+  // Mark as initialized for this specific URL
+  windowExt.pspDetectorContentScript = {
+    initialized: true,
+    url: currentUrl,
+  };
 
   // Initialize content script
   const contentScript = new ContentScript();
 
+  // Reset state if this is a URL change (re-initialization)
+  if (existingScript?.initialized) {
+    contentScript.resetForNewPage();
+  }
+
   // Add cleanup on page unload
   window.addEventListener('beforeunload', (): void => {
     contentScript.cleanup();
-    windowExt.pspDetectorContentScript = false;
+    if (windowExt.pspDetectorContentScript?.url === currentUrl) {
+      windowExt.pspDetectorContentScript = undefined;
+    }
   });
 
   contentScript.initialize().catch((error): void => {
