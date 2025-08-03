@@ -104,10 +104,3 @@ export const assertElementVisibility = (
 ): void => {
   expect(element.style.display).toBe(visible ? 'block' : 'none');
 };
-
-/**
- * Async test helper for promises with timeout
- */
-export const waitFor = (ms: number): Promise<void> => {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-};

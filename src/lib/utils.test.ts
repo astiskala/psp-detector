@@ -1,5 +1,4 @@
 import {
-  debounce,
   createSafeUrl,
   safeCompileRegex,
   logger,
@@ -8,42 +7,6 @@ import {
 } from './utils';
 
 describe('utils', () => {
-  describe('debounce', () => {
-    it('should delay function execution until after wait period', (done) => {
-      // Arrange
-      let count = 0;
-      const fn = debounce(() => {
-        count++;
-      }, 10);
-
-      // Act
-      fn();
-      fn();
-      fn();
-
-      // Assert
-      setTimeout(() => {
-        expect(count).toBe(1);
-        done();
-      }, 30);
-    });
-
-    it('should handle boundary values correctly with zero delay', (done) => {
-      // Arrange
-      let callCount = 0;
-      const fn = debounce(() => callCount++, 0); // Zero delay
-
-      // Act
-      fn();
-      fn();
-
-      // Assert - With zero delay, should still debounce properly
-      setTimeout(() => {
-        expect(callCount).toBe(1);
-        done();
-      }, 10);
-    });
-  });
 
   describe('URL utilities', () => {
     it('should create safe URL for valid URLs', () => {
@@ -146,48 +109,6 @@ describe('utils', () => {
     consoleSpy.mockRestore();
   });
 
-  it('memoryUtils.createEventCleanup removes event listeners', () => {
-    const element = document.createElement('div');
-    const listener1 = jest.fn();
-    const listener2 = jest.fn();
-    const eventMap = new Map([
-      ['click', listener1],
-      ['scroll', listener2],
-    ]);
-
-    // Add event listeners
-    eventMap.forEach((listener, event) => {
-      element.addEventListener(event, listener);
-    });
-
-    // Create and execute cleanup
-    const cleanup = memoryUtils.createEventCleanup(element, eventMap);
-    cleanup();
-
-    // Verify listeners are removed by checking map is cleared
-    expect(eventMap.size).toBe(0);
-  });
-
-  it('memoryUtils.throttle limits function execution rate', (done) => {
-    const mockFn = jest.fn();
-    const throttledFn = memoryUtils.throttle(mockFn, 50);
-
-    // Call multiple times rapidly
-    throttledFn();
-    throttledFn();
-    throttledFn();
-
-    // Should only execute once immediately
-    expect(mockFn).toHaveBeenCalledTimes(1);
-
-    // Wait for throttle period to pass
-    setTimeout(() => {
-      throttledFn();
-      expect(mockFn).toHaveBeenCalledTimes(2);
-      done();
-    }, 60);
-  });
-
   it('logger.time and logger.timeEnd work in development mode', () => {
     const originalEnv = process.env.NODE_ENV;
     process.env.NODE_ENV = 'development';
@@ -214,20 +135,4 @@ describe('utils', () => {
     process.env.NODE_ENV = originalEnv;
   });
 
-  it('memoryUtils.throttle limits function calls', (done) => {
-    const mockFn = jest.fn();
-    const throttledFn = memoryUtils.throttle(mockFn, 50);
-
-    throttledFn();
-    throttledFn();
-    throttledFn();
-
-    expect(mockFn).toHaveBeenCalledTimes(1);
-
-    setTimeout(() => {
-      throttledFn();
-      expect(mockFn).toHaveBeenCalledTimes(2);
-      done();
-    }, 100);
-  });
 });

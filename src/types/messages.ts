@@ -15,14 +15,6 @@ export interface ChromeMessage {
 }
 
 /**
- * Response structure for PSP detection
- */
-export interface PSPDetectionResponse {
-  psp: PSPName | null;
-  tabId?: TabId;
-}
-
-/**
  * PSP detection message data
  */
 export interface PSPDetectionData {

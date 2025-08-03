@@ -1,6 +1,6 @@
 import type { PSP, PSPConfig, PSPName, URL } from '../types';
 import { PSPDetectionResult, TypeConverters } from '../types';
-import { safeCompileRegex, logger } from '../lib/utils';
+import { safeCompileRegex, logger, getAllProviders } from '../lib/utils';
 
 /**
  * Service for detecting Payment Service Providers (PSPs) on a page.
@@ -27,17 +27,6 @@ export class PSPDetectorService {
    */
   public setExemptDomains(domains: string[]): void {
     this.exemptDomains = domains || [];
-  }
-
-  /**
-   * Get all PSPs, orchestrators, and TSPs as a single array
-   */
-  private getAllProviders(): PSP[] {
-    if (!this.pspConfig) return [];
-    const psps = this.pspConfig.psps || [];
-    const orchestrators = this.pspConfig.orchestrators?.list || [];
-    const tsps = this.pspConfig.tsps?.list || [];
-    return [...psps, ...orchestrators, ...tsps];
   }
 
   /**
@@ -96,7 +85,7 @@ export class PSPDetectorService {
     let scannedPatterns = 0;
     const pageContent = `${url}\n\n${content}`;
 
-    for (const psp of this.getAllProviders()) {
+    for (const psp of getAllProviders(this.pspConfig)) {
       scannedPatterns++;
 
       if (psp.matchStrings && psp.matchStrings.length > 0) {
@@ -116,7 +105,7 @@ export class PSPDetectorService {
     logger.timeEnd('matchStringsScanning');
 
     logger.time('regexScanning');
-    for (const psp of this.getAllProviders()) {
+    for (const psp of getAllProviders(this.pspConfig)) {
       if (psp.compiledRegex && psp.compiledRegex.test(pageContent)) {
         logger.timeEnd('regexScanning');
         logger.info('PSP detected via regex:', psp.name);
@@ -140,7 +129,7 @@ export class PSPDetectorService {
   private precompileRegexPatterns(): void {
     if (!this.pspConfig) return;
 
-    for (const psp of this.getAllProviders()) {
+    for (const psp of getAllProviders(this.pspConfig)) {
       if (psp.regex) {
         const compiled = safeCompileRegex(psp.regex);
         if (compiled) {

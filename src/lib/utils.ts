@@ -1,27 +1,3 @@
-/**
- * Debounce function to limit the rate at which a function can fire
- * @param func - The function to debounce
- * @param wait - The number of milliseconds to wait
- */
-export function debounce<T extends(...args: unknown[]) => unknown>(
-  func: T,
-  wait: number,
-): (...args: Parameters<T>) => void {
-  let timeout: NodeJS.Timeout | null = null;
-
-  return (...args: Parameters<T>): void => {
-    const later = (): void => {
-      timeout = null;
-      func(...args);
-    };
-
-    if (timeout) {
-      clearTimeout(timeout);
-    }
-
-    timeout = setTimeout(later, wait);
-  };
-}
 
 /**
  * Create a safe URL by sanitizing the input
@@ -127,42 +103,6 @@ export const memoryUtils = {
     });
   },
 
-  /**
-   * Create a cleanup function that removes event listeners
-   * @param element - Element to remove listeners from
-   * @param eventMap - Map of event types to listeners
-   */
-  createEventCleanup: (
-    element: Element,
-    eventMap: Map<string, EventListener>,
-  ): (() => void) => {
-    return (): void => {
-      eventMap.forEach((listener, event) => {
-        element.removeEventListener(event, listener);
-      });
-
-      eventMap.clear();
-    };
-  },
-
-  /**
-   * Throttle function calls to improve performance
-   * @param func - Function to throttle
-   * @param limit - Time limit in milliseconds
-   */
-  throttle: <T extends (...args: unknown[]) => unknown>(
-    func: T,
-    limit: number,
-  ): ((...args: Parameters<T>) => void) => {
-    let inThrottle: boolean;
-    return (...args: Parameters<T>): void => {
-      if (!inThrottle) {
-        func(...args);
-        inThrottle = true;
-        setTimeout(() => (inThrottle = false), limit);
-      }
-    };
-  },
 };
 
 /**
