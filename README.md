@@ -122,6 +122,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - ACI Worldwide
 - APEXX
 - Akurateco
+- Basis Theory
 - BR-DGE
 - CellPoint Digital
 - Gr4vy

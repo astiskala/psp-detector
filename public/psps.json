@@ -1132,6 +1132,16 @@
         "url": "https://www.verygoodsecurity.com"
       },
       {
+        "name": "Basis Theory",
+        "matchStrings": [
+          "api.basistheory.com",
+          "js.basistheory.com"
+        ],
+        "image": "basistheory",
+        "summary": "Basis Theory is a data privacy and tokenization platform that provides secure Web Elements for collecting sensitive payment data. It enables developers to build PCI-compliant payment forms without handling raw payment data, offering tokenization, vaulting, and secure data processing capabilities.",
+        "url": "https://basistheory.com"
+      },
+      {
         "name": "Primer",
         "matchStrings": [
           "api.primer.io",

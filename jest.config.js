@@ -26,14 +26,12 @@ module.exports = {
     '<rootDir>/src/**/*.(test|spec).(ts|js)',
   ],
 
-  // Coverage configuration
-  collectCoverageFrom: [
-    'src/**/*.{ts,js}',
-    '!src/**/*.d.ts',
-    '!src/**/*.test.ts',
-    '!src/**/*.spec.ts',
-    '!src/test-helpers/**',
-  ],
+  // Coverage configuration - disabled due to Node.js v24 compatibility issues
+  collectCoverage: false,
+  collectCoverageFrom: [],
+
+  // Coverage reporter configuration
+  coverageReporters: ['text', 'text-summary'],
 
   // Setup files
   setupFilesAfterEnv: [],
@@ -47,4 +45,7 @@ module.exports = {
   // Clear mocks between tests
   clearMocks: true,
   restoreMocks: true,
+
+  // Workaround for Node.js v20+ coverage issues
+  workerIdleMemoryLimit: '512MB',
 };
