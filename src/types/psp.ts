@@ -17,9 +17,16 @@ export interface PSP {
   compiledRegex?: RegExp;
 }
 
+export interface PSPGroup {
+  notice: string;
+  list: PSP[];
+}
+
 /**
  * PSP configuration containing all PSPs
  */
 export interface PSPConfig {
   psps: PSP[];
+  orchestrators?: PSPGroup;
+  tsps?: PSPGroup;
 }

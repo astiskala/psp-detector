@@ -437,10 +437,17 @@ class BackgroundService {
    * @return {PSP|null} PSP info or null
    */
   getPspInfo(psp: string): PSP | null {
-    if (!this.config.cachedPspConfig?.psps) return null;
+    if (!this.config.cachedPspConfig) return null;
+
+    const allProviders = [
+      ...(this.config.cachedPspConfig.psps || []),
+      ...(this.config.cachedPspConfig.orchestrators?.list || []),
+      ...(this.config.cachedPspConfig.tsps?.list || []),
+    ];
+
     return (
-      this.config.cachedPspConfig.psps.find(
-        (p: { name: string }) => p.name === psp,
+      allProviders.find(
+        (provider: { name: string }) => provider.name === psp,
       ) || null
     );
   }

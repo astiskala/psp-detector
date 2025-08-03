@@ -265,3 +265,17 @@ export const memoryUtils = {
     };
   },
 };
+
+/**
+ * Get all PSPs, orchestrators, and TSPs as a single array
+ * @param pspConfig - The PSP configuration object
+ * @returns Array of all providers
+ */
+import type { PSPConfig, PSP } from '../types/psp';
+export function getAllProviders(pspConfig: PSPConfig): PSP[] {
+  if (!pspConfig) return [];
+  const psps = pspConfig.psps || [];
+  const orchestrators = pspConfig.orchestrators?.list || [];
+  const tsps = pspConfig.tsps?.list || [];
+  return [...psps, ...orchestrators, ...tsps];
+}

@@ -5,7 +5,7 @@
  */
 import { MessageAction, PSPConfig, PSPResponse, PSPDetectionResult } from './types';
 import { UIService } from './services/ui';
-import { logger, reportError, createContextError } from './lib/utils';
+import { logger, reportError, createContextError, getAllProviders } from './lib/utils';
 
 class PopupManager {
   private ui: UIService;
@@ -35,11 +35,31 @@ class PopupManager {
       }
 
       const pspConfig = await this.getPSPConfig();
-      const psp = pspConfig.psps.find(
+
+      // Use shared utility to get all providers
+      const allProviders = getAllProviders(pspConfig);
+      const psp = allProviders.find(
         (p: { name: string }) => p.name === detectedPspResult.psp,
       );
+
+      // Determine group-level notice if provider is in orchestrators or tsps
+      let groupNotice: string | undefined;
+      if (pspConfig.orchestrators?.list.some((o) => o.name === psp?.name)) {
+        groupNotice = pspConfig.orchestrators.notice;
+      } else if (pspConfig.tsps?.list.some((t) => t.name === psp?.name)) {
+        groupNotice = pspConfig.tsps.notice;
+      }
+
       if (psp) {
-        this.ui.updatePSPDisplay(psp, detectedPspResult.detectionInfo);
+        // Prefer group-level notice if present
+        const displayPsp = {
+          ...psp,
+          notice: groupNotice || psp.notice,
+        };
+        this.ui.updatePSPDisplay(
+          displayPsp,
+          detectedPspResult.detectionInfo,
+        );
       } else {
         reportError(
           createContextError('PSP config not found', {

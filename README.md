@@ -120,6 +120,8 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 ## Supported orchestrators / proxies
 
 - ACI Worldwide
+- APEXX
+- Akurateco
 - BR-DGE
 - CellPoint Digital
 - Gr4vy
@@ -128,10 +130,13 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Paydock
 - PCI Proxy
 - PCI Vault
+- Praxis Tech
 - Primer
 - ProcessOut
 - Spreedly
+- Tranzzo
 - VGS (Very Good Security)
+- Yuno
 
 ## Supported third-party service providers (TSPs)
 

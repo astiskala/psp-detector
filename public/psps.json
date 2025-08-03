@@ -732,16 +732,6 @@
       "url": "https://www.flywire.com"
     },
     {
-      "name": "ProcessOut",
-      "matchStrings": [
-        "js.processout.com",
-        "static.processout.com"
-      ],
-      "image": "processout",
-      "summary": "ProcessOut is a payment orchestration platform that helps businesses optimize their payment operations. It provides smart routing, analytics, and fraud prevention tools while supporting multiple payment providers and methods. The platform enables businesses to manage multiple PSPs, optimize payment success rates, and reduce costs through intelligent transaction routing.",
-      "url": "https://www.processout.com"
-    },
-    {
       "name": "Debia",
       "matchStrings": [
         "pgw.debiapay.com"
@@ -975,160 +965,289 @@
       "summary": "Shopify Payments is an integrated payment processing solution for Shopify store owners. It allows businesses to accept payments directly through their Shopify platform, supporting major credit cards and offering checkout experiences for customers.",
       "url": "https://www.shopify.com",
       "notice": "Shopify's payment page can be configured to submit payments via other PSPs. As such, it is possible that Shopify is misidentified as the PSP (and another PSP is used for card processing)."
-    },
-    {
-      "name": "Primer",
-      "matchStrings": [
-        "api.primer.io",
-        "sandbox.primer.io",
-        "sdk.primer.io"
-      ],
-      "image": "primer",
-      "summary": "Primer is a unified infrastructure and automation platform for payments and commerce. It provides merchants with a single integration to consolidate their payment stack, connect various payment services and third-party tools with minimal code, and build dynamic end-to-end payment flows. Primer aims to simplify payment integration and management, optimize payment performance (including authorization rates and routing), and supports a wide range of payment methods and services.",
-      "url": "https://primer.io",
-      "notice": "As an orchestration/proxy platform, Primer obscures the underlying PSP processing the payment. It is not possible from the merchant's frontend to determine who is the underlying card processor."
-    },
-    {
-      "name": "Paydock",
-      "matchStrings": [
-        "cdn.paydock.com",
-        "paydock.com/assets",
-        "paydock.com/sdk"
-      ],
-      "image": "paydock",
-      "summary": "Paydock is a payment orchestration platform that enables businesses to connect and manage multiple payment services through a single API. It provides features like smart routing, tokenization, and fraud prevention.",
-      "url": "https://www.paydock.com",
-      "notice": "As an orchestration/proxy platform, Paydock may obscure the underlying PSP processing the payment. It is not always possible from the merchant's frontend to determine who is the underlying card processor."
-    },
-    {
-      "name": "Spreedly",
-      "matchStrings": [
-        "core.spreedly.com"
-      ],
-      "image": "spreedly",
-      "summary": "Spreedly is a payment orchestration platform allowing businesses to securely tokenize, store, and optimize payment data. It supports connections to multiple gateways and payment services, enabling greater flexibility and scalability.",
-      "url": "https://www.spreedly.com",
-      "notice": "As an orchestration/proxy platform, Spreedly obscures the underlying PSP processing the payment. It is not possible from the merchant's frontend to determine who is the underlying card processor."
-    },
-    {
-      "name": "IXOPAY",
-      "matchStrings": [
-        "gateway.ixopay.com",
-        "htp.tokenex.com"
-      ],
-      "image": "ixopay",
-      "summary": "IXOPAY is a payment orchestration platform providing centralized payment management, dynamic routing, and tokenization. It supports global payment methods and offers fraud prevention tools, making it a comprehensive solution for large enterprises.",
-      "url": "https://www.ixopay.com",
-      "notice": "As an orchestration/proxy platform, IXOPAY obscures the underlying PSP processing the payment. It is not possible from the merchant's frontend to determine who is the underlying card processor."
-    },
-    {
-      "name": "Gr4vy",
-      "matchStrings": [
-        "gr4vy.app"
-      ],
-      "image": "gr4vy",
-      "summary": "Gr4vy is a cloud-native payment orchestration platform offering businesses the ability to deploy their payment infrastructure on the cloud. It simplifies the integration and management of multiple payment methods and gateways, providing features like tokenization, routing, and failover.",
-      "url": "https://www.gr4vy.com",
-      "notice": "As an orchestration/proxy platform, Gr4vy obscures the underlying PSP processing the payment. It is not possible from the merchant's frontend to determine who is the underlying card processor."
-    },
-    {
-      "name": "PCI Proxy",
-      "matchStrings": [
-        "pay.datatrans.com",
-        "pay.sandbox.datatrans.com",
-        "pci-proxy.com"
-      ],
-      "image": "pci-proxy",
-      "summary": "PCI Proxy is a tokenization and proxy platform that enables businesses to securely handle sensitive payment data. It provides PCI compliance, tokenization, and flexible APIs for easy integration into payment systems.",
-      "url": "https://www.pci-proxy.com",
-      "notice": "As an orchestration/proxy platform, PCI Proxy obscures the underlying PSP processing the payment. It is not possible from the merchant's frontend to determine who is the underlying card processor."
-    },
-    {
-      "name": "PCI Vault",
-      "matchStrings": [
-        "api.pcivault.io"
-      ],
-      "image": "pci-vault",
-      "summary": "PCI Vault offers secure tokenization services for storing and managing sensitive payment data. It focuses on compliance with PCI standards and provides robust APIs for seamless integration with eCommerce platforms.",
-      "url": "https://www.pcivault.com",
-      "notice": "As an orchestration/proxy platform, PCI Vault obscures the underlying PSP processing the payment. It is not possible from the merchant's frontend to determine who is the underlying card processor."
-    },
-    {
-      "name": "ACI Worldwide",
-      "matchStrings": [
-        "payments.aciworldwide.com",
-        "sdk.aciworldwide.com",
-        "secure.aciworldwide.com"
-      ],
-      "image": "aciworldwide",
-      "summary": "ACI Worldwide provides payment processing and orchestration solutions for merchants, banks, and billers, supporting a wide range of payment methods and fraud prevention tools.",
-      "url": "https://www.aciworldwide.com",
-      "notice": "As an orchestration/proxy platform, ACI Worldwide may obscure the underlying PSP processing the payment. It is not always possible from the merchant's frontend to determine who is the underlying card processor."
-    },
-    {
-      "name": "BR-DGE",
-      "matchStrings": [
-        "assets.comcarde.com",
-        "sandbox.comcarde.com",
-        "secure.comcarde.com"
-      ],
-      "image": "brdge",
-      "summary": "BR-DGE is a payment orchestration platform that connects merchants to multiple payment providers, offering smart routing, tokenization, and analytics.",
-      "url": "https://br-dge.to",
-      "notice": "As an orchestration/proxy platform, BR-DGE may obscure the underlying PSP processing the payment. It is not always possible from the merchant's frontend to determine who is the underlying card processor."
-    },
-    {
-      "name": "CellPoint Digital",
-      "matchStrings": [
-        "cdn.cellpointdigital.com",
-        "cellpointdigital.com/assets",
-        "cellpointdigital.com/sdk"
-      ],
-      "image": "cellpointdigital",
-      "summary": "CellPoint Digital provides payment orchestration and digital commerce solutions for travel, airlines, and retail, enabling merchants to optimize payment flows and connect to multiple PSPs.",
-      "url": "https://www.cellpointdigital.com",
-      "notice": "As an orchestration/proxy platform, CellPoint Digital may obscure the underlying PSP processing the payment. It is not always possible from the merchant's frontend to determine who is the underlying card processor."
-    },
-    {
-      "name": "VGS (Very Good Security)",
-      "matchStrings": [
-        "js.verygoodvault.com"
-      ],
-      "image": "vgs",
-      "summary": "Very Good Security (VGS) is a data security and tokenization platform that simplifies PCI compliance by replacing sensitive data with tokens. It offers seamless integration with payment systems while maintaining privacy and security.",
-      "url": "https://www.verygoodsecurity.com",
-      "notice": "As an orchestration/proxy platform, VGS obscures the underlying PSP processing the payment. It is not possible from the merchant's frontend to determine who is the underlying card processor."
-    },
-    {
-      "name": "Juspay",
-      "matchStrings": [
-        "api.juspay.in",
-        "payments.juspay.in"
-      ],
-      "image": "juspay",
-      "summary": "Juspay is an Indian payment platform providing SDKs (like Express Checkout), payment gateway services, and orchestration features. It aims to simplify checkouts, enhance transaction success rates, and supports numerous local payment methods including UPI, wallets, and cards.",
-      "url": "https://www.juspay.in",
-      "notice": "As an orchestration/proxy platform, Juspay obscures the underlying PSP processing the payment. It is not possible from the merchant's frontend to determine who is the underlying card processor."
-    },
-    {
-      "name": "Amadeus Hospitality (TravelClick)",
-      "matchStrings": [
-        "static.travelclick.com"
-      ],
-      "image": "amadeus",
-      "summary": "Amadeus Hospitality (TravelClick) enables hotels to validate credit cards and capture deposit payments for bookings. It integrates with third-party Payment Service Providers to facilitate secure and efficient payment management.",
-      "url": "https://www.amadeus-hospitality.com/",
-      "notice": "As a third party service provider (TSP), Amadeus Hospitality obscures the underlying PSP processing the payment. It is not possible from the merchant's frontend to determine who is the underlying card processor."
-    },
-    {
-      "name": "Sabre SynXis",
-      "matchStrings": [
-        "synxis.com"
-      ],
-      "image": "sabre",
-      "summary": "Sabre SynXis provides secure handling of payments for hotels, enabling seamless transactions across booking channels. It supports credit card validation, tokenization, and integration with multiple payment service providers to streamline the payment process and enhance guest experiences.",
-      "url": "https://www.sabre.com/products/travel-agency-solutions/synxis-platform/",
-      "notice": "As a third party service provider (TSP), Amadeus Hospitality obscures the underlying PSP processing the payment. It is not possible from the merchant's frontend to determine who is the underlying card processor."
     }
-  ]
+  ],
+  "orchestrators": {
+    "notice": "As this website is using an orchestration/proxy platform, the underlying PSP processing the payment is obscured. It is not possible from the merchant's frontend to determine the card processor.",
+    "list": [
+      {
+        "name": "Primer",
+        "matchStrings": [
+          "api.primer.io",
+          "sandbox.primer.io",
+          "sdk.primer.io"
+        ],
+        "image": "primer",
+        "summary": "Primer is a unified infrastructure and automation platform for payments and commerce. It provides merchants with a single integration to consolidate their payment stack, connect various payment services and third-party tools with minimal code, and build dynamic end-to-end payment flows. Primer aims to simplify payment integration and management, optimize payment performance (including authorization rates and routing), and supports a wide range of payment methods and services.",
+        "url": "https://primer.io"
+      },
+      {
+        "name": "APEXX",
+        "matchStrings": [
+          "cse.apexx.global",
+          "liveapi.apexx.global",
+          "sandbox.apexx.global"
+        ],
+        "image": "apexx",
+        "summary": "APEXX is a global payment orchestration platform that connects merchants to multiple payment service providers, acquirers, and alternative payment methods through a single API. It offers smart routing, fraud prevention, and analytics to optimize payment performance.",
+        "url": "https://apexx.global"
+      },
+      {
+        "name": "Yuno",
+        "matchStrings": [
+          "cdn.y.uno",
+          "sdk-web.y.uno"
+        ],
+        "image": "yuno",
+        "summary": "Yuno is a payment orchestration platform that enables businesses to connect to multiple payment providers and methods globally. It offers features like smart routing, fraud prevention, and unified reporting to optimize payment acceptance.",
+        "url": "https://www.y.uno"
+      },
+      {
+        "name": "Praxis Tech",
+        "matchStrings": [
+          "praxispay.com",
+          "praxis.cashier.com"
+        ],
+        "image": "praxis",
+        "summary": "Praxis Tech is a payment orchestration platform that connects merchants to a wide range of payment service providers and alternative payment methods. It provides smart routing, risk management, and reporting tools for global businesses.",
+        "url": "https://praxis.tech"
+      },
+      {
+        "name": "Akurateco",
+        "matchStrings": [
+          "gate.akurateco.com"
+        ],
+        "image": "akurateco",
+        "summary": "Akurateco is a white-label payment orchestration platform that allows businesses to connect to multiple payment providers and manage transactions through a unified interface. It offers smart routing, risk management, and analytics.",
+        "url": "https://akurateco.com"
+      },
+      {
+        "name": "Tranzzo",
+        "matchStrings": [
+          "api.tranzzo.com"
+        ],
+        "image": "tranzzo",
+        "summary": "Tranzzo is a payment gateway and orchestration platform that enables merchants to accept payments via multiple providers and methods. It offers unified integration, smart routing, and fraud prevention tools.",
+        "url": "https://tranzzo.com"
+      },
+      {
+        "name": "Paydock",
+        "matchStrings": [
+          "cdn.paydock.com",
+          "paydock.com/assets",
+          "paydock.com/sdk"
+        ],
+        "image": "paydock",
+        "summary": "Paydock is a payment orchestration platform that enables businesses to connect and manage multiple payment services through a single API. It provides features like smart routing, tokenization, and fraud prevention.",
+        "url": "https://www.paydock.com"
+      },
+      {
+        "name": "Spreedly",
+        "matchStrings": [
+          "core.spreedly.com"
+        ],
+        "image": "spreedly",
+        "summary": "Spreedly is a payment orchestration platform allowing businesses to securely tokenize, store, and optimize payment data. It supports connections to multiple gateways and payment services, enabling greater flexibility and scalability.",
+        "url": "https://www.spreedly.com"
+      },
+      {
+        "name": "IXOPAY",
+        "matchStrings": [
+          "gateway.ixopay.com",
+          "htp.tokenex.com"
+        ],
+        "image": "ixopay",
+        "summary": "IXOPAY is a payment orchestration platform providing centralized payment management, dynamic routing, and tokenization. It supports global payment methods and offers fraud prevention tools, making it a comprehensive solution for large enterprises.",
+        "url": "https://www.ixopay.com"
+      },
+      {
+        "name": "Gr4vy",
+        "matchStrings": [
+          "gr4vy.app"
+        ],
+        "image": "gr4vy",
+        "summary": "Gr4vy is a cloud-native payment orchestration platform offering businesses the ability to deploy their payment infrastructure on the cloud. It simplifies the integration and management of multiple payment methods and gateways, providing features like tokenization, routing, and failover.",
+        "url": "https://www.gr4vy.com"
+      },
+      {
+        "name": "PCI Proxy",
+        "matchStrings": [
+          "pay.datatrans.com",
+          "pay.sandbox.datatrans.com",
+          "pci-proxy.com"
+        ],
+        "image": "pci-proxy",
+        "summary": "PCI Proxy is a tokenization and proxy platform that enables businesses to securely handle sensitive payment data. It provides PCI compliance, tokenization, and flexible APIs for easy integration into payment systems.",
+        "url": "https://www.pci-proxy.com"
+      },
+      {
+        "name": "PCI Vault",
+        "matchStrings": [
+          "api.pcivault.io"
+        ],
+        "image": "pci-vault",
+        "summary": "PCI Vault offers secure tokenization services for storing and managing sensitive payment data. It focuses on compliance with PCI standards and provides robust APIs for seamless integration with eCommerce platforms.",
+        "url": "https://www.pcivault.com"
+      },
+      {
+        "name": "ACI Worldwide",
+        "matchStrings": [
+          "payments.aciworldwide.com",
+          "sdk.aciworldwide.com",
+          "secure.aciworldwide.com"
+        ],
+        "image": "aciworldwide",
+        "summary": "ACI Worldwide provides payment processing and orchestration solutions for merchants, banks, and billers, supporting a wide range of payment methods and fraud prevention tools.",
+        "url": "https://www.aciworldwide.com"
+      },
+      {
+        "name": "BR-DGE",
+        "matchStrings": [
+          "assets.comcarde.com",
+          "sandbox.comcarde.com",
+          "secure.comcarde.com"
+        ],
+        "image": "brdge",
+        "summary": "BR-DGE is a payment orchestration platform that connects merchants to multiple payment providers, offering smart routing, tokenization, and analytics.",
+        "url": "https://br-dge.to"
+      },
+      {
+        "name": "CellPoint Digital",
+        "matchStrings": [
+          "cdn.cellpointdigital.com",
+          "cellpointdigital.com/assets",
+          "cellpointdigital.com/sdk"
+        ],
+        "image": "cellpointdigital",
+        "summary": "CellPoint Digital provides payment orchestration and digital commerce solutions for travel, airlines, and retail, enabling merchants to optimize payment flows and connect to multiple PSPs.",
+        "url": "https://www.cellpointdigital.com"
+      },
+      {
+        "name": "VGS (Very Good Security)",
+        "matchStrings": [
+          "js.verygoodvault.com"
+        ],
+        "image": "vgs",
+        "summary": "Very Good Security (VGS) is a data security and tokenization platform that simplifies PCI compliance by replacing sensitive data with tokens. It offers seamless integration with payment systems while maintaining privacy and security.",
+        "url": "https://www.verygoodsecurity.com"
+      },
+      {
+        "name": "Primer",
+        "matchStrings": [
+          "api.primer.io",
+          "sandbox.primer.io",
+          "sdk.primer.io"
+        ],
+        "image": "primer",
+        "summary": "Primer is a unified infrastructure and automation platform for payments and commerce. It provides merchants with a single integration to consolidate their payment stack, connect various payment services and third-party tools with minimal code, and build dynamic end-to-end payment flows. Primer aims to simplify payment integration and management, optimize payment performance (including authorization rates and routing), and supports a wide range of payment methods and services.",
+        "url": "https://primer.io"
+      },
+      {
+        "name": "APEXX",
+        "matchStrings": [
+          "apexx.cloud",
+          "apexxfintech.com",
+          "apexx.global"
+        ],
+        "image": "apexx",
+        "summary": "APEXX is a global payment orchestration platform that connects merchants to multiple payment service providers, acquirers, and alternative payment methods through a single API. It offers smart routing, fraud prevention, and analytics to optimize payment performance.",
+        "url": "https://apexx.global"
+      },
+      {
+        "name": "ProcessOut",
+        "matchStrings": [
+          "js.processout.com",
+          "static.processout.com"
+        ],
+        "image": "processout",
+        "summary": "ProcessOut is a payment orchestration platform that helps businesses optimize their payment operations. It provides smart routing, analytics, and fraud prevention tools while supporting multiple payment providers and methods. The platform enables businesses to manage multiple PSPs, optimize payment success rates, and reduce costs through intelligent transaction routing.",
+        "url": "https://www.processout.com"
+      },
+      {
+        "name": "Yuno",
+        "matchStrings": [
+          "api.y.uno",
+          "api-sandbox.y.uno",
+          "cdn.y.uno"
+        ],
+        "image": "yuno",
+        "summary": "Yuno is a payment orchestration platform that enables businesses to connect to multiple payment providers and methods globally. It offers features like smart routing, fraud prevention, and unified reporting to optimize payment acceptance.",
+        "url": "https://www.y.uno"
+      },
+      {
+        "name": "Praxis Tech",
+        "matchStrings": [
+          "praxispay.com",
+          "praxis.cashier.com"
+        ],
+        "image": "praxis",
+        "summary": "Praxis Tech is a payment orchestration platform that connects merchants to a wide range of payment service providers and alternative payment methods. It provides smart routing, risk management, and reporting tools for global businesses.",
+        "url": "https://praxis.tech"
+      },
+      {
+        "name": "Akurateco",
+        "matchStrings": [
+          "akurateco.com",
+          "gate.akurateco.com"
+        ],
+        "image": "akurateco",
+        "summary": "Akurateco is a white-label payment orchestration platform that allows businesses to connect to multiple payment providers and manage transactions through a unified interface. It offers smart routing, risk management, and analytics.",
+        "url": "https://akurateco.com"
+      },
+      {
+        "name": "Tranzzo",
+        "matchStrings": [
+          "tranzzo.com",
+          "api.tranzzo.com"
+        ],
+        "image": "tranzzo",
+        "summary": "Tranzzo is a payment gateway and orchestration platform that enables merchants to accept payments via multiple providers and methods. It offers unified integration, smart routing, and fraud prevention tools.",
+        "url": "https://tranzzo.com"
+      },
+      {
+        "name": "Paydock",
+        "matchStrings": [
+          "cdn.paydock.com",
+          "paydock.com/assets",
+          "paydock.com/sdk"
+        ],
+        "image": "paydock",
+        "summary": "Paydock is a payment orchestration platform that enables businesses to connect and manage multiple payment services through a single API. It provides features like smart routing, tokenization, and fraud prevention.",
+        "url": "https://www.paydock.com"
+      },
+      {
+        "name": "Juspay",
+        "matchStrings": [
+          "api.juspay.in",
+          "payments.juspay.in"
+        ],
+        "image": "juspay",
+        "summary": "Juspay is an Indian payment platform providing SDKs (like Express Checkout), payment gateway services, and orchestration features. It aims to simplify checkouts, enhance transaction success rates, and supports numerous local payment methods including UPI, wallets, and cards.",
+        "url": "https://www.juspay.in"
+      }
+    ]
+  },
+  "tsps": {
+    "notice": "As this website is using a third party service provider (TSP), the underlying PSP processing the payment is obscured. It is not possible from the merchant's frontend to determine the card processor.",
+    "list": [
+      {
+        "name": "Amadeus Hospitality (TravelClick)",
+        "matchStrings": [
+          "static.travelclick.com"
+        ],
+        "image": "amadeus",
+        "summary": "Amadeus Hospitality (TravelClick) enables hotels to validate credit cards and capture deposit payments for bookings. It integrates with third-party Payment Service Providers to facilitate secure and efficient payment management.",
+        "url": "https://www.amadeus-hospitality.com/"
+      },
+      {
+        "name": "Sabre SynXis",
+        "matchStrings": [
+          "synxis.com"
+        ],
+        "image": "sabre",
+        "summary": "Sabre SynXis provides secure handling of payments for hotels, enabling seamless transactions across booking channels. It supports credit card validation, tokenization, and integration with multiple payment service providers to streamline the payment process and enhance guest experiences.",
+        "url": "https://www.sabre.com/products/travel-agency-solutions/synxis-platform/"
+      }
+    ]
+  }
 }

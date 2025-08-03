@@ -30,6 +30,17 @@ export class PSPDetectorService {
   }
 
   /**
+   * Get all PSPs, orchestrators, and TSPs as a single array
+   */
+  private getAllProviders(): PSP[] {
+    if (!this.pspConfig) return [];
+    const psps = this.pspConfig.psps || [];
+    const orchestrators = this.pspConfig.orchestrators?.list || [];
+    const tsps = this.pspConfig.tsps?.list || [];
+    return [...psps, ...orchestrators, ...tsps];
+  }
+
+  /**
    * Detect PSP on the current page
    * @param {string} url - The URL to check
    * @param {string} content - The page content to scan
@@ -85,7 +96,7 @@ export class PSPDetectorService {
     let scannedPatterns = 0;
     const pageContent = `${url}\n\n${content}`;
 
-    for (const psp of this.pspConfig.psps) {
+    for (const psp of this.getAllProviders()) {
       scannedPatterns++;
 
       if (psp.matchStrings && psp.matchStrings.length > 0) {
@@ -105,7 +116,7 @@ export class PSPDetectorService {
     logger.timeEnd('matchStringsScanning');
 
     logger.time('regexScanning');
-    for (const psp of this.pspConfig.psps) {
+    for (const psp of this.getAllProviders()) {
       if (psp.compiledRegex && psp.compiledRegex.test(pageContent)) {
         logger.timeEnd('regexScanning');
         logger.info('PSP detected via regex:', psp.name);
@@ -129,7 +140,7 @@ export class PSPDetectorService {
   private precompileRegexPatterns(): void {
     if (!this.pspConfig) return;
 
-    for (const psp of this.pspConfig.psps) {
+    for (const psp of this.getAllProviders()) {
       if (psp.regex) {
         const compiled = safeCompileRegex(psp.regex);
         psp.compiledRegex = compiled === null ? undefined : compiled;
