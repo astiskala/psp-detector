@@ -52,7 +52,12 @@ export class UIService {
     ];
 
     optionalElements.forEach((id, index) => {
-      const element = document.querySelector(optionalSelectors[index]);
+      const selector = optionalSelectors[index];
+      if (!selector) {
+        throw new Error(`Selector for ${id} is undefined`);
+      }
+
+      const element = document.querySelector(selector);
       if (element) {
         this.elements[id] = element as HTMLElement;
       }
@@ -112,7 +117,10 @@ export class UIService {
       'The Payment Service Provider could not be determined. Please ensure you have navigated to the website\'s checkout page.',
     );
 
-    this.elements.notice.style.display = 'none';
+    if (this.elements.notice) {
+      this.elements.notice.style.display = 'none';
+    }
+
     this.updateTextContent('notice', '');
     this.updateLearnMoreLink(
       'mailto:psp-detector@adamstiskala.com',
@@ -139,7 +147,10 @@ export class UIService {
       'PSP detection has been disabled on this website for performance or compatibility reasons.',
     );
 
-    this.elements.notice.style.display = 'none';
+    if (this.elements.notice) {
+      this.elements.notice.style.display = 'none';
+    }
+
     this.updateTextContent('notice', '');
     this.updateLearnMoreLink(
       'mailto:psp-detector@adamstiskala.com',
@@ -166,7 +177,10 @@ export class UIService {
       'An error occurred while loading PSP information. Please try again later.',
     );
 
-    this.elements.notice.style.display = 'none';
+    if (this.elements.notice) {
+      this.elements.notice.style.display = 'none';
+    }
+
     this.updateImage('default', 'Error');
   }
 
@@ -190,6 +204,10 @@ export class UIService {
    * @return {void}
    */
   private updateNoticeSection(notice?: string): void {
+    if (!this.elements.notice) {
+      throw new Error('Notice element is not defined');
+    }
+
     if (notice) {
       this.elements.notice.style.display = 'block';
       this.elements.notice.classList.add('show');
@@ -209,6 +227,10 @@ export class UIService {
    * @return {void}
    */
   private updateLearnMoreLink(url: string, text = 'Learn More'): void {
+    if (!this.elements.url) {
+      throw new Error('URL element is not defined');
+    }
+
     const anchor = document.createElement('a');
     anchor.href = createSafeUrl(url);
     anchor.textContent = text;

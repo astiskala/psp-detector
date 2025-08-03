@@ -13,14 +13,24 @@ const sharedConfig = {
   bundle: true,
   minify: !process.env.DEBUG,
   sourcemap: process.env.NO_SOURCEMAP ? false : true,
-  target: 'es2020',
+  target: 'es2022',
   format: 'esm',
   platform: 'browser',
+  supported: {
+    'top-level-await': true,
+    'import-meta': true,
+  },
   define: {
     'process.env.NODE_ENV': process.env.DEBUG
       ? '"development"'
       : '"production"',
   },
+
+  // TypeScript-specific optimizations
+  tsconfig: './tsconfig.json',
+  keepNames: true,
+  metafile: !!process.env.DEBUG,
+  logLevel: process.env.DEBUG ? 'info' : 'warning',
 };
 
 /**
