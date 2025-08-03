@@ -1,4 +1,4 @@
-import type { PSP, PSPConfig, PSPName, URL } from '../types';
+import type { PSPConfig } from '../types';
 import { PSPDetectionResult, TypeConverters } from '../types';
 import { safeCompileRegex, logger, getAllProviders } from '../lib/utils';
 
@@ -52,8 +52,6 @@ export class PSPDetectorService {
       );
     }
 
-    logger.time('exemptDomainsCheck');
-
     // Check if the top-level window URL contains any exempt domains
     let urlToCheck = url;
     try {
@@ -71,7 +69,6 @@ export class PSPDetectorService {
     }
 
     if (this.exemptDomains.some((domain) => urlToCheck.includes(domain))) {
-      logger.timeEnd('exemptDomainsCheck');
       logger.debug('URL is exempt from PSP detection:', urlToCheck);
       return PSPDetectionResult.exempt(
         'URL contains exempt domain',
@@ -79,9 +76,6 @@ export class PSPDetectorService {
       );
     }
 
-    logger.timeEnd('exemptDomainsCheck');
-
-    logger.time('matchStringsScanning');
     let scannedPatterns = 0;
     const pageContent = `${url}\n\n${content}`;
 
@@ -91,7 +85,6 @@ export class PSPDetectorService {
       if (psp.matchStrings && psp.matchStrings.length > 0) {
         for (const matchString of psp.matchStrings) {
           if (pageContent.includes(matchString)) {
-            logger.timeEnd('matchStringsScanning');
             logger.info('PSP detected via matchStrings:', psp.name);
             return PSPDetectionResult.detected(psp.name, {
               method: 'matchString',
@@ -102,12 +95,8 @@ export class PSPDetectorService {
       }
     }
 
-    logger.timeEnd('matchStringsScanning');
-
-    logger.time('regexScanning');
     for (const psp of getAllProviders(this.pspConfig)) {
       if (psp.compiledRegex && psp.compiledRegex.test(pageContent)) {
-        logger.timeEnd('regexScanning');
         logger.info('PSP detected via regex:', psp.name);
         return PSPDetectionResult.detected(psp.name, {
           method: 'regex',
@@ -115,8 +104,6 @@ export class PSPDetectorService {
         });
       }
     }
-
-    logger.timeEnd('regexScanning');
 
     return PSPDetectionResult.none(scannedPatterns);
   }
@@ -145,34 +132,5 @@ export class PSPDetectorService {
    */
   public isInitialized(): boolean {
     return !!this.pspConfig && this.exemptDomains.length > 0;
-  }
-
-  /**
-   * Get PSP by branded PSP name
-   * @param {PSPName} pspName - Branded PSP name
-   * @return {PSP|null} PSP object or null
-   */
-  public getPSPByPSPName(pspName: PSPName): PSP | null {
-    if (!this.pspConfig) {
-      return null;
-    }
-
-    return this.pspConfig.psps.find((psp) => psp.name === pspName) || null;
-  }
-
-  /**
-   * Check if a URL matches exempt domains (type-safe version)
-   * @param {URL} url - Branded URL to check
-   * @return {boolean} True if URL is exempt, false otherwise
-   */
-  public isURLExempt(url: URL): boolean {
-    try {
-      const parsedUrl = new globalThis.URL(url);
-      return this.exemptDomains.some((domain) =>
-        parsedUrl.hostname.includes(domain),
-      );
-    } catch {
-      return false;
-    }
   }
 }

@@ -7,7 +7,12 @@ import {
   TEST_CONTENT,
   TEST_EXEMPT_DOMAINS,
 } from '../test-helpers/constants';
-import { createCrossOriginWindowMock, restoreWindow } from '../test-helpers/utilities';
+import {
+  createCrossOriginWindowMock,
+  restoreWindow,
+  getPSPByPSPName,
+  isURLExempt,
+} from '../test-helpers/utilities';
 
 describe('PSPDetectorService', () => {
   let service: PSPDetectorService;
@@ -57,14 +62,14 @@ describe('PSPDetectorService', () => {
 
   it('should get PSP by PSPName', () => {
     expect(
-      service.getPSPByPSPName(TypeConverters.toPSPName('Stripe')!),
+      getPSPByPSPName(service, TypeConverters.toPSPName('Stripe')!),
     ).toMatchObject({
       name: 'Stripe',
       regex: 'stripe\\.com',
     });
 
     expect(
-      service.getPSPByPSPName(TypeConverters.toPSPName('Unknown')!),
+      getPSPByPSPName(service, TypeConverters.toPSPName('Unknown')!),
     ).toBeNull();
   });
 
@@ -173,8 +178,8 @@ describe('PSPDetectorService', () => {
     const url1 = TypeConverters.toURL('https://example.com/path')!;
     const url2 = TypeConverters.toURL('https://safe.com/path')!;
 
-    expect(service.isURLExempt(url1)).toBe(true); // example.com is exempt
-    expect(service.isURLExempt(url2)).toBe(false); // safe.com is not exempt
+    expect(isURLExempt(service, url1)).toBe(true); // example.com is exempt
+    expect(isURLExempt(service, url2)).toBe(false); // safe.com is not exempt
   });
 
   it('should handle invalid URLs in isURLExempt gracefully', () => {
@@ -184,8 +189,8 @@ describe('PSPDetectorService', () => {
     const validUrl1 = TypeConverters.toURL('https://example.com/path')!;
     const validUrl2 = TypeConverters.toURL('https://safe.com/path')!;
 
-    expect(service.isURLExempt(validUrl1)).toBe(true); // example.com is exempt
-    expect(service.isURLExempt(validUrl2)).toBe(false); // safe.com not exempt
+    expect(isURLExempt(service, validUrl1)).toBe(true); // example.com is exempt
+    expect(isURLExempt(service, validUrl2)).toBe(false); // safe.com not exempt
   });
 
   it('should handle window.top access errors gracefully', () => {

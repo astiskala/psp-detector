@@ -66,18 +66,9 @@ class ContentScript {
     // Defer configuration and observer setup to idle time
     const setup = async(): Promise<void> => {
       try {
-        const timestamp = Date.now();
-        logger.time(`initializeExemptDomains-${timestamp}`);
         await this.initializeExemptDomains();
-        logger.timeEnd(`initializeExemptDomains-${timestamp}`);
-
-        logger.time(`initializePSPConfig-${timestamp}`);
         await this.initializePSPConfig();
-        logger.timeEnd(`initializePSPConfig-${timestamp}`);
-
-        logger.time(`setupDOMObserver-${timestamp}`);
         this.setupDOMObserver();
-        logger.timeEnd(`setupDOMObserver-${timestamp}`);
 
         // Schedule initial detection
         if (typeof window.requestIdleCallback === 'function') {
