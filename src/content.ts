@@ -458,9 +458,97 @@ const windowExt = window as WindowWithPSPDetector;
 const currentUrl = document.URL;
 const existingScript = windowExt.pspDetectorContentScript;
 
+// Function to check if background script has state for this tab
+const checkBackgroundState = async(): Promise<boolean> => {
+  try {
+    if (!chrome.runtime?.id) {
+      return false;
+    }
+
+    // Try to ping the background script to see if it has detection state
+    const response = await chrome.runtime.sendMessage({
+      action: MessageAction.CHECK_TAB_STATE,
+    });
+    return response?.hasState === true;
+  } catch {
+    // Background script not responding or extension context invalid
+    return false;
+  }
+};
+
 // Allow re-initialization if URL has changed (new page navigation)
+// OR if background script has lost state (extension context restored)
 if (existingScript?.initialized && existingScript.url === currentUrl) {
-  logger.debug('Content script already initialized for this page, skipping');
+  // Check if background script still has state for this tab
+  checkBackgroundState().then((hasBackgroundState) => {
+    if (!hasBackgroundState) {
+      logger.debug('Background script lost state, forcing re-initialization');
+
+      // Clear the window state to force re-initialization
+      windowExt.pspDetectorContentScript = undefined;
+
+      // Re-run initialization logic
+      const contentScript = new ContentScript();
+      contentScript.resetForNewPage();
+
+      windowExt.pspDetectorContentScript = {
+        initialized: true,
+        url: currentUrl,
+      };
+
+      // Add cleanup on page unload
+      window.addEventListener('beforeunload', (): void => {
+        contentScript.cleanup();
+        if (windowExt.pspDetectorContentScript?.url === currentUrl) {
+          windowExt.pspDetectorContentScript = undefined;
+        }
+      });
+
+      contentScript.initialize().catch((error): void => {
+        if (
+          error instanceof Error &&
+          error.message.includes('Extension context invalidated')
+        ) {
+          logger.warn('Extension context invalidated during startup');
+        } else {
+          logger.error('Content script initialization failed:', error);
+        }
+      });
+    } else {
+      logger.debug('Content script already initialized for this page, skipping');
+    }
+  }).catch(() => {
+    logger.debug('Failed to check background state, assuming re-initialization needed');
+
+    // If we can't check background state, assume we need to re-initialize
+    windowExt.pspDetectorContentScript = undefined;
+
+    const contentScript = new ContentScript();
+    contentScript.resetForNewPage();
+
+    windowExt.pspDetectorContentScript = {
+      initialized: true,
+      url: currentUrl,
+    };
+
+    window.addEventListener('beforeunload', (): void => {
+      contentScript.cleanup();
+      if (windowExt.pspDetectorContentScript?.url === currentUrl) {
+        windowExt.pspDetectorContentScript = undefined;
+      }
+    });
+
+    contentScript.initialize().catch((error): void => {
+      if (
+        error instanceof Error &&
+        error.message.includes('Extension context invalidated')
+      ) {
+        logger.warn('Extension context invalidated during startup');
+      } else {
+        logger.error('Content script initialization failed:', error);
+      }
+    });
+  });
 } else {
   if (existingScript?.initialized) {
     logger.debug(

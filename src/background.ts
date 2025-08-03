@@ -141,6 +141,9 @@ class BackgroundService {
       case MessageAction.GET_EXEMPT_DOMAINS:
         sendResponse({ exemptDomains: this.config.exemptDomains });
         break;
+      case MessageAction.CHECK_TAB_STATE:
+        this.handleCheckTabState(sender, sendResponse);
+        break;
       default:
         logger.warn('Unknown message action:', message.action);
         sendResponse(null);
@@ -265,6 +268,24 @@ class BackgroundService {
       : null;
 
     sendResponse({ psp: pspResult });
+  }
+
+  /**
+   * Handle check tab state request - used to determine if background has
+   * state for current tab
+   * @private
+   */
+  handleCheckTabState(
+    sender: chrome.runtime.MessageSender,
+    sendResponse: (response?: { hasState: boolean }) => void,
+  ): void {
+    const tabId = sender.tab?.id ? TypeConverters.toTabId(sender.tab.id) : null;
+    const hasState = tabId !== null &&
+      (this.config.tabPsps.has(tabId) ||
+       (this.config.currentTabId === tabId &&
+        this.config.detectedPsp !== null));
+
+    sendResponse({ hasState });
   }
 
   /**
