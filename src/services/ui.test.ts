@@ -105,7 +105,7 @@ describe('UIService', () => {
   it('should show no PSP detected', () => {
     service.showNoPSPDetected();
     expect(elements.name?.textContent).toBe('No PSP detected');
-    expect(elements.notice?.style.display).toBe('none');
+    expect(elements.notice?.style.display).toBe('block');
   });
 
   it('should show error', () => {

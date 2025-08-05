@@ -1,0 +1,17 @@
+{
+  "connector": "local",
+  "hints": {
+    "html-checker": "error",
+    "manifest-app-name": "error",
+    "manifest-file-extension": "error",
+    "manifest-is-valid": "error",
+    "meta-charset-utf-8": "error",
+    "meta-theme-color": "error",
+    "meta-viewport": "error",
+    "no-inline-styles": "error",
+    "no-protocol-relative-urls": "error"
+  },
+  "browserslist": [
+    "last 2 Chrome versions"
+  ]
+}

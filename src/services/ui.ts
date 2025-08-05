@@ -99,11 +99,8 @@ export class UIService {
       'The Payment Service Provider could not be determined. Please ensure you have navigated to the website\'s checkout page.',
     );
 
-    if (this.elements.notice) {
-      this.elements.notice.style.display = 'none';
-    }
+    this.updateNoticeSection('Detection relies on identifying PSP frontend components (such as JavaScript or iframes). Integrations that do not use such techniques cannot be detected by this extension.');
 
-    this.updateTextContent('notice', '');
     this.updateLearnMoreLink(
       'mailto:psp-detector@adamstiskala.com',
       'Suggest Improvement',
@@ -129,11 +126,7 @@ export class UIService {
       'PSP detection has been disabled on this website for performance or compatibility reasons.',
     );
 
-    if (this.elements.notice) {
-      this.elements.notice.style.display = 'none';
-    }
-
-    this.updateTextContent('notice', '');
+    this.updateNoticeSection('');
     this.updateLearnMoreLink(
       'mailto:psp-detector@adamstiskala.com',
       'Suggest Improvement',
@@ -159,10 +152,7 @@ export class UIService {
       'An error occurred while loading PSP information. Please try again later.',
     );
 
-    if (this.elements.notice) {
-      this.elements.notice.style.display = 'none';
-    }
-
+    this.updateNoticeSection('');
     this.updateImage('default', 'Error');
   }
 

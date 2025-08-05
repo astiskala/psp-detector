@@ -143,3 +143,59 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 
 - Amadeus Hospitality (TravelClick)
 - Sabre SynXis
+
+## Development
+
+### Setup
+
+```bash
+npm install
+```
+
+### Building
+
+```bash
+npm run build          # Production build
+npm run build:debug    # Development build with debug info
+```
+
+### Testing
+
+```bash
+npm test              # Run all tests
+npm run test:watch    # Run tests in watch mode
+```
+
+### Linting
+
+```bash
+npm run lint          # TypeScript/JavaScript linting with ESLint
+npm run lint:fix      # Auto-fix TypeScript/JavaScript issues
+npm run lint:html     # HTML linting with webhint
+npm run lint:manifest # Chrome extension manifest linting
+npm run lint:web      # Combined HTML and manifest linting
+```
+
+### Quality Assurance
+
+```bash
+npm run typecheck     # TypeScript type checking
+npm run ci            # Full CI pipeline (lint + typecheck + test)
+npm run validate      # Complete validation (fix + typecheck + build + test)
+```
+
+### Available Scripts
+
+- `build` - Build the extension for production
+- `build:debug` - Build with debug information
+- `test` - Run Jest tests
+- `test:watch` - Run tests in watch mode
+- `lint` - Run ESLint on TypeScript files
+- `lint:fix` - Auto-fix ESLint issues
+- `lint:html` - Lint HTML files with webhint
+- `lint:manifest` - Lint Chrome extension manifest
+- `lint:web` - Run both HTML and manifest linting
+- `typecheck` - Run TypeScript compiler checks
+- `ci` - Complete CI pipeline
+- `validate` - Full validation before commit
+- `clean` - Clean build artifacts
