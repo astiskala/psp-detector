@@ -49,6 +49,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - DG Financial Technology
 - dLocal
 - DPO Group
+- Easebuzz
 - EBANX
 - Elavon
 - EVO Payments
@@ -125,6 +126,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Basis Theory
 - BR-DGE
 - CellPoint Digital
+- Chargebee
 - Gr4vy
 - IXOPAY
 - Juspay

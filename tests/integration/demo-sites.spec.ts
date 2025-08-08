@@ -10,19 +10,18 @@ interface SiteCase {
   expected: string;
 }
 const SITES: SiteCase[] = [
-  // { url: 'https://cbcheckoutapp.herokuapp.com', expected: 'Chargebee' },
-  // { url: 'https://easebuzz.in/demo/', expected: 'Easebuzz' },
+  { url: 'https://www.mystoredemo.io', expected: 'Adyen' },
   { url: 'https://checkout.bluesnapdemo.com', expected: 'BlueSnap' },
-  { url: 'https://checkout.stripe.dev/checkout', expected: 'Stripe' },
-  { url: 'https://demos.nuvei.com/intdemo-ecom/checkout/', expected: 'Nuvei' },
-  { url: 'https://dev.shift4.com/examples/checkout', expected: 'Shift4' },
+  { url: 'https://www.cashfree.com/demo/payment-gateway-demo/', expected: 'Cashfree Payments' },
   { url: 'https://flow-demo.sandbox.checkout.com', expected: 'Checkout.com' },
+  { url: 'https://cbcheckoutapp.herokuapp.com', expected: 'Chargebee' },
   { url: 'https://fs-react-devrels.vercel.app', expected: 'FastSpring' },
+  { url: 'https://demos.nuvei.com/intdemo-ecom/checkout/', expected: 'Nuvei' },
   { url: 'https://pay.skrill.com/assets/skrill-demo/ecommerce.html', expected: 'Skrill' },
+  { url: 'https://dev.shift4.com/examples/checkout', expected: 'Shift4' },
+  { url: 'https://checkout.stripe.dev/checkout', expected: 'Stripe' },
   { url: 'https://square.github.io/web-payments-showcase/', expected: 'Square' },
   { url: 'https://widget.payu.in/demo', expected: 'PayU' },
-  { url: 'https://www.cashfree.com/demo/payment-gateway-demo/', expected: 'Cashfree Payments' },
-  { url: 'https://www.mystoredemo.io', expected: 'Adyen' },
 ];
 
 function loadConfig(): PSPConfig {

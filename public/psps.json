@@ -106,6 +106,15 @@
       "url": "https://corporate.payu.com"
     },
     {
+      "name": "Easebuzz",
+      "matchStrings": [
+        "pay.easebuzz.in"
+      ],
+      "image": "easebuzz",
+      "summary": "Easebuzz is an Indian payment gateway offering online payment solutions including cards, net banking, UPI, and wallets with developer-friendly APIs and dashboards for reconciliation.",
+      "url": "https://easebuzz.in"
+    },
+    {
       "name": "Skrill",
       "matchStrings": [
         "pay.skrill.com"
@@ -1020,6 +1029,18 @@
         "image": "akurateco",
         "summary": "Akurateco is a white-label payment orchestration platform that allows businesses to connect to multiple payment providers and manage transactions through a unified interface. It offers smart routing, risk management, and analytics.",
         "url": "https://akurateco.com"
+      },
+      {
+        "name": "Chargebee",
+        "matchStrings": [
+          "js.chargebee.com",
+          "js1.chargebee.com",
+          "cdnjs.chargebee.com",
+          "api.chargebee.com"
+        ],
+        "image": "chargebee",
+        "summary": "Chargebee is a subscription billing and revenue management platform that also functions as a payments orchestrator for recurring businesses. It integrates with multiple payment gateways, manages invoicing, taxation, dunning, revenue recognition, and provides analytics.",
+        "url": "https://www.chargebee.com"
       },
       {
         "name": "Tranzzo",
