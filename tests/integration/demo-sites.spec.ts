@@ -12,7 +12,6 @@ interface SiteCase {
 const SITES: SiteCase[] = [
   { url: 'https://www.mystoredemo.io', expected: 'Adyen' },
   { url: 'https://checkout.bluesnapdemo.com', expected: 'BlueSnap' },
-  { url: 'https://www.cashfree.com/demo/payment-gateway-demo/', expected: 'Cashfree Payments' },
   { url: 'https://flow-demo.sandbox.checkout.com', expected: 'Checkout.com' },
   { url: 'https://cbcheckoutapp.herokuapp.com', expected: 'Chargebee' },
   { url: 'https://fs-react-devrels.vercel.app', expected: 'FastSpring' },

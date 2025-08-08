@@ -3,6 +3,7 @@
     {
       "name": "Stripe",
       "matchStrings": [
+        "checkout.stripe.dev",
         "checkout.stripe.com",
         "js.stripe.com"
       ],
