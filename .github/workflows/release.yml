@@ -4,6 +4,20 @@ on:
   push:
     branches:
       - main
+    # Only run when relevant source/build/test files change (skip for docs-only edits)
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'assets/**'
+      - 'tests/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'build.js'
+      - 'playwright.config.ts'
+      - 'tsconfig.json'
+      - 'tsconfig.test.json'
+      - 'eslint.config.mjs'
+      - '.github/workflows/**'
 
 jobs:
   build-and-release:
@@ -20,8 +34,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Validate project (lint, typecheck, test, build)
+      - name: Validate project (lint, typecheck, unit tests, build)
         run: npm run validate
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run integration tests (Playwright)
+        run: npx playwright test tests/integration --project=chromium --reporter=line
 
       - name: Get version from manifest
         id: manifest
