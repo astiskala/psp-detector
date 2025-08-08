@@ -60,18 +60,36 @@ class BackgroundService {
   }
 
   /**
-   * Load exempt domains configuration from extension resource
+   * Load exempt domains configuration from extension resource with validation
    * @private
    */
   async loadExemptDomains(): Promise<void> {
     try {
       const response = await fetch(
         chrome.runtime.getURL('exempt-domains.json'),
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
       );
-      const data = (await response.json()) as { exemptDomains?: string[] };
-      this.config.exemptDomains = Array.isArray(data.exemptDomains)
-        ? data.exemptDomains
-        : [];
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch exempt domains: ${response.status}`);
+      }
+
+      const data = (await response.json()) as { exemptDomains?: unknown };
+
+      // Validate the structure and content
+      if (data && Array.isArray(data.exemptDomains)) {
+        this.config.exemptDomains = data.exemptDomains.filter(
+          (domain): domain is string => typeof domain === 'string' && domain.length > 0,
+        );
+      } else {
+        logger.warn('Invalid exempt domains structure, using empty array');
+        this.config.exemptDomains = [];
+      }
     } catch (error) {
       logger.error('Failed to load exempt domains:', error);
       this.config.exemptDomains = [];
@@ -155,7 +173,7 @@ class BackgroundService {
   }
 
   /**
-   * Handle PSP configuration request
+   * Handle PSP configuration request with better error handling
    * @private
    */
   async handleGetPspConfig(
@@ -169,8 +187,26 @@ class BackgroundService {
     try {
       const response: Response = await fetch(
         chrome.runtime.getURL('psps.json'),
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
       );
-      this.config.cachedPspConfig = (await response.json()) as PSPConfig;
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch PSP config: ${response.status}`);
+      }
+
+      const configData = (await response.json()) as PSPConfig;
+
+      // Basic validation of the config structure
+      if (!configData || !Array.isArray(configData.psps)) {
+        throw new Error('Invalid PSP configuration structure');
+      }
+
+      this.config.cachedPspConfig = configData;
       sendResponse({ config: this.config.cachedPspConfig });
     } catch (error) {
       logger.error('Failed to load PSP config:', error);

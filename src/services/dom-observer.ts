@@ -17,20 +17,25 @@ export class DOMObserverService {
    * Initialize the observer with a callback
    */
   public initialize(callback: () => void, debounceMs = 2000): void {
+    if (this.observer) {
+      this.cleanup();
+    }
+
     try {
       this.onMutationCallback = debouncedMutation(callback, debounceMs);
       this.observer = new MutationObserver((mutations) => {
         if (!this.isObserving || !this.onMutationCallback) return;
 
         try {
-          for (const mutation of mutations) {
-            if (
-              mutation.type === 'childList' &&
-              mutation.addedNodes.length > 0
-            ) {
-              this.onMutationCallback();
-              break;
-            }
+          // More efficient mutation filtering
+          const hasRelevantChanges = mutations.some(mutation =>
+            mutation.type === 'childList' &&
+            mutation.addedNodes.length > 0 &&
+            this.isRelevantNode(mutation.addedNodes),
+          );
+
+          if (hasRelevantChanges) {
+            this.onMutationCallback();
           }
         } catch (mutationError) {
           logger.error('DOM mutation processing failed', mutationError);
@@ -39,6 +44,28 @@ export class DOMObserverService {
     } catch (initError) {
       logger.error('DOM observer initialization failed', initError);
     }
+  }
+
+  /**
+   * Check if added nodes are relevant for PSP detection
+   * @private
+   */
+  private isRelevantNode(nodeList: NodeList): boolean {
+    for (const node of nodeList) {
+      if (node.nodeType === Node.ELEMENT_NODE) {
+        const element = node as Element;
+
+        // Check for payment-related elements
+        if (element.tagName === 'SCRIPT' ||
+            element.tagName === 'IFRAME' ||
+            element.tagName === 'FORM' ||
+            element.querySelector?.('script, iframe, form')) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   /**

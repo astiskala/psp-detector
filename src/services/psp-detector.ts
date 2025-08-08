@@ -50,7 +50,7 @@ export class PSPDetectorService {
     try {
       // In browser context, use window.top.location.href as specified in
       // requirements. But only if it's not localhost (test environment)
-      if (typeof window !== 'undefined' && window.top && window.top.location) {
+      if (typeof window !== 'undefined' && window.top?.location?.href) {
         const topUrl = window.top.location.href;
         if (!topUrl.includes('localhost')) {
           urlToCheck = topUrl;
@@ -61,7 +61,8 @@ export class PSPDetectorService {
       // Fall back to using the provided URL
     }
 
-    if (this.exemptDomains.some((domain) => urlToCheck.includes(domain))) {
+    if (this.exemptDomains.length > 0 &&
+        this.exemptDomains.some((domain) => urlToCheck.includes(domain))) {
       logger.debug('URL is exempt from PSP detection:', urlToCheck);
       return PSPDetectionResult.exempt(
         'URL contains exempt domain',
@@ -69,13 +70,12 @@ export class PSPDetectorService {
       );
     }
 
-    let scannedPatterns = 0;
     const pageContent = `${url}\n\n${content}`;
+    const providers = getAllProviders(this.pspConfig);
 
-    for (const psp of getAllProviders(this.pspConfig)) {
-      scannedPatterns++;
-
-      if (psp.matchStrings && psp.matchStrings.length > 0) {
+    // First pass: Match strings (faster)
+    for (const psp of providers) {
+      if (psp.matchStrings?.length) {
         for (const matchString of psp.matchStrings) {
           if (pageContent.includes(matchString)) {
             logger.info('PSP detected via matchStrings:', psp.name);
@@ -88,8 +88,9 @@ export class PSPDetectorService {
       }
     }
 
-    for (const psp of getAllProviders(this.pspConfig)) {
-      if (psp.compiledRegex && psp.compiledRegex.test(pageContent)) {
+    // Second pass: Regex patterns (slower)
+    for (const psp of providers) {
+      if (psp.compiledRegex?.test(pageContent)) {
         logger.info('PSP detected via regex:', psp.name);
         return PSPDetectionResult.detected(psp.name, {
           method: 'regex',
@@ -98,7 +99,7 @@ export class PSPDetectorService {
       }
     }
 
-    return PSPDetectionResult.none(scannedPatterns);
+    return PSPDetectionResult.none(providers.length);
   }
 
   /**
@@ -122,6 +123,6 @@ export class PSPDetectorService {
    * Check if the detector is initialized
    */
   public isInitialized(): boolean {
-    return !!this.pspConfig && this.exemptDomains.length > 0;
+    return !!this.pspConfig;
   }
 }

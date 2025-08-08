@@ -172,25 +172,13 @@ class ContentScript {
       return;
     }
 
-    // Collect relevant URLs to scan instead of full HTML
-    const scriptSrcs = Array.from(document.scripts)
-      .map((s) => s.src)
-      .filter(Boolean);
-    const iframeSrcs = Array.from(document.querySelectorAll('iframe'))
-      .map((i) => (i as HTMLIFrameElement).src)
-      .filter(Boolean);
-    const formActions = Array.from(document.forms)
-      .map((f) => (f as HTMLFormElement).action)
-      .filter(Boolean);
-
-    // Get additional content from accessible iframes
+    // Collect relevant URLs to scan instead of full HTML - optimize performance
+    const scanSources = this.collectScanSources();
     const iframeContent = await this.getIframeContent();
 
     const scanContent = [
       document.URL,
-      ...scriptSrcs,
-      ...iframeSrcs,
-      ...formActions,
+      ...scanSources,
       ...iframeContent,
     ].join('\n');
 
@@ -216,6 +204,32 @@ class ContentScript {
       break;
     }
     }
+  }
+
+  /**
+   * Collect scan sources optimized for performance
+   * @private
+   */
+  private collectScanSources(): string[] {
+    const sources: string[] = [];
+
+    // Use more efficient collection methods
+    document.querySelectorAll('script[src]').forEach((script) => {
+      const src = (script as HTMLScriptElement).src;
+      if (src) sources.push(src);
+    });
+
+    document.querySelectorAll('iframe[src]').forEach((iframe) => {
+      const src = (iframe as HTMLIFrameElement).src;
+      if (src) sources.push(src);
+    });
+
+    document.querySelectorAll('form[action]').forEach((form) => {
+      const action = (form as HTMLFormElement).action;
+      if (action) sources.push(action);
+    });
+
+    return sources;
   }
 
   /**
@@ -364,65 +378,35 @@ class ContentScript {
   }
 
   /**
-   * Get iframe content for PSP detection (optimized with caching)
+   * Get iframe content for PSP detection (optimized with caching and security)
+   * @private
    */
   private async getIframeContent(): Promise<string[]> {
     const iframeContent: string[] = [];
-    const iframes = document.querySelectorAll('iframe');
+    const iframes = document.querySelectorAll('iframe[src]');
 
     for (const iframe of iframes) {
       const htmlIframe = iframe as HTMLIFrameElement;
       const src = htmlIframe.src;
 
-      // Skip if already processed
-      if (src && this.processedIframes.has(src)) {
+      // Skip if already processed or invalid
+      if (!src || this.processedIframes.has(src)) {
         continue;
       }
 
       // Only scan iframes we can access (same-origin or allowed domains)
-      if (src && this.canAccessIframe(src)) {
+      if (this.canAccessIframe(src)) {
         this.processedIframes.add(src);
 
         try {
-          // Wait a bit for iframe to load
-          await new Promise(resolve => setTimeout(resolve, 500));
+          // Reduce wait time for better performance
+          await new Promise(resolve => setTimeout(resolve, 200));
 
           const iframeDoc = htmlIframe.contentDocument ||
                            htmlIframe.contentWindow?.document;
           if (iframeDoc) {
-            // Get nested iframe sources
-            const nestedIframes = iframeDoc.querySelectorAll('iframe');
-            if (nestedIframes.length > 0) {
-              logger.debug(
-                `Found ${nestedIframes.length} nested iframes in: ${src}`,
-              );
-            }
-
-            nestedIframes.forEach(nestedIframe => {
-              const nestedSrc = (nestedIframe as HTMLIFrameElement).src;
-              if (nestedSrc && !this.processedIframes.has(nestedSrc)) {
-                iframeContent.push(nestedSrc);
-                this.processedIframes.add(nestedSrc);
-              }
-            });
-
-            // Get script sources from iframe
-            const nestedScripts = iframeDoc.querySelectorAll('script[src]');
-            nestedScripts.forEach(script => {
-              const scriptSrc = (script as HTMLScriptElement).src;
-              if (scriptSrc) {
-                iframeContent.push(scriptSrc);
-              }
-            });
-
-            // Get form actions from iframe
-            const nestedForms = iframeDoc.querySelectorAll('form[action]');
-            nestedForms.forEach(form => {
-              const action = (form as HTMLFormElement).action;
-              if (action) {
-                iframeContent.push(action);
-              }
-            });
+            // Get nested sources more efficiently
+            this.extractNestedSources(iframeDoc, iframeContent);
           }
         } catch {
           // Silently handle cross-origin errors
@@ -434,7 +418,39 @@ class ContentScript {
   }
 
   /**
+   * Extract sources from nested iframe documents
+   * @private
+   */
+  private extractNestedSources(doc: Document, content: string[]): void {
+    // Get nested iframe sources
+    doc.querySelectorAll('iframe[src]').forEach(nestedIframe => {
+      const nestedSrc = (nestedIframe as HTMLIFrameElement).src;
+      if (nestedSrc && !this.processedIframes.has(nestedSrc)) {
+        content.push(nestedSrc);
+        this.processedIframes.add(nestedSrc);
+      }
+    });
+
+    // Get script sources from iframe
+    doc.querySelectorAll('script[src]').forEach(script => {
+      const scriptSrc = (script as HTMLScriptElement).src;
+      if (scriptSrc) {
+        content.push(scriptSrc);
+      }
+    });
+
+    // Get form actions from iframe
+    doc.querySelectorAll('form[action]').forEach(form => {
+      const action = (form as HTMLFormElement).action;
+      if (action) {
+        content.push(action);
+      }
+    });
+  }
+
+  /**
    * Check if we can access iframe content based on same-origin policy
+   * @private
    */
   private canAccessIframe(src: string): boolean {
     try {

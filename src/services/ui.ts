@@ -28,7 +28,7 @@ export class UIService {
       this.elements[id] = element;
     });
 
-    // Detection details elements
+    // Detection details elements (optional)
     const detectionElement = document.getElementById('psp-detected-domain');
     const detectionDetailsElement = document.getElementById('psp-detection-details');
     if (detectionElement && detectionDetailsElement) {
@@ -48,6 +48,8 @@ export class UIService {
       const element = document.querySelector(selector);
       if (element) {
         this.elements[id] = element as HTMLElement;
+      } else {
+        logger.warn(`Optional UI element not found: ${selector}`);
       }
     }
   }
@@ -157,45 +159,49 @@ export class UIService {
   }
 
   /**
-   * Update text content of an element
+   * Update text content of an element safely
    * @private
-   *
    */
   private updateTextContent(elementId: string, content: string): void {
-    if (this.elements[elementId]) {
-      this.elements[elementId].textContent = content;
+    const element = this.elements[elementId];
+    if (element) {
+      element.textContent = content;
+    } else {
+      logger.warn(`Element ${elementId} not found for text update`);
     }
   }
 
   /**
-   * Update notice section visibility and content
+   * Update notice section visibility and content safely
    * @private
-   *
    */
   private updateNoticeSection(notice?: string): void {
-    if (!this.elements.notice) {
-      throw new Error('Notice element is not defined');
+    const noticeElement = this.elements.notice;
+    if (!noticeElement) {
+      logger.warn('Notice element not found');
+      return;
     }
 
     if (notice) {
-      this.elements.notice.style.display = 'block';
-      this.elements.notice.classList.add('show');
+      noticeElement.style.display = 'block';
+      noticeElement.classList.add('show');
       this.updateTextContent('notice', notice);
     } else {
-      this.elements.notice.style.display = 'none';
-      this.elements.notice.classList.remove('show');
+      noticeElement.style.display = 'none';
+      noticeElement.classList.remove('show');
       this.updateTextContent('notice', '');
     }
   }
 
   /**
-   * Update learn more link
+   * Update learn more link safely
    * @private
-   *
    */
   private updateLearnMoreLink(url: string, text = 'Learn More'): void {
-    if (!this.elements.url) {
-      throw new Error('URL element is not defined');
+    const linkElement = this.elements.url;
+    if (!linkElement) {
+      logger.warn('URL element not found');
+      return;
     }
 
     const anchor = document.createElement('a');
@@ -203,18 +209,21 @@ export class UIService {
     anchor.textContent = text;
     anchor.target = '_blank';
     anchor.rel = 'noopener noreferrer';
-    this.elements.url.replaceChildren(anchor);
+    linkElement.replaceChildren(anchor);
   }
 
   /**
-   * Update PSP image
+   * Update PSP image safely
    * @private
-   *
    */
   private updateImage(image: string, alt: string): void {
-    const imgElement = this.elements.image as HTMLImageElement;
-    imgElement.src = chrome.runtime.getURL(`images/${image}_128.png`);
-    imgElement.alt = `${alt} logo`;
+    const imgElement = this.elements.image;
+    if (imgElement && imgElement instanceof HTMLImageElement) {
+      imgElement.src = chrome.runtime.getURL(`images/${image}_128.png`);
+      imgElement.alt = `${alt} logo`;
+    } else {
+      logger.warn('Image element not found or not an img element');
+    }
   }
 
   /**
