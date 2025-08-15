@@ -26,7 +26,8 @@ class ContentScript {
   private reportedPSPs = new Set<string>();
   private processedIframes = new Set<string>();
   private lastDetectionTime = 0;
-  private detectionCooldown = 500; // 500ms cooldown between detections
+  private readonly detectionCooldown = 500; // 500ms cooldown between detections
+  private readonly maxIframeProcessing = 10; // Limit iframe processing
 
   constructor() {
     this.pspDetector = new PSPDetectorService();
@@ -327,40 +328,60 @@ class ContentScript {
   }
 
   /**
-   * Send a message to the background script
+   * Send a message to the background script with MV3 service worker handling
    * @private
    * @template T
    */
-  private sendMessage<T>(message: ChromeMessage): Promise<T> {
-    return new Promise((resolve, reject) => {
+  private async sendMessage<T>(
+    message: ChromeMessage,
+    retries = 3,
+  ): Promise<T> {
+    for (let attempt = 1; attempt <= retries; attempt++) {
       try {
         // Check if extension context is still valid
         if (!chrome.runtime?.id) {
-          reject(new Error('Extension context invalidated'));
-          return;
+          throw new Error('Extension context invalidated');
         }
 
-        chrome.runtime.sendMessage(message, (response) => {
-          if (chrome.runtime.lastError) {
-            // Handle specific case of extension context invalidation
-            if (
-              chrome.runtime.lastError.message?.includes(
-                'Extension context invalidated',
-              )
-            ) {
-              logger.warn('Extension was reloaded, stopping content script');
-              reject(new Error('Extension context invalidated'));
+        const response = await new Promise<T>((resolve, reject) => {
+          chrome.runtime.sendMessage(message, (response) => {
+            if (chrome.runtime.lastError) {
+              reject(new Error(chrome.runtime.lastError.message || 'Unknown error'));
             } else {
-              reject(chrome.runtime.lastError);
+              resolve(response as T);
             }
-          } else {
-            resolve(response as T);
-          }
+          });
         });
+
+        return response;
       } catch (error) {
-        reject(error);
+        const isLastAttempt = attempt === retries;
+        const errorMessage = error instanceof Error ?
+          error.message : String(error);
+
+        // Handle service worker restart scenarios
+        if (errorMessage.includes('Extension context invalidated') ||
+            errorMessage.includes('receiving end does not exist') ||
+            errorMessage.includes('service worker was stopped')) {
+          if (isLastAttempt) {
+            logger.warn('Failed to communicate with service worker after retries');
+            throw new Error('Service worker communication failed');
+          } else {
+            // Wait briefly before retry to allow service worker to restart
+            await new Promise(waitResolve =>
+              setTimeout(waitResolve, 100 * attempt),
+            );
+
+            continue;
+          }
+        }
+
+        // For other errors, don't retry
+        throw error;
       }
-    });
+    }
+
+    throw new Error('Max retries exceeded');
   }
 
   /**
@@ -384,8 +405,18 @@ class ContentScript {
   private async getIframeContent(): Promise<string[]> {
     const iframeContent: string[] = [];
     const iframes = document.querySelectorAll('iframe[src]');
+    let processedCount = 0;
 
     for (const iframe of iframes) {
+      // Limit iframe processing for performance
+      if (processedCount >= this.maxIframeProcessing) {
+        logger.debug(
+          `Iframe processing limit reached (${this.maxIframeProcessing})`,
+        );
+
+        break;
+      }
+
       const htmlIframe = iframe as HTMLIFrameElement;
       const src = htmlIframe.src;
 
@@ -397,6 +428,7 @@ class ContentScript {
       // Only scan iframes we can access (same-origin or allowed domains)
       if (this.canAccessIframe(src)) {
         this.processedIframes.add(src);
+        processedCount++;
 
         try {
           // Reduce wait time for better performance

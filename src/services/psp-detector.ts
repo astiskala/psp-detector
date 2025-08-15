@@ -26,7 +26,7 @@ export class PSPDetectorService {
   }
 
   /**
-   * Detect PSP on the current page
+   * Detect PSP on the current page with enhanced error handling and validation
    */
   public detectPSP(url: string, content: string): PSPDetectionResult {
     if (!this.pspConfig) {
@@ -37,10 +37,25 @@ export class PSPDetectorService {
       );
     }
 
+    // Validate inputs
+    if (typeof url !== 'string' || url.trim().length === 0) {
+      return PSPDetectionResult.error(
+        new Error('Invalid URL provided'),
+        'url_validation',
+      );
+    }
+
+    if (typeof content !== 'string') {
+      return PSPDetectionResult.error(
+        new Error('Invalid content provided'),
+        'content_validation',
+      );
+    }
+
     const brandedURL = TypeConverters.toURL(url);
     if (!brandedURL) {
       return PSPDetectionResult.error(
-        new Error(`Invalid URL: ${url}`),
+        new Error(`Invalid URL format: ${url}`),
         'url_validation',
       );
     }
@@ -70,36 +85,72 @@ export class PSPDetectorService {
       );
     }
 
-    const pageContent = `${url}\n\n${content}`;
-    const providers = getAllProviders(this.pspConfig);
+    try {
+      const pageContent = `${url}\n\n${content}`;
+      const providers = getAllProviders(this.pspConfig);
 
-    // First pass: Match strings (faster)
-    for (const psp of providers) {
-      if (psp.matchStrings?.length) {
-        for (const matchString of psp.matchStrings) {
-          if (pageContent.includes(matchString)) {
-            logger.info('PSP detected via matchStrings:', psp.name);
-            return PSPDetectionResult.detected(psp.name, {
-              method: 'matchString',
-              value: matchString,
-            });
+      if (providers.length === 0) {
+        logger.warn('No PSP providers available for detection');
+        return PSPDetectionResult.error(
+          new Error('No PSP providers configured'),
+          'config_validation',
+        );
+      }
+
+      // Performance optimization: limit content size to prevent excessive
+      // processing
+      const maxContentSize = 1024 * 1024; // 1MB limit
+      const truncatedContent = pageContent.length > maxContentSize
+        ? pageContent.substring(0, maxContentSize)
+        : pageContent;
+
+      if (pageContent.length > maxContentSize) {
+        logger.debug(
+          `Content truncated from ${pageContent.length} to ` +
+          `${maxContentSize} characters`,
+        );
+      }
+
+      // First pass: Match strings (faster)
+      for (const psp of providers) {
+        if (psp.matchStrings?.length) {
+          for (const matchString of psp.matchStrings) {
+            if (truncatedContent.includes(matchString)) {
+              logger.info('PSP detected via matchStrings:', psp.name);
+              return PSPDetectionResult.detected(psp.name, {
+                method: 'matchString',
+                value: matchString,
+              });
+            }
           }
         }
       }
-    }
 
-    // Second pass: Regex patterns (slower)
-    for (const psp of providers) {
-      if (psp.compiledRegex?.test(pageContent)) {
-        logger.info('PSP detected via regex:', psp.name);
-        return PSPDetectionResult.detected(psp.name, {
-          method: 'regex',
-          value: psp.regex || 'unknown',
-        });
+      // Second pass: Regex patterns (slower)
+      for (const psp of providers) {
+        try {
+          if (psp.compiledRegex?.test(truncatedContent)) {
+            logger.info('PSP detected via regex:', psp.name);
+            return PSPDetectionResult.detected(psp.name, {
+              method: 'regex',
+              value: psp.regex || 'unknown',
+            });
+          }
+        } catch (regexError) {
+          logger.warn(`Regex test failed for PSP ${psp.name}:`, regexError);
+
+          // Continue with other PSPs instead of failing completely
+        }
       }
-    }
 
-    return PSPDetectionResult.none(providers.length);
+      return PSPDetectionResult.none(providers.length);
+    } catch (error) {
+      logger.error('Error during PSP detection:', error);
+      return PSPDetectionResult.error(
+        error instanceof Error ? error : new Error('Unknown detection error'),
+        'detection_process',
+      );
+    }
   }
 
   /**

@@ -86,7 +86,7 @@ export function debouncedMutation<T extends(...args: unknown[]) => unknown>(
 }
 
 /**
- * Memory management utilities for cleanup
+ * Memory management utilities for cleanup and performance monitoring
  */
 export const memoryUtils = {
   /**
@@ -103,6 +103,58 @@ export const memoryUtils = {
     });
   },
 
+  /**
+   * Monitor memory usage and warn if high
+   * @param context - Context for logging
+   */
+  checkMemoryUsage: (context: string): void => {
+    if (typeof window !== 'undefined' && 'performance' in window &&
+        'memory' in window.performance) {
+      const memory = (window.performance as unknown as {
+        memory: {
+          usedJSHeapSize: number;
+          totalJSHeapSize: number;
+          jsHeapSizeLimit: number;
+        };
+      }).memory;
+
+      const usagePercent =
+        (memory.usedJSHeapSize / memory.jsHeapSizeLimit) * 100;
+
+      if (usagePercent > 80) {
+        logger.warn(
+          `High memory usage in ${context}: ${usagePercent.toFixed(1)}%`,
+        );
+      }
+    }
+  },
+
+  /**
+   * Create a resource cleanup manager
+   */
+  createCleanupManager: (): {
+    add: (cleanup: () => void) => void;
+    cleanup: () => void;
+  } => {
+    const resources: (() => void)[] = [];
+
+    return {
+      add: (cleanup: () => void): void => {
+        resources.push(cleanup);
+      },
+      cleanup: (): void => {
+        resources.forEach((fn) => {
+          try {
+            fn();
+          } catch (error) {
+            logger.error('Resource cleanup failed:', error);
+          }
+        });
+
+        resources.length = 0;
+      },
+    };
+  },
 };
 
 /**
@@ -118,3 +170,142 @@ export function getAllProviders(pspConfig: PSPConfig): PSP[] {
   const tsps = pspConfig.tsps?.list || [];
   return [...psps, ...orchestrators, ...tsps];
 }
+
+/**
+ * Performance monitoring utilities
+ */
+export const performanceUtils = {
+  /**
+   * Measure execution time of a function
+   * @param fn - Function to measure
+   * @param label - Label for the measurement
+   */
+  measureAsync: async <T>(
+    fn: () => Promise<T>,
+    label: string,
+  ): Promise<T> => {
+    logger.time(label);
+    try {
+      const result = await fn();
+      return result;
+    } finally {
+      logger.timeEnd(label);
+    }
+  },
+
+  /**
+   * Measure execution time of a synchronous function
+   * @param fn - Function to measure
+   * @param label - Label for the measurement
+   */
+  measure: <T>(fn: () => T, label: string): T => {
+    logger.time(label);
+    try {
+      return fn();
+    } finally {
+      logger.timeEnd(label);
+    }
+  },
+
+  /**
+   * Throttle function execution
+   * @param fn - Function to throttle
+   * @param limit - Time limit in milliseconds
+   */
+  throttle: <T extends (...args: unknown[]) => unknown>(
+    fn: T,
+    limit: number,
+  ): ((...args: Parameters<T>) => void) => {
+    let inThrottle = false;
+
+    return (...args: Parameters<T>): void => {
+      if (!inThrottle) {
+        fn(...args);
+        inThrottle = true;
+        setTimeout(() => {
+          inThrottle = false;
+        }, limit);
+      }
+    };
+  },
+};
+
+/**
+ * Error handling utilities
+ */
+export const errorUtils = {
+  /**
+   * Safely execute a function with error handling
+   * @param fn - Function to execute
+   * @param context - Context for error logging
+   * @param fallback - Fallback value on error
+   */
+  safeExecute: <T>(
+    fn: () => T,
+    context: string,
+    fallback: T,
+  ): T => {
+    try {
+      return fn();
+    } catch (error) {
+      logger.error(`Error in ${context}:`, error);
+      return fallback;
+    }
+  },
+
+  /**
+   * Safely execute an async function with error handling
+   * @param fn - Async function to execute
+   * @param context - Context for error logging
+   * @param fallback - Fallback value on error
+   */
+  safeExecuteAsync: async <T>(
+    fn: () => Promise<T>,
+    context: string,
+    fallback: T,
+  ): Promise<T> => {
+    try {
+      return await fn();
+    } catch (error) {
+      logger.error(`Error in ${context}:`, error);
+      return fallback;
+    }
+  },
+
+  /**
+   * Create a retry wrapper for functions
+   * @param fn - Function to retry
+   * @param maxAttempts - Maximum retry attempts
+   * @param delay - Delay between retries in milliseconds
+   */
+  withRetry: <T>(
+    fn: () => Promise<T>,
+    maxAttempts = 3,
+    delay = 1000,
+  ): (() => Promise<T>) => {
+    return async(): Promise<T> => {
+      let lastError: Error;
+
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+          return await fn();
+        } catch (error) {
+          lastError = error instanceof Error ? error : new Error(String(error));
+
+          if (attempt === maxAttempts) {
+            throw lastError;
+          }
+
+          logger.warn(
+            `Attempt ${attempt} failed, retrying in ${delay}ms:`,
+            error,
+          );
+
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
+
+      throw lastError!;
+    };
+  },
+};

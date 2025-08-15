@@ -3,7 +3,7 @@
   "name": "PSP Detector",
   "version": "",
   "description": "Chrome extension to detect Payment Service Providers on web pages",
-  "permissions": ["scripting", "activeTab"],
+  "permissions": ["scripting", "activeTab", "storage"],
   "host_permissions": ["https://*/*"],
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self';"
