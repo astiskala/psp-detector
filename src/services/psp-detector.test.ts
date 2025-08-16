@@ -80,6 +80,23 @@ describe('PSPDetectorService', () => {
     expect(PSPDetectionResult.isExempt(result)).toBe(true);
   });
 
+  it('should treat subdomains of an exempt domain as exempt', () => {
+    const url = 'https://shop.example.com/checkout';
+    const content = '<script src="https://js.stripe.com/v3/"></script>';
+    const result = service.detectPSP(url, content);
+    expect(PSPDetectionResult.isExempt(result)).toBe(true);
+  });
+
+  it('should normalize exempt domains (case & whitespace) and still exempt', () => {
+    const normalizedService = new PSPDetectorService();
+    normalizedService.initialize(TEST_PSP_CONFIGS.MULTI_PSP);
+    normalizedService.setExemptDomains(['  ExAmPle.CoM  ']);
+    const url = 'https://payments.example.com/checkout';
+    const content = '<script src="https://js.stripe.com/v3/"></script>';
+    const result = normalizedService.detectPSP(url, content);
+    expect(PSPDetectionResult.isExempt(result)).toBe(true);
+  });
+
   it('should detect PSP using string arrays', () => {
     const configWithMatchStrings: PSPConfig = {
       psps: [

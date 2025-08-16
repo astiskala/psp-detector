@@ -10,11 +10,17 @@ export class PSPDetectorService {
   private pspConfig: PSPConfig | null = null;
   private exemptDomains: string[] = [];
 
+  /** Cache of flattened providers for faster lookups (populated at init) */
+  private providerCache: ReturnType<typeof getAllProviders> | null = null;
+
   /**
    * Initialize the PSP detector with configuration
    */
   public initialize(config: PSPConfig): void {
     this.pspConfig = config;
+
+    /* Flatten providers once and reuse – order preserved */
+    this.providerCache = getAllProviders(config);
     this.precompileRegexPatterns();
   }
 
@@ -22,7 +28,11 @@ export class PSPDetectorService {
    * Set the exempt domains list
    */
   public setExemptDomains(domains: string[]): void {
-    this.exemptDomains = domains || [];
+    // Normalize & dedupe while preserving original order of first occurrence
+    const seen = new Set<string>();
+    this.exemptDomains = (domains || [])
+      .map(d => d.trim().toLowerCase())
+      .filter(d => d.length > 0 && !seen.has(d) && seen.add(d));
   }
 
   /**
@@ -76,18 +86,33 @@ export class PSPDetectorService {
       // Fall back to using the provided URL
     }
 
-    if (this.exemptDomains.length > 0 &&
-        this.exemptDomains.some((domain) => urlToCheck.includes(domain))) {
-      logger.debug('URL is exempt from PSP detection:', urlToCheck);
-      return PSPDetectionResult.exempt(
-        'URL contains exempt domain',
-        brandedURL,
-      );
+    if (this.exemptDomains.length > 0) {
+      try {
+        const host = new globalThis.URL(urlToCheck).hostname.toLowerCase();
+        if (this.isHostExempt(host)) {
+          logger.debug('URL is exempt from PSP detection:', urlToCheck);
+          return PSPDetectionResult.exempt(
+            'URL contains exempt domain',
+            brandedURL,
+          );
+        }
+      } catch {
+        // Fallback to legacy substring logic if URL parsing fails
+        if (this.exemptDomains.some(domain => urlToCheck.includes(domain))) {
+          logger.debug('URL is exempt from PSP detection (fallback):', urlToCheck);
+          return PSPDetectionResult.exempt(
+            'URL contains exempt domain',
+            brandedURL,
+          );
+        }
+      }
     }
 
     try {
       const pageContent = `${url}\n\n${content}`;
-      const providers = getAllProviders(this.pspConfig);
+
+      /* Use cached providers if available */
+      const providers = this.providerCache || getAllProviders(this.pspConfig);
 
       if (providers.length === 0) {
         logger.warn('No PSP providers available for detection');
@@ -175,5 +200,15 @@ export class PSPDetectorService {
    */
   public isInitialized(): boolean {
     return !!this.pspConfig;
+  }
+
+  /**
+   * Determine if a hostname matches an exempt domain. Matches if:
+   *  - host === domain OR host endsWith(`.${domain}`)
+   */
+  private isHostExempt(host: string): boolean {
+    return this.exemptDomains.some((domain) =>
+      host === domain || host.endsWith(`.${domain}`),
+    );
   }
 }

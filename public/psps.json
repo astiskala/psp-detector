@@ -1164,28 +1164,6 @@
         "url": "https://basistheory.com"
       },
       {
-        "name": "Primer",
-        "matchStrings": [
-          "api.primer.io",
-          "sandbox.primer.io",
-          "sdk.primer.io"
-        ],
-        "image": "primer",
-        "summary": "Primer is a unified infrastructure and automation platform for payments and commerce. It provides merchants with a single integration to consolidate their payment stack, connect various payment services and third-party tools with minimal code, and build dynamic end-to-end payment flows. Primer aims to simplify payment integration and management, optimize payment performance (including authorization rates and routing), and supports a wide range of payment methods and services.",
-        "url": "https://primer.io"
-      },
-      {
-        "name": "APEXX",
-        "matchStrings": [
-          "apexx.cloud",
-          "apexxfintech.com",
-          "apexx.global"
-        ],
-        "image": "apexx",
-        "summary": "APEXX is a global payment orchestration platform that connects merchants to multiple payment service providers, acquirers, and alternative payment methods through a single API. It offers smart routing, fraud prevention, and analytics to optimize payment performance.",
-        "url": "https://apexx.global"
-      },
-      {
         "name": "ProcessOut",
         "matchStrings": [
           "js.processout.com",
@@ -1194,58 +1172,6 @@
         "image": "processout",
         "summary": "ProcessOut is a payment orchestration platform that helps businesses optimize their payment operations. It provides smart routing, analytics, and fraud prevention tools while supporting multiple payment providers and methods. The platform enables businesses to manage multiple PSPs, optimize payment success rates, and reduce costs through intelligent transaction routing.",
         "url": "https://www.processout.com"
-      },
-      {
-        "name": "Yuno",
-        "matchStrings": [
-          "api.y.uno",
-          "api-sandbox.y.uno",
-          "cdn.y.uno"
-        ],
-        "image": "yuno",
-        "summary": "Yuno is a payment orchestration platform that enables businesses to connect to multiple payment providers and methods globally. It offers features like smart routing, fraud prevention, and unified reporting to optimize payment acceptance.",
-        "url": "https://www.y.uno"
-      },
-      {
-        "name": "Praxis Tech",
-        "matchStrings": [
-          "praxispay.com",
-          "praxis.cashier.com"
-        ],
-        "image": "praxis",
-        "summary": "Praxis Tech is a payment orchestration platform that connects merchants to a wide range of payment service providers and alternative payment methods. It provides smart routing, risk management, and reporting tools for global businesses.",
-        "url": "https://praxis.tech"
-      },
-      {
-        "name": "Akurateco",
-        "matchStrings": [
-          "akurateco.com",
-          "gate.akurateco.com"
-        ],
-        "image": "akurateco",
-        "summary": "Akurateco is a white-label payment orchestration platform that allows businesses to connect to multiple payment providers and manage transactions through a unified interface. It offers smart routing, risk management, and analytics.",
-        "url": "https://akurateco.com"
-      },
-      {
-        "name": "Tranzzo",
-        "matchStrings": [
-          "tranzzo.com",
-          "api.tranzzo.com"
-        ],
-        "image": "tranzzo",
-        "summary": "Tranzzo is a payment gateway and orchestration platform that enables merchants to accept payments via multiple providers and methods. It offers unified integration, smart routing, and fraud prevention tools.",
-        "url": "https://tranzzo.com"
-      },
-      {
-        "name": "Paydock",
-        "matchStrings": [
-          "cdn.paydock.com",
-          "paydock.com/assets",
-          "paydock.com/sdk"
-        ],
-        "image": "paydock",
-        "summary": "Paydock is a payment orchestration platform that enables businesses to connect and manage multiple payment services through a single API. It provides features like smart routing, tokenization, and fraud prevention.",
-        "url": "https://www.paydock.com"
       },
       {
         "name": "Juspay",

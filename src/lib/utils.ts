@@ -7,7 +7,7 @@ export function createSafeUrl(url: string): string {
   try {
     return new globalThis.URL(url).toString();
   } catch (e) {
-    console.error('Invalid URL:', e);
+    logger.error('Invalid URL:', e);
     return '#';
   }
 }
@@ -20,7 +20,7 @@ export function safeCompileRegex(pattern: string): RegExp | null {
   try {
     return new RegExp(pattern, 'i');
   } catch (error) {
-    console.error(`Invalid regex pattern: ${pattern}`, error);
+    logger.error(`Invalid regex pattern: ${pattern}`, error);
     return null;
   }
 }
