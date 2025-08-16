@@ -48,7 +48,7 @@ describe('PSP image assets', () => {
   });
 
   it('should have an image (pspname.png) for every PSP in source', () => {
-    const missing = [];
+    const missing: string[] = [];
     for (const psp of config.psps) {
       const imgPath = path.join(srcImagesDir, `${psp.image}.png`);
       if (!fs.existsSync(imgPath)) {
@@ -64,7 +64,7 @@ describe('PSP image assets', () => {
   });
 
   it('should have 48px and 128px images for every PSP in dist after build', () => {
-    const missing = [];
+    const missing: string[] = [];
     for (const psp of config.psps) {
       for (const size of [48, 128]) {
         const imgPath = path.join(distImagesDir, `${psp.image}_${size}.png`);
