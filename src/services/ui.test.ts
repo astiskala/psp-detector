@@ -94,43 +94,43 @@ describe('UIService', () => {
       notice: 'notice',
     };
     service.updatePSPDisplay(psp);
-    expect(elements.name?.textContent).toBe('TestPSP');
-    expect(elements.description?.textContent).toBe('summary');
-    expect(elements.notice?.textContent).toBe('notice');
-    expect(elements.notice?.style.display).toBe('block');
-    expect(elements.url?.querySelector('a')?.href).toBe('https://test.com/');
-    expect((elements.image as HTMLImageElement)?.alt).toBe('TestPSP logo');
+    expect(elements['name']?.textContent).toBe('TestPSP');
+    expect(elements['description']?.textContent).toBe('summary');
+    expect(elements['notice']?.textContent).toBe('notice');
+    expect(elements['notice']?.style.display).toBe('block');
+    expect(elements['url']?.querySelector('a')?.href).toBe('https://test.com/');
+    expect((elements['image'] as HTMLImageElement)?.alt).toBe('TestPSP logo');
   });
 
   it('should show no PSP detected', () => {
     service.showNoPSPDetected();
-    expect(elements.name?.textContent).toBe('No PSP detected');
-    expect(elements.notice?.style.display).toBe('block');
+    expect(elements['name']?.textContent).toBe('No PSP detected');
+    expect(elements['notice']?.style.display).toBe('block');
   });
 
   it('should show error', () => {
     service.showError();
-    expect(elements.name?.textContent).toBe('Error');
-    expect(elements.notice?.style.display).toBe('none');
+    expect(elements['name']?.textContent).toBe('Error');
+    expect(elements['notice']?.style.display).toBe('none');
   });
 
   it('should show PSP detection disabled', () => {
     service.showPSPDetectionDisabled();
-    expect(elements.name?.textContent).toBe('PSP detection disabled');
-    expect(elements.description?.textContent).toBe(
+    expect(elements['name']?.textContent).toBe('PSP detection disabled');
+    expect(elements['description']?.textContent).toBe(
       'PSP detection has been disabled on this website for performance or compatibility reasons.',
     );
 
-    expect(elements.notice?.style.display).toBe('none');
-    expect(elements.url?.querySelector('a')?.textContent).toBe(
+    expect(elements['notice']?.style.display).toBe('none');
+    expect(elements['url']?.querySelector('a')?.textContent).toBe(
       'Suggest Improvement',
     );
 
-    expect(elements.url?.querySelector('a')?.href).toBe(
+    expect(elements['url']?.querySelector('a')?.href).toBe(
       'mailto:psp-detector@adamstiskala.com',
     );
 
-    expect((elements.image as HTMLImageElement)?.alt).toBe(
+    expect((elements['image'] as HTMLImageElement)?.alt).toBe(
       'PSP detection disabled logo',
     );
   });
@@ -158,8 +158,8 @@ describe('UIService', () => {
 
     service.updatePSPDisplay(psp, detectionInfo);
 
-    expect(elements.name?.textContent).toBe('TestPSP');
-    expect(elements.description?.textContent).toBe('Test payment processor');
+    expect(elements['name']?.textContent).toBe('TestPSP');
+    expect(elements['description']?.textContent).toBe('Test payment processor');
 
     // Check detection details
     const detectedDomain = document.getElementById('psp-detected-domain');

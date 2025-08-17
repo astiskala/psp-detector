@@ -3,7 +3,8 @@
  * Handles UI updates and communication with background script.
  * @module popup
  */
-import { MessageAction, PSPConfig, PSPResponse, PSPDetectionResult } from './types';
+import { MessageAction, PSPDetectionResult } from './types';
+import type { PSPConfig, PSPResponse } from './types';
 import { UIService } from './services/ui';
 import {
   logger,

@@ -110,8 +110,8 @@ describe('utils', () => {
   });
 
   it('logger.time and logger.timeEnd work in development mode', () => {
-    const originalEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = 'development';
+    const originalEnv = process.env['NODE_ENV'];
+    process.env['NODE_ENV'] = 'development';
 
     const timeSpy = jest
       .spyOn(console, 'time')
@@ -132,7 +132,7 @@ describe('utils', () => {
 
     timeSpy.mockRestore();
     timeEndSpy.mockRestore();
-    process.env.NODE_ENV = originalEnv;
+    process.env['NODE_ENV'] = originalEnv;
   });
 
 });
