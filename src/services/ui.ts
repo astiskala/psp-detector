@@ -32,8 +32,8 @@ export class UIService {
     const detectionElement = document.getElementById('psp-detected-domain');
     const detectionDetailsElement = document.getElementById('psp-detection-details');
     if (detectionElement && detectionDetailsElement) {
-      this.elements.detectedDomain = detectionElement;
-      this.elements.detectionDetails = detectionDetailsElement;
+      this.elements['detectedDomain'] = detectionElement;
+      this.elements['detectionDetails'] = detectionDetailsElement;
     }
 
     // Required UI elements
@@ -176,7 +176,7 @@ export class UIService {
    * @private
    */
   private updateNoticeSection(notice?: string): void {
-    const noticeElement = this.elements.notice;
+    const noticeElement = this.elements['notice'];
     if (!noticeElement) {
       logger.warn('Notice element not found');
       return;
@@ -198,7 +198,7 @@ export class UIService {
    * @private
    */
   private updateLearnMoreLink(url: string, text = 'Learn More'): void {
-    const linkElement = this.elements.url;
+    const linkElement = this.elements['url'];
     if (!linkElement) {
       logger.warn('URL element not found');
       return;
@@ -217,7 +217,7 @@ export class UIService {
    * @private
    */
   private updateImage(image: string, alt: string): void {
-    const imgElement = this.elements.image;
+    const imgElement = this.elements['image'];
     if (imgElement && imgElement instanceof HTMLImageElement) {
       imgElement.src = chrome.runtime.getURL(`images/${image}_128.png`);
       imgElement.alt = `${alt} logo`;
@@ -232,8 +232,8 @@ export class UIService {
    *
    */
   private hideLoadingState(): void {
-    if (this.elements.loadingState) {
-      this.elements.loadingState.style.display = 'none';
+    if (this.elements['loadingState']) {
+      this.elements['loadingState'].style.display = 'none';
     }
   }
 
@@ -243,8 +243,8 @@ export class UIService {
    *
    */
   private showContentState(): void {
-    if (this.elements.contentState) {
-      this.elements.contentState.style.display = 'block';
+    if (this.elements['contentState']) {
+      this.elements['contentState'].style.display = 'block';
     }
   }
 
@@ -254,14 +254,14 @@ export class UIService {
    *
    */
   private setUIState(state: string): void {
-    if (!this.elements.container) return;
+    if (!this.elements['container']) return;
 
     // Remove existing state classes
-    this.elements.container.classList.remove('error-state', 'no-psp-state', 'disabled-state');
+    this.elements['container'].classList.remove('error-state', 'no-psp-state', 'disabled-state');
 
     // Add new state class
     if (state !== 'success') {
-      this.elements.container.classList.add(`${state}-state`);
+      this.elements['container'].classList.add(`${state}-state`);
     }
   }
 
@@ -271,13 +271,13 @@ export class UIService {
    *
    */
   private showStatusIcon(icon: string): void {
-    if (this.elements.image) {
-      this.elements.image.style.display = 'none';
+    if (this.elements['image']) {
+      this.elements['image'].style.display = 'none';
     }
 
-    if (this.elements.statusIcon) {
-      this.elements.statusIcon.style.display = 'flex';
-      this.elements.statusIcon.textContent = icon;
+    if (this.elements['statusIcon']) {
+      this.elements['statusIcon'].style.display = 'flex';
+      this.elements['statusIcon'].textContent = icon;
     }
   }
 
@@ -287,12 +287,12 @@ export class UIService {
    *
    */
   private showPSPImage(): void {
-    if (this.elements.statusIcon) {
-      this.elements.statusIcon.style.display = 'none';
+    if (this.elements['statusIcon']) {
+      this.elements['statusIcon'].style.display = 'none';
     }
 
-    if (this.elements.image) {
-      this.elements.image.style.display = 'block';
+    if (this.elements['image']) {
+      this.elements['image'].style.display = 'block';
     }
   }
 
@@ -305,7 +305,7 @@ export class UIService {
     method: string;
     value: string;
   }): void {
-    if (!this.elements.detectedDomain || !this.elements.detectionDetails) {
+    if (!this.elements['detectedDomain'] || !this.elements['detectionDetails']) {
       return;
     }
 
@@ -313,11 +313,11 @@ export class UIService {
       ? 'Match String'
       : 'Regex Pattern';
 
-    this.elements.detectionDetails.textContent = detectionInfo.value;
-    this.elements.detectedDomain.style.display = 'block';
+    this.elements['detectionDetails'].textContent = detectionInfo.value;
+    this.elements['detectedDomain'].style.display = 'block';
 
     // Update the header if needed
-    const header = this.elements.detectedDomain.querySelector('h3');
+    const header = this.elements['detectedDomain'].querySelector('h3');
     if (header) {
       header.textContent = `Detected via ${methodLabel}`;
     }
@@ -329,8 +329,8 @@ export class UIService {
    *
    */
   private hideDetectionDetails(): void {
-    if (this.elements.detectedDomain) {
-      this.elements.detectedDomain.style.display = 'none';
+    if (this.elements['detectedDomain']) {
+      this.elements['detectedDomain'].style.display = 'none';
     }
   }
 }

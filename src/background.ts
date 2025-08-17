@@ -6,14 +6,16 @@
  */
 import {
   MessageAction,
+  TypeConverters,
+  PSPDetectionResult,
+} from './types';
+import type {
   PSP,
   ChromeMessage,
   PSPDetectionData,
   PSPConfigResponse,
   PSPConfig,
   PSPResponse,
-  TypeConverters,
-  PSPDetectionResult,
 } from './types';
 import { PSP_DETECTION_EXEMPT } from './types';
 import { DEFAULT_ICONS } from './types/background';

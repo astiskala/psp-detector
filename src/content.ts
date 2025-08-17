@@ -8,10 +8,12 @@ import { PSPDetectorService } from './services/psp-detector';
 import { DOMObserverService } from './services/dom-observer';
 import {
   MessageAction,
-  ChromeMessage,
-  PSPConfigResponse,
   TypeConverters,
   PSPDetectionResult,
+} from './types';
+import type {
+  ChromeMessage,
+  PSPConfigResponse,
 } from './types';
 import { PSP_DETECTION_EXEMPT } from './types';
 import {

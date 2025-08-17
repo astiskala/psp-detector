@@ -30,7 +30,7 @@ export function safeCompileRegex(pattern: string): RegExp | null {
  */
 export const logger = {
   debug: (message: string, ...args: unknown[]): void => {
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env['NODE_ENV'] === 'development') {
       console.debug('[PSP Detector] ' + message, ...args);
     }
   },
@@ -44,12 +44,12 @@ export const logger = {
     console.error('[PSP Detector] ' + message, ...args);
   },
   time: (label: string): void => {
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env['NODE_ENV'] === 'development') {
       console.time('[PSP Detector] ' + label);
     }
   },
   timeEnd: (label: string): void => {
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env['NODE_ENV'] === 'development') {
       console.timeEnd('[PSP Detector] ' + label);
     }
   },
