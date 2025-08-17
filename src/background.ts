@@ -576,24 +576,68 @@ class BackgroundService {
     }
 
     // Validate each PSP entry
-    return config.psps.every((psp: unknown) => {
-      if (!psp || typeof psp !== 'object') {
+    const isValidPspArray = (psps: unknown[]): boolean => {
+      return psps.every((psp: unknown) => {
+        if (!psp || typeof psp !== 'object') {
+          return false;
+        }
+
+        const pspEntry = psp as Partial<PSP>;
+        const hasValidName = typeof pspEntry.name === 'string' &&
+          pspEntry.name.trim().length > 0;
+        const hasValidImage = typeof pspEntry.image === 'string' &&
+          pspEntry.image.trim().length > 0;
+        const hasValidUrl = typeof pspEntry.url === 'string' &&
+          pspEntry.url.trim().length > 0;
+        const hasValidSummary = typeof pspEntry.summary === 'string' &&
+          pspEntry.summary.trim().length > 0;
+
+        // Must have either matchStrings or regex
+        const hasValidMatchStrings = Array.isArray(pspEntry.matchStrings) &&
+          pspEntry.matchStrings.length > 0 &&
+          pspEntry.matchStrings.every((str: unknown) =>
+            typeof str === 'string' && str.trim().length > 0,
+          );
+        const hasValidRegex = typeof pspEntry.regex === 'string' &&
+          pspEntry.regex.trim().length > 0;
+
+        return hasValidName && hasValidImage && hasValidUrl &&
+          hasValidSummary && (hasValidMatchStrings || hasValidRegex);
+      });
+    };
+
+    // Validate main psps array
+    if (!isValidPspArray(config.psps)) {
+      return false;
+    }
+
+    // Validate orchestrators if present
+    if (config.orchestrators) {
+      if (typeof config.orchestrators !== 'object' ||
+          typeof config.orchestrators.notice !== 'string' ||
+          !Array.isArray(config.orchestrators.list)) {
         return false;
       }
 
-      const pspEntry = psp as Partial<PSP>;
-      return (
-        typeof pspEntry.name === 'string' &&
-        pspEntry.name.trim().length > 0 &&
-        typeof pspEntry.image === 'string' &&
-        pspEntry.image.trim().length > 0 &&
-        Array.isArray(pspEntry.matchStrings) &&
-        pspEntry.matchStrings.length > 0 &&
-        pspEntry.matchStrings.every((str: unknown) =>
-          typeof str === 'string' && str.trim().length > 0,
-        )
-      );
-    });
+      if (!isValidPspArray(config.orchestrators.list)) {
+        return false;
+      }
+    }
+
+    // Validate tsps if present
+    if (config.tsps) {
+      if (typeof config.tsps !== 'object' ||
+          typeof config.tsps.notice !== 'string' ||
+          !Array.isArray(config.tsps.list)) {
+        return false;
+      }
+
+      if (!isValidPspArray(config.tsps.list)) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   /**
@@ -922,6 +966,7 @@ class BackgroundService {
 
     // Clear any badge when showing PSP icon
     chrome.action.setBadgeText({ text: '' });
+    chrome.action.setBadgeBackgroundColor({ color: '#6B7280' }); // Neutral grey
   }
 
   /**
@@ -936,6 +981,7 @@ class BackgroundService {
 
     // Add warning badge
     chrome.action.setBadgeText({ text: '🚫' });
+    chrome.action.setBadgeBackgroundColor({ color: '#6B7280' }); // Neutral grey
     logger.debug('Showing exempt domain icon with warning badge');
   }
 
@@ -950,6 +996,7 @@ class BackgroundService {
 
     // Add searching badge
     chrome.action.setBadgeText({ text: '🔍' });
+    chrome.action.setBadgeBackgroundColor({ color: '#6B7280' }); // Neutral grey
   }
 
   /**
