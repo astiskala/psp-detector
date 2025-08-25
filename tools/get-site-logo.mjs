@@ -146,7 +146,54 @@ function uniq(arr) {
   return [...new Map(arr.map((a) => [a.url, a])).values()];
 }
 
-function candidateScore(c) {
+/**
+ * Check if URL contains logo-like keywords
+ */
+function hasLogoKeywords(url) {
+  if (!url) return false;
+  const logoKeywords = ['logo', 'icon', 'brand', 'symbol', 'mark', 'favicon'];
+  const urlLower = url.toLowerCase();
+  return logoKeywords.some(keyword => urlLower.includes(keyword));
+}
+
+/**
+ * Check if URL contains non-logo keywords (banners, backgrounds, etc.)
+ */
+function hasNonLogoKeywords(url) {
+  if (!url) return false;
+  const nonLogoKeywords = [
+    'banner', 'hero', 'background', 'bg', 'header', 'cover', 
+    'thumbnail', 'preview', 'social', 'og-image', 'twitter-card',
+    'screenshot', 'gallery', 'carousel', 'slide'
+  ];
+  const urlLower = url.toLowerCase();
+  return nonLogoKeywords.some(keyword => urlLower.includes(keyword));
+}
+
+/**
+ * Check if candidate URL is from same domain as base URL
+ */
+function isSameDomain(candidateUrl, baseUrl) {
+  try {
+    const candidateDomain = new URL(candidateUrl).hostname;
+    const baseDomain = new URL(baseUrl).hostname;
+    return candidateDomain === baseDomain;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Check if image has banner-like aspect ratio
+ */
+function isBannerAspectRatio(width, height) {
+  if (!width || !height) return false;
+  const aspectRatio = width / height;
+  // Consider very wide (>3:1) or very tall (<1:3) as banner-like
+  return aspectRatio > 3 || aspectRatio < 0.33;
+}
+
+function candidateScore(c, baseUrl = '') {
   // Base scores by source
   const sourceWeight = {
     'manifest-icon': 500,
@@ -185,6 +232,27 @@ function candidateScore(c) {
 
   const sizeBonus = minSide >= MIN_SIZE ? 200 : -500; // hard penalty if too small
 
+  // NEW HEURISTICS FOR BETTER LOGO DETECTION
+  
+  // Bonus for logo-like keywords in URL
+  const logoKeywordBonus = hasLogoKeywords(c.url) ? 300 : 0;
+  
+  // Penalty for non-logo keywords (banners, backgrounds, etc.)
+  const nonLogoPenalty = hasNonLogoKeywords(c.url) ? -400 : 0;
+  
+  // Bonus for same-domain assets (prefer assets hosted on the same domain)
+  const sameDomainBonus = baseUrl && isSameDomain(c.url, baseUrl) ? 150 : 0;
+  
+  // Penalty for banner-like aspect ratios
+  const bannerPenalty = isBannerAspectRatio(w, h) ? -300 : 0;
+  
+  // Additional penalty for very large images that are likely banners/heroes
+  const hugeSizePenalty = (w > 1200 || h > 1200) ? -200 : 0;
+  
+  // Extra penalty for OG/Twitter images that are very wide (likely banners)
+  const socialBannerPenalty = (c.source === 'og-image' || c.source === 'twitter-image') && 
+                              w && h && (w / h > 2) ? -300 : 0;
+
   return (
     sourceWeight +
     fmtWeight +
@@ -192,7 +260,13 @@ function candidateScore(c) {
     squareBonus +
     nearSquareBonus +
     bigDeclBonus +
-    sizeBonus
+    sizeBonus +
+    logoKeywordBonus +
+    nonLogoPenalty +
+    sameDomainBonus +
+    bannerPenalty +
+    hugeSizePenalty +
+    socialBannerPenalty
   );
 }
 
@@ -390,6 +464,33 @@ async function probeCandidate(c) {
   return [c];
 }
 
+/**
+ * Filter out obvious non-logo candidates to reduce false positives
+ */
+function filterNonLogoCandidates(candidates) {
+  return candidates.filter(c => {
+    // Keep all structured sources (manifest, icons, etc.)
+    const structuredSources = ['manifest-icon', 'android-chrome', 'mask-icon', 'apple-touch-icon', 'icon', 'guess-path'];
+    if (structuredSources.includes(c.source)) {
+      return true;
+    }
+    
+    // For img-logo source, only keep if it has logo keywords or doesn't have non-logo keywords
+    if (c.source === 'img-logo') {
+      return hasLogoKeywords(c.url) || !hasNonLogoKeywords(c.url);
+    }
+    
+    // For OG/Twitter images, be more selective
+    if (c.source === 'og-image' || c.source === 'twitter-image') {
+      // Keep only if it has logo keywords and doesn't have obvious non-logo keywords
+      return hasLogoKeywords(c.url) && !hasNonLogoKeywords(c.url);
+    }
+    
+    // Keep social-og sources but they'll be scored lower
+    return true;
+  });
+}
+
 async function fetchAndMeasure(cand) {
   const res = await fetchBuffer(cand.url);
   if (!res.ok) return null;
@@ -503,14 +604,17 @@ async function processLogoForPSP(psp, assetsDir) {
       }),
     );
 
-    if (!unique.length) {
-      console.log(`❌ ${psp.name}: No icon candidates discovered`);
-      return { psp: psp.name, status: 'failed', reason: 'no candidates' };
+    // Filter out obvious non-logo candidates
+    const filtered = filterNonLogoCandidates(unique);
+
+    if (!filtered.length) {
+      console.log(`❌ ${psp.name}: No icon candidates discovered after filtering`);
+      return { psp: psp.name, status: 'failed', reason: 'no candidates after filtering' };
     }
 
     // Fetch and measure with a concurrency cap
     const measured = (
-      await withLimit(MAX_CONCURRENCY, unique, fetchAndMeasure)
+      await withLimit(MAX_CONCURRENCY, filtered, fetchAndMeasure)
     ).filter(Boolean);
 
     // Enforce minimum size; allow SVG and upscale later if needed
@@ -526,7 +630,7 @@ async function processLogoForPSP(psp, assetsDir) {
     }
 
     // Pick the best by score
-    const withScores = viable.map((v) => ({ ...v, _score: candidateScore(v) }));
+    const withScores = viable.map((v) => ({ ...v, _score: candidateScore(v, psp.url) }));
     withScores.sort((a, b) => b._score - a._score);
     const best = withScores[0];
 
@@ -681,14 +785,17 @@ async function main() {
     }),
   );
 
-  if (!unique.length) {
-    console.error('No icon candidates discovered.');
+  // Filter out obvious non-logo candidates
+  const filtered = filterNonLogoCandidates(unique);
+
+  if (!filtered.length) {
+    console.error('No icon candidates discovered after filtering.');
     process.exit(2);
   }
 
   // Fetch and measure with a concurrency cap
   const measured = (
-    await withLimit(MAX_CONCURRENCY, unique, fetchAndMeasure)
+    await withLimit(MAX_CONCURRENCY, filtered, fetchAndMeasure)
   ).filter(Boolean);
 
   // Enforce minimum size; allow SVG (width/height may be 0) and upscale later if needed
@@ -704,7 +811,7 @@ async function main() {
   }
 
   // Pick the best by score
-  const withScores = viable.map((v) => ({ ...v, _score: candidateScore(v) }));
+  const withScores = viable.map((v) => ({ ...v, _score: candidateScore(v, domainArg) }));
   withScores.sort((a, b) => b._score - a._score);
   const best = withScores[0];
 
