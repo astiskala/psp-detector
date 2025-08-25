@@ -975,6 +975,54 @@
       "summary": "Shopify Payments is an integrated payment processing solution for Shopify store owners. It allows businesses to accept payments directly through their Shopify platform, supporting major credit cards and offering checkout experiences for customers.",
       "url": "https://www.shopify.com",
       "notice": "Shopify's payment page can be configured to submit payments via other PSPs. As such, it is possible that Shopify is misidentified as the PSP (and another PSP is used for card processing)."
+    },
+    {
+      "name": "Xsolla Pay",
+      "matchStrings": [
+        "secure.xsolla.com",
+        "sandbox-secure.xsolla.com"
+      ],
+      "image": "xsolla",
+      "summary": "Xsolla Pay (Pay Station) provides a global checkout optimized for games, supporting cards, wallets, and local methods with anti-fraud and regional pricing.",
+      "url": "https://xsolla.com/payments"
+    },
+    {
+      "name": "Paddle",
+      "matchStrings": [
+        "buy.paddle.com",
+        "cdn.paddle.com"
+      ],
+      "image": "paddle",
+      "summary": "Paddle is a merchant-of-record platform for SaaS that includes checkout, tax, compliance, and payments across cards and wallets.",
+      "url": "https://www.paddle.com"
+    },
+    {
+      "name": "Codapay",
+      "matchStrings": [
+        "airtime.codapayments.com",
+        "sandbox.codapayments.com"
+      ],
+      "image": "codapay",
+      "summary": "Codapay by Coda Payments enables alternative payments (carrier billing, e-wallets) across emerging markets with a unified checkout.",
+      "url": "https://www.coda.co"
+    },
+    {
+      "name": "Easy Pay Direct",
+      "matchStrings": [
+        "secure.easypaydirectgateway.com"
+      ],
+      "image": "easypaydirect",
+      "summary": "Easy Pay Direct is a payment gateway and merchant services provider specializing in high‑risk and high‑volume merchants. Their platform commonly uses tokenization and hosted fields delivered from secure.easypaydirect.com and a server API at gwapi.easypaydirect.com.",
+      "url": "https://www.easypaydirect.com"
+    },
+    {
+      "name": "PayKings",
+      "matchStrings": [
+        "paykings.transactiongateway.com"
+      ],
+      "image": "paykings",
+      "summary": "PayKings provides merchant accounts and a white‑label gateway solution. Their hosted payment fields and tokenization scripts are typically served from secure.paykingsgateway.com.",
+      "url": "https://www.paykings.com"
     }
   ],
   "orchestrators": {
