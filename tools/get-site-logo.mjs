@@ -1,4 +1,10 @@
 #!/usr/bin/env node
+/* eslint-env node */
+/* global process, Buffer */
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
+/* eslint-disable lines-around-comment */
+/* eslint-disable no-empty */
+/* eslint-disable max-len */
 /**
  * get-site-logo.mjs
  *
@@ -52,9 +58,20 @@ const SOCIAL_HOSTS = [
 
 const COMMON_ICON_PATHS = [
   '/favicon.ico',
+  '/favicon.svg',
   '/favicon.png',
+  '/favicon-32x32.png',
+  '/favicon-96x96.png',
+  '/favicon-194x194.png',
+  '/favicon-196x196.png',
   '/apple-touch-icon.png',
   '/apple-touch-icon-precomposed.png',
+  '/apple-touch-icon-57x57.png',
+  '/apple-touch-icon-60x60.png',
+  '/apple-touch-icon-72x72.png',
+  '/apple-touch-icon-76x76.png',
+  '/apple-touch-icon-114x114.png',
+  '/apple-touch-icon-120x120.png',
   '/apple-touch-icon-120x120.png',
   '/apple-touch-icon-152x152.png',
   '/apple-touch-icon-167x167.png',
@@ -146,65 +163,298 @@ function uniq(arr) {
   return [...new Map(arr.map((a) => [a.url, a])).values()];
 }
 
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
 /**
- * Check if URL contains logo-like keywords
+ * Extract hostname from a URL string.
+ * @param {string} u
+ * @returns {string}
  */
-function hasLogoKeywords(url) {
-  if (!url) return false;
-  const logoKeywords = ['logo', 'icon', 'brand', 'symbol', 'mark', 'favicon'];
-  const urlLower = url.toLowerCase();
-  return logoKeywords.some(keyword => urlLower.includes(keyword));
-}
-
-/**
- * Check if URL contains non-logo keywords (banners, backgrounds, etc.)
- */
-function hasNonLogoKeywords(url) {
-  if (!url) return false;
-  const nonLogoKeywords = [
-    'banner', 'hero', 'background', 'bg', 'header', 'cover', 
-    'thumbnail', 'preview', 'social', 'og-image', 'twitter-card',
-    'screenshot', 'gallery', 'carousel', 'slide'
-  ];
-  const urlLower = url.toLowerCase();
-  return nonLogoKeywords.some(keyword => urlLower.includes(keyword));
-}
-
-/**
- * Check if candidate URL is from same domain as base URL
- */
-function isSameDomain(candidateUrl, baseUrl) {
+function getHostname(u) {
   try {
-    const candidateDomain = new URL(candidateUrl).hostname;
-    const baseDomain = new URL(baseUrl).hostname;
-    return candidateDomain === baseDomain;
+    return new URL(u).hostname.toLowerCase();
   } catch {
-    return false;
+    return '';
   }
 }
 
 /**
- * Check if image has banner-like aspect ratio
+ * Normalize host for comparisons (drop www.).
+ * @param {string} host
+ * @returns {string}
  */
-function isBannerAspectRatio(width, height) {
-  if (!width || !height) return false;
-  const aspectRatio = width / height;
-  // Consider very wide (>3:1) or very tall (<1:3) as banner-like
-  return aspectRatio > 3 || aspectRatio < 0.33;
+function normalizeHost(host) {
+  return (host || '').replace(/^www\./, '').toLowerCase();
 }
 
-function candidateScore(c, baseUrl = '') {
+/**
+ * Score URL path keywords: boost logo-ish, penalize banner-ish.
+ * @param {string} uLower
+ * @returns {number}
+ */
+function keywordScoreForUrl(uLower) {
+  // Positive indicators that it's a logo/icon
+  const positives = [
+    'logo',
+    'brand',
+    'brandmark',
+    'favicon',
+    'apple-touch-icon',
+    'android-chrome',
+    'icon-512',
+    'icon-384',
+    'icon-256',
+    'icon-192',
+    'icon-180',
+    'icon-167',
+    'icon-152',
+    'mark',
+    'glyph',
+    'symbol',
+    'logotype',
+  ];
+
+  // Negative indicators (common for hero/banners or social share images)
+  const negatives = [
+    'banner',
+    'hero',
+    'cover',
+    'header',
+    'share',
+    'social',
+    'og',
+    'open-graph',
+    'twitter',
+    'card',
+    'twimg',
+    'promo',
+    'advert',
+    'ad-',
+    '/ads/',
+    'press',
+    'news',
+    'blog',
+    'article',
+    'event',
+    'conference',
+    'screenshot',
+    'snapshot',
+    'background',
+    'wallpaper',
+    'brochure',
+  ];
+
+  let score = 0;
+  if (positives.some((k) => uLower.includes(k))) score += 300;
+  if (negatives.some((k) => uLower.includes(k))) score -= 400;
+  return score;
+}
+
+/**
+ * Return true if the candidate likely refers to a third-party brand mark (social/payment badges),
+ * which we should exclude from consideration unless it clearly matches the site's own brand
+ * in the asset path or the element's alt/title.
+ * @param {{url:string, alt?:string, title?:string}} cand
+ * @param {string[]} brandWords
+ * @returns {boolean}
+ */
+function isForeignBrandMarkUrl(cand, brandWords) {
+  const rawUrl = cand?.url || '';
+  let pathLower = rawUrl.toLowerCase();
+  try {
+    const u = new URL(rawUrl);
+    pathLower = (u.pathname + (u.search || '')).toLowerCase();
+  } catch {
+    // keep full lower URL if not parseable
+  }
+
+  const altLower = (cand?.alt || '').toLowerCase();
+  const titleLower = (cand?.title || '').toLowerCase();
+
+  // Common social platforms and communities
+  const socialTokens = [
+    'facebook',
+    'instagram',
+    'linkedin',
+    'twitter',
+    'twimg',
+    'x-logo',
+    'tiktok',
+    'youtube',
+    'pinterest',
+    'github',
+    'gitlab',
+    'discord',
+    'slack',
+    'whatsapp',
+    'wechat',
+    'weixin',
+    'telegram',
+  ];
+
+  // Common payment method/brand badges often shown on PSP sites
+  const paymentTokens = [
+    'visa',
+    'mastercard',
+    'maestro',
+    'amex',
+    'american-express',
+    'diners',
+    'discover',
+    'jcb',
+    'unionpay',
+    'rupay',
+    'alipay',
+    'wechatpay',
+    'paypal',
+    'apple-pay',
+    'google-pay',
+    'gpay',
+    'klarna',
+    'afterpay',
+    'affirm',
+    'ideal',
+    'giropay',
+    'bancontact',
+    'sofort',
+    'przelewy24',
+    'eps',
+    'pse',
+    'pix',
+    'boleto',
+    'mbway',
+    'multibanco',
+    'sepa',
+    'trustly',
+    'swish',
+    'vipps',
+    'blik',
+    'upi',
+    'paytm',
+    'gcash',
+  ];
+
+  // Paths that usually indicate a list of client/partner logos rather than the site's own brand
+  const galleryTokens = [
+    'clients',
+    'customer',
+    'customers',
+    'partners',
+    'partnerships',
+    'brands',
+    'bigcompanies',
+    'case-studies',
+    'case_studies',
+    'references',
+    'portfolio',
+    'press-logos',
+    '/logos/',
+  ];
+
+  // First, exclude obvious galleries and third-party brand tokens regardless of host/brand words
+  if (galleryTokens.some((t) => pathLower.includes(t))) return true;
+  if (socialTokens.some((t) => pathLower.includes(t))) return true;
+  if (paymentTokens.some((t) => pathLower.includes(t))) return true;
+
+  // If the asset path or text includes brand words, treat as first-party; host name alone isn't sufficient
+  const hasBrand = brandWords.some((w) => pathLower.includes(w) || altLower.includes(w) || titleLower.includes(w));
+  if (hasBrand) return false;
+  return false;
+}
+
+/**
+ * Extract probable brand words from URL and optional display name.
+ * @param {string} siteUrl
+ * @param {string=} displayName
+ * @returns {string[]}
+ */
+function deriveBrandWords(siteUrl, displayName) {
+  const words = new Set();
+  try {
+    const h = new URL(siteUrl.startsWith('http') ? siteUrl : 'https://' + siteUrl).hostname;
+    const tokens = h
+      .toLowerCase()
+      .replace(/^www\./, '')
+      .split(/[.-]/)
+      .filter(Boolean);
+    for (const t of tokens) {
+      if (t.length >= 3 && !['com', 'net', 'org', 'www'].includes(t)) words.add(t);
+    }
+  } catch {}
+
+  if (displayName) {
+    const nameTokens = displayName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+    for (const t of nameTokens) if (t.length >= 3) words.add(t);
+  }
+
+  return Array.from(words);
+}
+
+/**
+ * Penalize extreme aspect ratios (likely banners), heavier for social sources.
+ * @param {number} w
+ * @param {number} h
+ * @param {string} src
+ * @returns {number}
+ */
+function extremeAspectPenalty(w, h, src) {
+  if (!w || !h) return 0;
+  const a = w / h;
+
+  // Penalize non-square shapes; banners get harsher penalty
+  if (a > 3.5 || a < 1 / 3.5) return -1200; // extremely banner-like
+  if (a > 2.0 || a < 0.5) {
+    const isSocial =
+      src === 'og-image' || src === 'twitter-image' || src === 'social-og';
+    return isSocial ? -900 : -400;
+  }
+
+  // handled by square bonus elsewhere
+  if (Math.abs(w - h) / Math.max(w, h) <= 0.1) return 0;
+  return -180; // mild penalty for rectangles
+}
+
+/**
+ * Slightly prefer images on the same host (or subdomain) as the site.
+ * @param {string} candidateUrl
+ * @param {string} expectedHost
+ * @returns {number}
+ */
+function sameHostDelta(candidateUrl, expectedHost) {
+  if (!expectedHost) return 0;
+  const ch = normalizeHost(getHostname(candidateUrl));
+  const eh = normalizeHost(expectedHost);
+  if (!ch || !eh) return 0;
+  // If candidate host ends with the expected host (allowing cdn subdomains),
+  // boost.
+  if (ch === eh || ch.endsWith('.' + eh)) return 140;
+  return -90;
+}
+
+/**
+ * Compute a score for a candidate image.
+ * @param {any} c
+ * @param {{expectedHost?: string}} [opts]
+ * @returns {number}
+ */
+function candidateScore(c, { expectedHost, brandWords = [] } = {}) {
   // Base scores by source
   const sourceWeight = {
-    'manifest-icon': 500,
-    'android-chrome': 500,
-    'mask-icon': 450,
-    'apple-touch-icon': 420,
-    icon: 350,
-    'img-logo': 320,
-    'og-image': 140,
-    'twitter-image': 130,
-    'social-og': 260,
+    'manifest-icon': 520,
+    'android-chrome': 520,
+    'mask-icon': 460,
+    'apple-touch-icon': 430,
+    icon: 360,
+    'img-logo': 340,
+
+    // Lower the base trust of OG/Twitter images to avoid picking banners
+    'og-image': 80,
+    'twitter-image': 70,
+    'social-og': 60,
     'guess-path': 300,
   }[c.source] || 0;
 
@@ -213,16 +463,17 @@ function candidateScore(c, baseUrl = '') {
     png: 200,
     webp: 150,
     ico: 120,
-    gif: 60,
-    jpg: 50,
-    jpeg: 50,
+    gif: 20, // animated or low quality often not a logo
+    jpg: 40,
+    jpeg: 40,
     avif: 150,
   }[c.format || ''] || 0;
 
   const w = c.width || 0;
   const h = c.height || 0;
   const minSide = Math.min(w, h);
-  const areaWeight = Math.min(minSide, 1024); // cap
+  // Slightly lower cap to avoid over-rewarding very large banners
+  const areaWeight = Math.min(minSide, 800);
   const squareBonus = w && h && w === h ? 1000 : 0;
   const nearSquareBonus =
     !squareBonus && w && h && Math.abs(w - h) / Math.max(w, h) <= 0.1 ? 80 : 0;
@@ -230,28 +481,38 @@ function candidateScore(c, baseUrl = '') {
   const bigDeclBonus =
     (c.declaredSizes || []).some((s) => s.w >= 512 && s.h >= 512) ? 60 : 0;
 
-  const sizeBonus = minSide >= MIN_SIZE ? 200 : -500; // hard penalty if too small
+  // Hard penalty if too small
+  const sizeBonus = minSide >= MIN_SIZE ? 200 : -500;
 
-  // NEW HEURISTICS FOR BETTER LOGO DETECTION
-  
-  // Bonus for logo-like keywords in URL
-  const logoKeywordBonus = hasLogoKeywords(c.url) ? 300 : 0;
-  
-  // Penalty for non-logo keywords (banners, backgrounds, etc.)
-  const nonLogoPenalty = hasNonLogoKeywords(c.url) ? -400 : 0;
-  
-  // Bonus for same-domain assets (prefer assets hosted on the same domain)
-  const sameDomainBonus = baseUrl && isSameDomain(c.url, baseUrl) ? 150 : 0;
-  
-  // Penalty for banner-like aspect ratios
-  const bannerPenalty = isBannerAspectRatio(w, h) ? -300 : 0;
-  
-  // Additional penalty for very large images that are likely banners/heroes
-  const hugeSizePenalty = (w > 1200 || h > 1200) ? -200 : 0;
-  
-  // Extra penalty for OG/Twitter images that are very wide (likely banners)
-  const socialBannerPenalty = (c.source === 'og-image' || c.source === 'twitter-image') && 
-                              w && h && (w / h > 2) ? -300 : 0;
+  const urlLower = (c.url || '').toLowerCase();
+  const keywordDelta = keywordScoreForUrl(urlLower);
+  const aspectDelta = extremeAspectPenalty(w, h, c.source);
+  const hostDelta = sameHostDelta(c.url, expectedHost);
+  // Logos frequently have transparency; small bonus for alpha on rasters
+  const alphaDelta = c.hasAlpha && (c.format === 'png' || c.format === 'webp') ? 60 : 0;
+
+  // Additional penalty for JPEG OG/Twitter images
+  const socialJpegPenalty = (c.source === 'og-image' || c.source === 'twitter-image' || c.source === 'social-og') && (c.format === 'jpg' || c.format === 'jpeg') ? -120 : 0;
+
+  // Brand-awareness: check URL, host, and alt/title for brand words
+  const lowerAlt = (c.alt || '').toLowerCase();
+  const lowerTitle = (c.title || '').toLowerCase();
+  const chost = getHostname(c.url || '');
+  const brandHitUrl = brandWords.some((wrd) => urlLower.includes(wrd));
+  const brandHitHost = brandWords.some((wrd) => (chost || '').includes(wrd));
+  const brandHitText = brandWords.some((wrd) => lowerAlt.includes(wrd) || lowerTitle.includes(wrd));
+  const brandBoost = (brandHitUrl ? 220 : 0) + (brandHitHost ? 160 : 0) + (brandHitText ? 260 : 0);
+
+  // Penalize social hosts additionally (e.g., facebook, twitter) unless brand-matched
+  const isSocialHost = SOCIAL_HOSTS.includes(chost);
+  const socialHostPenalty = isSocialHost && !brandHitHost ? -300 : 0;
+
+  // If it's an on-page <img> logo but off-host and no brand hint, penalize heavily
+  const offHostNoBrandPenalty =
+    c.source === 'img-logo' && !(chost === normalizeHost(expectedHost) || chost.endsWith('.' + normalizeHost(expectedHost))) &&
+    !brandHitUrl && !brandHitText
+      ? -220
+      : 0;
 
   return (
     sourceWeight +
@@ -261,13 +522,41 @@ function candidateScore(c, baseUrl = '') {
     nearSquareBonus +
     bigDeclBonus +
     sizeBonus +
-    logoKeywordBonus +
-    nonLogoPenalty +
-    sameDomainBonus +
-    bannerPenalty +
-    hugeSizePenalty +
-    socialBannerPenalty
+    keywordDelta +
+    aspectDelta +
+    hostDelta +
+    alphaDelta +
+    socialJpegPenalty +
+    brandBoost +
+    socialHostPenalty +
+    offHostNoBrandPenalty
   );
+}
+
+/**
+ * Quick check to reject obvious banner-like non-logos.
+ * @param {any} c
+ * @returns {boolean}
+ */
+function isLikelyBanner(c) {
+  const w = c.width || 0;
+  const h = c.height || 0;
+  if (!w || !h) return false;
+  const a = w / h;
+  const urlLower = (c.url || '').toLowerCase();
+
+  const negHints = ['banner', 'hero', 'cover', 'header', 'social', 'og'];
+  const hasNeg = negHints.some((k) => urlLower.includes(k));
+  const isSocial =
+    c.source === 'og-image' ||
+    c.source === 'twitter-image' ||
+    c.source === 'social-og';
+
+  // If it's extremely wide/tall and has negative hints or from social, drop.
+  if ((a > 3 || a < 1 / 3) && (hasNeg || isSocial)) return true;
+  // Be stricter for social-sourced images: near-square only
+  if (isSocial && (a > 1.8 || a < 1 / 1.8)) return true;
+  return false;
 }
 
 async function getImageMeta(buffer) {
@@ -358,9 +647,17 @@ function collectFromDom($, baseUrl) {
   $(logoSel).each((_, el) => {
     const src = $(el).attr('src') || '';
     const srcset = $(el).attr('srcset') || '';
+    const alt = ($(el).attr('alt') || '').trim();
+    const title = ($(el).attr('title') || '').trim();
     const chosen = chooseSrcFromSrcset(src, srcset);
+    const chosenLower = (chosen || '').toLowerCase();
+    // Skip obvious social brand marks embedded in the site's footer/header
+    if (/facebook|instagram|linkedin|twitter|twimg|x-logo/.test(chosenLower)) {
+      return;
+    }
+
     const abs = toAbsolute(chosen, baseUrl);
-    if (abs) cands.push({ url: abs, source: 'img-logo' });
+    if (abs) cands.push({ url: abs, source: 'img-logo', alt, title });
   });
 
   // JSON-LD sameAs (social)
@@ -376,7 +673,7 @@ function collectFromDom($, baseUrl) {
           for (const s of arr) if (typeof s === 'string') socialLinks.add(s);
         }
       }
-    } catch {}
+    } catch { /* ignore */ }
   });
 
   // On-page <a> to social
@@ -388,7 +685,7 @@ function collectFromDom($, baseUrl) {
     try {
       const u = new URL(abs);
       if (SOCIAL_HOSTS.includes(u.hostname)) socialLinks.add(abs);
-    } catch {}
+    } catch { /* ignore */ }
   });
 
   for (const s of socialLinks) cands.push({ url: s, source: 'social-link' });
@@ -462,33 +759,6 @@ async function probeCandidate(c) {
   }
 
   return [c];
-}
-
-/**
- * Filter out obvious non-logo candidates to reduce false positives
- */
-function filterNonLogoCandidates(candidates) {
-  return candidates.filter(c => {
-    // Keep all structured sources (manifest, icons, etc.)
-    const structuredSources = ['manifest-icon', 'android-chrome', 'mask-icon', 'apple-touch-icon', 'icon', 'guess-path'];
-    if (structuredSources.includes(c.source)) {
-      return true;
-    }
-    
-    // For img-logo source, only keep if it has logo keywords or doesn't have non-logo keywords
-    if (c.source === 'img-logo') {
-      return hasLogoKeywords(c.url) || !hasNonLogoKeywords(c.url);
-    }
-    
-    // For OG/Twitter images, be more selective
-    if (c.source === 'og-image' || c.source === 'twitter-image') {
-      // Keep only if it has logo keywords and doesn't have obvious non-logo keywords
-      return hasLogoKeywords(c.url) && !hasNonLogoKeywords(c.url);
-    }
-    
-    // Keep social-og sources but they'll be scored lower
-    return true;
-  });
 }
 
 async function fetchAndMeasure(cand) {
@@ -604,33 +874,102 @@ async function processLogoForPSP(psp, assetsDir) {
       }),
     );
 
-    // Filter out obvious non-logo candidates
-    const filtered = filterNonLogoCandidates(unique);
-
-    if (!filtered.length) {
-      console.log(`❌ ${psp.name}: No icon candidates discovered after filtering`);
-      return { psp: psp.name, status: 'failed', reason: 'no candidates after filtering' };
+    if (!unique.length) {
+      console.log(`❌ ${psp.name}: No icon candidates discovered`);
+      return { psp: psp.name, status: 'failed', reason: 'no candidates' };
     }
 
     // Fetch and measure with a concurrency cap
     const measured = (
-      await withLimit(MAX_CONCURRENCY, filtered, fetchAndMeasure)
+      await withLimit(MAX_CONCURRENCY, unique, fetchAndMeasure)
     ).filter(Boolean);
 
+    // Compute brand/host context early for filtering and scoring
+    let expectedHost = '';
+    try {
+      expectedHost = new URL(psp.url).hostname;
+    } catch {
+      expectedHost = '';
+    }
+
+    const brandWords = deriveBrandWords(psp.url, psp.name || '');
+
     // Enforce minimum size; allow SVG and upscale later if needed
-    const viable = measured.filter((m) => {
+    const nonBanner = measured.filter((m) => !isLikelyBanner(m));
+    // Drop obvious third-party marks (social logos, payment badges)
+    let nonForeign = nonBanner.filter((m) => !isForeignBrandMarkUrl(m, brandWords));
+
+    // Additional rule: if source is img-logo, require it to look like the site's brand
+    nonForeign = nonForeign.filter((m) => {
+      if (m.source !== 'img-logo') return true;
+      const urlLower = (m.url || '').toLowerCase();
+      const altLower = (m.alt || '').toLowerCase();
+      const titleLower = (m.title || '').toLowerCase();
+      const looksLikeLogo = urlLower.includes('logo') || altLower.includes('logo') || titleLower.includes('logo');
+      const hasBrand = brandWords.some((w) => urlLower.includes(w) || altLower.includes(w) || titleLower.includes(w));
+      return looksLikeLogo || hasBrand;
+    });
+
+    let viable = nonForeign.filter((m) => {
       if (m.format === 'svg') return true; // vector: fine
       const minSide = Math.min(m.width || 0, m.height || 0);
       return minSide >= MIN_SIZE;
     });
 
+    // Fallback: if nothing >=128, allow >=96 as a last resort (will be upscaled)
     if (!viable.length) {
-      console.log(`❌ ${psp.name}: No viable icons found (>= 128x128 or SVG)`);
-      return { psp: psp.name, status: 'failed', reason: 'no viable icons' };
+      viable = nonForeign.filter((m) => {
+        if (m.format === 'svg') return true;
+        const minSide = Math.min(m.width || 0, m.height || 0);
+        return minSide >= 96;
+      });
+    }
+
+    if (!viable.length) {
+      // Last-chance fallback: on-host small icons from link/guess-path sources (>=48px)
+      const normExpectedHost = normalizeHost(expectedHost);
+      const smallIconish = nonForeign.filter((m) => {
+        const ch = normalizeHost(getHostname(m.url || ''));
+        const onHost = !normExpectedHost || ch === normExpectedHost || ch.endsWith('.' + normExpectedHost);
+        const isIconish = m.source === 'icon' || m.source === 'apple-touch-icon' || m.source === 'guess-path' || m.source === 'manifest-icon';
+        if (!(onHost && isIconish)) return false;
+        if (m.format === 'svg') return true;
+        const minSide = Math.min(m.width || 0, m.height || 0);
+        return minSide >= 48;
+      });
+      if (smallIconish.length) {
+        viable = smallIconish;
+      } else {
+        console.log(`❌ ${psp.name}: No viable icons found (>= 128x128 or SVG)`);
+        return { psp: psp.name, status: 'failed', reason: 'no viable icons' };
+      }
+    }
+
+    // Prefer non-social images when available
+    const isSocialSource = (s) => s === 'og-image' || s === 'twitter-image' || s === 'social-og';
+    const hasNonSocial = viable.some((v) => !isSocialSource(v.source));
+    if (hasNonSocial) {
+      viable = viable.filter((v) => !isSocialSource(v.source));
+    }
+
+    // If both on-host and off-host exist, keep on-host
+    const normExpected = normalizeHost(expectedHost);
+    const hasOnHost = viable.some((v) => {
+      const ch = normalizeHost(getHostname(v.url || ''));
+      return ch === normExpected || ch.endsWith('.' + normExpected);
+    });
+    if (hasOnHost) {
+      viable = viable.filter((v) => {
+        const ch = normalizeHost(getHostname(v.url || ''));
+        return ch === normExpected || ch.endsWith('.' + normExpected);
+      });
     }
 
     // Pick the best by score
-    const withScores = viable.map((v) => ({ ...v, _score: candidateScore(v, psp.url) }));
+    const withScores = viable.map((v) => ({
+      ...v,
+      _score: candidateScore(v, { expectedHost, brandWords }),
+    }));
     withScores.sort((a, b) => b._score - a._score);
     const best = withScores[0];
 
@@ -785,33 +1124,100 @@ async function main() {
     }),
   );
 
-  // Filter out obvious non-logo candidates
-  const filtered = filterNonLogoCandidates(unique);
-
-  if (!filtered.length) {
-    console.error('No icon candidates discovered after filtering.');
+  if (!unique.length) {
+    console.error('No icon candidates discovered.');
     process.exit(2);
   }
 
   // Fetch and measure with a concurrency cap
   const measured = (
-    await withLimit(MAX_CONCURRENCY, filtered, fetchAndMeasure)
+    await withLimit(MAX_CONCURRENCY, unique, fetchAndMeasure)
   ).filter(Boolean);
 
-  // Enforce minimum size; allow SVG (width/height may be 0) and upscale later if needed
-  const viable = measured.filter((m) => {
+  // Drop likely banners and obvious foreign brand marks; compute context
+  const nonBanner = measured.filter((m) => !isLikelyBanner(m));
+
+  let expectedHost = '';
+  try {
+    const inputHost = domainArg.startsWith('http') ? domainArg : `https://${domainArg}`;
+    expectedHost = new URL(inputHost).hostname;
+  } catch {
+    expectedHost = '';
+  }
+
+  const brandWords = deriveBrandWords(domainArg, '');
+  let nonForeign = nonBanner.filter((m) => !isForeignBrandMarkUrl(m, brandWords));
+
+  nonForeign = nonForeign.filter((m) => {
+    if (m.source !== 'img-logo') return true;
+    const urlLower = (m.url || '').toLowerCase();
+    const altLower = (m.alt || '').toLowerCase();
+    const titleLower = (m.title || '').toLowerCase();
+    const looksLikeLogo = urlLower.includes('logo') || altLower.includes('logo') || titleLower.includes('logo');
+    const hasBrand = brandWords.some((w) => urlLower.includes(w) || altLower.includes(w) || titleLower.includes(w));
+    return looksLikeLogo || hasBrand;
+  });
+
+  let viable = nonForeign.filter((m) => {
     if (m.format === 'svg') return true; // vector: fine
     const minSide = Math.min(m.width || 0, m.height || 0);
     return minSide >= MIN_SIZE;
   });
 
+  // Fallback: if nothing >=128, allow >=96 as a last resort (will be upscaled)
   if (!viable.length) {
-    console.error('No viable icons found (>= 128x128 or SVG).');
-    process.exit(3);
+    viable = nonForeign.filter((m) => {
+      if (m.format === 'svg') return true;
+      const minSide = Math.min(m.width || 0, m.height || 0);
+      return minSide >= 96;
+    });
+  }
+
+  if (!viable.length) {
+    // Last-chance fallback: on-host small icons from link/guess-path sources (>=48px)
+    const normExpectedHost = normalizeHost(expectedHost);
+    const smallIconish = nonForeign.filter((m) => {
+      const ch = normalizeHost(getHostname(m.url || ''));
+      const onHost = !normExpectedHost || ch === normExpectedHost || ch.endsWith('.' + normExpectedHost);
+      const isIconish = m.source === 'icon' || m.source === 'apple-touch-icon' || m.source === 'guess-path' || m.source === 'manifest-icon';
+      if (!(onHost && isIconish)) return false;
+      if (m.format === 'svg') return true;
+      const minSide = Math.min(m.width || 0, m.height || 0);
+      return minSide >= 48;
+    });
+    if (smallIconish.length) {
+      viable = smallIconish;
+    } else {
+      console.error('No viable icons found (>= 128x128 or SVG).');
+      process.exit(3);
+    }
+  }
+
+  // Prefer non-social images when available
+  const isSocialSource = (s) => s === 'og-image' || s === 'twitter-image' || s === 'social-og';
+  const hasNonSocial = viable.some((v) => !isSocialSource(v.source));
+  if (hasNonSocial) {
+    viable = viable.filter((v) => !isSocialSource(v.source));
+  }
+
+  // If both on-host and off-host exist, keep on-host
+  const normExpected = normalizeHost(expectedHost);
+  const hasOnHost = viable.some((v) => {
+    const ch = normalizeHost(getHostname(v.url || ''));
+    return ch === normExpected || ch.endsWith('.' + normExpected);
+  });
+  if (hasOnHost) {
+    viable = viable.filter((v) => {
+      const ch = normalizeHost(getHostname(v.url || ''));
+      return ch === normExpected || ch.endsWith('.' + normExpected);
+    });
   }
 
   // Pick the best by score
-  const withScores = viable.map((v) => ({ ...v, _score: candidateScore(v, domainArg) }));
+  const withScores = viable.map((v) => ({
+    ...v,
+    _score: candidateScore(v, { expectedHost, brandWords }),
+  }));
   withScores.sort((a, b) => b._score - a._score);
   const best = withScores[0];
 
