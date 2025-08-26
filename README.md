@@ -31,7 +31,6 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Amazon Payment Services (PayFort)
 - AsiaPay
 - Authorize.net
-- Codapay
 - Bambora
 - BillDesk
 - BlueSnap
@@ -42,8 +41,8 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Chase Payment Solutions
 - Checkout.com
 - Cielo
+- Codapay
 - Conekta
-- Easy Pay Direct
 - CSG Forte
 - CX Pay
 - Cybersource
@@ -52,6 +51,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - dLocal
 - DPO Group
 - Easebuzz
+- Easy Pay Direct
 - EBANX
 - Elavon
 - EVO Payments
@@ -60,9 +60,9 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - FastSpring
 - Fat Zebra
 - Fiserv
-- Flywire
 - Fiuu
 - Flutterwave
+- Flywire
 - Global Payments
 - GMO Payment Gateway
 - Helcim
@@ -84,12 +84,12 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Nuvei
 - Oceanpayment
 - Opn Payments (Omise)
+- Paddle
 - PagBrasil
 - PagSeguro
-- Paddle
 - PayGent
-- Payletter
 - PayKings
+- Payletter
 - Paymentwall
 - Payoneer
 - PayPal
@@ -127,8 +127,8 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 ## Supported orchestrators / proxies
 
 - ACI Worldwide
-- APEXX
 - Akurateco
+- APEXX
 - Basis Theory
 - BR-DGE
 - CellPoint Digital
