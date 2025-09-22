@@ -30,3 +30,28 @@ export interface PSPConfig {
   orchestrators?: PSPGroup;
   tsps?: PSPGroup;
 }
+
+/**
+ * JSON-friendly PSP types (unbranded) for tools/ingestion
+ * These mirror the PSP types but use plain strings to match psps.json.
+ */
+export interface PSPJson {
+  name: string;
+  regex?: string;
+  matchStrings?: string[];
+  url?: string;
+  image?: string;
+  summary?: string;
+  notice?: string;
+}
+
+export interface PSPJsonGroup {
+  notice?: string;
+  list: PSPJson[];
+}
+
+export interface PSPJsonConfig {
+  psps: PSPJson[];
+  orchestrators?: PSPJsonGroup;
+  tsps?: PSPJsonGroup;
+}

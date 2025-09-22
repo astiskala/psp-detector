@@ -546,16 +546,6 @@
       "url": "https://www.tyro.com"
     },
     {
-      "name": "Bambora",
-      "matchStrings": [
-        "checkout.bambora.com",
-        "libs.na.bambora.com"
-      ],
-      "image": "bambora",
-      "summary": "Bambora, now part of Worldline, provides various payment services for businesses, from e-commerce and mobile payments to in-store transactions. The company focuses on simplifying the payment process for small and medium-sized enterprises.",
-      "url": "https://www.bambora.com"
-    },
-    {
       "name": "EVO Payments",
       "matchStrings": [
         "cashierui-api.evopaymentgateway.com",
@@ -948,22 +938,24 @@
       "name": "Worldline",
       "matchStrings": [
         "payment.direct.worldline-solutions.com",
-        "payment.preprod.direct.worldline-solutions.com"
+        "payment.preprod.direct.worldline-solutions.com",
+        "checkout.bambora.com",
+        "libs.na.bambora.com"
       ],
       "image": "worldline",
       "summary": "Worldline is a leader in payment services, providing businesses with payment solutions. It offers various services, from payment terminals to e-commerce processing, intended to optimize transactions and improve customer experience.",
       "url": "https://www.worldline.com"
     },
     {
-      "name": "Braintree",
+      "name": "PayPal Enterprise Payments",
       "matchStrings": [
         "assets.braintreegateway.com",
         "js.braintreegateway.com"
       ],
       "image": "braintree",
-      "summary": "Braintree, a PayPal service, offers a full-stack payment platform intended to make online payments for merchants. Its services include credit card processing, PayPal, Apple Pay, and subscription billing, with a focus on providing solutions for businesses.",
+      "summary": "PayPal Enterprise Payments (formerly Braintree), offers a full-stack payment platform intended to make online payments for merchants. Its services include credit card processing, PayPal, Apple Pay, and subscription billing, with a focus on providing solutions for businesses.",
       "url": "https://www.braintreepayments.com",
-      "notice": "Because PayPal and Braintree are integrated, sometimes Braintree is misidentified as the PSP (even though a separate PSP may be used for card processing)."
+      "notice": "Because PayPal and PayPal Enterprise Payments are integrated, sometimes PayPal Enterprise Payments is misidentified as the PSP (even though a separate PSP may be used for card processing)."
     },
     {
       "name": "Shopify Payments",
@@ -1248,6 +1240,7 @@
       {
         "name": "Sabre SynXis",
         "matchStrings": [
+          "be.synxis.com",
           "synxis.com"
         ],
         "image": "sabre",
