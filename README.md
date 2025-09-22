@@ -30,11 +30,9 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Allinpay
 - Amazon Payment Services (PayFort)
 - AsiaPay
-- Authorize.net
-- Bambora
+- Authorize.ne
 - BillDesk
 - BlueSnap
-- Braintree
 - Cardknox
 - Cashfree Payments
 - Cellulant
@@ -93,6 +91,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Paymentwall
 - Payoneer
 - PayPal
+- PayPal Enterprise Payments
 - Paysafe
 - Paysera
 - Paystack
