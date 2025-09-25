@@ -95,6 +95,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - PayPal
 - PayPal Enterprise Payments
 - Paysafe
+- Paysbuy
 - Paysera
 - Paystack
 - PayTabs
