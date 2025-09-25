@@ -29,6 +29,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Alipay
 - Allinpay
 - Amazon Payment Services (PayFort)
+- AsiaBill
 - AsiaPay
 - Authorize.ne
 - BillDesk
