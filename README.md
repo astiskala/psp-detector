@@ -74,6 +74,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Maya
 - MercadoPago
 - Mollie
+- MONEI
 - Moneris
 - MyFatoorah
 - Network International
