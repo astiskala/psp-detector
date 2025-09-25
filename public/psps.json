@@ -1053,6 +1053,18 @@
       "image": "paysbuy",
       "summary": "Paysbuy is a Thailand-based payment service provider offering online payment solutions for e-commerce and digital businesses. It supports credit cards, bank transfers, and e-wallets, providing secure and convenient payment processing for merchants and consumers.",
       "url": "https://www.paysbuy.com"
+    },
+    {
+      "name": "AsiaBill",
+      "matchStrings": [
+        "safepay.asiabill.com",
+        "openapi.asiabill.com",
+        "testpay.asiabill.com",
+        "api-uat.asiabill.com"
+      ],
+      "image": "asiabill",
+      "summary": "AsiaBill is a global payment service provider specializing in cross-border e-commerce payments. It offers merchants secure payment processing, multi-currency support, and a wide range of local and international payment methods, with a focus on Asian markets.",
+      "url": "https://www.asiabill.com"
     }
   ],
   "orchestrators": {
