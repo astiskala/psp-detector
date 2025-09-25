@@ -107,6 +107,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - PayU
 - Plastiq
 - Plug'n Pay
+- Quickpay
 - Rapyd
 - Razorpay
 - Red Dot Payment
