@@ -1094,6 +1094,15 @@
       "image": "netbilling",
       "summary": "NETbilling is a payment gateway and merchant account provider offering secure online payment processing, fraud protection, and recurring billing solutions for e-commerce businesses.",
       "url": "https://www.netbilling.com"
+    },
+    {
+      "name": "Plug'n Pay",
+      "matchStrings": [
+        "pay1.plugnpay.com"
+      ],
+      "image": "plugnpay",
+      "summary": "Plug'n Pay is a payment gateway and merchant services provider offering secure online payment processing, fraud prevention, and recurring billing solutions for businesses of all sizes. Their platform supports a variety of payment methods and provides integration tools for e-commerce.",
+      "url": "https://www.plugnpay.com"
     }
   ],
   "orchestrators": {
