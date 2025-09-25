@@ -1027,8 +1027,20 @@
         "paykings.transactiongateway.com"
       ],
       "image": "paykings",
-      "summary": "PayKings provides merchant accounts and a white‑label gateway solution. Their hosted payment fields and tokenization scripts are typically served from secure.paykingsgateway.com.",
+      "summary": "PayKings provides merchant accounts and a white‑label gateway solution. Their platform supports a variety of payment methods and currencies, with a focus on high-risk industries.",
       "url": "https://www.paykings.com"
+    },
+    {
+      "name": "LianLian",
+      "matchStrings": [
+        "api.lianlianpay.co.th",
+        "iframe.lianlianpay.co.th",
+        "sandbox-th.lianlianpay-inc.com",
+        "sandbox-checkout-iframe.lianlianpay-inc.com"
+      ],
+      "image": "lianlian",
+      "summary": "LianLian is a payment service provider offering secure online payment solutions, with a focus on cross-border transactions and e-commerce in Asia. It supports a variety of payment methods and provides APIs for seamless integration.",
+      "url": "https://www.lianlianpay.com"
     }
   ],
   "orchestrators": {
