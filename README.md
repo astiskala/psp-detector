@@ -67,6 +67,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Inicis
 - Judopay
 - KSNET
+- LianLian
 - Linkly
 - Mastercard Gateway (MPGS)
 - Maya
