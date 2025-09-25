@@ -77,6 +77,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - MONEI
 - Moneris
 - MyFatoorah
+- NETbilling
 - Network International
 - Nexi Group (Nets)
 - NHN KCP
