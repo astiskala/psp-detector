@@ -69,6 +69,20 @@
       "url": "https://paymentservices.amazon.com/"
     },
     {
+      "name": "NTT DATA",
+      "matchStrings": [
+        "payment.ipay88.co.id",
+        "payment.ipay88.com.my",
+        "payment.ipay88.com.ph",
+        "sandbox.ipay88.co.id",
+        "sandbox.ipay88.com.my",
+        "sandbox.ipay88.com.ph"
+      ],
+      "image": "nttdata",
+      "summary": "NTT DATA (formerly iPay88) is a leading payment gateway provider in Southeast Asia, offering secure online payment solutions for merchants across Indonesia, Malaysia, and the Philippines.",
+      "url": "https://www.nttdata.com/global/en/services/ipay88"
+    },
+    {
       "name": "Checkout.com",
       "matchStrings": [
         "cdn.checkout.com",
