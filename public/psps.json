@@ -1103,6 +1103,16 @@
       "image": "plugnpay",
       "summary": "Plug'n Pay is a payment gateway and merchant services provider offering secure online payment processing, fraud prevention, and recurring billing solutions for businesses of all sizes. Their platform supports a variety of payment methods and provides integration tools for e-commerce.",
       "url": "https://www.plugnpay.com"
+    },
+    {
+      "name": "Quickpay",
+      "matchStrings": [
+        "api.quickpay.net",
+        "payment.quickpay.net"
+      ],
+      "image": "quickpay",
+      "summary": "Quickpay is a payment service provider offering online payment solutions for businesses, including card payments, mobile payments, and recurring billing. Their platform supports a wide range of payment methods and provides integration tools for e-commerce and subscription services.",
+      "url": "https://quickpay.net"
     }
   ],
   "orchestrators": {
