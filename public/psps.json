@@ -1065,6 +1065,17 @@
       "image": "asiabill",
       "summary": "AsiaBill is a global payment service provider specializing in cross-border e-commerce payments. It offers merchants secure payment processing, multi-currency support, and a wide range of local and international payment methods, with a focus on Asian markets.",
       "url": "https://www.asiabill.com"
+    },
+    {
+      "name": "MONEI",
+      "matchStrings": [
+        "api.monei.com",
+        "js.monei.com",
+        "secure.monei.com"
+      ],
+      "image": "monei",
+      "summary": "MONEI is a modern payment service provider offering a unified platform for online payments, subscriptions, and digital commerce. It supports a wide range of payment methods and provides APIs and hosted solutions for seamless integration.",
+      "url": "https://monei.com"
     }
   ],
   "orchestrators": {
