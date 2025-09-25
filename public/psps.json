@@ -1076,6 +1076,15 @@
       "image": "monei",
       "summary": "MONEI is a modern payment service provider offering a unified platform for online payments, subscriptions, and digital commerce. It supports a wide range of payment methods and provides APIs and hosted solutions for seamless integration.",
       "url": "https://monei.com"
+    },
+    {
+      "name": "NETbilling",
+      "matchStrings": [
+        "secure.netbilling.com"
+      ],
+      "image": "netbilling",
+      "summary": "NETbilling is a payment gateway and merchant account provider offering secure online payment processing, fraud protection, and recurring billing solutions for e-commerce businesses.",
+      "url": "https://www.netbilling.com"
     }
   ],
   "orchestrators": {
