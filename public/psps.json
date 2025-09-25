@@ -1041,6 +1041,18 @@
       "image": "lianlian",
       "summary": "LianLian is a payment service provider offering secure online payment solutions, with a focus on cross-border transactions and e-commerce in Asia. It supports a variety of payment methods and provides APIs for seamless integration.",
       "url": "https://www.lianlianpay.com"
+    },
+    {
+      "name": "Paysbuy",
+      "matchStrings": [
+        "www.paysbuy.com/paynow.aspx",
+        "demo.paysbuy.com/paynow.aspx",
+        "paysbuy.com/api_paynow",
+        "demo.paysbuy.com/api_paynow"
+      ],
+      "image": "paysbuy",
+      "summary": "Paysbuy is a Thailand-based payment service provider offering online payment solutions for e-commerce and digital businesses. It supports credit cards, bank transfers, and e-wallets, providing secure and convenient payment processing for merchants and consumers.",
+      "url": "https://www.paysbuy.com"
     }
   ],
   "orchestrators": {
