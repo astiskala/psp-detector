@@ -130,6 +130,15 @@
       "url": "https://easebuzz.in"
     },
     {
+      "name": "PayJunction",
+      "matchStrings": [
+        "www.payjunctionlabs.com/trinity"
+      ],
+      "image": "payjunction",
+      "summary": "PayJunction is a payment processing provider offering solutions for in-person and online transactions, including credit card processing, e-commerce integration, and digital signature capture. Their platform is designed for businesses seeking secure, efficient, and paperless payment workflows.",
+      "url": "https://www.payjunction.com"
+    },
+    {
       "name": "Skrill",
       "matchStrings": [
         "pay.skrill.com"

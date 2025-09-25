@@ -12,6 +12,7 @@ These demos from various payment providers can be used to test this extension.
 * FastSpring: https://fs-react-devrels.vercel.app
 * Global Payments: https://demo.globalpay.com/merchants
 * Nuvei: https://demos.nuvei.com/intdemo-ecom/checkout/
+* PayJunction: https://codepen.io/PayJunction-Support/pen/LYKMGOw
 * PayPal: https://demo.paypal.com/us/paypal/v5/physical-goods/checkout
 * PayU: https://widget.payu.in/demo
 * Razorpay: https://razorpay.com/demo/
