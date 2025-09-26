@@ -1113,6 +1113,16 @@
       "image": "quickpay",
       "summary": "Quickpay is a payment service provider offering online payment solutions for businesses, including card payments, mobile payments, and recurring billing. Their platform supports a wide range of payment methods and provides integration tools for e-commerce and subscription services.",
       "url": "https://quickpay.net"
+    },
+    {
+      "name": "senangPay",
+      "matchStrings": [
+        "app.senangpay.my",
+        "sandbox.senangpay.my"
+      ],
+      "image": "senangpay",
+      "summary": "senangPay is a Malaysian payment gateway providing secure online payment solutions for businesses. It supports credit cards, online banking, and e-wallets, with easy integration for e-commerce platforms and a focus on simplicity for merchants.",
+      "url": "https://senangpay.my"
     }
   ],
   "orchestrators": {
