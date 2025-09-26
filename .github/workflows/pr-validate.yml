@@ -1,9 +1,7 @@
-name: Build and Release Extension
+name: PR Validate
 
 on:
-  push:
-    branches:
-      - main
+  pull_request:
     paths:
       - 'src/**'
       - 'public/**'
@@ -19,7 +17,7 @@ on:
       - '.github/workflows/**'
 
 jobs:
-  build-and-release:
+  pr-validate:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -41,22 +39,3 @@ jobs:
 
       - name: Run integration tests (Playwright)
         run: npx playwright test tests/integration --project=chromium --reporter=line
-
-      - name: Get version from manifest
-        id: manifest
-        run: |
-          VERSION=$(jq -r .version dist/manifest.json)
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Archive dist folder
-        run: zip -r psp-detector-${{ steps.manifest.outputs.version }}.zip dist
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ steps.manifest.outputs.version }}
-          name: psp-detector-${{ steps.manifest.outputs.version }}.zip
-          body: "Automated build and release."
-          files: psp-detector-${{ steps.manifest.outputs.version }}.zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
