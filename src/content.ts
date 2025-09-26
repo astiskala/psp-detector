@@ -232,6 +232,11 @@ class ContentScript {
       if (action) sources.push(action);
     });
 
+    document.querySelectorAll('link[href]').forEach((link) => {
+      const href = (link as HTMLLinkElement).href;
+      if (href) sources.push(href);
+    });
+
     return sources;
   }
 
