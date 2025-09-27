@@ -6,7 +6,7 @@
 export { MessageAction, PSP_DETECTION_EXEMPT } from './core';
 
 // Branded types and converters - primary types for type safety
-export type { PSPName, URL, RegexPattern } from './branded';
+export type { PSPName, URL, RegexPattern, TabId } from './branded';
 export { TypeConverters } from './branded';
 
 // Core PSP types using branded types

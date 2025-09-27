@@ -187,25 +187,10 @@ class ContentScript {
 
     const result = this.pspDetector.detectPSP(url, scanContent);
 
-    switch (result.type) {
-    case 'detected':
+    if (result.type === 'detected' || result.type === 'exempt') {
       await this.handlePSPDetection(result);
-      break;
-    case 'exempt':
-      await this.handlePSPDetection({ type: 'exempt', reason: result.reason, url: result.url });
-      break;
-    case 'none':
-      // No PSP detected, continue monitoring
-      break;
-    case 'error':
+    } else if (result.type === 'error') {
       logger.error('PSP detection error:', result.error);
-      break;
-    default: {
-      // Type safety: ensure all cases are handled
-      // Exhaustive check for switch statement
-      void result;
-      break;
-    }
     }
   }
 
@@ -244,81 +229,74 @@ class ContentScript {
    * Handle PSP detection result (shared logic)
    * @private
    */
-  private async handlePSPDetection(result: PSPDetectionResult): Promise<void> {
+  private async handlePSPDetection(
+    result: Extract<PSPDetectionResult, { type: 'detected' | 'exempt' }>,
+  ): Promise<void> {
     try {
-      // Early duplicate detection check
-      let pspName: string | null = null;
-      if (result.type === 'detected') {
-        pspName = result.psp;
-      } else if (result.type === 'exempt') {
-        pspName = PSP_DETECTION_EXEMPT;
-      }
+      const pspName =
+        result.type === 'detected' ? result.psp : PSP_DETECTION_EXEMPT;
 
       // Check for duplicate detection
-      if (pspName && this.reportedPSPs.has(pspName)) {
+      if (this.reportedPSPs.has(pspName)) {
         logger.debug(`PSP ${pspName} already reported, skipping duplicate`);
         return;
       }
 
       // Mark as reported
-      if (pspName) {
-        this.reportedPSPs.add(pspName);
-      }
+      this.reportedPSPs.add(pspName);
 
       const tabResponse = await this.sendMessage<{ tabId: number }>({
         action: MessageAction.GET_TAB_ID,
       });
 
-      if (tabResponse?.tabId) {
-        const tabId = TypeConverters.toTabId(tabResponse.tabId);
+      if (!tabResponse?.tabId) {
+        logger.warn('Content: Could not get tab ID, cannot send message');
+        return;
+      }
 
-        let detectionInfo: { method: 'matchString' | 'regex'; value: string } | undefined;
-        let url: string | undefined;
+      const tabId = TypeConverters.toTabId(tabResponse.tabId);
+      const pspNameForMessage = TypeConverters.toPSPName(pspName);
 
-        if (result.type === 'detected') {
-          detectionInfo = result.detectionInfo;
-        } else if (result.type === 'exempt') {
-          url = result.url;
-        }
-
-        if (tabId && pspName) {
-          logger.debug(
-            'Content: Sending PSP detection to background - ' +
-            `PSP: ${pspName}, TabID: ${tabId}`,
-          );
-
-          const messageData = {
-            action: MessageAction.DETECT_PSP,
-            data: {
-              psp: TypeConverters.toPSPName(pspName),
-              tabId: tabId,
-              detectionInfo,
-              url,
-            },
-          };
-
-          logger.debug('Content: Message data:', messageData);
-
-          try {
-            await this.sendMessage(messageData);
-            logger.debug('Content: Successfully sent PSP detection message to background');
-          } catch (error) {
-            logger.error('Content: Failed to send PSP detection message:', error);
-            throw error; // Re-throw to be caught by outer try-catch
-          }
-        } else {
-          logger.warn(
-            `Content: Invalid tabId (${tabId}) or pspName (${pspName}), ` +
+      if (!tabId || !pspNameForMessage) {
+        logger.warn(
+          `Content: Invalid tabId (${tabId}) or pspName (${pspName}), ` +
             'cannot send message',
-          );
-        }
+        );
+
+        return;
+      }
+
+      logger.debug(
+        'Content: Sending PSP detection to background - ' +
+          `PSP: ${pspName}, TabID: ${tabId}`,
+      );
+
+      const messageData = {
+        action: MessageAction.DETECT_PSP,
+        data: {
+          psp: pspNameForMessage,
+          tabId: tabId,
+          detectionInfo:
+            result.type === 'detected' ? result.detectionInfo : undefined,
+          url: result.type === 'exempt' ? result.url : undefined,
+        },
+      };
+
+      logger.debug('Content: Message data:', messageData);
+
+      try {
+        await this.sendMessage(messageData);
+        logger.debug(
+          'Content: Successfully sent PSP detection message to background',
+        );
+      } catch (error) {
+        logger.error('Content: Failed to send PSP detection message:', error);
+        throw error; // Re-throw to be caught by outer try-catch
       }
 
       // Mark as detected for all PSPs, including exempt domains
       this.pspDetected = true;
-      if (result.type === 'detected' || result.type === 'exempt') {
-        this.domObserver.stopObserving();
-      }
+      this.domObserver.stopObserving();
     } catch (error) {
       // Handle extension context invalidation gracefully
       if (

@@ -1,7 +1,7 @@
 /**
  * Message types for Chrome extension communication
  */
-import type { PSPName, TabId } from './branded';
+import type { PSPName, TabId, URL } from './branded';
 import type { PSPConfig } from './psp';
 import type { MessageAction } from './core';
 import type { PSPDetectionResult } from './detection';
@@ -24,7 +24,7 @@ export interface PSPDetectionData {
     method: 'matchString' | 'regex';
     value: string;
   };
-  url?: string; // URL for exempt domains
+  url?: URL; // URL for exempt domains
 }
 
 /**

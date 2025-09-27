@@ -23,6 +23,10 @@ describe('DOMObserverService', () => {
     service.initialize(callback, 0); // no debounce for test
     service.startObserving();
 
+    // Trigger a mutation
+    const newNode = document.createElement('div');
+    document.body.appendChild(newNode);
+
     // Wait for the mock observer to trigger
     await waitFor(TEST_TIMEOUTS.DOM_MUTATION_DELAY);
 
