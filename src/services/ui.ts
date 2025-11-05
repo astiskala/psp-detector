@@ -19,14 +19,14 @@ export class UIService {
    */
   private initializeDOMElements(): void {
     const elementIds = ['name', 'description', 'notice', 'url', 'image'];
-    elementIds.forEach((id) => {
+    for (const id of elementIds) {
       const element = document.getElementById(`psp-${id}`);
       if (!element) {
         throw new Error(`Element psp-${id} not found`);
       }
 
       this.elements[id] = element;
-    });
+    }
 
     // Detection details elements (optional)
     const detectionElement = document.getElementById('psp-detected-domain');

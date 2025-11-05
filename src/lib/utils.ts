@@ -94,13 +94,13 @@ export const memoryUtils = {
    * @param cleanupFns - Array of cleanup functions
    */
   cleanup: (cleanupFns: (() => void)[]): void => {
-    cleanupFns.forEach((fn) => {
+    for (const fn of cleanupFns) {
       try {
         fn();
       } catch (cleanupError) {
         logger.error('Cleanup function failed:', cleanupError);
       }
-    });
+    }
   },
 
   /**
@@ -108,9 +108,9 @@ export const memoryUtils = {
    * @param context - Context for logging
    */
   checkMemoryUsage: (context: string): void => {
-    if (typeof window !== 'undefined' && 'performance' in window &&
-        'memory' in window.performance) {
-      const memory = (window.performance as unknown as {
+    if (globalThis.window !== undefined && 'performance' in globalThis.window &&
+        'memory' in globalThis.window.performance) {
+      const memory = (globalThis.window.performance as unknown as {
         memory: {
           usedJSHeapSize: number;
           totalJSHeapSize: number;
@@ -143,13 +143,13 @@ export const memoryUtils = {
         resources.push(cleanup);
       },
       cleanup: (): void => {
-        resources.forEach((fn) => {
+        for (const fn of resources) {
           try {
             fn();
           } catch (error) {
             logger.error('Resource cleanup failed:', error);
           }
-        });
+        }
 
         resources.length = 0;
       },
@@ -284,7 +284,7 @@ export const errorUtils = {
     delay = 1000,
   ): (() => Promise<T>) => {
     return async(): Promise<T> => {
-      let lastError: Error;
+      let lastError: Error | undefined;
 
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         try {
@@ -305,7 +305,8 @@ export const errorUtils = {
         }
       }
 
-      throw lastError!;
+      // This line should never be reached, but TypeScript requires it
+      throw lastError ?? new Error('All retry attempts failed');
     };
   },
 };

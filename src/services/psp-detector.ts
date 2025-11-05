@@ -1,4 +1,4 @@
-import type { PSPConfig } from '../types';
+import type { PSPConfig, PSP } from '../types';
 import { PSPDetectionResult, TypeConverters } from '../types';
 import { safeCompileRegex, logger, getAllProviders } from '../lib/utils';
 
@@ -39,6 +39,32 @@ export class PSPDetectorService {
    * Detect PSP on the current page with enhanced error handling and validation
    */
   public detectPSP(url: string, content: string): PSPDetectionResult {
+    // Validate initialization and inputs
+    const validationResult = this.validateDetectionInputs(url, content);
+    if (validationResult) {
+      return validationResult;
+    }
+
+    const brandedURL = TypeConverters.toURL(url)!;
+
+    // Check for exempt domains
+    const exemptResult = this.checkExemptDomains(url, brandedURL);
+    if (exemptResult) {
+      return exemptResult;
+    }
+
+    // Perform detection
+    return this.performDetection(url, content);
+  }
+
+  /**
+   * Validate detection inputs
+   * @private
+   */
+  private validateDetectionInputs(
+    url: string,
+    content: string,
+  ): PSPDetectionResult | null {
     if (!this.pspConfig) {
       logger.warn('PSP detector not properly initialized');
       return PSPDetectionResult.error(
@@ -47,7 +73,6 @@ export class PSPDetectorService {
       );
     }
 
-    // Validate inputs
     if (typeof url !== 'string' || url.trim().length === 0) {
       return PSPDetectionResult.error(
         new Error('Invalid URL provided'),
@@ -70,49 +95,82 @@ export class PSPDetectorService {
       );
     }
 
-    // Check if the top-level window URL contains any exempt domains
-    let urlToCheck = url;
+    return null;
+  }
+
+  /**
+   * Check if URL is in exempt domains
+   * @private
+   */
+  private checkExemptDomains(
+    url: string,
+    brandedURL: string & { readonly __brand: 'URL' },
+  ): PSPDetectionResult | null {
+    if (this.exemptDomains.length === 0) {
+      return null;
+    }
+
+    // Get the URL to check (prefer top-level window URL)
+    const urlToCheck = this.getTopLevelUrl(url);
+
     try {
-      // In browser context, use window.top.location.href as specified in
-      // requirements. But only if it's not localhost (test environment)
-      if (typeof window !== 'undefined' && window.top?.location?.href) {
-        const topUrl = window.top.location.href;
-        if (!topUrl.includes('localhost')) {
-          urlToCheck = topUrl;
-        }
+      const host = new globalThis.URL(urlToCheck).hostname.toLowerCase();
+      if (this.isHostExempt(host)) {
+        logger.debug('URL is exempt from PSP detection:', urlToCheck);
+        return PSPDetectionResult.exempt(
+          'URL contains exempt domain',
+          brandedURL,
+        );
+      }
+    } catch {
+      // Fallback to legacy substring logic if URL parsing fails
+      if (this.exemptDomains.some(domain => urlToCheck.includes(domain))) {
+        logger.debug(
+          'URL is exempt from PSP detection (fallback):',
+          urlToCheck,
+        );
+
+        return PSPDetectionResult.exempt(
+          'URL contains exempt domain',
+          brandedURL,
+        );
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Get the top-level URL to check (prefer window.top if available)
+   * @private
+   */
+  private getTopLevelUrl(url: string): string {
+    try {
+      const topUrl = globalThis.window?.top?.location?.href;
+      if (topUrl && !topUrl.includes('localhost')) {
+        return topUrl;
       }
     } catch {
       // window.top might not be accessible due to cross-origin restrictions
-      // Fall back to using the provided URL
     }
 
-    if (this.exemptDomains.length > 0) {
-      try {
-        const host = new globalThis.URL(urlToCheck).hostname.toLowerCase();
-        if (this.isHostExempt(host)) {
-          logger.debug('URL is exempt from PSP detection:', urlToCheck);
-          return PSPDetectionResult.exempt(
-            'URL contains exempt domain',
-            brandedURL,
-          );
-        }
-      } catch {
-        // Fallback to legacy substring logic if URL parsing fails
-        if (this.exemptDomains.some(domain => urlToCheck.includes(domain))) {
-          logger.debug('URL is exempt from PSP detection (fallback):', urlToCheck);
-          return PSPDetectionResult.exempt(
-            'URL contains exempt domain',
-            brandedURL,
-          );
-        }
-      }
-    }
+    return url;
+  }
 
+  /**
+   * Perform the actual PSP detection
+   * @private
+   */
+  private performDetection(
+    url: string,
+    content: string,
+  ): PSPDetectionResult {
     try {
       const pageContent = `${url}\n\n${content}`;
 
       /* Use cached providers if available */
-      const providers = this.providerCache || getAllProviders(this.pspConfig);
+      const providers = this.providerCache ||
+        getAllProviders(this.pspConfig!);
 
       if (providers.length === 0) {
         logger.warn('No PSP providers available for detection');
@@ -122,50 +180,22 @@ export class PSPDetectorService {
         );
       }
 
-      // Performance optimization: limit content size to prevent excessive
-      // processing
-      const maxContentSize = 1024 * 1024; // 1MB limit
-      const truncatedContent = pageContent.length > maxContentSize
-        ? pageContent.substring(0, maxContentSize)
-        : pageContent;
-
-      if (pageContent.length > maxContentSize) {
-        logger.debug(
-          `Content truncated from ${pageContent.length} to ` +
-          `${maxContentSize} characters`,
-        );
-      }
+      // Truncate content if needed
+      const truncatedContent = this.truncateContent(pageContent);
 
       // First pass: Match strings (faster)
-      for (const psp of providers) {
-        if (psp.matchStrings?.length) {
-          for (const matchString of psp.matchStrings) {
-            if (truncatedContent.includes(matchString)) {
-              logger.info('PSP detected via matchStrings:', psp.name);
-              return PSPDetectionResult.detected(psp.name, {
-                method: 'matchString',
-                value: matchString,
-              });
-            }
-          }
-        }
+      const matchStringResult = this.detectByMatchStrings(
+        providers,
+        truncatedContent,
+      );
+      if (matchStringResult) {
+        return matchStringResult;
       }
 
       // Second pass: Regex patterns (slower)
-      for (const psp of providers) {
-        try {
-          if (psp.compiledRegex?.test(truncatedContent)) {
-            logger.info('PSP detected via regex:', psp.name);
-            return PSPDetectionResult.detected(psp.name, {
-              method: 'regex',
-              value: psp.regex || 'unknown',
-            });
-          }
-        } catch (regexError) {
-          logger.warn(`Regex test failed for PSP ${psp.name}:`, regexError);
-
-          // Continue with other PSPs instead of failing completely
-        }
+      const regexResult = this.detectByRegex(providers, truncatedContent);
+      if (regexResult) {
+        return regexResult;
       }
 
       return PSPDetectionResult.none(providers.length);
@@ -176,6 +206,76 @@ export class PSPDetectorService {
         'detection_process',
       );
     }
+  }
+
+  /**
+   * Truncate content if it exceeds max size
+   * @private
+   */
+  private truncateContent(content: string): string {
+    const maxContentSize = 1024 * 1024; // 1MB limit
+    if (content.length > maxContentSize) {
+      logger.debug(
+        `Content truncated from ${content.length} to ` +
+        `${maxContentSize} characters`,
+      );
+
+      return content.substring(0, maxContentSize);
+    }
+
+    return content;
+  }
+
+  /**
+   * Detect PSP by match strings
+   * @private
+   */
+  private detectByMatchStrings(
+    providers: PSP[],
+    content: string,
+  ): PSPDetectionResult | null {
+    for (const psp of providers) {
+      if (psp.matchStrings?.length) {
+        for (const matchString of psp.matchStrings) {
+          if (content.includes(matchString)) {
+            logger.info('PSP detected via matchStrings:', psp.name);
+            return PSPDetectionResult.detected(psp.name, {
+              method: 'matchString',
+              value: matchString,
+            });
+          }
+        }
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Detect PSP by regex patterns
+   * @private
+   */
+  private detectByRegex(
+    providers: PSP[],
+    content: string,
+  ): PSPDetectionResult | null {
+    for (const psp of providers) {
+      try {
+        if (psp.compiledRegex?.test(content)) {
+          logger.info('PSP detected via regex:', psp.name);
+          return PSPDetectionResult.detected(psp.name, {
+            method: 'regex',
+            value: psp.regex || 'unknown',
+          });
+        }
+      } catch (regexError) {
+        logger.warn(`Regex test failed for PSP ${psp.name}:`, regexError);
+
+        // Continue with other PSPs instead of failing completely
+      }
+    }
+
+    return null;
   }
 
   /**

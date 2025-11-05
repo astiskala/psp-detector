@@ -4,7 +4,7 @@
 
 // MutationObserver mock for Jest/JSDOM - centralized implementation
 export class MockMutationObserver {
-  private callback: MutationCallback;
+  private readonly callback: MutationCallback;
   public observe: jest.Mock;
   public disconnect: jest.Mock;
 
@@ -35,7 +35,7 @@ export class MockMutationObserver {
  * Sets up the global MutationObserver mock
  */
 export function setupMutationObserverMock(): void {
-  global.MutationObserver =
+  globalThis.MutationObserver =
     MockMutationObserver as unknown as typeof MutationObserver;
 }
 
@@ -50,7 +50,7 @@ export function setupCleanDOM(): void {
  * Sets up Chrome runtime mock for extension testing
  */
 export function setupChromeRuntimeMock(): void {
-  global.chrome = {
+  globalThis.chrome = {
     runtime: {
       getURL: jest.fn((path: string) => `chrome-extension://test-id/${path}`),
     },
@@ -90,7 +90,7 @@ export function createMockConsole(): {
 export function restoreWindow(
   originalWindow: Window & typeof globalThis,
 ): void {
-  global.window = originalWindow;
+  globalThis.window = originalWindow;
 }
 
 /**

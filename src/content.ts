@@ -6,27 +6,27 @@
  */
 import { PSPDetectorService } from './services/psp-detector';
 import { DOMObserverService } from './services/dom-observer';
-import {
-  MessageAction,
-  TypeConverters,
-  PSPDetectionResult,
-} from './types';
 import type {
   ChromeMessage,
   PSPConfigResponse,
 } from './types';
-import { PSP_DETECTION_EXEMPT } from './types';
+import {
+  MessageAction,
+  TypeConverters,
+  PSPDetectionResult,
+  PSP_DETECTION_EXEMPT,
+} from './types';
 import {
   logger,
   memoryUtils,
 } from './lib/utils';
 
 class ContentScript {
-  private pspDetector: PSPDetectorService;
-  private domObserver: DOMObserverService;
+  private readonly pspDetector: PSPDetectorService;
+  private readonly domObserver: DOMObserverService;
   private pspDetected = false;
-  private reportedPSPs = new Set<string>();
-  private processedIframes = new Set<string>();
+  private readonly reportedPSPs = new Set<string>();
+  private readonly processedIframes = new Set<string>();
   private lastDetectionTime = 0;
   private readonly detectionCooldown = 500; // 500ms cooldown between detections
   private readonly maxIframeProcessing = 10; // Limit iframe processing
@@ -72,8 +72,8 @@ class ContentScript {
         this.setupDOMObserver();
 
         // Schedule initial detection
-        if (typeof window.requestIdleCallback === 'function') {
-          window.requestIdleCallback((): void => {
+        if (typeof globalThis.requestIdleCallback === 'function') {
+          globalThis.requestIdleCallback((): void => {
             void this.detectPSP();
           });
         } else {
@@ -96,8 +96,8 @@ class ContentScript {
       }
     };
 
-    if (typeof window.requestIdleCallback === 'function') {
-      window.requestIdleCallback((): void => {
+    if (typeof globalThis.requestIdleCallback === 'function') {
+      globalThis.requestIdleCallback((): void => {
         void setup();
       });
     } else {
@@ -195,32 +195,32 @@ class ContentScript {
   }
 
   /**
-   * Collect scan sources optimized for performance
+   * Collect additional scan sources from the page
    * @private
    */
   private collectScanSources(): string[] {
     const sources: string[] = [];
 
     // Use more efficient collection methods
-    document.querySelectorAll('script[src]').forEach((script) => {
+    for (const script of document.querySelectorAll('script[src]')) {
       const src = (script as HTMLScriptElement).src;
       if (src) sources.push(src);
-    });
+    }
 
-    document.querySelectorAll('iframe[src]').forEach((iframe) => {
+    for (const iframe of document.querySelectorAll('iframe[src]')) {
       const src = (iframe as HTMLIFrameElement).src;
       if (src) sources.push(src);
-    });
+    }
 
-    document.querySelectorAll('form[action]').forEach((form) => {
+    for (const form of document.querySelectorAll('form[action]')) {
       const action = (form as HTMLFormElement).action;
       if (action) sources.push(action);
-    });
+    }
 
-    document.querySelectorAll('link[href]').forEach((link) => {
+    for (const link of document.querySelectorAll('link[href]')) {
       const href = (link as HTMLLinkElement).href;
       if (href) sources.push(href);
-    });
+    }
 
     return sources;
   }
@@ -323,50 +323,86 @@ class ContentScript {
   ): Promise<T> {
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
-        // Check if extension context is still valid
-        if (!chrome.runtime?.id) {
-          throw new Error('Extension context invalidated');
-        }
-
-        const response = await new Promise<T>((resolve, reject) => {
-          chrome.runtime.sendMessage(message, (response) => {
-            if (chrome.runtime.lastError) {
-              reject(new Error(chrome.runtime.lastError.message || 'Unknown error'));
-            } else {
-              resolve(response as T);
-            }
-          });
-        });
-
-        return response;
+        return await this.attemptSendMessage<T>(message);
       } catch (error) {
-        const isLastAttempt = attempt === retries;
-        const errorMessage = error instanceof Error ?
-          error.message : String(error);
+        const shouldRetry = this.shouldRetryMessage(
+          error,
+          attempt,
+          retries,
+        );
 
-        // Handle service worker restart scenarios
-        if (errorMessage.includes('Extension context invalidated') ||
-            errorMessage.includes('receiving end does not exist') ||
-            errorMessage.includes('service worker was stopped')) {
-          if (isLastAttempt) {
-            logger.warn('Failed to communicate with service worker after retries');
-            throw new Error('Service worker communication failed');
-          } else {
-            // Wait briefly before retry to allow service worker to restart
-            await new Promise(waitResolve =>
-              setTimeout(waitResolve, 100 * attempt),
-            );
-
-            continue;
-          }
+        if (!shouldRetry) {
+          throw error;
         }
 
-        // For other errors, don't retry
-        throw error;
+        // Wait briefly before retry to allow service worker to restart
+        await new Promise(waitResolve =>
+          setTimeout(waitResolve, 100 * attempt),
+        );
       }
     }
 
     throw new Error('Max retries exceeded');
+  }
+
+  /**
+   * Attempt to send a message to the background script
+   * @private
+   */
+  private async attemptSendMessage<T>(
+    message: ChromeMessage,
+  ): Promise<T> {
+    // Check if extension context is still valid
+    if (!chrome.runtime?.id) {
+      throw new Error('Extension context invalidated');
+    }
+
+    return new Promise<T>((resolve, reject) => {
+      chrome.runtime.sendMessage(message, (response) => {
+        if (chrome.runtime.lastError) {
+          reject(
+            new Error(chrome.runtime.lastError.message || 'Unknown error'),
+          );
+        } else {
+          resolve(response as T);
+        }
+      });
+    });
+  }
+
+  /**
+   * Determine if message should be retried
+   * @private
+   */
+  private shouldRetryMessage(
+    error: unknown,
+    attempt: number,
+    maxRetries: number,
+  ): boolean {
+    const isLastAttempt = attempt === maxRetries;
+    const errorMessage = error instanceof Error ?
+      error.message : String(error);
+
+    // Handle service worker restart scenarios
+    const isServiceWorkerError =
+      errorMessage.includes('Extension context invalidated') ||
+      errorMessage.includes('receiving end does not exist') ||
+      errorMessage.includes('service worker was stopped');
+
+    if (isServiceWorkerError) {
+      if (isLastAttempt) {
+        logger.warn(
+          'Failed to communicate with service worker after retries',
+        );
+
+        return false;
+      }
+
+      return true;
+    }
+
+    // For other errors, don't retry
+    return false;
   }
 
   /**
@@ -440,29 +476,29 @@ class ContentScript {
    */
   private extractNestedSources(doc: Document, content: string[]): void {
     // Get nested iframe sources
-    doc.querySelectorAll('iframe[src]').forEach(nestedIframe => {
+    for (const nestedIframe of doc.querySelectorAll('iframe[src]')) {
       const nestedSrc = (nestedIframe as HTMLIFrameElement).src;
       if (nestedSrc && !this.processedIframes.has(nestedSrc)) {
         content.push(nestedSrc);
         this.processedIframes.add(nestedSrc);
       }
-    });
+    }
 
     // Get script sources from iframe
-    doc.querySelectorAll('script[src]').forEach(script => {
+    for (const script of doc.querySelectorAll('script[src]')) {
       const scriptSrc = (script as HTMLScriptElement).src;
       if (scriptSrc) {
         content.push(scriptSrc);
       }
-    });
+    }
 
     // Get form actions from iframe
-    doc.querySelectorAll('form[action]').forEach(form => {
+    for (const form of doc.querySelectorAll('form[action]')) {
       const action = (form as HTMLFormElement).action;
       if (action) {
         content.push(action);
       }
-    });
+    }
   }
 
   /**
@@ -472,7 +508,7 @@ class ContentScript {
   private canAccessIframe(src: string): boolean {
     try {
       const srcOrigin = new URL(src, document.baseURI).origin;
-      return srcOrigin === window.location.origin;
+      return srcOrigin === globalThis.location.origin;
     } catch {
       return false;
     }
@@ -486,7 +522,7 @@ interface WindowWithPSPDetector {
     url: string;
   } | undefined;
 }
-const windowExt = window as WindowWithPSPDetector;
+const windowExt = globalThis as WindowWithPSPDetector;
 
 const currentUrl = document.URL;
 const existingScript = windowExt.pspDetectorContentScript;
@@ -509,80 +545,65 @@ const checkBackgroundState = async(): Promise<boolean> => {
   }
 };
 
-// Allow re-initialization if URL has changed (new page navigation)
-// OR if background script has lost state (extension context restored)
-if (existingScript?.initialized && existingScript.url === currentUrl) {
-  // Check if background script still has state for this tab
-  checkBackgroundState().then((hasBackgroundState) => {
-    if (!hasBackgroundState) {
-      logger.debug('Background script lost state, forcing re-initialization');
+// Helper to reinitialize content script
+const reinitializeContentScript = async(): Promise<void> => {
+  windowExt.pspDetectorContentScript = undefined;
 
-      // Clear the window state to force re-initialization
+  const contentScript = new ContentScript();
+  contentScript.resetForNewPage();
+
+  windowExt.pspDetectorContentScript = {
+    initialized: true,
+    url: currentUrl,
+  };
+
+  globalThis.addEventListener('beforeunload', (): void => {
+    contentScript.cleanup();
+    if (windowExt.pspDetectorContentScript?.url === currentUrl) {
       windowExt.pspDetectorContentScript = undefined;
-
-      // Re-run initialization logic
-      const contentScript = new ContentScript();
-      contentScript.resetForNewPage();
-
-      windowExt.pspDetectorContentScript = {
-        initialized: true,
-        url: currentUrl,
-      };
-
-      // Add cleanup on page unload
-      window.addEventListener('beforeunload', (): void => {
-        contentScript.cleanup();
-        if (windowExt.pspDetectorContentScript?.url === currentUrl) {
-          windowExt.pspDetectorContentScript = undefined;
-        }
-      });
-
-      contentScript.initialize().catch((error): void => {
-        if (
-          error instanceof Error &&
-          error.message.includes('Extension context invalidated')
-        ) {
-          logger.warn('Extension context invalidated during startup');
-        } else {
-          logger.error('Content script initialization failed:', error);
-        }
-      });
-    } else {
-      logger.debug('Content script already initialized for this page, skipping');
     }
-  }).catch(() => {
-    logger.debug('Failed to check background state, assuming re-initialization needed');
-
-    // If we can't check background state, assume we need to re-initialize
-    windowExt.pspDetectorContentScript = undefined;
-
-    const contentScript = new ContentScript();
-    contentScript.resetForNewPage();
-
-    windowExt.pspDetectorContentScript = {
-      initialized: true,
-      url: currentUrl,
-    };
-
-    window.addEventListener('beforeunload', (): void => {
-      contentScript.cleanup();
-      if (windowExt.pspDetectorContentScript?.url === currentUrl) {
-        windowExt.pspDetectorContentScript = undefined;
-      }
-    });
-
-    contentScript.initialize().catch((error): void => {
-      if (
-        error instanceof Error &&
-        error.message.includes('Extension context invalidated')
-      ) {
-        logger.warn('Extension context invalidated during startup');
-      } else {
-        logger.error('Content script initialization failed:', error);
-      }
-    });
   });
-} else {
+
+  try {
+    await contentScript.initialize();
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message.includes('Extension context invalidated')
+    ) {
+      logger.warn('Extension context invalidated during startup');
+    } else {
+      logger.error('Content script initialization failed:', error);
+    }
+  }
+};
+
+// Handle existing script re-initialization
+const handleExistingScript = async(): Promise<void> => {
+  try {
+    const hasBackgroundState = await checkBackgroundState();
+
+    if (hasBackgroundState) {
+      logger.debug(
+        'Content script already initialized on this page with background state',
+      );
+
+      return;
+    }
+
+    logger.debug('Background script lost state, forcing re-initialization');
+    await reinitializeContentScript();
+  } catch {
+    logger.debug(
+      'Failed to check background state, assuming re-initialization needed',
+    );
+
+    await reinitializeContentScript();
+  }
+};
+
+// Handle new script initialization
+const handleNewScript = async(): Promise<void> => {
   if (existingScript?.initialized) {
     logger.debug(
       `Content script URL changed from ${existingScript.url} to ` +
@@ -607,14 +628,16 @@ if (existingScript?.initialized && existingScript.url === currentUrl) {
   }
 
   // Add cleanup on page unload
-  window.addEventListener('beforeunload', (): void => {
+  globalThis.addEventListener('beforeunload', (): void => {
     contentScript.cleanup();
     if (windowExt.pspDetectorContentScript?.url === currentUrl) {
       windowExt.pspDetectorContentScript = undefined;
     }
   });
 
-  contentScript.initialize().catch((error): void => {
+  try {
+    await contentScript.initialize();
+  } catch (error) {
     // Don't log errors if extension context is invalidated
     // (expected during reloads)
     if (
@@ -625,5 +648,19 @@ if (existingScript?.initialized && existingScript.url === currentUrl) {
     } else {
       logger.error('Content script initialization failed:', error);
     }
-  });
-}
+  }
+};
+
+// Main initialization function
+const initializeContentScript = async(): Promise<void> => {
+  // Allow re-initialization if URL has changed (new page navigation)
+  // OR if background script has lost state (extension context restored)
+  if (existingScript?.initialized && existingScript.url === currentUrl) {
+    await handleExistingScript();
+  } else {
+    await handleNewScript();
+  }
+};
+
+// Execute initialization
+await initializeContentScript();

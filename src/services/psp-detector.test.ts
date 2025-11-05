@@ -65,7 +65,7 @@ describe('PSPDetectorService', () => {
       getPSPByPSPName(service, TypeConverters.toPSPName('Stripe')!),
     ).toMatchObject({
       name: 'Stripe',
-      regex: 'stripe\\.com',
+      regex: String.raw`stripe\.com`,
     });
 
     expect(
@@ -157,7 +157,7 @@ describe('PSPDetectorService', () => {
       psps: [
         {
           name: TypeConverters.toPSPName('ValidPSP')!,
-          regex: TypeConverters.toRegexPattern('valid\\.pattern')!,
+          regex: TypeConverters.toRegexPattern(String.raw`valid\.pattern`)!,
           url: TypeConverters.toURL('https://valid.com')!,
           image: 'valid',
           summary: 'Valid PSP',
@@ -212,8 +212,8 @@ describe('PSPDetectorService', () => {
 
   it('should handle window.top access errors gracefully', () => {
     // Mock window.top to throw error (cross-origin)
-    const originalWindow = global.window;
-    global.window = createCrossOriginWindowMock();
+    const originalWindow = globalThis.window;
+    globalThis.window = createCrossOriginWindowMock();
 
     const result = service.detectPSP(
       TEST_URLS.STRIPE.CHECKOUT,

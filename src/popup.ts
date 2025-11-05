@@ -14,7 +14,7 @@ import {
 } from './lib/utils';
 
 class PopupManager {
-  private ui: UIService;
+  private readonly ui: UIService;
   private isInitialized = false;
 
   constructor() {
@@ -41,7 +41,7 @@ class PopupManager {
           return;
         }
 
-        if (!detectedPspResult || detectedPspResult.type !== 'detected') {
+        if (detectedPspResult?.type !== 'detected') {
           // No PSP detection result - PSP detection ran but found nothing
           this.ui.showNoPSPDetected();
           return;
@@ -220,7 +220,7 @@ class PopupManager {
       try {
         chrome.runtime.sendMessage(message, (response) => {
           if (chrome.runtime.lastError) {
-            reject(chrome.runtime.lastError);
+            reject(new Error(chrome.runtime.lastError.message));
           } else {
             resolve(response as T);
           }

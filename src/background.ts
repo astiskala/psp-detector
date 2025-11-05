@@ -4,11 +4,6 @@
  * Manifest V3 service worker implementation with proper lifecycle management.
  * @module background
  */
-import {
-  MessageAction,
-  TypeConverters,
-  PSPDetectionResult,
-} from './types';
 import type {
   PSP,
   ChromeMessage,
@@ -17,12 +12,16 @@ import type {
   PSPConfig,
   PSPResponse,
   TabId,
+  URL,
 } from './types';
-import { PSP_DETECTION_EXEMPT } from './types';
+import {
+  MessageAction,
+  TypeConverters,
+  PSPDetectionResult,
+  PSP_DETECTION_EXEMPT,
+} from './types';
 import { DEFAULT_ICONS } from './types/background';
 import { logger, getAllProviders } from './lib/utils';
-
-import type { URL } from './types';
 
 // Use a session-persisted object for tab state
 interface TabState {
@@ -43,20 +42,19 @@ class BackgroundService {
   private currentTabId: TabId | null = null;
 
   constructor() {
-    this.initializeServiceWorker();
+    // Set up event listeners synchronously
+    this.setupEventListeners();
   }
 
   /**
    * Initialize service worker with proper MV3 lifecycle management
-   * @private
    */
-  private async initializeServiceWorker(): Promise<void> {
+  public async initializeServiceWorker(): Promise<void> {
     if (this.isInitialized) {
       return;
     }
 
     try {
-      await this.setupEventListeners();
       await this.restoreState();
       await this.loadExemptDomains();
       await this.preloadPspConfig();
@@ -71,7 +69,7 @@ class BackgroundService {
    * Set up all service worker event listeners
    * @private
    */
-  private async setupEventListeners(): Promise<void> {
+  private setupEventListeners(): void {
     // Handle extension startup
     chrome.runtime.onStartup.addListener(() => {
       logger.info('Extension startup detected');
@@ -360,7 +358,7 @@ class BackgroundService {
         }
 
         await this.handleDetectPsp(
-          message.data as PSPDetectionData,
+          message.data,
           sendResponse,
         );
 
@@ -471,11 +469,9 @@ class BackgroundService {
         throw new Error('Invalid PSP configuration structure or content');
       }
 
-      const validConfig = configData as PSPConfig;
-
       // Cache the config
-      await this.setCachedPspConfig(validConfig);
-      sendResponse({ config: validConfig });
+      await this.setCachedPspConfig(configData);
+      sendResponse({ config: configData });
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
         logger.error('PSP config fetch timed out');
@@ -975,4 +971,9 @@ class BackgroundService {
   }
 }
 
-export default new BackgroundService();
+const backgroundService = new BackgroundService();
+
+// Initialize the service worker asynchronously
+backgroundService.initializeServiceWorker();
+
+export default backgroundService;

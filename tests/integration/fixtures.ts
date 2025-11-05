@@ -1,5 +1,5 @@
 import { test as base, chromium } from '@playwright/test';
-import path from 'path';
+import path from 'node:path';
 
 export const test = base.extend<{ extensionId: string }>({
   // eslint-disable-next-line no-empty-pattern

@@ -1,5 +1,5 @@
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 import type { PSPConfig, PSP } from '../types/psp';
 
 describe('PSP Data Validation', () => {
@@ -42,13 +42,13 @@ describe('PSP Data Validation', () => {
       const allProviders = getAllProviders(pspConfig);
       const requiredFields: (keyof PSP)[] = ['name', 'url', 'image', 'summary'];
 
-      allProviders.forEach((provider) => {
-        requiredFields.forEach(field => {
+      for (const provider of allProviders) {
+        for (const field of requiredFields) {
           expect(provider[field]).toBeDefined();
           expect(typeof provider[field]).toBe('string');
           expect((provider[field] as string).trim()).not.toBe('');
-        });
-      });
+        }
+      }
     });
 
     it('should have unique provider names across all groups', () => {
@@ -60,13 +60,13 @@ describe('PSP Data Validation', () => {
         const duplicates: string[] = [];
         const seen = new Set<string>();
 
-        names.forEach(name => {
+        for (const name of names) {
           if (seen.has(name) && !duplicates.includes(name)) {
             duplicates.push(name);
           } else {
             seen.add(name);
           }
-        });
+        }
 
         console.log('Duplicate provider names found:', duplicates);
       }
@@ -77,19 +77,20 @@ describe('PSP Data Validation', () => {
     it('should have valid regex patterns when provided', () => {
       const allProviders = getAllProviders(pspConfig);
 
-      allProviders.forEach(provider => {
+      for (const provider of allProviders) {
         if (provider.regex && typeof provider.regex === 'string') {
           expect(() => {
-            new RegExp(provider.regex as string, 'i');
+            const regex = new RegExp(provider.regex as string, 'i');
+            expect(regex).toBeDefined();
           }).not.toThrow();
         }
-      });
+      }
     });
 
     it('should have unique match strings within each provider', () => {
       const allProviders = getAllProviders(pspConfig);
 
-      allProviders.forEach(provider => {
+      for (const provider of allProviders) {
         if (Array.isArray(provider.matchStrings)) {
           const matchStrings = provider.matchStrings;
           const uniqueStrings = new Set(matchStrings);
@@ -97,18 +98,18 @@ describe('PSP Data Validation', () => {
           expect(uniqueStrings.size).toBe(matchStrings.length);
 
           // Verify all match strings are non-empty strings
-          matchStrings.forEach(str => {
+          for (const str of matchStrings) {
             expect(typeof str).toBe('string');
             expect(str.trim()).not.toBe('');
-          });
+          }
         }
-      });
+      }
     });
 
     it('should have valid image references', () => {
       const allProviders = getAllProviders(pspConfig);
 
-      allProviders.forEach(provider => {
+      for (const provider of allProviders) {
         expect(provider.image).toBeDefined();
         expect(typeof provider.image).toBe('string');
         expect(provider.image.trim()).not.toBe('');
@@ -116,17 +117,18 @@ describe('PSP Data Validation', () => {
         // Image should be a filename without extension
         expect(provider.image).not.toContain('/');
         expect(provider.image).not.toContain('\\');
-      });
+      }
     });
 
     it('should have valid URLs', () => {
       const allProviders = getAllProviders(pspConfig);
 
-      allProviders.forEach(provider => {
+      for (const provider of allProviders) {
         expect(() => {
-          new URL(provider.url);
+          const url = new URL(provider.url);
+          expect(url).toBeDefined();
         }).not.toThrow();
-      });
+      }
     });
   });
 
