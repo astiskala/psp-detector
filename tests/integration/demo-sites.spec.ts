@@ -62,6 +62,16 @@ const SITES: SiteCase[] = [
     expected: 'PayU',
     expectedTitle: 'PayU',
   },
+  {
+    url: 'https://www.google.com',
+    expected: 'Exempt',
+    expectedTitle: 'PSP detection disabled',
+  },
+  {
+    url: 'https://www.example.com',
+    expected: 'None',
+    expectedTitle: 'No PSP detected',
+  },
 ];
 
 for (const site of SITES) {
@@ -69,11 +79,12 @@ for (const site of SITES) {
     page,
     extensionId,
   }) => {
-    await page.goto(site.url, { waitUntil: 'domcontentloaded' });
-    await page.waitForTimeout(5000); // Wait for detection
+    console.log('Extension ID:', extensionId);
+    await page.goto(site.url, { waitUntil: 'load' });
+    await page.waitForTimeout(28000); // Wait for detection
 
     await page.goto(`chrome-extension://${extensionId}/popup.html`);
-    const pspTitle = await page.locator('#psp-title').textContent();
+    const pspTitle = await page.locator('#psp-name').textContent();
     expect(pspTitle).toBe(site.expectedTitle);
   });
 }

@@ -1,11 +1,9 @@
-import { test as base, chromium, type BrowserContext } from '@playwright/test';
+import { test as base, chromium } from '@playwright/test';
 import path from 'path';
 
-export const test = base.extend<{
-  context: BrowserContext;
-  extensionId: string;
-}>({
-  context: async(_fixtures, use) => {
+export const test = base.extend<{ extensionId: string }>({
+  // eslint-disable-next-line no-empty-pattern
+  context: async({}, use) => {
     const pathToExtension = path.join(__dirname, '..', '..', 'dist');
     const context = await chromium.launchPersistentContext('', {
       headless: false,
@@ -15,7 +13,6 @@ export const test = base.extend<{
       ],
     });
     await use(context);
-    await context.close();
   },
   extensionId: async({ context }, use) => {
     // for manifest v3:

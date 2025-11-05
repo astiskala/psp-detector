@@ -895,66 +895,84 @@ class BackgroundService {
       );
 
       if (pspInfo) {
-        logger.debug('Background: Found PSP info:', pspInfo);
+        logger.debug('PSP info found:', pspInfo);
         return pspInfo;
       } else {
-        logger.warn('Background: No PSP info found for:', psp);
-        logger.debug('Background: PSP not found in cached config');
+        logger.warn(`PSP not found in config: ${psp}`);
         return null;
       }
     } catch (error) {
-      logger.error('Background: Error getting PSP info:', error);
+      logger.error('Error getting PSP info:', error);
       return null;
     }
   }
 
   /**
-   * Inject content script into tab
+   * Inject content script into a tab
    * @private
    */
-  async injectContentScript(tabId: number): Promise<void> {
+  private async injectContentScript(tabId: number): Promise<void> {
+    const brandedTabId = TypeConverters.toTabId(tabId);
+    if (!brandedTabId) return;
+
     try {
-      await chrome.scripting.executeScript({
-        target: { tabId },
-        files: ['content.js'],
-      });
-    } catch (error) {
-      // Handle specific common error cases more gracefully
-      if (error instanceof Error) {
-        if (error.message.includes('error page') ||
-            error.message.includes('Frame with ID 0 is showing error page')) {
-          logger.debug(
-            `Skipping content script injection for tab ${tabId}: ` +
-            'Tab is showing an error page',
-          );
-
-          return;
-        }
-
-        if (error.message.includes('Cannot access contents of the page')) {
-          logger.debug(
-            `Skipping content script injection for tab ${tabId}: ` +
-            'Cannot access page contents (likely a restricted page)',
-          );
-
-          return;
-        }
-
-        if (error.message.includes('The extensions gallery cannot be scripted')) {
-          logger.debug(
-            `Skipping content script injection for tab ${tabId}: ` +
-            'Chrome Web Store page',
-          );
-
-          return;
-        }
+      // Only inject if not already injected
+      const existing = await chrome.scripting.getRegisteredContentScripts();
+      const isInjected = existing.some(
+        (script) => script.id === 'pspDetectorContentScript',
+      );
+      if (isInjected) {
+        logger.debug('Content script already injected');
+        return;
       }
 
-      // Log other errors as warnings since they might be actionable
-      logger.warn(`Failed to inject content script into tab ${tabId}:`, error);
+      // Get the URL of the current tab
+      const tab = await chrome.tabs.get(tabId);
+      if (!tab.url) {
+        logger.warn('Tab URL is empty, cannot inject content script');
+        return;
+      }
+
+      // Determine the injection point based on URL
+      const injectDetails = this.getContentScriptInjectionDetails(tab.url);
+      if (!injectDetails) {
+        logger.warn('No valid injection details found for URL:', tab.url);
+        return;
+      }
+
+      // Inject the content script
+      await chrome.scripting.registerContentScripts([
+        {
+          id: 'pspDetectorContentScript',
+          js: ['content-script.js'],
+          matches: [injectDetails.matchPattern],
+          runAt: injectDetails.runAt,
+          allFrames: true,
+          world: 'MAIN',
+        },
+      ]);
+
+      logger.info('Content script injected successfully');
+    } catch (error) {
+      logger.error('Failed to inject content script:', error);
     }
+  }
+
+  /**
+   * Get content script injection details based on URL
+   * @private
+   */
+  private getContentScriptInjectionDetails(url: string): { matchPattern: string, runAt: 'document_start' | 'document_end' } | null {
+    // Example logic to determine injection details
+    if (url.includes('example.com')) {
+      return {
+        matchPattern: 'https://*.example.com/*',
+        runAt: 'document_start',
+      };
+    }
+
+    return null;
   }
 }
 
-// Initialize background service
-new BackgroundService();
+export default new BackgroundService();

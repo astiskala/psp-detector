@@ -602,7 +602,7 @@ if (existingScript?.initialized && existingScript.url === currentUrl) {
   const contentScript = new ContentScript();
 
   // Reset state if this is a URL change (re-initialization)
-  if (existingScript?.initialized) {
+  if (existingScript?.initialized && !currentUrl.startsWith('chrome-extension://')) {
     contentScript.resetForNewPage();
   }
 
