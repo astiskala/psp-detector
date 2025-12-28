@@ -36,6 +36,12 @@ jobs:
             --repo "${{ github.repository }}" \
             --pattern "psp-detector-$TAG.zip"
 
+          if [ ! -f "psp-detector-$TAG.zip" ]; then
+            echo "Error: Expected asset 'psp-detector-$TAG.zip' was not found for tag '$TAG'."
+            echo "Available files in the current directory:"
+            ls -la
+            exit 1
+          fi
           ls -la
 
       - name: Upload and publish to Chrome Web Store
