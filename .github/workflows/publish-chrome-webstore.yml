@@ -1,0 +1,50 @@
+name: Publish to Chrome Web Store
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "GitHub Release tag to publish (must match the extension version, e.g. 1.2.3)"
+        required: true
+        type: string
+      tester:
+        description: "Publish to Trusted Testers only"
+        required: false
+        type: boolean
+        default: true
+      publish:
+        description: "Publish after upload"
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download release ZIP for the selected tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          gh release download "$TAG" \
+            --repo "${{ github.repository }}" \
+            --pattern "psp-detector-$TAG.zip"
+
+          ls -la
+
+      - name: Upload and publish to Chrome Web Store
+        uses: furkanipek/chrome-extension-action@v1.0.1
+        with:
+          refresh-token: ${{ secrets.CWS_REFRESH_TOKEN }}
+          extension-id: ${{ secrets.CWS_EXTENSION_ID }}
+          client-id: ${{ secrets.CWS_CLIENT_ID }}
+          client-secret: ${{ secrets.CWS_CLIENT_SECRET }}
+          extension-file: psp-detector-${{ inputs.tag }}.zip
+          publish: ${{ inputs.publish }}
+          tester: ${{ inputs.tester }}
