@@ -629,7 +629,7 @@ const bootstrap = async(): Promise<void> => {
   });
 };
 
-bootstrap().catch((error) => {
+bootstrap().catch((error) => { // NOSONAR
   if (isExtensionContextInvalidated(error)) {
     logger.warn('Extension context invalidated during bootstrap');
   } else {

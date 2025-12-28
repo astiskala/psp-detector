@@ -191,7 +191,7 @@ class PopupManager {
   private async getFromCache(key: string): Promise<PSPConfig | null> {
     try {
       const result = await chrome.storage.local.get(key);
-      return result[key] || null;
+      return (result as Record<string, unknown>)[key] as PSPConfig | null;
     } catch (error) {
       logger.warn('Failed to get from cache:', error);
       return null;

@@ -192,10 +192,10 @@ class BackgroundService {
    */
   private async getCurrentTabId(): Promise<number | null> {
     try {
-      const result = await chrome.storage.local.get(
-        STORAGE_KEYS.CURRENT_TAB_ID,
-      );
-      return result[STORAGE_KEYS.CURRENT_TAB_ID] || null;
+      const result = await chrome.storage.local.get({
+        [STORAGE_KEYS.CURRENT_TAB_ID]: null as number | null,
+      });
+      return result[STORAGE_KEYS.CURRENT_TAB_ID] as number | null;
     } catch (error) {
       logger.error('Failed to get current tab ID:', error);
       return null;
@@ -222,8 +222,10 @@ class BackgroundService {
    */
   private async getDetectedPsp(): Promise<PSPDetectionResult | null> {
     try {
-      const result = await chrome.storage.local.get(STORAGE_KEYS.DETECTED_PSP);
-      return result[STORAGE_KEYS.DETECTED_PSP] || null;
+      const result = await chrome.storage.local.get({
+        [STORAGE_KEYS.DETECTED_PSP]: null as PSPDetectionResult | null,
+      });
+      return result[STORAGE_KEYS.DETECTED_PSP] as PSPDetectionResult | null;
     } catch (error) {
       logger.error('Failed to get detected PSP:', error);
       return null;
@@ -250,8 +252,14 @@ class BackgroundService {
    */
   private async getTabPsps(): Promise<Record<string, PSPDetectionResult>> {
     try {
-      const result = await chrome.storage.local.get(STORAGE_KEYS.TAB_PSPS);
-      return result[STORAGE_KEYS.TAB_PSPS] || {};
+      const result = await chrome.storage.local.get({
+        [STORAGE_KEYS.TAB_PSPS]: {} as Record<string, PSPDetectionResult>,
+      });
+      const tabPsps = result[STORAGE_KEYS.TAB_PSPS] as Record<
+        string,
+        PSPDetectionResult
+      >;
+      return tabPsps;
     } catch (error) {
       logger.error('Failed to get tab PSPs:', error);
       return {};
@@ -301,10 +309,10 @@ class BackgroundService {
    */
   private async getExemptDomains(): Promise<string[]> {
     try {
-      const result = await chrome.storage.local.get(
-        STORAGE_KEYS.EXEMPT_DOMAINS,
-      );
-      return result[STORAGE_KEYS.EXEMPT_DOMAINS] || [];
+      const result = await chrome.storage.local.get({
+        [STORAGE_KEYS.EXEMPT_DOMAINS]: [] as string[],
+      });
+      return result[STORAGE_KEYS.EXEMPT_DOMAINS] as string[];
     } catch (error) {
       logger.error('Failed to get exempt domains:', error);
       return [];
@@ -684,17 +692,18 @@ class BackgroundService {
    */
   private async getCachedPspConfig(): Promise<PSPConfig | null> {
     try {
-      const result = await chrome.storage.local.get(
-        STORAGE_KEYS.CACHED_PSP_CONFIG,
-      );
-      const config = result[STORAGE_KEYS.CACHED_PSP_CONFIG] || null;
+      const result = await chrome.storage.local.get({
+        [STORAGE_KEYS.CACHED_PSP_CONFIG]: null as PSPConfig | null,
+      });
+      const candidate = result[STORAGE_KEYS.CACHED_PSP_CONFIG];
 
-      // Also update in-memory cache
-      if (config) {
-        this.inMemoryPspConfig = config;
+      if (!candidate || !this.isValidPspConfig(candidate)) {
+        return null;
       }
 
-      return config;
+      // Also update in-memory cache
+      this.inMemoryPspConfig = candidate;
+      return candidate;
     } catch (error) {
       logger.error('Failed to get cached PSP config:', error);
       return null;
@@ -1138,6 +1147,7 @@ class BackgroundService {
 
 // Initialize background service
 const backgroundService = new BackgroundService();
-backgroundService.initialize().catch((error) => {
+
+backgroundService.initialize().catch((error) => { // NOSONAR
   logger.error('Failed to initialize background service:', error);
 });
