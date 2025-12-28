@@ -65,7 +65,7 @@ export default [
 
   // Node.js build files
   {
-    files: ['build.js', 'jest.config.js'],
+    files: ['build.mjs', 'jest.config.js'],
     languageOptions: {
       globals: {
         ...globals.node,

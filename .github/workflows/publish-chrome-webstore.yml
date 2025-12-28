@@ -39,7 +39,7 @@ jobs:
           ls -la
 
       - name: Upload and publish to Chrome Web Store
-        uses: furkanipek/chrome-extension-action@v1.0.1
+        uses: furkanipek/chrome-extension-action@7b8043da23667cbbf606ad7b075faa23fd16d09f # v1.0.1
         with:
           refresh-token: ${{ secrets.CWS_REFRESH_TOKEN }}
           extension-id: ${{ secrets.CWS_EXTENSION_ID }}

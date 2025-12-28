@@ -7,7 +7,7 @@ Focused guidance for AI coding agents working in this repository. Keep answers c
 - Chrome MV3 extension that detects the Payment Service Provider (PSP) / Orchestrator / TSP on an e‑commerce page.
 - Core detection surface = current page URL + full HTML + observed network request URLs.
 - Detection logic: `src/services/psp-detector.ts` over merged provider list (PSPs + orchestrators + TSPs) from `public/psps.json`.
-- Build (`build.js`) bundles `content.ts`, `background.ts`, `popup.ts` via esbuild, copies `public/` → `dist/`, injects version into `manifest.json` & `package.json`, resizes PNG logos to `_48` / `_128` with `sharp`.
+- Build (`build.mjs`) bundles `content.ts`, `background.ts`, `popup.ts` via esbuild, copies `public/` → `dist/`, injects version into `manifest.json` & `package.json`, resizes PNG logos to `_48` / `_128` with `sharp`.
 - Provider metadata is data‑driven (no hardcoded providers in logic). Source images: `assets/images/*.png`.
 
 ### 2. Detection Model
@@ -22,7 +22,7 @@ Focused guidance for AI coding agents working in this repository. Keep answers c
 
 - `src/services/psp-detector.ts` – core service (keep public API stable).
 - `public/psps.json` – provider definitions. Order matters for precedence; don’t mass re‑sort.
-- `build.js` – versioning + asset pipeline; add new steps after manifest processing.
+- `build.mjs` – versioning + asset pipeline; add new steps after manifest processing.
 - `tests/integration/demo-sites.spec.ts` – Playwright real‑site checks (one test per site; structured diagnostics on failure).
 
 ### 4. Commands / Workflows

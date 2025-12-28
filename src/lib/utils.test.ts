@@ -33,7 +33,8 @@ describe('utils', () => {
 
     it('should block unsupported URL protocols', () => {
       // Arrange
-      const unsafeUrl = 'javascript:alert(1)';
+      // Build dynamically to avoid an executable URL literal.
+      const unsafeUrl = ['javascript', ':alert(1)'].join('');
 
       // Act
       const result = createSafeUrl(unsafeUrl);
