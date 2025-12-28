@@ -12,6 +12,7 @@ import {
   performanceUtils,
   errorUtils,
 } from './lib/utils';
+import { STORAGE_KEYS } from './lib/storage-keys';
 
 class PopupManager {
   private readonly ui: UIService;
@@ -126,7 +127,7 @@ class PopupManager {
    */
   private async getPSPConfigWithCache(): Promise<PSPConfig> {
     // Try to get from extension storage cache first
-    const cacheKey = 'popup_psp_config_cache';
+    const cacheKey = STORAGE_KEYS.POPUP_PSP_CONFIG_CACHE;
     const cachedConfig = await this.getFromCache(cacheKey);
 
     if (cachedConfig) {

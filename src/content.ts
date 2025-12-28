@@ -225,25 +225,37 @@ class ContentScript {
   private collectScanSources(): string[] {
     const sources: string[] = [];
 
-    // Use more efficient collection methods
-    document.querySelectorAll('script[src]').forEach((script) => {
-      const src = (script as HTMLScriptElement).src;
-      if (src) sources.push(src);
-    });
+    document.querySelectorAll(
+      'script[src], iframe[src], form[action], link[href]',
+    ).forEach((element) => {
+      switch (element.tagName) {
+      case 'SCRIPT': {
+        const src = (element as HTMLScriptElement).src;
+        if (src) sources.push(src);
+        break;
+      }
 
-    document.querySelectorAll('iframe[src]').forEach((iframe) => {
-      const src = (iframe as HTMLIFrameElement).src;
-      if (src) sources.push(src);
-    });
+      case 'IFRAME': {
+        const src = (element as HTMLIFrameElement).src;
+        if (src) sources.push(src);
+        break;
+      }
 
-    document.querySelectorAll('form[action]').forEach((form) => {
-      const action = (form as HTMLFormElement).action;
-      if (action) sources.push(action);
-    });
+      case 'FORM': {
+        const action = (element as HTMLFormElement).action;
+        if (action) sources.push(action);
+        break;
+      }
 
-    document.querySelectorAll('link[href]').forEach((link) => {
-      const href = (link as HTMLLinkElement).href;
-      if (href) sources.push(href);
+      case 'LINK': {
+        const href = (element as HTMLLinkElement).href;
+        if (href) sources.push(href);
+        break;
+      }
+
+      default:
+        break;
+      }
     });
 
     return sources;

@@ -30,6 +30,28 @@ describe('utils', () => {
       // Assert
       expect(result).toBe('#');
     });
+
+    it('should block unsupported URL protocols', () => {
+      // Arrange
+      const unsafeUrl = 'javascript:alert(1)';
+
+      // Act
+      const result = createSafeUrl(unsafeUrl);
+
+      // Assert
+      expect(result).toBe('#');
+    });
+
+    it('should allow mailto URLs', () => {
+      // Arrange
+      const mailtoUrl = 'mailto:psp-detector@adamstiskala.com';
+
+      // Act
+      const result = createSafeUrl(mailtoUrl);
+
+      // Assert
+      expect(result).toBe('mailto:psp-detector@adamstiskala.com');
+    });
   });
 
   describe('regex utilities', () => {

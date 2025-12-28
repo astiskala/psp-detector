@@ -3,9 +3,18 @@
  * Create a safe URL by sanitizing the input
  * @param url - The URL to sanitize
  */
+const ALLOWED_URL_PROTOCOLS = new Set(['http:', 'https:', 'mailto:']);
+
 export function createSafeUrl(url: string): string {
   try {
-    return new globalThis.URL(url).toString();
+    const parsed = new globalThis.URL(url);
+
+    if (!ALLOWED_URL_PROTOCOLS.has(parsed.protocol)) {
+      logger.warn('Blocked unsupported URL protocol:', parsed.protocol);
+      return '#';
+    }
+
+    return parsed.toString();
   } catch (e) {
     logger.error('Invalid URL:', e);
     return '#';
