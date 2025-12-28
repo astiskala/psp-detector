@@ -176,6 +176,13 @@ npm run build          # Production build
 npm run build:debug    # Development build with debug info
 ```
 
+### Loading In Chrome
+
+1. Run `npm run build`.
+2. Open `chrome://extensions` and enable **Developer mode**.
+3. Click **Load unpacked** and select the `dist/` folder (not `assets/`).
+4. After rebuilding, click **Reload** on the extension.
+
 ### Testing
 
 ```bash

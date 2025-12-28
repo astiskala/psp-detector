@@ -98,11 +98,23 @@ function toAbsolute(href, base) {
   }
 }
 
+function stripHttpScheme(input) {
+  if (input.startsWith('https://')) return input.slice('https://'.length);
+  if (input.startsWith('http://')) return input.slice('http://'.length);
+  return input;
+}
+
+function stripTrailingSlashes(input) {
+  let out = input;
+  while (out.endsWith('/')) out = out.slice(0, -1);
+  return out;
+}
+
 function pickOutputPath(domainArg, outArg) {
+  const cleaned = stripTrailingSlashes(stripHttpScheme(domainArg));
   const base =
     outArg ||
-    `${domainArg.replace(/^https?:\/\//, '').replace(/\/+$/, '') ||
-      'logo'}.png`;
+    `${cleaned || 'logo'}.png`;
   return path.resolve(process.cwd(), base);
 }
 
@@ -166,7 +178,7 @@ function parseSizes(sizesAttr) {
     .map(s => {
       const m = /^(\d+)x(\d+)$/i.exec(s);
       if (!m) return null;
-      return { w: parseInt(m[1], 10), h: parseInt(m[2], 10) };
+      return { w: Number.parseInt(m[1], 10), h: Number.parseInt(m[2], 10) };
     })
     .filter(size => size !== null);
 }
@@ -190,7 +202,7 @@ function inferSizesFromUrl(rawUrl) {
     // Google favicon style ?sz=128
     const sz = params.get('sz');
     if (sz && /^\d{2,4}$/.test(sz)) {
-      const n = parseInt(sz, 10);
+      const n = Number.parseInt(sz, 10);
       if (n > 0) sizes.push({ w: n, h: n });
     }
 
@@ -198,15 +210,15 @@ function inferSizesFromUrl(rawUrl) {
     const qw = params.get('w');
     const qh = params.get('h');
     if (qw && qh && /^\d{2,4}$/.test(qw) && /^\d{2,4}$/.test(qh)) {
-      sizes.push({ w: parseInt(qw, 10), h: parseInt(qh, 10) });
+      sizes.push({ w: Number.parseInt(qw, 10), h: Number.parseInt(qh, 10) });
     }
 
     // Filename patterns like -152x152 or _128x128
     const name = (u.pathname.split('/').pop() || '').toLowerCase();
     const m = /(\d{2,4})x(\d{2,4})(?=\D|$)/i.exec(name);
     if (m) {
-      const w = parseInt(m[1], 10);
-      const h = parseInt(m[2], 10);
+      const w = Number.parseInt(m[1], 10);
+      const h = Number.parseInt(m[2], 10);
       if (w > 0 && h > 0) sizes.push({ w, h });
     }
 
@@ -227,6 +239,10 @@ function candidateBelowMinByDeclaration(cand) {
   const combined = [...declared, ...fromUrl];
   if (!combined.length) return false; // unknown sizes -> keep
   return allSizesBelowMin(combined);
+}
+
+function candidateMeetsMinByDeclaration(cand) {
+  return !candidateBelowMinByDeclaration(cand);
 }
 
 function extractDomain(input) {
@@ -259,61 +275,78 @@ async function getImageMeta(buffer) {
 // Lightweight magic-number sniff to avoid feeding HTML/JSON into sharp
 function sniffImageFormat(buffer, contentType = '', url = '') {
   try {
-    const ct = (contentType || '').toLowerCase();
     if (!buffer || buffer.length < 4) return 'unknown';
 
-    // Trust known image content-types
-    if (ct.startsWith('image/')) {
-      // normalize ico variants
-      if (ct.includes('svg')) return 'svg';
-      if (ct.includes('icon') || ct.includes('x-icon') || ct.includes('vnd.microsoft.icon')) return 'ico';
-      if (ct.includes('png')) return 'png';
-      if (ct.includes('jpeg') || ct.includes('jpg')) return 'jpeg';
-      if (ct.includes('gif')) return 'gif';
-      if (ct.includes('webp')) return 'webp';
-      if (ct.includes('avif')) return 'avif';
+    const ct = (contentType || '').toLowerCase();
+    const fromCt = sniffFromContentType(ct);
+    if (fromCt) return fromCt;
 
-      // fallthrough: unknown image/* -> let sharp try
-      return 'image';
-    }
+    const fromMagic = sniffFromMagicNumbers(buffer);
+    if (fromMagic) return fromMagic;
 
-    // Magic numbers
-    const b0 = buffer[0];
-    const b1 = buffer[1];
-    const b2 = buffer[2];
-    const b3 = buffer[3];
+    const fromSvg = sniffFromSvgHead(buffer);
+    if (fromSvg) return fromSvg;
 
-    // PNG
-    if (b0 === 0x89 && b1 === 0x50 && b2 === 0x4e && b3 === 0x47) return 'png';
-
-    // JPG
-    if (b0 === 0xff && b1 === 0xd8) return 'jpeg';
-
-    // GIF
-    if (b0 === 0x47 && b1 === 0x49 && b2 === 0x46 && b3 === 0x38) return 'gif';
-
-    // WEBP (RIFF....WEBP)
-    if (buffer.length >= 12) {
-      const riff = buffer.slice(0, 4).toString('ascii');
-      const webp = buffer.slice(8, 12).toString('ascii');
-      if (riff === 'RIFF' && webp === 'WEBP') return 'webp';
-    }
-
-    // ICO: 00 00 01 00
-    if (b0 === 0x00 && b1 === 0x00 && b2 === 0x01 && b3 === 0x00) return 'ico';
-
-    // SVG detection: look for <svg in the first 512 bytes
-    const head = buffer.slice(0, Math.min(512, buffer.length)).toString('utf8').toLowerCase();
-    if (head.includes('<svg')) return 'svg';
-
-    // Some servers may mislabel; use URL extension hint as last resort
-    const lowerUrl = (url || '').toLowerCase();
-    if (/[.](png|jpe?g|gif|webp|avif|ico|svg)(\?|#|$)/.test(lowerUrl)) return 'image';
+    const fromUrl = sniffFromUrlExtension(url);
+    if (fromUrl) return fromUrl;
 
     return 'unknown';
   } catch {
     return 'unknown';
   }
+}
+
+function sniffFromContentType(ct) {
+  if (!ct || !ct.startsWith('image/')) return null;
+
+  if (ct.includes('svg')) return 'svg';
+  if (ct.includes('icon') || ct.includes('x-icon') || ct.includes('vnd.microsoft.icon')) return 'ico';
+  if (ct.includes('png')) return 'png';
+  if (ct.includes('jpeg') || ct.includes('jpg')) return 'jpeg';
+  if (ct.includes('gif')) return 'gif';
+  if (ct.includes('webp')) return 'webp';
+  if (ct.includes('avif')) return 'avif';
+
+  // unknown image/* -> let sharp try
+  return 'image';
+}
+
+function sniffFromMagicNumbers(buffer) {
+  const b0 = buffer[0];
+  const b1 = buffer[1];
+  const b2 = buffer[2];
+  const b3 = buffer[3];
+
+  // PNG
+  if (b0 === 0x89 && b1 === 0x50 && b2 === 0x4e && b3 === 0x47) return 'png';
+
+  // JPG
+  if (b0 === 0xff && b1 === 0xd8) return 'jpeg';
+
+  // GIF
+  if (b0 === 0x47 && b1 === 0x49 && b2 === 0x46 && b3 === 0x38) return 'gif';
+
+  // WEBP (RIFF....WEBP)
+  if (buffer.length >= 12) {
+    const riff = buffer.slice(0, 4).toString('ascii');
+    const webp = buffer.slice(8, 12).toString('ascii');
+    if (riff === 'RIFF' && webp === 'WEBP') return 'webp';
+  }
+
+  // ICO: 00 00 01 00
+  if (b0 === 0x00 && b1 === 0x00 && b2 === 0x01 && b3 === 0x00) return 'ico';
+
+  return null;
+}
+
+function sniffFromSvgHead(buffer) {
+  const head = buffer.slice(0, Math.min(512, buffer.length)).toString('utf8').toLowerCase();
+  return head.includes('<svg') ? 'svg' : null;
+}
+
+function sniffFromUrlExtension(url) {
+  const lowerUrl = (url || '').toLowerCase();
+  return /[.](png|jpe?g|gif|webp|avif|ico|svg)(\?|#|$)/.test(lowerUrl) ? 'image' : null;
 }
 
 async function tryManifestIcons(manifestUrl, base) {
@@ -366,9 +399,8 @@ function collectFromDom($, baseUrl) {
       let source = 'icon';
       if (rel.includes('apple-touch')) source = 'apple-touch-icon';
       else if (rel.includes('mask-icon')) source = 'mask-icon';
-      else if (rel.includes('icon')) source = 'icon';
       const cand = { url: abs, source, declaredSizes: sizes };
-      if (!candidateBelowMinByDeclaration(cand)) {
+      if (candidateMeetsMinByDeclaration(cand)) {
         cands.push(cand);
       } else {
         vlog(`prefilter(dom): drop < ${MIN_SIZE}px ${abs}`);
@@ -389,7 +421,7 @@ function collectFromDom($, baseUrl) {
     const abs = toAbsolute(og, baseUrl);
     if (abs) {
       const cand = { url: abs, source: 'og-image' };
-      if (!candidateBelowMinByDeclaration(cand)) {
+      if (candidateMeetsMinByDeclaration(cand)) {
         cands.push(cand);
       } else {
         vlog(`prefilter(dom-og): drop < ${MIN_SIZE}px ${abs}`);
@@ -518,151 +550,146 @@ async function processLogoForPSP(psp, assetsDir) {
 
     const domain = extractDomain(psp.url);
     const bases = domainToBases(psp.url);
+    const isAcceptable = (m) => isAcceptableIconCandidate(m);
 
-    // Helper to filter acceptable icons
-    const isAcceptable = (m) => {
-      if (!m) return false;
-      const w = m.width || 0;
-      const h = m.height || 0;
-      const fmt = (m.format || '').toLowerCase();
-      const isRaster = ['png', 'webp', 'jpg', 'jpeg', 'ico', 'gif', 'avif'].includes(fmt);
+    const metaResult = await tryWriteFromMetadataCandidates(psp.name, bases, outputPath, isAcceptable);
+    if (metaResult) return metaResult;
 
-      // Treat SVG only if it declares measurable size
-      if (!isRaster && fmt !== 'svg') return false;
-      if (fmt === 'svg') {
-        // require measurable dimensions for aspect check
-        if (!w || !h) return false;
-      }
+    const commonResult = await tryWriteFromCommonPaths(psp.name, bases, outputPath, isAcceptable);
+    if (commonResult) return commonResult;
 
-      if (Math.min(w, h) < MIN_SIZE) return false;
-      if (!isSquareish(w, h, 0.05)) return false;
-      return true;
-    };
+    const thirdPartyResult = await tryWriteFromThirdParty(psp.name, domain, outputPath, isAcceptable);
+    if (thirdPartyResult) return thirdPartyResult;
 
-    // Priority 1: Metadata (link icons, apple-touch, manifest icons, og:image)
-    const metaCands = [];
-    for (const base of bases) {
-      const got = await collectCandidatesForBase(base).catch(() => []);
-      metaCands.push(...got);
-    }
-
-    vlog(`${psp.name}: meta candidates found = ${metaCands.length}`);
-
-    const expanded = (
-      await Promise.all(metaCands.map(c => probeCandidate(c)))
-    )
-      .flat()
-      .filter(Boolean);
-    const unique = uniq(
-      expanded.filter(c => {
-        try {
-          new URL(c.url);
-          return true;
-        } catch {
-          return false;
-        }
-      }),
-    );
-
-    vlog(`${psp.name}: expanded=${expanded.length}, unique=${unique.length}`);
-
-    const metaMeasured = (
-      await withLimit(MEASURE_CONCURRENCY, unique, fetchAndMeasure)
-    ).filter(isAcceptable);
-    vlog(`${psp.name}: meta measured acceptable = ${metaMeasured.length}`);
-    if (metaMeasured.length) {
-      const best = metaMeasured.sort(
-        (a, b) => Math.min(a.width, a.height) - Math.min(b.width, b.height),
-      )[0];
-      await writeOut128(best.buffer, outputPath, best.format);
-      console.log(
-        `✅ ${psp.name}: Updated ${outputPath} (${best.source}, ` +
-          `${best.width}x${best.height})`,
-      );
-
-      return {
-        psp: psp.name,
-        status: 'success',
-        output: outputPath,
-        source: best.source,
-        dimensions: `${best.width}x${best.height}`,
-        format: best.format,
-      };
-    }
-
-    // Priority 2: Common icon paths on site
-    const commonCands = [];
-    for (const base of bases) {
-      for (const p of COMMON_ICON_PATHS) {
-        const abs = toAbsolute(p, base);
-        if (!abs) continue;
-        const cand = { url: abs, source: p.endsWith('.json') || p.endsWith('manifest') ? 'manifest-link' : 'guess-path' };
-        if (cand.source === 'manifest-link' || !candidateBelowMinByDeclaration(cand)) {
-          commonCands.push(cand);
-        } else {
-          vlog(`prefilter(common-bulk): drop < ${MIN_SIZE}px ${abs}`);
-        }
-      }
-    }
-
-    vlog(`${psp.name}: trying common paths (${commonCands.length})`);
-    const expandedCommon = (
-      await Promise.all(uniq(commonCands).map(c => probeCandidate(c)))
-    ).flat().filter(Boolean);
-    const commonMeasured = (await withLimit(MEASURE_CONCURRENCY, expandedCommon, fetchAndMeasure)).filter(isAcceptable);
-    vlog(`${psp.name}: common measured acceptable = ${commonMeasured.length}`);
-    if (commonMeasured.length) {
-      const best = commonMeasured.sort((a, b) => Math.min(a.width, a.height) - Math.min(b.width, b.height))[0];
-      await writeOut128(best.buffer, outputPath, best.format);
-      console.log(`✅ ${psp.name}: Updated ${outputPath} (${best.source}, ${best.width}x${best.height})`);
-      return {
-        psp: psp.name,
-        status: 'success',
-        output: outputPath,
-        source: best.source,
-        dimensions: `${best.width}x${best.height}`,
-        format: best.format,
-      };
-    }
-
-    // Priority 3: Third-party favicon services
-    const thirdParty = [
-      { url: GOOGLE_FAVICON(domain), source: 'google-favicon' },
-      { url: DUCK_FAVICON(domain), source: 'duckduckgo-favicon' },
-    ];
-    vlog(`${psp.name}: falling back to third-party favicons`);
-    const thirdMeasured = (await withLimit(MEASURE_CONCURRENCY, thirdParty, fetchAndMeasure)).filter(isAcceptable);
-    if (!thirdMeasured.length) {
-      console.log(`❌ ${psp.name}: No acceptable icons (>=128px and square-ish)`);
-      return { psp: psp.name, status: 'failed', reason: 'no acceptable icons' };
-    }
-
-    {
-      const best = thirdMeasured.sort((a, b) => Math.min(a.width, a.height) - Math.min(b.width, b.height))[0];
-      await writeOut128(best.buffer, outputPath, best.format);
-      console.log(`✅ ${psp.name}: Updated ${outputPath} (${best.source}, ${best.width}x${best.height})`);
-      return {
-        psp: psp.name,
-        status: 'success',
-        output: outputPath,
-        source: best.source,
-        dimensions: `${best.width}x${best.height}`,
-        format: best.format,
-      };
-    }
-
+    console.log(`❌ ${psp.name}: No acceptable icons (>=128px and square-ish)`);
+    return { psp: psp.name, status: 'failed', reason: 'no acceptable icons' };
   } catch (error) {
     console.log(`❌ ${psp.name}: Error - ${error.message}`);
     return { psp: psp.name, status: 'error', reason: error.message };
   }
 }
 
-async function writeOut128(inputBuffer, outputPath, fmt) {
-  // Prepare final 128x128 PNG without enlarging bitmaps; analyze then choose background
-  const svg = (fmt || '').toLowerCase() === 'svg';
-  const base = svg ? sharp(inputBuffer, { density: 512 }) : sharp(inputBuffer, { animated: false });
+async function tryWriteFromMetadataCandidates(pspName, bases, outputPath, isAcceptable) {
+  const metaCands = await collectMetaCandidates(bases);
+  vlog(`${pspName}: meta candidates found = ${metaCands.length}`);
 
-  // Build analysis pipeline on a clone to avoid reusing same sharp instance after toBuffer
+  const unique = await expandAndUniqCandidates(metaCands);
+  vlog(`${pspName}: unique metadata candidates=${unique.length}`);
+
+  const measured = (await withLimit(MEASURE_CONCURRENCY, unique, fetchAndMeasure)).filter(isAcceptable);
+  vlog(`${pspName}: meta measured acceptable = ${measured.length}`);
+  return await writeBestMeasured(pspName, measured, outputPath);
+}
+
+async function tryWriteFromCommonPaths(pspName, bases, outputPath, isAcceptable) {
+  const commonCands = collectCommonPathCandidates(bases);
+  vlog(`${pspName}: trying common paths (${commonCands.length})`);
+
+  const expanded = (await Promise.all(uniq(commonCands).map(c => probeCandidate(c)))).flat().filter(Boolean);
+  const measured = (await withLimit(MEASURE_CONCURRENCY, expanded, fetchAndMeasure)).filter(isAcceptable);
+  vlog(`${pspName}: common measured acceptable = ${measured.length}`);
+  return await writeBestMeasured(pspName, measured, outputPath);
+}
+
+async function tryWriteFromThirdParty(pspName, domain, outputPath, isAcceptable) {
+  const thirdParty = [
+    { url: GOOGLE_FAVICON(domain), source: 'google-favicon' },
+    { url: DUCK_FAVICON(domain), source: 'duckduckgo-favicon' },
+  ];
+  vlog(`${pspName}: falling back to third-party favicons`);
+
+  const measured = (await withLimit(MEASURE_CONCURRENCY, thirdParty, fetchAndMeasure)).filter(isAcceptable);
+  return await writeBestMeasured(pspName, measured, outputPath);
+}
+
+async function collectMetaCandidates(bases) {
+  const metaCands = [];
+  for (const base of bases) {
+    const got = await collectCandidatesForBase(base).catch(() => []);
+    metaCands.push(...got);
+  }
+
+  return metaCands;
+}
+
+async function expandAndUniqCandidates(candidates) {
+  const expanded = (await Promise.all(candidates.map(c => probeCandidate(c)))).flat().filter(Boolean);
+  return uniq(expanded.filter(isValidUrlCandidate));
+}
+
+function isValidUrlCandidate(c) {
+  try {
+    new URL(c.url);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function collectCommonPathCandidates(bases) {
+  const commonCands = [];
+  for (const base of bases) {
+    for (const p of COMMON_ICON_PATHS) {
+      const abs = toAbsolute(p, base);
+      if (!abs) continue;
+      const cand = { url: abs, source: p.endsWith('.json') || p.endsWith('manifest') ? 'manifest-link' : 'guess-path' };
+      if (cand.source === 'manifest-link' || !candidateBelowMinByDeclaration(cand)) {
+        commonCands.push(cand);
+      } else {
+        vlog(`prefilter(common-bulk): drop < ${MIN_SIZE}px ${abs}`);
+      }
+    }
+  }
+
+  return commonCands;
+}
+
+function isAcceptableIconCandidate(m) {
+  if (!m) return false;
+  const w = m.width || 0;
+  const h = m.height || 0;
+  const fmt = (m.format || '').toLowerCase();
+  const isRaster = ['png', 'webp', 'jpg', 'jpeg', 'ico', 'gif', 'avif'].includes(fmt);
+
+  if (!isRaster && fmt !== 'svg') return false;
+  if (fmt === 'svg' && (!w || !h)) return false;
+  if (Math.min(w, h) < MIN_SIZE) return false;
+  return isSquareish(w, h, 0.05);
+}
+
+async function writeBestMeasured(pspName, measured, outputPath) {
+  if (!measured || measured.length === 0) return null;
+
+  const best = measured.sort(
+    (a, b) => Math.min(a.width, a.height) - Math.min(b.width, b.height),
+  )[0];
+
+  await writeOut128(best.buffer, outputPath, best.format);
+  console.log(`✅ ${pspName}: Updated ${outputPath} (${best.source}, ${best.width}x${best.height})`);
+
+  return {
+    psp: pspName,
+    status: 'success',
+    output: outputPath,
+    source: best.source,
+    dimensions: `${best.width}x${best.height}`,
+    format: best.format,
+  };
+}
+
+async function writeOut128(inputBuffer, outputPath, fmt) {
+  const base = createSharpBase(inputBuffer, fmt);
+  const analysis = await analyzeForWriteOut128(base, outputPath, fmt);
+  const output = buildWriteOut128Pipeline(base, analysis);
+  await writeOut128ToFile(output, inputBuffer, outputPath);
+}
+
+function createSharpBase(inputBuffer, fmt) {
+  const svg = (fmt || '').toLowerCase() === 'svg';
+  return svg ? sharp(inputBuffer, { density: 512 }) : sharp(inputBuffer, { animated: false });
+}
+
+async function analyzeForWriteOut128(base, outputPath, fmt) {
   const analysisPipe = base
     .clone()
     .resize(MIN_SIZE, MIN_SIZE, {
@@ -672,157 +699,194 @@ async function writeOut128(inputBuffer, outputPath, fmt) {
     })
     .ensureAlpha();
 
-  // Analyze luminance of visible pixels (alpha-weighted) to choose white/black background
   const { data, info } = await analysisPipe.raw().toBuffer({ resolveWithObject: true });
+  const stats = computeWriteOut128Stats(data, info);
+
+  const avgLum = stats.alphaSum > 0 ? stats.lumSum / stats.alphaSum : 255;
+  const bgIsBlack = avgLum >= 128;
+  const hasTransparency = stats.transparentCount / stats.len > 0.02;
+
+  const cornerArea = stats.cornerSize * stats.cornerSize;
+  const tlFrac = stats.transTL / cornerArea;
+  const trFrac = stats.transTR / cornerArea;
+  const blFrac = stats.transBL / cornerArea;
+  const brFrac = stats.transBR / cornerArea;
+  const innerShare = stats.transStrictTotal > 0 ? (stats.innerStrict / stats.transStrictTotal) : 0;
+  const fourCornersTransparent = tlFrac >= 0.2 && trFrac >= 0.2 && blFrac >= 0.2 && brFrac >= 0.2;
+
+  const cornerOnlyTransparency = hasTransparency && fourCornersTransparent && innerShare <= 0.05;
+  const shouldHandleTransparency = hasTransparency && !cornerOnlyTransparency;
+
+  const desiredPad = 16;
+  const bgColor = bgIsBlack ? { r: 18, g: 18, b: 18 } : { r: 255, g: 255, b: 255 };
+
+  let scale = 1;
+  if (shouldHandleTransparency && stats.maxX >= 0 && stats.maxY >= 0) {
+    const contentW = Math.max(1, (stats.maxX - stats.minX + 1));
+    const contentH = Math.max(1, (stats.maxY - stats.minY + 1));
+    const targetInner = MIN_SIZE - 2 * desiredPad;
+    if (contentW > targetInner || contentH > targetInner) {
+      scale = Math.min(1, targetInner / Math.max(contentW, contentH));
+    }
+  }
+
+  const target = Math.round(MIN_SIZE * scale);
+  const padLeft = Math.floor((MIN_SIZE - target) / 2);
+  const padTop = Math.floor((MIN_SIZE - target) / 2);
+  const padRight = MIN_SIZE - target - padLeft;
+  const padBottom = MIN_SIZE - target - padTop;
+  const padBg = shouldHandleTransparency ? bgColor : { r: 0, g: 0, b: 0, alpha: 0 };
+
+  let bgLabel = 'transparent';
+  if (shouldHandleTransparency) {
+    bgLabel = bgIsBlack ? 'black' : 'white';
+  }
+
+  vlog(
+    `writeOut128 ${path.basename(outputPath)}: fmt=${fmt}, size=${stats.w}x${stats.h}, ` +
+      `avgLum=${Math.round(avgLum)}, hasAlpha=${hasTransparency}, ` +
+      `cornersOK=${fourCornersTransparent}, innerShare=${(innerShare * 100).toFixed(1)}%, ` +
+      `cornerOnly=${cornerOnlyTransparency}, handleTransparency=${shouldHandleTransparency}, ` +
+      `scale=${scale.toFixed(2)}, padL/T=${padLeft}/${padTop}, bg=${bgLabel}`,
+  );
+
+  return {
+    bgColor,
+    shouldHandleTransparency,
+    scale,
+    padLeft,
+    padRight,
+    padTop,
+    padBottom,
+    padBg,
+  };
+}
+
+function computeWriteOut128Stats(data, info) {
   const channels = info.channels || 4;
   const w = info.width;
   const h = info.height;
-  let lumSum = 0;
-  let alphaSum = 0;
-  let transparentCount = 0; // loose transparency counter (a < 250)
-  // Track non-transparent content bounds to evaluate existing margins
-  let minX = w, minY = h, maxX = -1, maxY = -1;
-
-  // Corner-only transparency analysis
-  const cornerSize = Math.max(6, Math.round(Math.min(w, h) * 0.12)); // ~12% of edge length
-  let transTL = 0, transTR = 0, transBL = 0, transBR = 0; // strict transparency (a < 200)
-  let transStrictTotal = 0;
-  let innerStrict = 0; // strict transparency in true inner area (excluding edges and corners)
+  const cornerSize = Math.max(6, Math.round(Math.min(w, h) * 0.12));
   const len = w * h;
+
+  const state = {
+    lumSum: 0,
+    alphaSum: 0,
+    transparentCount: 0,
+    minX: w,
+    minY: h,
+    maxX: -1,
+    maxY: -1,
+    transTL: 0,
+    transTR: 0,
+    transBL: 0,
+    transBR: 0,
+    transStrictTotal: 0,
+    innerStrict: 0,
+  };
+
   for (let i = 0; i < len; i++) {
     const idx = i * channels;
     const r = data[idx + 0];
     const g = data[idx + 1];
     const b = data[idx + 2];
     const a = channels > 3 ? data[idx + 3] : 255;
-    if (a < 250) transparentCount++;
-    if (a > 10) {
-      const al = a / 255;
-      const y = 0.2126 * r + 0.7152 * g + 0.0722 * b; // sRGB luma
-      lumSum += y * al;
-      alphaSum += al;
+    const x = i % w;
+    const yIdx = Math.trunc(i / w);
 
-      // update bounds
-      const x = i % w;
-      const yIdx = (i / w) | 0;
-      if (x < minX) minX = x;
-      if (x > maxX) maxX = x;
-      if (yIdx < minY) minY = yIdx;
-      if (yIdx > maxY) maxY = yIdx;
-    }
-
-    // Strict transparency accounting for corner-only detection
-    if (a < 200) {
-      transStrictTotal++;
-      const x = i % w;
-      const yIdx = (i / w) | 0;
-      const inTL = x < cornerSize && yIdx < cornerSize;
-      const inTR = x >= (w - cornerSize) && yIdx < cornerSize;
-      const inBL = x < cornerSize && yIdx >= (h - cornerSize);
-      const inBR = x >= (w - cornerSize) && yIdx >= (h - cornerSize);
-      if (inTL) transTL++;
-      else if (inTR) transTR++;
-      else if (inBL) transBL++;
-      else if (inBR) transBR++;
-      else {
-        const inTop = yIdx < cornerSize;
-        const inBottom = yIdx >= (h - cornerSize);
-        const inLeft = x < cornerSize;
-        const inRight = x >= (w - cornerSize);
-        if (!(inTop || inBottom || inLeft || inRight)) innerStrict++;
-      }
-    }
+    updateTransparencyCounters(state, a);
+    updateLumaAndBounds(state, r, g, b, a, x, yIdx);
+    updateStrictTransparency(state, a, x, yIdx, cornerSize, w, h);
   }
 
-  // Decide background: default white; if average luma is bright, choose black
-  const avgLum = alphaSum > 0 ? lumSum / alphaSum : 255;
-  const bgIsBlack = avgLum >= 128; // bright logo => black bg; dark logo => white bg
-  const hasTransparency = transparentCount / len > 0.02; // any noticeable transparency
-  // Treat rounded-rectangle cases (only corner transparency) as "safe to keep transparency"
+  return {
+    channels,
+    w,
+    h,
+    cornerSize,
+    len,
+    ...state,
+  };
+}
 
-  // Require all four corners to show significant transparency and very little transparency elsewhere
-  const cornerArea = cornerSize * cornerSize;
-  const tlFrac = transTL / cornerArea;
-  const trFrac = transTR / cornerArea;
-  const blFrac = transBL / cornerArea;
-  const brFrac = transBR / cornerArea;
-  const innerShare = transStrictTotal > 0 ? (innerStrict / transStrictTotal) : 0;
-  const fourCornersTransparent = tlFrac >= 0.2 && trFrac >= 0.2 && blFrac >= 0.2 && brFrac >= 0.2;
+function updateTransparencyCounters(state, a) {
+  if (a < 250) state.transparentCount++;
+}
 
-  // Accept transparent corners and edge bands as "safe" as long as the inner area is mostly opaque.
-  const cornerOnlyTransparency = hasTransparency && fourCornersTransparent && innerShare <= 0.05;
-  const shouldHandleTransparency = hasTransparency && !cornerOnlyTransparency; // only apply bg/padding when not corner-only
+function updateLumaAndBounds(state, r, g, b, a, x, yIdx) {
+  if (a <= 10) return;
 
-  // Build final output pipeline. Ensure >=16px padding by optionally scaling down regardless of transparency
-  const desiredPad = 16;
-  const bgColor = bgIsBlack ? { r: 18, g: 18, b: 18 } : { r: 255, g: 255, b: 255 };
+  const al = a / 255;
+  const y = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  state.lumSum += y * al;
+  state.alphaSum += al;
 
-  // default: no extra shrink
-  let scale = 1;
+  if (x < state.minX) state.minX = x;
+  if (x > state.maxX) state.maxX = x;
+  if (yIdx < state.minY) state.minY = yIdx;
+  if (yIdx > state.maxY) state.maxY = yIdx;
+}
 
-  // Only enforce interior padding when we intend to flatten/add a background.
-  // For rounded-rectangle icons with only corner transparency, keep the
-  // content at full size (no extra padding), preserving their intended look.
-  if (shouldHandleTransparency && maxX >= 0 && maxY >= 0) {
-    const contentW = Math.max(1, (maxX - minX + 1));
-    const contentH = Math.max(1, (maxY - minY + 1));
-    const targetInner = MIN_SIZE - 2 * desiredPad; // 96 for 128px canvas
-    if (contentW > targetInner || contentH > targetInner) {
-      scale = Math.min(1, targetInner / Math.max(contentW, contentH));
-    }
-  }
+function updateStrictTransparency(state, a, x, yIdx, cornerSize, w, h) {
+  if (a >= 200) return;
 
-  // First, resize content into possibly smaller square. When we intend to flatten
-  // onto a solid background, FLATTEN BEFORE RESIZE so interpolation happens against
-  // the correct background, avoiding halos/lines from semi-transparent edge pixels.
+  state.transStrictTotal++;
+
+  const inTL = x < cornerSize && yIdx < cornerSize;
+  const inTR = x >= (w - cornerSize) && yIdx < cornerSize;
+  const inBL = x < cornerSize && yIdx >= (h - cornerSize);
+  const inBR = x >= (w - cornerSize) && yIdx >= (h - cornerSize);
+
+  if (inTL) state.transTL++;
+  else if (inTR) state.transTR++;
+  else if (inBL) state.transBL++;
+  else if (inBR) state.transBR++;
+  else updateInnerStrict(state, x, yIdx, cornerSize, w, h);
+}
+
+function updateInnerStrict(state, x, yIdx, cornerSize, w, h) {
+  const inTop = yIdx < cornerSize;
+  const inBottom = yIdx >= (h - cornerSize);
+  const inLeft = x < cornerSize;
+  const inRight = x >= (w - cornerSize);
+  if (!(inTop || inBottom || inLeft || inRight)) state.innerStrict++;
+}
+
+function buildWriteOut128Pipeline(base, analysis) {
+  const { bgColor, shouldHandleTransparency, scale, padLeft, padRight, padTop, padBottom, padBg } = analysis;
+  const targetSize = Math.round(MIN_SIZE * scale);
+
   let output;
   if (shouldHandleTransparency) {
     output = base
       .clone()
       .flatten({ background: bgColor })
-      .resize(Math.round(MIN_SIZE * scale), Math.round(MIN_SIZE * scale), {
+      .resize(targetSize, targetSize, {
         fit: 'contain',
         background: bgColor,
         withoutEnlargement: true,
       });
   } else {
-    // Preserve transparency (e.g., rounded-rectangle with transparent corners)
     output = base
       .clone()
       .ensureAlpha()
-      .resize(Math.round(MIN_SIZE * scale), Math.round(MIN_SIZE * scale), {
+      .resize(targetSize, targetSize, {
         fit: 'contain',
         background: { r: 0, g: 0, b: 0, alpha: 0 },
         withoutEnlargement: true,
       });
   }
 
-  // Always extend to 128x128 to center with padding; use transparent padding unless we're flattening
-  const target = Math.round(MIN_SIZE * scale);
-  const padLeft = Math.floor((MIN_SIZE - target) / 2);
-  const padRight = MIN_SIZE - target - padLeft;
-  const padTop = Math.floor((MIN_SIZE - target) / 2);
-  const padBottom = MIN_SIZE - target - padTop;
-  const padBg = shouldHandleTransparency ? bgColor : { r: 0, g: 0, b: 0, alpha: 0 };
+  return output.extend({ top: padTop, bottom: padBottom, left: padLeft, right: padRight, background: padBg });
+}
 
-  vlog(
-    `writeOut128 ${path.basename(outputPath)}: fmt=${fmt}, size=${w}x${h}, ` +
-      `avgLum=${Math.round(avgLum)}, hasAlpha=${hasTransparency}, ` +
-      `cornersOK=${fourCornersTransparent}, innerShare=${(innerShare * 100).toFixed(1)}%, ` +
-      `cornerOnly=${cornerOnlyTransparency}, handleTransparency=${shouldHandleTransparency}, ` +
-      `scale=${scale.toFixed(2)}, padL/T=${padLeft}/${padTop}, bg=` +
-      `${shouldHandleTransparency ? (bgIsBlack ? 'black' : 'white') : 'transparent'}`,
-  );
-
-  output = output.extend({ top: padTop, bottom: padBottom, left: padLeft, right: padRight, background: padBg });
-
+async function writeOut128ToFile(output, inputBuffer, outputPath) {
   try {
     await output
       .png({ compressionLevel: 9, adaptiveFiltering: true })
       .withMetadata({})
       .toFile(outputPath);
   } catch {
-    // Fallback: minimal pipeline to avoid potential native issues
     await sharp(inputBuffer)
       .resize(MIN_SIZE, MIN_SIZE, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 1 }, withoutEnlargement: true })
       .png({ compressionLevel: 9 })
@@ -830,7 +894,7 @@ async function writeOut128(inputBuffer, outputPath, fmt) {
   }
 }
 
-async function processBulk(pspsJsonPath = './public/psps.json', startFrom) {
+async function processBulk(pspsJsonPath = './public/psps.json', startFrom = undefined) {
   const assetsDir = path.resolve('./assets/images');
 
   try {
@@ -849,32 +913,14 @@ async function processBulk(pspsJsonPath = './public/psps.json', startFrom) {
     });
 
     // Determine start index if provided
-    let startIndex = 0;
-    let startHint = '';
-    if (startFrom && typeof startFrom === 'string') {
-      const s = startFrom.trim();
-      if (/^\d+$/.test(s)) {
-        const idx = Math.max(0, Math.min(providers.length - 1, parseInt(s, 10) - 1));
-        startIndex = idx;
-        startHint = `index ${idx + 1}`;
-      } else {
-        const needle = s.toLowerCase();
-        let idx = providers.findIndex(p => (p?.name || '').toLowerCase() === needle);
-        if (idx === -1) idx = providers.findIndex(p => (p?.name || '').toLowerCase().startsWith(needle));
-        if (idx !== -1) {
-          startIndex = idx;
-          startHint = `name "${providers[idx].name}"`;
-        } else {
-          console.warn(`⚠️  --start '${startFrom}' not found; starting from the beginning.`);
-        }
-      }
-    }
+    const { startIndex, startHint } = resolveStartIndex(providers, startFrom);
 
     const providersToProcess = providers.slice(startIndex);
 
     console.log(`🚀 Processing ${providersToProcess.length} providers (PSPs + orchestrators) from ${pspsJsonPath}`);
     if (startIndex > 0) {
-      console.log(`⏩ Starting at ${startHint || `index ${startIndex + 1}`}: ${providers[startIndex]?.name || 'unknown'}`);
+      const startAt = startHint || `index ${startIndex + 1}`;
+      console.log(`⏩ Starting at ${startAt}: ${providers[startIndex]?.name || 'unknown'}`);
     }
 
     console.log(`📁 Output directory: ${assetsDir}`);
@@ -932,34 +978,69 @@ async function processBulk(pspsJsonPath = './public/psps.json', startFrom) {
   }
 }
 
+function resolveStartIndex(providers, startFrom) {
+  let startIndex = 0;
+  let startHint = '';
+
+  if (startFrom && typeof startFrom === 'string') {
+    const s = startFrom.trim();
+    if (/^\d+$/.test(s)) {
+      const idx = Math.max(0, Math.min(providers.length - 1, Number.parseInt(s, 10) - 1));
+      startIndex = idx;
+      startHint = `index ${idx + 1}`;
+    } else {
+      const needle = s.toLowerCase();
+      let idx = providers.findIndex(p => (p?.name || '').toLowerCase() === needle);
+      if (idx < 0) {
+        idx = providers.findIndex(p => (p?.name || '').toLowerCase().startsWith(needle));
+      }
+
+      if (idx >= 0) {
+        startIndex = idx;
+        startHint = `name "${providers[idx].name}"`;
+      } else {
+        console.warn(`⚠️  --start '${startFrom}' not found; starting from the beginning.`);
+      }
+    }
+  }
+
+  return { startIndex, startHint };
+}
+
 async function main() {
   const args = process.argv.slice(2);
 
-  // Check for bulk mode
-  if (args.includes('--bulk')) {
+  const mode = parseCliMode(args);
+  if (mode.kind === 'bulk') {
+    await processBulk(mode.pspsArg, mode.startFrom);
+    return;
+  }
 
-    // pick the first non-flag arg after --bulk as path; else default
+  await runSingleSiteMode(mode);
+}
+
+function parseCliMode(args) {
+  if (args.includes('--bulk')) {
     const bulkIndex = args.indexOf('--bulk');
     const after = args.slice(bulkIndex + 1);
     const pspsArg = after.find(a => !a.startsWith('--')) || './public/psps.json';
 
-    // parse optional --start <name|index>
-    let startFrom;
     const startIdx = args.indexOf('--start');
-    if (startIdx !== -1) {
-      const val = args[startIdx + 1];
-      if (val && !val.startsWith('--')) startFrom = val;
-    }
+    const val = startIdx >= 0 ? args[startIdx + 1] : undefined;
+    const startFrom = val && !val.startsWith('--') ? val : undefined;
 
-    await processBulk(pspsArg, startFrom);
-    return;
+    return { kind: 'bulk', pspsArg, startFrom };
   }
 
-  // Original single-site mode
   const positional = args.filter(a => !a.startsWith('--'));
   const domainArg = positional[0];
   const outArg = positional[1];
+  return { kind: 'single', domainArg, outArg };
+}
 
+async function runSingleSiteMode(mode) {
+  const domainArg = mode.domainArg;
+  const outArg = mode.outArg;
   if (!domainArg) {
     console.error('Usage: node get-site-logo.mjs <domain-or-url> [output.png] [--verbose]');
     console.error('       node get-site-logo.mjs --bulk [psps.json] [--start <name|index>] [--verbose]');
@@ -967,49 +1048,34 @@ async function main() {
   }
 
   const outPath = pickOutputPath(domainArg, outArg);
-
-  // Gather candidates from HTTPS first, then HTTP as fallback
   const domain = extractDomain(domainArg);
   const bases = domainToBases(domainArg);
+  const isAcceptable = (m) => isAcceptableIconCandidate(m);
 
-  const isAcceptable = (m) => {
-    if (!m) return false;
-    const w = m.width || 0;
-    const h = m.height || 0;
-    const fmt = (m.format || '').toLowerCase();
-    const isRaster = ['png', 'webp', 'jpg', 'jpeg', 'ico', 'gif', 'avif'].includes(fmt);
-    if (!isRaster && fmt !== 'svg') return false;
-    if (fmt === 'svg' && (!w || !h)) return false;
-    if (Math.min(w, h) < MIN_SIZE) return false;
-    if (!isSquareish(w, h, 0.05)) return false;
-    return true;
-  };
+  const metaResult = await tryWriteSingleFromMetadata(bases, outPath, isAcceptable);
+  if (metaResult) return;
 
-  // 1) Metadata
-  const metaCands = [];
-  for (const base of bases) {
-    const got = await collectCandidatesForBase(base).catch(() => []);
-    metaCands.push(...got);
-  }
+  const commonResult = await tryWriteSingleFromCommonPaths(bases, outPath, isAcceptable);
+  if (commonResult) return;
 
-  const expanded = (await Promise.all(metaCands.map((c) => probeCandidate(c)))).flat().filter(Boolean);
-  const unique = uniq(expanded.filter((c) => { try { new URL(c.url); return true; } catch { return false; } }));
-  const measuredMeta = (await withLimit(MEASURE_CONCURRENCY, unique, fetchAndMeasure)).filter(isAcceptable);
-  if (measuredMeta.length) {
-    const best = measuredMeta.sort((a, b) => Math.min(a.width, a.height) - Math.min(b.width, b.height))[0];
-    await writeOut128(best.buffer, outPath, best.format);
-    console.log(JSON.stringify({ output: outPath, chosen: { url: best.url, source: best.source, width: best.width, height: best.height, format: best.format } }, null, 2));
-    return;
-  }
+  await writeSingleFromThirdParty(domain, outPath, isAcceptable);
+}
 
-  // 2) Common icon paths
+async function tryWriteSingleFromMetadata(bases, outPath, isAcceptable) {
+  const metaCands = await collectMetaCandidates(bases);
+  const unique = await expandAndUniqCandidates(metaCands);
+  const measured = (await withLimit(MEASURE_CONCURRENCY, unique, fetchAndMeasure)).filter(isAcceptable);
+  return await writeSingleChoiceOrNull(measured, outPath);
+}
+
+async function tryWriteSingleFromCommonPaths(bases, outPath, isAcceptable) {
   const common = [];
   for (const base of bases) {
     for (const p of COMMON_ICON_PATHS) {
       const abs = toAbsolute(p, base);
       if (!abs) continue;
       const cand = { url: abs, source: p.endsWith('.json') || p.endsWith('manifest') ? 'manifest-link' : 'guess-path' };
-      if (cand.source === 'manifest-link' || !candidateBelowMinByDeclaration(cand)) {
+      if (cand.source === 'manifest-link' || candidateMeetsMinByDeclaration(cand)) {
         common.push(cand);
       } else if (VERBOSE) {
         console.log(`[v] prefilter(common-single): drop < ${MIN_SIZE}px ${abs}`);
@@ -1017,33 +1083,44 @@ async function main() {
     }
   }
 
-  const commonMeasured = (await withLimit(MEASURE_CONCURRENCY, uniq(common), fetchAndMeasure)).filter(isAcceptable);
-  if (commonMeasured.length) {
-    const best = commonMeasured.sort((a, b) => Math.min(a.width, a.height) - Math.min(b.width, b.height))[0];
-    await writeOut128(best.buffer, outPath, best.format);
-    console.log(JSON.stringify({ output: outPath, chosen: { url: best.url, source: best.source, width: best.width, height: best.height, format: best.format } }, null, 2));
-    return;
-  }
+  const measured = (await withLimit(MEASURE_CONCURRENCY, uniq(common), fetchAndMeasure)).filter(isAcceptable);
+  return await writeSingleChoiceOrNull(measured, outPath);
+}
 
-  // 3) Third-party
+async function writeSingleFromThirdParty(domain, outPath, isAcceptable) {
   const tp = [
     { url: GOOGLE_FAVICON(domain), source: 'google-favicon' },
     { url: DUCK_FAVICON(domain), source: 'duckduckgo-favicon' },
   ];
-  const tpMeasured = (await withLimit(MEASURE_CONCURRENCY, tp, fetchAndMeasure)).filter(isAcceptable);
-  if (!tpMeasured.length) {
-    console.error('No acceptable icons (>=128px and square-ish).');
-    process.exit(3);
-  }
+  const measured = (await withLimit(MEASURE_CONCURRENCY, tp, fetchAndMeasure)).filter(isAcceptable);
+  const wrote = await writeSingleChoiceOrNull(measured, outPath);
+  if (wrote) return;
 
-  {
-    const best = tpMeasured.sort((a, b) => Math.min(a.width, a.height) - Math.min(b.width, b.height))[0];
-    await writeOut128(best.buffer, outPath, best.format);
-    console.log(JSON.stringify({ output: outPath, chosen: { url: best.url, source: best.source, width: best.width, height: best.height, format: best.format } }, null, 2));
-  }
+  console.error('No acceptable icons (>=128px and square-ish).');
+  process.exit(3);
 }
 
-main().catch((e) => {
+async function writeSingleChoiceOrNull(measured, outPath) {
+  const best = pickBestMeasured(measured);
+  if (!best) return false;
+
+  await writeOut128(best.buffer, outPath, best.format);
+  console.log(JSON.stringify({
+    output: outPath,
+    chosen: { url: best.url, source: best.source, width: best.width, height: best.height, format: best.format },
+  }, null, 2));
+
+  return true;
+}
+
+function pickBestMeasured(measured) {
+  if (!measured || measured.length === 0) return null;
+  return measured.sort((a, b) => Math.min(a.width, a.height) - Math.min(b.width, b.height))[0];
+}
+
+try {
+  await main();
+} catch (e) {
   console.error(e);
   process.exit(10);
-});
+}

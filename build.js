@@ -1,7 +1,11 @@
-const esbuild = require('esbuild');
-const fs = require('fs-extra');
-const path = require('path');
-const sharp = require('sharp');
+import esbuild from 'esbuild';
+import fs from 'fs-extra';
+import path from 'node:path';
+import sharp from 'sharp';
+import { fileURLToPath } from 'node:url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const mainEntryPoints = {
   content: './src/content.ts',
@@ -12,7 +16,7 @@ const mainEntryPoints = {
 const sharedConfig = {
   bundle: true,
   minify: !process.env.DEBUG,
-  sourcemap: process.env.NO_SOURCEMAP ? false : true,
+  sourcemap: !process.env.NO_SOURCEMAP,
   target: 'esnext',
   format: 'esm',
   platform: 'browser',
@@ -153,4 +157,4 @@ async function buildFiles() {
   }
 }
 
-buildFiles();
+await buildFiles();

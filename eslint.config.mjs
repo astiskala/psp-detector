@@ -88,4 +88,20 @@ export default [
       },
     },
   },
+
+  // MV3 service worker: Chrome disallows top-level await
+  {
+    files: ['src/background.ts'],
+    rules: {
+      'prefer-top-level-await': 'off',
+    },
+  },
+
+  // Content script is executed as a classic script (no top-level await)
+  {
+    files: ['src/content.ts'],
+    rules: {
+      'prefer-top-level-await': 'off',
+    },
+  },
 ];

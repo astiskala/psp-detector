@@ -8,16 +8,14 @@ import {
   MessageAction,
   TypeConverters,
   PSPDetectionResult,
+  PSP_DETECTION_EXEMPT,
+  type PSP,
+  type ChromeMessage,
+  type PSPDetectionData,
+  type PSPConfigResponse,
+  type PSPConfig,
+  type PSPResponse,
 } from './types';
-import type {
-  PSP,
-  ChromeMessage,
-  PSPDetectionData,
-  PSPConfigResponse,
-  PSPConfig,
-  PSPResponse,
-} from './types';
-import { PSP_DETECTION_EXEMPT } from './types';
 import { DEFAULT_ICONS } from './types/background';
 import { logger, getAllProviders } from './lib/utils';
 
@@ -30,12 +28,16 @@ const STORAGE_KEYS = {
   CURRENT_TAB_ID: 'currentTabId',
 } as const;
 
+const BADGE_COLOR = '#6B7280';
+const EXEMPT_DOMAIN_REASON = 'Domain is exempt from PSP detection';
+const EXEMPT_DISABLED_REASON = 'PSP detection is disabled for this domain';
+
 class BackgroundService {
   private isInitialized = false;
   private inMemoryPspConfig: PSPConfig | null = null;
 
-  constructor() {
-    this.initializeServiceWorker();
+  public async initialize(): Promise<void> {
+    await this.initializeServiceWorker();
   }
 
   /**
@@ -67,7 +69,9 @@ class BackgroundService {
     // Handle extension startup
     chrome.runtime.onStartup.addListener(() => {
       logger.info('Extension startup detected');
-      this.initializeServiceWorker();
+      this.initializeServiceWorker().catch((error) => {
+        logger.error('Failed to initialize service worker on startup:', error);
+      });
     });
 
     // Handle extension installation/update
@@ -405,6 +409,35 @@ class BackgroundService {
   }
 
   /**
+   * Create a standardized exempt PSP detection result
+   * @private
+   */
+  private createExemptResult(
+    reason: string,
+    url?: string,
+  ): PSPDetectionResult {
+    return PSPDetectionResult.exempt(
+      reason,
+      (url || 'unknown') as import('./types/branded').URL,
+    );
+  }
+
+  /**
+   * Persist exempt PSP detection state for a tab
+   * @private
+   */
+  private async setExemptTabState(
+    tabId: number,
+    url: string,
+    reason: string,
+  ): Promise<void> {
+    const exemptResult = this.createExemptResult(reason, url);
+    await this.setDetectedPsp(exemptResult);
+    await this.setTabPsp(tabId, exemptResult);
+    this.showExemptDomainIcon();
+  }
+
+  /**
    * Handle incoming extension messages with enhanced type safety
    * @private
    */
@@ -433,10 +466,13 @@ class BackgroundService {
           break;
         }
 
-        await this.handleDetectPsp(
-          message.data as PSPDetectionData,
-          sendResponse,
-        );
+        {
+          const detectionData = message.data;
+          await this.handleDetectPsp(
+            detectionData,
+            sendResponse,
+          );
+        }
 
         break;
 
@@ -545,7 +581,7 @@ class BackgroundService {
         throw new Error('Invalid PSP configuration structure or content');
       }
 
-      const validConfig = configData as PSPConfig;
+      const validConfig = configData;
 
       // Cache the config
       await this.setCachedPspConfig(validConfig);
@@ -735,10 +771,7 @@ class BackgroundService {
 
       if (String(pspName) === PSP_DETECTION_EXEMPT) {
         // Create exempt result for exempt domains
-        detectionResult = PSPDetectionResult.exempt(
-          'Domain is exempt from PSP detection',
-          (url || 'unknown') as import('./types/branded').URL,
-        );
+        detectionResult = this.createExemptResult(EXEMPT_DOMAIN_REASON, url);
 
         logger.debug('Background: Created exempt domain result');
       } else {
@@ -846,52 +879,64 @@ class BackgroundService {
    */
   async handleTabActivation(activeInfo: { tabId: number }): Promise<void> {
     const tabId = TypeConverters.toTabId(activeInfo.tabId);
-    if (tabId) {
-      logger.debug(`Background: Tab activated - ID: ${tabId}`);
-      await this.setCurrentTabId(tabId);
+    if (!tabId) return;
 
-      const tabPsps = await this.getTabPsps();
-      const detectedPsp = tabPsps[tabId.toString()] || null;
-      await this.setDetectedPsp(detectedPsp);
+    logger.debug(`Background: Tab activated - ID: ${tabId}`);
+    await this.setCurrentTabId(tabId);
 
-      logger.debug(
-        `Background: Retrieved PSP for tab ${tabId}:`,
-        detectedPsp,
+    const tabPsps = await this.getTabPsps();
+    const detectedPsp = tabPsps[tabId.toString()] || null;
+    await this.setDetectedPsp(detectedPsp);
+
+    logger.debug(
+      `Background: Retrieved PSP for tab ${tabId}:`,
+      detectedPsp,
+    );
+
+    try {
+      const tab = await chrome.tabs.get(activeInfo.tabId);
+      await this.handleActivatedTab(tabId, activeInfo.tabId, tab, detectedPsp);
+    } catch (error) {
+      logger.warn('Tab access error:', error);
+      this.resetIcon();
+    }
+  }
+
+  private async handleActivatedTab(
+    tabId: NonNullable<ReturnType<typeof TypeConverters.toTabId>>,
+    rawTabId: number,
+    tab: chrome.tabs.Tab,
+    detectedPsp: PSPDetectionResult | null,
+  ): Promise<void> {
+    if (detectedPsp) {
+      if (detectedPsp.type === 'exempt') {
+        this.showExemptDomainIcon();
+        return;
+      }
+
+      if (detectedPsp.type === 'detected') {
+        this.updateIcon(detectedPsp.psp);
+        return;
+      }
+
+      return;
+    }
+
+    this.resetIcon();
+    if (!tab?.url) return;
+
+    const isExempt = await this.isUrlExempt(tab.url);
+    if (isExempt || this.isSpecialUrl(tab.url)) {
+      await this.setExemptTabState(
+        tabId,
+        tab.url,
+        EXEMPT_DISABLED_REASON,
       );
 
-      try {
-        const tab = await chrome.tabs.get(activeInfo.tabId);
-        if (detectedPsp) {
-
-          // Handle different PSP detection states
-          if (detectedPsp.type === 'exempt') {
-            this.showExemptDomainIcon();
-          } else if (detectedPsp.type === 'detected') {
-            this.updateIcon(detectedPsp.psp);
-          }
-        } else {
-          this.resetIcon();
-          if (tab?.url) {
-            const isExempt = await this.isUrlExempt(tab.url);
-            if (isExempt || this.isSpecialUrl(tab.url)) {
-              // Create exempt result for exempt domains or special URLs
-              const exemptResult = PSPDetectionResult.exempt(
-                'PSP detection is disabled for this domain',
-                (tab.url || 'unknown') as import('./types/branded').URL,
-              );
-              await this.setDetectedPsp(exemptResult);
-              await this.setTabPsp(tabId, exemptResult);
-              this.showExemptDomainIcon();
-            } else {
-              await this.injectContentScript(activeInfo.tabId);
-            }
-          }
-        }
-      } catch (error) {
-        logger.warn('Tab access error:', error);
-        this.resetIcon();
-      }
+      return;
     }
+
+    await this.injectContentScript(rawTabId);
   }
 
   /**
@@ -918,16 +963,13 @@ class BackgroundService {
     if (changeInfo.status === 'complete' && tab.url) {
       const isExempt = await this.isUrlExempt(tab.url);
       if (isExempt || this.isSpecialUrl(tab.url)) {
-        // Create exempt result for exempt domains or special URLs
-        const exemptResult = PSPDetectionResult.exempt(
-          'PSP detection is disabled for this domain',
-          (tab.url || 'unknown') as import('./types/branded').URL,
-        );
         const currentTabId = await this.getCurrentTabId();
         if (brandedTabId && brandedTabId === currentTabId) {
-          await this.setDetectedPsp(exemptResult);
-          await this.setTabPsp(brandedTabId, exemptResult);
-          this.showExemptDomainIcon();
+          await this.setExemptTabState(
+            brandedTabId,
+            tab.url,
+            EXEMPT_DISABLED_REASON,
+          );
         }
       } else {
         // For regular websites, inject content script for detection
@@ -968,7 +1010,9 @@ class BackgroundService {
 
     // Clear any badge when showing PSP icon
     chrome.action.setBadgeText({ text: '' });
-    chrome.action.setBadgeBackgroundColor({ color: '#6B7280' }); // Neutral grey
+
+    // Neutral grey
+    chrome.action.setBadgeBackgroundColor({ color: BADGE_COLOR });
   }
 
   /**
@@ -983,7 +1027,9 @@ class BackgroundService {
 
     // Add warning badge
     chrome.action.setBadgeText({ text: '🚫' });
-    chrome.action.setBadgeBackgroundColor({ color: '#6B7280' }); // Neutral grey
+
+    // Neutral grey
+    chrome.action.setBadgeBackgroundColor({ color: BADGE_COLOR });
     logger.debug('Showing exempt domain icon with warning badge');
   }
 
@@ -998,7 +1044,9 @@ class BackgroundService {
 
     // Add searching badge
     chrome.action.setBadgeText({ text: '🔍' });
-    chrome.action.setBadgeBackgroundColor({ color: '#6B7280' }); // Neutral grey
+
+    // Neutral grey
+    chrome.action.setBadgeBackgroundColor({ color: BADGE_COLOR });
   }
 
   /**
@@ -1089,4 +1137,7 @@ class BackgroundService {
 }
 
 // Initialize background service
-new BackgroundService();
+const backgroundService = new BackgroundService();
+backgroundService.initialize().catch((error) => {
+  logger.error('Failed to initialize background service:', error);
+});
