@@ -27,11 +27,11 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Adyen
 - Airwallex
 - Alipay
-- Allinpay
+- Allinpay International
 - Amazon Payment Services (PayFort)
 - AsiaBill
 - AsiaPay
-- Authorize.ne
+- Authorize.net
 - BillDesk
 - BlueSnap
 - Cardknox
@@ -62,12 +62,14 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Fiuu
 - Flutterwave
 - Flywire
+- Geidea
 - Global Payments
 - GMO Payment Gateway
 - Helcim
-- Inicis
 - Judopay
+- KG Inicis
 - KSNET
+- Kushki
 - LianLian
 - Linkly
 - Mastercard Gateway (MPGS)
@@ -86,7 +88,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - NTT DATA
 - Nuvei
 - Oceanpayment
-- Opn Payments (Omise)
+- Opn Payments
 - Paddle
 - PagBrasil
 - PagSeguro
@@ -95,6 +97,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - PayKings
 - Payletter
 - Paymentwall
+- PayMob
 - Payoneer
 - PayPal
 - PayPal Enterprise Payments
@@ -105,6 +108,8 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - PayTabs
 - Paytm
 - PayU
+- Peach Payments
+- Pine Labs
 - Plastiq
 - Plug'n Pay
 - Quickpay
@@ -121,7 +126,8 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Stripe
 - SumUp
 - Tap Payments
-- Tipalti
+- Telr
+- Tilled
 - Trust Payments
 - Tyro
 - WePay
@@ -131,7 +137,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Xendit
 - Xsolla Pay
 - Yoco
-- Zai (Assembly Payments)
+- Zai
 
 ## Supported orchestrators / proxies
 
@@ -140,17 +146,21 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - APEXX
 - Basis Theory
 - BR-DGE
+- BridgerPay
 - CellPoint Digital
 - Chargebee
+- Corefy
 - Gr4vy
 - IXOPAY
 - Juspay
 - Paydock
+- Paytiko
 - PCI Proxy
 - PCI Vault
 - Praxis Tech
 - Primer
 - ProcessOut
+- Rebilly
 - Spreedly
 - Tranzzo
 - VGS (Very Good Security)
@@ -159,7 +169,9 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 ## Supported third-party service providers (TSPs)
 
 - Amadeus Hospitality (TravelClick)
+- Cloudbeds
 - Sabre SynXis
+- SiteMinder
 
 ## Development
 
@@ -175,6 +187,13 @@ npm install
 npm run build          # Production build
 npm run build:debug    # Development build with debug info
 ```
+
+### Loading In Chrome
+
+1. Run `npm run build`.
+2. Open `chrome://extensions` and enable **Developer mode**.
+3. Click **Load unpacked** and select the `dist/` folder (not `assets/`).
+4. After rebuilding, click **Reload** on the extension.
 
 ### Testing
 

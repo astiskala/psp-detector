@@ -20,7 +20,7 @@ export const TEST_PSP_CONFIGS = {
     psps: [
       {
         name: TypeConverters.toPSPName('Stripe')!,
-        regex: TypeConverters.toRegexPattern('stripe\\.com')!,
+        regex: TypeConverters.toRegexPattern(String.raw`stripe\.com`)!,
         url: TypeConverters.toURL('https://stripe.com')!,
         image: 'stripe',
         summary: 'Stripe payment processing',
@@ -44,14 +44,14 @@ export const TEST_PSP_CONFIGS = {
     psps: [
       {
         name: TypeConverters.toPSPName('Stripe')!,
-        regex: TypeConverters.toRegexPattern('stripe\\.com')!,
+        regex: TypeConverters.toRegexPattern(String.raw`stripe\.com`)!,
         url: TypeConverters.toURL('https://stripe.com')!,
         image: 'stripe',
         summary: 'Stripe payment processing',
       },
       {
         name: TypeConverters.toPSPName('PayPal')!,
-        regex: TypeConverters.toRegexPattern('paypal\\.com')!,
+        regex: TypeConverters.toRegexPattern(String.raw`paypal\.com`)!,
         url: TypeConverters.toURL('https://paypal.com')!,
         image: 'paypal',
         summary: 'PayPal payment processing',

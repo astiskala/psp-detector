@@ -65,7 +65,7 @@ export default [
 
   // Node.js build files
   {
-    files: ['build.js', 'jest.config.js'],
+    files: ['build.mjs', 'jest.config.js'],
     languageOptions: {
       globals: {
         ...globals.node,
@@ -86,6 +86,22 @@ export default [
       globals: {
         ...globals.browser,
       },
+    },
+  },
+
+  // MV3 service worker: Chrome disallows top-level await
+  {
+    files: ['src/background.ts'],
+    rules: {
+      'prefer-top-level-await': 'off',
+    },
+  },
+
+  // Content script is executed as a classic script (no top-level await)
+  {
+    files: ['src/content.ts'],
+    rules: {
+      'prefer-top-level-await': 'off',
     },
   },
 ];

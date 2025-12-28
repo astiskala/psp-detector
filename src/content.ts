@@ -10,23 +10,49 @@ import {
   MessageAction,
   TypeConverters,
   PSPDetectionResult,
+  PSP_DETECTION_EXEMPT,
+  type ChromeMessage,
+  type PSPConfigResponse,
 } from './types';
-import type {
-  ChromeMessage,
-  PSPConfigResponse,
-} from './types';
-import { PSP_DETECTION_EXEMPT } from './types';
 import {
   logger,
   memoryUtils,
 } from './lib/utils';
 
+const EXTENSION_CONTEXT_INVALIDATED_MESSAGE = 'Extension context invalidated';
+const SERVICE_WORKER_RESTART_ERRORS = [
+  EXTENSION_CONTEXT_INVALIDATED_MESSAGE,
+  'receiving end does not exist',
+  'service worker was stopped',
+];
+
+const isExtensionContextInvalidated = (error: unknown): boolean =>
+  error instanceof Error &&
+  error.message.includes(EXTENSION_CONTEXT_INVALIDATED_MESSAGE);
+
+const isServiceWorkerRestartError = (message: string): boolean =>
+  SERVICE_WORKER_RESTART_ERRORS.some((fragment) => message.includes(fragment));
+
+type IdleCallback = (callback: () => void) => void;
+
+const scheduleIdle = (callback: () => void): void => {
+  const requestIdleCallback = (globalThis as unknown as {
+    requestIdleCallback?: IdleCallback;
+  }).requestIdleCallback;
+
+  if (typeof requestIdleCallback === 'function') {
+    requestIdleCallback(callback);
+  } else {
+    setTimeout(callback, 0);
+  }
+};
+
 class ContentScript {
-  private pspDetector: PSPDetectorService;
-  private domObserver: DOMObserverService;
+  private readonly pspDetector: PSPDetectorService;
+  private readonly domObserver: DOMObserverService;
   private pspDetected = false;
-  private reportedPSPs = new Set<string>();
-  private processedIframes = new Set<string>();
+  private readonly reportedPSPs = new Set<string>();
+  private readonly processedIframes = new Set<string>();
   private lastDetectionTime = 0;
   private readonly detectionCooldown = 500; // 500ms cooldown between detections
   private readonly maxIframeProcessing = 10; // Limit iframe processing
@@ -72,22 +98,15 @@ class ContentScript {
         this.setupDOMObserver();
 
         // Schedule initial detection
-        if (typeof window.requestIdleCallback === 'function') {
-          window.requestIdleCallback((): void => {
-            void this.detectPSP();
+        scheduleIdle(() => {
+          this.detectPSP().catch((error) => {
+            logger.error('Initial PSP detection failed:', error);
           });
-        } else {
-          setTimeout((): void => {
-            void this.detectPSP();
-          }, 0);
-        }
+        });
 
         logger.info('Content script initialized successfully');
       } catch (error) {
-        if (
-          error instanceof Error &&
-          error.message.includes('Extension context invalidated')
-        ) {
+        if (isExtensionContextInvalidated(error)) {
           logger.warn('Extension context invalidated during initialization');
           return;
         }
@@ -96,15 +115,11 @@ class ContentScript {
       }
     };
 
-    if (typeof window.requestIdleCallback === 'function') {
-      window.requestIdleCallback((): void => {
-        void setup();
+    scheduleIdle(() => {
+      setup().catch((error) => {
+        logger.error('Content script setup failed:', error);
       });
-    } else {
-      setTimeout((): void => {
-        void setup();
-      }, 0);
-    }
+    });
   }
 
   /**
@@ -200,12 +215,6 @@ class ContentScript {
     case 'error':
       logger.error('PSP detection error:', result.error);
       break;
-    default: {
-      // Type safety: ensure all cases are handled
-      // Exhaustive check for switch statement
-      void result;
-      break;
-    }
     }
   }
 
@@ -216,25 +225,37 @@ class ContentScript {
   private collectScanSources(): string[] {
     const sources: string[] = [];
 
-    // Use more efficient collection methods
-    document.querySelectorAll('script[src]').forEach((script) => {
-      const src = (script as HTMLScriptElement).src;
-      if (src) sources.push(src);
-    });
+    document.querySelectorAll(
+      'script[src], iframe[src], form[action], link[href]',
+    ).forEach((element) => {
+      switch (element.tagName) {
+      case 'SCRIPT': {
+        const src = (element as HTMLScriptElement).src;
+        if (src) sources.push(src);
+        break;
+      }
 
-    document.querySelectorAll('iframe[src]').forEach((iframe) => {
-      const src = (iframe as HTMLIFrameElement).src;
-      if (src) sources.push(src);
-    });
+      case 'IFRAME': {
+        const src = (element as HTMLIFrameElement).src;
+        if (src) sources.push(src);
+        break;
+      }
 
-    document.querySelectorAll('form[action]').forEach((form) => {
-      const action = (form as HTMLFormElement).action;
-      if (action) sources.push(action);
-    });
+      case 'FORM': {
+        const action = (element as HTMLFormElement).action;
+        if (action) sources.push(action);
+        break;
+      }
 
-    document.querySelectorAll('link[href]').forEach((link) => {
-      const href = (link as HTMLLinkElement).href;
-      if (href) sources.push(href);
+      case 'LINK': {
+        const href = (element as HTMLLinkElement).href;
+        if (href) sources.push(href);
+        break;
+      }
+
+      default:
+        break;
+      }
     });
 
     return sources;
@@ -246,72 +267,20 @@ class ContentScript {
    */
   private async handlePSPDetection(result: PSPDetectionResult): Promise<void> {
     try {
-      // Early duplicate detection check
-      let pspName: string | null = null;
-      if (result.type === 'detected') {
-        pspName = result.psp;
-      } else if (result.type === 'exempt') {
-        pspName = PSP_DETECTION_EXEMPT;
-      }
+      const pspName = this.getPspNameForResult(result);
 
-      // Check for duplicate detection
-      if (pspName && this.reportedPSPs.has(pspName)) {
-        logger.debug(`PSP ${pspName} already reported, skipping duplicate`);
-        return;
-      }
-
-      // Mark as reported
       if (pspName) {
+        if (this.reportedPSPs.has(pspName)) {
+          logger.debug(`PSP ${pspName} already reported, skipping duplicate`);
+          return;
+        }
+
         this.reportedPSPs.add(pspName);
       }
 
-      const tabResponse = await this.sendMessage<{ tabId: number }>({
-        action: MessageAction.GET_TAB_ID,
-      });
-
-      if (tabResponse?.tabId) {
-        const tabId = TypeConverters.toTabId(tabResponse.tabId);
-
-        let detectionInfo: { method: 'matchString' | 'regex'; value: string } | undefined;
-        let url: string | undefined;
-
-        if (result.type === 'detected') {
-          detectionInfo = result.detectionInfo;
-        } else if (result.type === 'exempt') {
-          url = result.url;
-        }
-
-        if (tabId && pspName) {
-          logger.debug(
-            'Content: Sending PSP detection to background - ' +
-            `PSP: ${pspName}, TabID: ${tabId}`,
-          );
-
-          const messageData = {
-            action: MessageAction.DETECT_PSP,
-            data: {
-              psp: TypeConverters.toPSPName(pspName),
-              tabId: tabId,
-              detectionInfo,
-              url,
-            },
-          };
-
-          logger.debug('Content: Message data:', messageData);
-
-          try {
-            await this.sendMessage(messageData);
-            logger.debug('Content: Successfully sent PSP detection message to background');
-          } catch (error) {
-            logger.error('Content: Failed to send PSP detection message:', error);
-            throw error; // Re-throw to be caught by outer try-catch
-          }
-        } else {
-          logger.warn(
-            `Content: Invalid tabId (${tabId}) or pspName (${pspName}), ` +
-            'cannot send message',
-          );
-        }
+      const tabId = await this.getActiveTabId();
+      if (tabId && pspName) {
+        await this.reportDetectionToBackground(tabId, pspName, result);
       }
 
       // Mark as detected for all PSPs, including exempt domains
@@ -321,10 +290,7 @@ class ContentScript {
       }
     } catch (error) {
       // Handle extension context invalidation gracefully
-      if (
-        error instanceof Error &&
-        error.message.includes('Extension context invalidated')
-      ) {
+      if (isExtensionContextInvalidated(error)) {
         logger.warn('Extension context invalidated, stopping content script');
         this.domObserver.stopObserving();
         return;
@@ -332,6 +298,57 @@ class ContentScript {
 
       logger.error('Failed to report detected PSP:', error);
     }
+  }
+
+  private async getActiveTabId(): Promise<
+    ReturnType<typeof TypeConverters.toTabId> | null
+    > {
+    const tabResponse = await this.sendMessage<{ tabId: number }>({
+      action: MessageAction.GET_TAB_ID,
+    });
+
+    if (!tabResponse?.tabId) return null;
+    return TypeConverters.toTabId(tabResponse.tabId);
+  }
+
+  private async reportDetectionToBackground(
+    tabId: ReturnType<typeof TypeConverters.toTabId>,
+    pspName: string,
+    result: PSPDetectionResult,
+  ): Promise<void> {
+    const detectionInfo = result.type === 'detected' ? result.detectionInfo : undefined;
+    const url = result.type === 'exempt' ? result.url : undefined;
+
+    logger.debug(
+      'Content: Sending PSP detection to background - ' +
+      `PSP: ${pspName}, TabID: ${tabId}`,
+    );
+
+    const messageData = {
+      action: MessageAction.DETECT_PSP,
+      data: {
+        psp: TypeConverters.toPSPName(pspName),
+        tabId,
+        detectionInfo,
+        url,
+      },
+    };
+
+    logger.debug('Content: Message data:', messageData);
+    await this.sendMessage(messageData);
+    logger.debug('Content: Successfully sent PSP detection message to background');
+  }
+
+  private getPspNameForResult(result: PSPDetectionResult): string | null {
+    if (result.type === 'detected') {
+      return result.psp;
+    }
+
+    if (result.type === 'exempt') {
+      return PSP_DETECTION_EXEMPT;
+    }
+
+    return null;
   }
 
   /**
@@ -345,42 +362,25 @@ class ContentScript {
   ): Promise<T> {
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
-        // Check if extension context is still valid
-        if (!chrome.runtime?.id) {
-          throw new Error('Extension context invalidated');
-        }
-
-        const response = await new Promise<T>((resolve, reject) => {
-          chrome.runtime.sendMessage(message, (response) => {
-            if (chrome.runtime.lastError) {
-              reject(new Error(chrome.runtime.lastError.message || 'Unknown error'));
-            } else {
-              resolve(response as T);
-            }
-          });
-        });
-
-        return response;
+        return await this.sendMessageOnce(message);
       } catch (error) {
         const isLastAttempt = attempt === retries;
-        const errorMessage = error instanceof Error ?
-          error.message : String(error);
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
 
         // Handle service worker restart scenarios
-        if (errorMessage.includes('Extension context invalidated') ||
-            errorMessage.includes('receiving end does not exist') ||
-            errorMessage.includes('service worker was stopped')) {
+        if (isServiceWorkerRestartError(errorMessage)) {
           if (isLastAttempt) {
             logger.warn('Failed to communicate with service worker after retries');
             throw new Error('Service worker communication failed');
-          } else {
-            // Wait briefly before retry to allow service worker to restart
-            await new Promise(waitResolve =>
-              setTimeout(waitResolve, 100 * attempt),
-            );
-
-            continue;
           }
+
+          // Wait briefly before retry to allow service worker to restart
+          await new Promise(waitResolve =>
+            setTimeout(waitResolve, 100 * attempt),
+          );
+
+          continue;
         }
 
         // For other errors, don't retry
@@ -389,6 +389,24 @@ class ContentScript {
     }
 
     throw new Error('Max retries exceeded');
+  }
+
+  private async sendMessageOnce<T>(message: ChromeMessage): Promise<T> {
+    // Check if extension context is still valid
+    if (!chrome.runtime?.id) {
+      throw new Error(EXTENSION_CONTEXT_INVALIDATED_MESSAGE);
+    }
+
+    return await new Promise<T>((resolve, reject) => {
+      chrome.runtime.sendMessage(message, (response) => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message || 'Unknown error'));
+          return;
+        }
+
+        resolve(response as T);
+      });
+    });
   }
 
   /**
@@ -447,8 +465,8 @@ class ContentScript {
             // Get nested sources more efficiently
             this.extractNestedSources(iframeDoc, iframeContent);
           }
-        } catch {
-          // Silently handle cross-origin errors
+        } catch (error) {
+          logger.debug('Skipping iframe content due to access error', error);
         }
       }
     }
@@ -494,7 +512,7 @@ class ContentScript {
   private canAccessIframe(src: string): boolean {
     try {
       const srcOrigin = new URL(src, document.baseURI).origin;
-      return srcOrigin === window.location.origin;
+      return srcOrigin === globalThis.location.origin;
     } catch {
       return false;
     }
@@ -508,7 +526,7 @@ interface WindowWithPSPDetector {
     url: string;
   } | undefined;
 }
-const windowExt = window as WindowWithPSPDetector;
+const windowExt = globalThis as unknown as WindowWithPSPDetector;
 
 const currentUrl = document.URL;
 const existingScript = windowExt.pspDetectorContentScript;
@@ -525,127 +543,108 @@ const checkBackgroundState = async(): Promise<boolean> => {
       action: MessageAction.CHECK_TAB_STATE,
     });
     return response?.hasState === true;
-  } catch {
+  } catch (error) {
+    logger.debug('Background state check failed', error);
+
     // Background script not responding or extension context invalid
     return false;
   }
 };
 
-// Allow re-initialization if URL has changed (new page navigation)
-// OR if background script has lost state (extension context restored)
-if (existingScript?.initialized && existingScript.url === currentUrl) {
-  // Check if background script still has state for this tab
-  checkBackgroundState().then((hasBackgroundState) => {
-    if (!hasBackgroundState) {
-      logger.debug('Background script lost state, forcing re-initialization');
-
-      // Clear the window state to force re-initialization
+const registerContentScriptCleanup = (
+  contentScript: ContentScript,
+  url: string,
+): void => {
+  globalThis.addEventListener('beforeunload', (): void => {
+    contentScript.cleanup();
+    if (windowExt.pspDetectorContentScript?.url === url) {
       windowExt.pspDetectorContentScript = undefined;
-
-      // Re-run initialization logic
-      const contentScript = new ContentScript();
-      contentScript.resetForNewPage();
-
-      windowExt.pspDetectorContentScript = {
-        initialized: true,
-        url: currentUrl,
-      };
-
-      // Add cleanup on page unload
-      window.addEventListener('beforeunload', (): void => {
-        contentScript.cleanup();
-        if (windowExt.pspDetectorContentScript?.url === currentUrl) {
-          windowExt.pspDetectorContentScript = undefined;
-        }
-      });
-
-      contentScript.initialize().catch((error): void => {
-        if (
-          error instanceof Error &&
-          error.message.includes('Extension context invalidated')
-        ) {
-          logger.warn('Extension context invalidated during startup');
-        } else {
-          logger.error('Content script initialization failed:', error);
-        }
-      });
-    } else {
-      logger.debug('Content script already initialized for this page, skipping');
     }
-  }).catch(() => {
-    logger.debug('Failed to check background state, assuming re-initialization needed');
-
-    // If we can't check background state, assume we need to re-initialize
-    windowExt.pspDetectorContentScript = undefined;
-
-    const contentScript = new ContentScript();
-    contentScript.resetForNewPage();
-
-    windowExt.pspDetectorContentScript = {
-      initialized: true,
-      url: currentUrl,
-    };
-
-    window.addEventListener('beforeunload', (): void => {
-      contentScript.cleanup();
-      if (windowExt.pspDetectorContentScript?.url === currentUrl) {
-        windowExt.pspDetectorContentScript = undefined;
-      }
-    });
-
-    contentScript.initialize().catch((error): void => {
-      if (
-        error instanceof Error &&
-        error.message.includes('Extension context invalidated')
-      ) {
-        logger.warn('Extension context invalidated during startup');
-      } else {
-        logger.error('Content script initialization failed:', error);
-      }
-    });
   });
-} else {
-  if (existingScript?.initialized) {
-    logger.debug(
-      `Content script URL changed from ${existingScript.url} to ` +
-      `${currentUrl}, re-initializing`,
-    );
-  } else {
-    logger.debug(`Content script initializing for new page: ${currentUrl}`);
+};
+
+const startContentScript = async(options: {
+  resetState: boolean;
+  resetForNewPage: boolean;
+  logMessage?: string;
+}): Promise<void> => {
+  if (options.logMessage) {
+    logger.debug(options.logMessage);
   }
 
-  // Mark as initialized for this specific URL
+  if (options.resetState) {
+    windowExt.pspDetectorContentScript = undefined;
+  }
+
+  const contentScript = new ContentScript();
+
+  if (options.resetForNewPage) {
+    contentScript.resetForNewPage();
+  }
+
   windowExt.pspDetectorContentScript = {
     initialized: true,
     url: currentUrl,
   };
 
-  // Initialize content script
-  const contentScript = new ContentScript();
+  registerContentScriptCleanup(contentScript, currentUrl);
 
-  // Reset state if this is a URL change (re-initialization)
-  if (existingScript?.initialized) {
-    contentScript.resetForNewPage();
-  }
-
-  // Add cleanup on page unload
-  window.addEventListener('beforeunload', (): void => {
-    contentScript.cleanup();
-    if (windowExt.pspDetectorContentScript?.url === currentUrl) {
-      windowExt.pspDetectorContentScript = undefined;
-    }
-  });
-
-  contentScript.initialize().catch((error): void => {
-    // Don't log errors if extension context is invalidated
-    // (expected during reloads)
-    if (
-      error instanceof Error &&
-      error.message.includes('Extension context invalidated')
-    ) {
+  try {
+    await contentScript.initialize();
+  } catch (error) {
+    if (isExtensionContextInvalidated(error)) {
       logger.warn('Extension context invalidated during startup');
     } else {
       logger.error('Content script initialization failed:', error);
     }
+  }
+};
+
+// Allow re-initialization if URL has changed (new page navigation)
+// OR if background script has lost state (extension context restored)
+const bootstrap = async(): Promise<void> => {
+  if (existingScript?.initialized && existingScript.url === currentUrl) {
+    try {
+      const hasBackgroundState = await checkBackgroundState();
+      if (hasBackgroundState) {
+        logger.debug('Content script already initialized for this page, skipping');
+        return;
+      }
+
+      await startContentScript({
+        resetState: true,
+        resetForNewPage: true,
+        logMessage: 'Background script lost state, forcing re-initialization',
+      });
+
+      return;
+    } catch {
+      await startContentScript({
+        resetState: true,
+        resetForNewPage: true,
+        logMessage: 'Failed to check background state, assuming re-initialization needed',
+      });
+
+      return;
+    }
+  }
+
+  const logMessage = existingScript?.initialized
+    ? `Content script URL changed from ${existingScript.url} to ` +
+      `${currentUrl}, re-initializing`
+    : `Content script initializing for new page: ${currentUrl}`;
+
+  await startContentScript({
+    resetState: false,
+    resetForNewPage: !!existingScript?.initialized,
+    logMessage,
   });
-}
+};
+
+bootstrap().catch((error) => { // NOSONAR
+  if (isExtensionContextInvalidated(error)) {
+    logger.warn('Extension context invalidated during bootstrap');
+  } else {
+    logger.error('Content script bootstrap failed:', error);
+  }
+});

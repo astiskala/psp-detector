@@ -12,9 +12,10 @@ import {
   performanceUtils,
   errorUtils,
 } from './lib/utils';
+import { STORAGE_KEYS } from './lib/storage-keys';
 
 class PopupManager {
-  private ui: UIService;
+  private readonly ui: UIService;
   private isInitialized = false;
 
   constructor() {
@@ -41,7 +42,7 @@ class PopupManager {
           return;
         }
 
-        if (!detectedPspResult || detectedPspResult.type !== 'detected') {
+        if (detectedPspResult?.type !== 'detected') {
           // No PSP detection result - PSP detection ran but found nothing
           this.ui.showNoPSPDetected();
           return;
@@ -126,7 +127,7 @@ class PopupManager {
    */
   private async getPSPConfigWithCache(): Promise<PSPConfig> {
     // Try to get from extension storage cache first
-    const cacheKey = 'popup_psp_config_cache';
+    const cacheKey = STORAGE_KEYS.POPUP_PSP_CONFIG_CACHE;
     const cachedConfig = await this.getFromCache(cacheKey);
 
     if (cachedConfig) {
@@ -191,7 +192,7 @@ class PopupManager {
   private async getFromCache(key: string): Promise<PSPConfig | null> {
     try {
       const result = await chrome.storage.local.get(key);
-      return result[key] || null;
+      return (result as Record<string, unknown>)[key] as PSPConfig | null;
     } catch (error) {
       logger.warn('Failed to get from cache:', error);
       return null;
@@ -220,13 +221,13 @@ class PopupManager {
       try {
         chrome.runtime.sendMessage(message, (response) => {
           if (chrome.runtime.lastError) {
-            reject(chrome.runtime.lastError);
+            reject(new Error(chrome.runtime.lastError.message || 'Unknown error'));
           } else {
             resolve(response as T);
           }
         });
       } catch (error) {
-        reject(error);
+        reject(error instanceof Error ? error : new Error(String(error)));
       }
     });
   }

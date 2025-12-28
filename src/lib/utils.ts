@@ -3,9 +3,18 @@
  * Create a safe URL by sanitizing the input
  * @param url - The URL to sanitize
  */
+const ALLOWED_URL_PROTOCOLS = new Set(['http:', 'https:', 'mailto:']);
+
 export function createSafeUrl(url: string): string {
   try {
-    return new globalThis.URL(url).toString();
+    const parsed = new globalThis.URL(url);
+
+    if (!ALLOWED_URL_PROTOCOLS.has(parsed.protocol)) {
+      logger.warn('Blocked unsupported URL protocol:', parsed.protocol);
+      return '#';
+    }
+
+    return parsed.toString();
   } catch (e) {
     logger.error('Invalid URL:', e);
     return '#';
@@ -108,9 +117,10 @@ export const memoryUtils = {
    * @param context - Context for logging
    */
   checkMemoryUsage: (context: string): void => {
-    if (typeof window !== 'undefined' && 'performance' in window &&
-        'memory' in window.performance) {
-      const memory = (window.performance as unknown as {
+    const win = (globalThis as unknown as { window?: Window }).window;
+
+    if (win && 'performance' in win && 'memory' in (win.performance as unknown as object)) {
+      const memory = (win.performance as unknown as {
         memory: {
           usedJSHeapSize: number;
           totalJSHeapSize: number;
@@ -284,15 +294,16 @@ export const errorUtils = {
     delay = 1000,
   ): (() => Promise<T>) => {
     return async(): Promise<T> => {
-      let lastError: Error;
+      const attempts = Math.max(1, maxAttempts);
+      let lastError = new Error('Retry attempts exhausted');
 
-      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      for (let attempt = 1; attempt <= attempts; attempt++) {
         try {
           return await fn();
         } catch (error) {
           lastError = error instanceof Error ? error : new Error(String(error));
 
-          if (attempt === maxAttempts) {
+          if (attempt === attempts) {
             throw lastError;
           }
 
@@ -305,7 +316,7 @@ export const errorUtils = {
         }
       }
 
-      throw lastError!;
+      throw lastError;
     };
   },
 };

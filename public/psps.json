@@ -1123,6 +1123,75 @@
       "image": "senangpay",
       "summary": "senangPay is a Malaysian payment gateway providing secure online payment solutions for businesses. It supports credit cards, online banking, and e-wallets, with easy integration for e-commerce platforms and a focus on simplicity for merchants.",
       "url": "https://senangpay.my"
+    },
+    {
+      "name": "Kushki",
+      "matchStrings": [
+        "cdn.kushkipagos.com"
+      ],
+      "image": "kushki",
+      "summary": "Kushki is a major Latin American payment platform offering local payment methods across the region, connecting businesses to the digital economy.",
+      "url": "https://kushkipagos.com"
+    },
+    {
+      "name": "Peach Payments",
+      "matchStrings": [
+        "checkout.peachpayments.com",
+        "secure.peachpayments.com"
+      ],
+      "image": "peachpayments",
+      "summary": "Peach Payments is a leading African PSP providing enterprise-grade payment solutions in South Africa, Kenya, and Mauritius.",
+      "url": "https://peachpayments.com"
+    },
+    {
+      "name": "Geidea",
+      "matchStrings": [
+        "merchant.geidea.net",
+        "ksamerchant.geidea.net"
+      ],
+      "image": "geidea",
+      "summary": "Geidea is a dominant fintech in Saudi Arabia and Egypt, offering POS and e-commerce solutions for businesses.",
+      "url": "https://geidea.net"
+    },
+    {
+      "name": "PayMob",
+      "matchStrings": [
+        "paymob-pixel",
+        "accept.paymob.com"
+      ],
+      "image": "paymob",
+      "summary": "PayMob is a MENA-focused infrastructure powering digital financial services in Egypt, Pakistan, and UAE.",
+      "url": "https://paymob.com"
+    },
+    {
+      "name": "Telr",
+      "matchStrings": [
+        "secure.telr.com"
+      ],
+      "image": "telr",
+      "summary": "Telr is an award-winning payment gateway in the UAE and Saudi Arabia, enabling businesses to accept payments online.",
+      "url": "https://telr.com"
+    },
+    {
+      "name": "Pine Labs",
+      "matchStrings": [
+        "pinepg.in",
+        "pluralpay.in",
+        "pluralonline.com"
+      ],
+      "image": "pinelabs",
+      "summary": "Pine Labs is a major Asian merchant platform known for its POS solutions and online gateway 'Plural'.",
+      "url": "https://pinelabs.com"
+    },
+    {
+      "name": "Tilled",
+      "matchStrings": [
+        "api.tilled.com",
+        "js.tilled.com"
+      ],
+      "image": "tilled",
+      "summary": "Tilled is a PayFac-as-a-Service platform allowing software companies to monetize payments within their platforms.",
+      "url": "https://tilled.com"
     }
   ],
   "orchestrators": {
@@ -1330,6 +1399,43 @@
         "image": "juspay",
         "summary": "Juspay is an Indian payment platform providing SDKs (like Express Checkout), payment gateway services, and orchestration features. It aims to simplify checkouts, enhance transaction success rates, and supports numerous local payment methods including UPI, wallets, and cards.",
         "url": "https://www.juspay.in"
+      },
+      {
+        "name": "BridgerPay",
+        "matchStrings": [
+          "api.bridgerpay.dev"
+        ],
+        "image": "bridgerpay",
+        "summary": "BridgerPay is an AI-powered payment operations platform focused on retry logic and routing to optimize payment acceptance.",
+        "url": "https://bridgerpay.com"
+      },
+      {
+        "name": "Rebilly",
+        "matchStrings": [
+          "cdn.rebilly.com"
+        ],
+        "image": "rebilly",
+        "summary": "Rebilly is a subscription and recurring billing orchestration platform designed to maximize revenue.",
+        "url": "https://rebilly.com"
+      },
+      {
+        "name": "Paytiko",
+        "matchStrings": [
+          "core.paytiko.com"
+        ],
+        "image": "paytiko",
+        "summary": "Paytiko is a payment management platform optimizing acceptance rates and streamlining payment operations.",
+        "url": "https://paytiko.com"
+      },
+      {
+        "name": "Corefy",
+        "matchStrings": [
+          "com.paycore.io",
+          "@paycore/payment-widget-js"
+        ],
+        "image": "corefy",
+        "summary": "Corefy is a universal payment orchestration platform for online businesses and fintechs.",
+        "url": "https://corefy.com"
       }
     ]
   },
@@ -1354,6 +1460,24 @@
         "image": "sabre",
         "summary": "Sabre SynXis provides secure handling of payments for hotels, enabling seamless transactions across booking channels. It supports credit card validation, tokenization, and integration with multiple payment service providers to streamline the payment process and enhance guest experiences.",
         "url": "https://www.sabre.com/products/travel-agency-solutions/synxis-platform/"
+      },
+      {
+        "name": "SiteMinder",
+        "matchStrings": [
+          "book-directonline.com"
+        ],
+        "image": "siteminder",
+        "summary": "SiteMinder is the world's leading open hotel commerce platform and booking engine.",
+        "url": "https://siteminder.com"
+      },
+      {
+        "name": "Cloudbeds",
+        "matchStrings": [
+          "hotels.cloudbeds.com"
+        ],
+        "image": "cloudbeds",
+        "summary": "Cloudbeds is a hospitality management software with an integrated booking engine and payments platform.",
+        "url": "https://cloudbeds.com"
       }
     ]
   }

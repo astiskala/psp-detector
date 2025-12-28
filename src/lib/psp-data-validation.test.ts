@@ -1,9 +1,15 @@
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 import type { PSPConfig, PSP } from '../types/psp';
 
 describe('PSP Data Validation', () => {
   let pspConfig: PSPConfig;
+
+  const expectNonEmptyString = (value: unknown): void => {
+    expect(value).toBeDefined();
+    expect(typeof value).toBe('string');
+    expect((value as string).trim()).not.toBe('');
+  };
 
   const getAllProviders = (config: PSPConfig): (PSP & { type: string })[] => {
     const psps = config.psps || [];
@@ -42,13 +48,11 @@ describe('PSP Data Validation', () => {
       const allProviders = getAllProviders(pspConfig);
       const requiredFields: (keyof PSP)[] = ['name', 'url', 'image', 'summary'];
 
-      allProviders.forEach((provider) => {
-        requiredFields.forEach(field => {
-          expect(provider[field]).toBeDefined();
-          expect(typeof provider[field]).toBe('string');
-          expect((provider[field] as string).trim()).not.toBe('');
-        });
-      });
+      for (const provider of allProviders) {
+        for (const field of requiredFields) {
+          expectNonEmptyString(provider[field]);
+        }
+      }
     });
 
     it('should have unique provider names across all groups', () => {
@@ -77,32 +81,28 @@ describe('PSP Data Validation', () => {
     it('should have valid regex patterns when provided', () => {
       const allProviders = getAllProviders(pspConfig);
 
-      allProviders.forEach(provider => {
+      for (const provider of allProviders) {
         if (provider.regex && typeof provider.regex === 'string') {
-          expect(() => {
-            new RegExp(provider.regex as string, 'i');
-          }).not.toThrow();
+          const compiled = new RegExp(provider.regex, 'i');
+          expect(compiled).toBeInstanceOf(RegExp);
         }
-      });
+      }
     });
 
     it('should have unique match strings within each provider', () => {
       const allProviders = getAllProviders(pspConfig);
 
-      allProviders.forEach(provider => {
-        if (Array.isArray(provider.matchStrings)) {
-          const matchStrings = provider.matchStrings;
-          const uniqueStrings = new Set(matchStrings);
+      for (const provider of allProviders) {
+        if (!Array.isArray(provider.matchStrings)) continue;
 
-          expect(uniqueStrings.size).toBe(matchStrings.length);
+        const matchStrings = provider.matchStrings;
+        const uniqueStrings = new Set(matchStrings);
+        expect(uniqueStrings.size).toBe(matchStrings.length);
 
-          // Verify all match strings are non-empty strings
-          matchStrings.forEach(str => {
-            expect(typeof str).toBe('string');
-            expect(str.trim()).not.toBe('');
-          });
+        for (const matchString of matchStrings) {
+          expectNonEmptyString(matchString);
         }
-      });
+      }
     });
 
     it('should have valid image references', () => {
@@ -122,11 +122,10 @@ describe('PSP Data Validation', () => {
     it('should have valid URLs', () => {
       const allProviders = getAllProviders(pspConfig);
 
-      allProviders.forEach(provider => {
-        expect(() => {
-          new URL(provider.url);
-        }).not.toThrow();
-      });
+      for (const provider of allProviders) {
+        const parsed = new URL(provider.url);
+        expect(parsed.hostname).not.toBe('');
+      }
     });
   });
 
