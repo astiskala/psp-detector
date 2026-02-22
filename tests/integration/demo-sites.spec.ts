@@ -1,9 +1,10 @@
 import { test } from '@playwright/test';
+import type { Page } from '@playwright/test';
 import fs from 'node:fs';
 import path from 'node:path';
 import { PSPDetectorService } from '../../src/services/psp-detector';
-import { TypeConverters, PSPConfig, PSPDetectionResult, PSP } from '../../src/types';
-import { PSPGroup } from '../../src/types/psp';
+import { TypeConverters, type PSPConfig, PSPDetectionResult, type PSP } from '../../src/types';
+import { type PSPGroup } from '../../src/types/psp';
 
 interface SiteCase {
   url: string;
@@ -69,7 +70,7 @@ function loadConfig(): PSPConfig {
 const config = loadConfig();
 
 // Helper: detect a single site; throws with diagnostics on mismatch.
-async function detectAndAssert(page: import('@playwright/test').Page, site: SiteCase): Promise<void> {
+async function detectAndAssert(page: Page, site: SiteCase): Promise<void> {
   const requests: string[] = [];
   const listener = (r: {url: () => string}): void => {
     try { requests.push(r.url()); } catch { /* ignore */ }
@@ -87,8 +88,10 @@ async function detectAndAssert(page: import('@playwright/test').Page, site: Site
   detector.initialize(config);
   detector.setExemptDomains([]);
   const result = detector.detectPSP(site.url, surface);
-
-  if (!PSPDetectionResult.isDetected(result) || result.psp !== site.expected) {
+  const matchedNames = PSPDetectionResult.isDetected(result)
+    ? result.psps.map((match) => match.psp)
+    : [];
+  if (!matchedNames.includes(site.expected)) {
     // Provide concise diagnostics
     const hostSet = Array.from(new Set(requests
       .map(u => { try { return new URL(u).host; } catch { return ''; } })
@@ -96,12 +99,10 @@ async function detectAndAssert(page: import('@playwright/test').Page, site: Site
     const snippet = html.slice(0, 5000); // cap output size
     const diag = {
       expected: site.expected,
-      received: PSPDetectionResult.isDetected(result) ? result.psp : 'NONE',
-
-      // detectionInfo is optional on result; cast to access safely
-      detectionInfo: (
-        result as unknown as { detectionInfo?: unknown }
-      ).detectionInfo || null,
+      received: matchedNames.length > 0 ? matchedNames : 'NONE',
+      detectionInfo: PSPDetectionResult.isDetected(result)
+        ? result.psps.map((match) => match.detectionInfo ?? null)
+        : null,
       firstHosts: hostSet,
       requestCount: requests.length,
       htmlPrefixSample: snippet,

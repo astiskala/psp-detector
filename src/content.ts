@@ -9,10 +9,12 @@ import { DOMObserverService } from './services/dom-observer';
 import {
   MessageAction,
   TypeConverters,
-  PSPDetectionResult,
+  type PSPDetectionResult,
   PSP_DETECTION_EXEMPT,
   type ChromeMessage,
   type PSPConfigResponse,
+  type PSPMatch,
+  type SourceType,
 } from './types';
 import {
   logger,
@@ -46,6 +48,13 @@ const scheduleIdle = (callback: () => void): void => {
     setTimeout(callback, 0);
   }
 };
+
+interface ScanSources {
+  scriptSrcs: string[];
+  iframeSrcs: string[];
+  formActions: string[];
+  linkHrefs: string[];
+}
 
 class ContentScript {
   private readonly pspDetector: PSPDetectorService;
@@ -196,7 +205,10 @@ class ContentScript {
 
     const scanContent = [
       document.URL,
-      ...scanSources,
+      ...scanSources.scriptSrcs,
+      ...scanSources.iframeSrcs,
+      ...scanSources.formActions,
+      ...scanSources.linkHrefs,
       ...iframeContent,
     ].join('\n');
 
@@ -204,10 +216,23 @@ class ContentScript {
 
     switch (result.type) {
     case 'detected':
-      await this.handlePSPDetection(result);
+      for (const match of result.psps) {
+        const sourceType = match.detectionInfo
+          ? this.determineSourceType(match.detectionInfo.value, scanSources)
+          : 'pageUrl';
+
+        const taggedMatch: PSPMatch = match.detectionInfo
+          ? {
+            ...match,
+            detectionInfo: { ...match.detectionInfo, sourceType },
+          }
+          : { ...match };
+        await this.handlePSPMatch(taggedMatch);
+      }
+
       break;
     case 'exempt':
-      await this.handlePSPDetection({ type: 'exempt', reason: result.reason, url: result.url });
+      await this.handlePSPDetection(result);
       break;
     case 'none':
       // No PSP detected, continue monitoring
@@ -222,8 +247,11 @@ class ContentScript {
    * Collect scan sources optimized for performance
    * @private
    */
-  private collectScanSources(): string[] {
-    const sources: string[] = [];
+  private collectScanSources(): ScanSources {
+    const scriptSrcs: string[] = [];
+    const iframeSrcs: string[] = [];
+    const formActions: string[] = [];
+    const linkHrefs: string[] = [];
 
     document.querySelectorAll(
       'script[src], iframe[src], form[action], link[href]',
@@ -231,25 +259,25 @@ class ContentScript {
       switch (element.tagName) {
       case 'SCRIPT': {
         const src = (element as HTMLScriptElement).src;
-        if (src) sources.push(src);
+        if (src) scriptSrcs.push(src);
         break;
       }
 
       case 'IFRAME': {
         const src = (element as HTMLIFrameElement).src;
-        if (src) sources.push(src);
+        if (src) iframeSrcs.push(src);
         break;
       }
 
       case 'FORM': {
         const action = (element as HTMLFormElement).action;
-        if (action) sources.push(action);
+        if (action) formActions.push(action);
         break;
       }
 
       case 'LINK': {
         const href = (element as HTMLLinkElement).href;
-        if (href) sources.push(href);
+        if (href) linkHrefs.push(href);
         break;
       }
 
@@ -258,7 +286,18 @@ class ContentScript {
       }
     });
 
-    return sources;
+    return { scriptSrcs, iframeSrcs, formActions, linkHrefs };
+  }
+
+  private determineSourceType(
+    value: string,
+    sources: ScanSources,
+  ): SourceType {
+    if (sources.scriptSrcs.some((s) => s.includes(value))) return 'scriptSrc';
+    if (sources.iframeSrcs.some((s) => s.includes(value))) return 'iframeSrc';
+    if (sources.formActions.some((s) => s.includes(value))) return 'formAction';
+    if (sources.linkHrefs.some((s) => s.includes(value))) return 'linkHref';
+    return 'pageUrl';
   }
 
   /**
@@ -267,20 +306,11 @@ class ContentScript {
    */
   private async handlePSPDetection(result: PSPDetectionResult): Promise<void> {
     try {
-      const pspName = this.getPspNameForResult(result);
-
-      if (pspName) {
-        if (this.reportedPSPs.has(pspName)) {
-          logger.debug(`PSP ${pspName} already reported, skipping duplicate`);
-          return;
-        }
-
-        this.reportedPSPs.add(pspName);
-      }
-
       const tabId = await this.getActiveTabId();
-      if (tabId && pspName) {
-        await this.reportDetectionToBackground(tabId, pspName, result);
+      if (tabId && result.type === 'exempt') {
+        await this.reportDetectionToBackground(tabId, PSP_DETECTION_EXEMPT, {
+          psp: TypeConverters.toPSPName(PSP_DETECTION_EXEMPT)!,
+        });
       }
 
       // Mark as detected for all PSPs, including exempt domains
@@ -300,6 +330,23 @@ class ContentScript {
     }
   }
 
+  private async handlePSPMatch(match: PSPMatch): Promise<void> {
+    if (this.reportedPSPs.has(match.psp)) {
+      logger.debug(`PSP ${match.psp} already reported, skipping`);
+      return;
+    }
+
+    this.reportedPSPs.add(match.psp);
+    const tabId = await this.getActiveTabId();
+
+    if (tabId) {
+      await this.reportDetectionToBackground(tabId, match.psp, match);
+    }
+
+    this.pspDetected = true;
+    this.domObserver.stopObserving();
+  }
+
   private async getActiveTabId(): Promise<
     ReturnType<typeof TypeConverters.toTabId> | null
     > {
@@ -314,11 +361,8 @@ class ContentScript {
   private async reportDetectionToBackground(
     tabId: ReturnType<typeof TypeConverters.toTabId>,
     pspName: string,
-    result: PSPDetectionResult,
+    match: PSPMatch,
   ): Promise<void> {
-    const detectionInfo = result.type === 'detected' ? result.detectionInfo : undefined;
-    const url = result.type === 'exempt' ? result.url : undefined;
-
     logger.debug(
       'Content: Sending PSP detection to background - ' +
       `PSP: ${pspName}, TabID: ${tabId}`,
@@ -329,26 +373,13 @@ class ContentScript {
       data: {
         psp: TypeConverters.toPSPName(pspName),
         tabId,
-        detectionInfo,
-        url,
+        detectionInfo: match.detectionInfo,
       },
     };
 
     logger.debug('Content: Message data:', messageData);
     await this.sendMessage(messageData);
     logger.debug('Content: Successfully sent PSP detection message to background');
-  }
-
-  private getPspNameForResult(result: PSPDetectionResult): string | null {
-    if (result.type === 'detected') {
-      return result.psp;
-    }
-
-    if (result.type === 'exempt') {
-      return PSP_DETECTION_EXEMPT;
-    }
-
-    return null;
   }
 
   /**
@@ -372,7 +403,9 @@ class ContentScript {
         if (isServiceWorkerRestartError(errorMessage)) {
           if (isLastAttempt) {
             logger.warn('Failed to communicate with service worker after retries');
-            throw new Error('Service worker communication failed');
+            throw new Error('Service worker communication failed', {
+              cause: error,
+            });
           }
 
           // Wait briefly before retry to allow service worker to restart

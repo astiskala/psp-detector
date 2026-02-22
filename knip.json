@@ -1,0 +1,28 @@
+{
+  "$schema": "https://unpkg.com/knip@latest/schema.json",
+  "entry": [
+    "src/background.ts",
+    "src/content.ts",
+    "src/popup.ts",
+    "src/options.ts"
+  ],
+  "project": ["src/**/*.ts"],
+  "ignore": [
+    "src/test-helpers/index.ts",
+    "src/test-helpers/constants.ts",
+    "src/test-helpers/utilities.ts",
+    "src/types/psp.ts"
+  ],
+  "ignoreDependencies": [
+    "cheerio",
+    "@eslint/json",
+    "@eslint/markdown",
+    "@hint/hint-meta-theme-color",
+    "@typescript-eslint/eslint-plugin",
+    "@typescript-eslint/parser",
+    "jiti",
+    "node-gyp"
+  ],
+  "ignoreUnresolved": ["tslib"],
+  "ignoreExportsUsedInFile": true
+}

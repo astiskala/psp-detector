@@ -15,10 +15,14 @@ import {
   type PSPConfigResponse,
   type PSPConfig,
   type PSPResponse,
+  type StoredTabPsp,
 } from './types';
 import { DEFAULT_ICONS } from './types/background';
+import type { URL as BrandedURL } from './types/branded';
 import { logger, getAllProviders } from './lib/utils';
 import { STORAGE_KEYS } from './lib/storage-keys';
+import { writeHistoryEntry } from './lib/history';
+import type { HistoryEntry, ProviderType } from './types/history';
 
 const BADGE_COLOR = '#6B7280';
 const EXEMPT_DOMAIN_REASON = 'Domain is exempt from PSP detection';
@@ -47,6 +51,7 @@ class BackgroundService {
       await this.restoreState();
       await this.loadExemptDomains();
       await this.preloadPspConfig();
+      await this.setupOptionalNetworkScanning();
       this.isInitialized = true;
       logger.info('Service worker initialized successfully');
     } catch (error) {
@@ -113,9 +118,10 @@ class BackgroundService {
 
     // Initialize default storage values
     await chrome.storage.local.set({
-      [STORAGE_KEYS.TAB_PSPS]: {},
       [STORAGE_KEYS.EXEMPT_DOMAINS]: [],
     });
+
+    await chrome.storage.session.set({ [STORAGE_KEYS.TAB_PSPS]: {} });
 
     await this.clearCachedConfig();
     await this.loadExemptDomains();
@@ -165,10 +171,11 @@ class BackgroundService {
       // Get state from storage but we don't need to use it immediately
       await chrome.storage.local.get([
         STORAGE_KEYS.DETECTED_PSP,
-        STORAGE_KEYS.TAB_PSPS,
         STORAGE_KEYS.CURRENT_TAB_ID,
         STORAGE_KEYS.CACHED_PSP_CONFIG,
       ]);
+
+      await chrome.storage.session.get([STORAGE_KEYS.TAB_PSPS]);
 
       logger.info('State restored from storage');
     } catch (error) {
@@ -260,14 +267,14 @@ class BackgroundService {
    * Get tab PSPs from storage
    * @private
    */
-  private async getTabPsps(): Promise<Record<string, PSPDetectionResult>> {
+  private async getTabPsps(): Promise<Record<number, StoredTabPsp[]>> {
     try {
-      const result = await chrome.storage.local.get({
-        [STORAGE_KEYS.TAB_PSPS]: {} as Record<string, PSPDetectionResult>,
+      const result = await chrome.storage.session.get({
+        [STORAGE_KEYS.TAB_PSPS]: {} as Record<number, StoredTabPsp[]>,
       });
       const tabPsps = result[STORAGE_KEYS.TAB_PSPS] as Record<
-        string,
-        PSPDetectionResult
+        number,
+        StoredTabPsp[]
       >;
       return tabPsps;
     } catch (error) {
@@ -280,18 +287,13 @@ class BackgroundService {
    * Set tab PSP data in storage
    * @private
    */
-  private async setTabPsp(
-    tabId: number,
-    psp: PSPDetectionResult,
+  private async setTabPsps(
+    tabPsps: Record<number, StoredTabPsp[]>,
   ): Promise<void> {
     try {
-      const tabPsps = await this.getTabPsps();
-      tabPsps[tabId.toString()] = psp;
-      await chrome.storage.local.set({
-        [STORAGE_KEYS.TAB_PSPS]: tabPsps,
-      });
+      await chrome.storage.session.set({ [STORAGE_KEYS.TAB_PSPS]: tabPsps });
     } catch (error) {
-      logger.error('Failed to set tab PSP:', error);
+      logger.error('Failed to set tab PSPs:', error);
     }
   }
 
@@ -302,12 +304,10 @@ class BackgroundService {
   private async cleanupTabData(tabId: number): Promise<void> {
     try {
       const tabPsps = await this.getTabPsps();
-      delete tabPsps[tabId.toString()];
-      await chrome.storage.local.set({
-        [STORAGE_KEYS.TAB_PSPS]: tabPsps,
-      });
+      delete tabPsps[tabId];
+      await this.setTabPsps(tabPsps);
 
-      logger.info(`Cleaned up data for tab ${tabId}`);
+      logger.debug(`Cleaned up data for tab ${tabId}`);
     } catch (error) {
       logger.error(`Failed to cleanup tab ${tabId}:`, error);
     }
@@ -468,7 +468,7 @@ class BackgroundService {
   ): PSPDetectionResult {
     return PSPDetectionResult.exempt(
       reason,
-      (url || 'unknown') as import('./types/branded').URL,
+      (url || 'unknown') as BrandedURL,
     );
   }
 
@@ -483,7 +483,9 @@ class BackgroundService {
   ): Promise<void> {
     const exemptResult = this.createExemptResult(reason, url);
     await this.setDetectedPsp(exemptResult);
-    await this.setTabPsp(tabId, exemptResult);
+    const tabPsps = await this.getTabPsps();
+    tabPsps[tabId] = [{ psp: PSP_DETECTION_EXEMPT }];
+    await this.setTabPsps(tabPsps);
     this.showExemptDomainIcon();
   }
 
@@ -518,16 +520,14 @@ class BackgroundService {
 
         {
           const detectionData = message.data;
-          await this.handleDetectPsp(
-            detectionData,
-            sendResponse,
-          );
+          await this.handleDetectPsp(detectionData, sender);
+          sendResponse(null);
         }
 
         break;
 
       case MessageAction.GET_PSP:
-        await this.handleGetPsp(sendResponse);
+        await this.handleGetPsp(sender, sendResponse);
         break;
 
       case MessageAction.GET_TAB_ID:
@@ -573,7 +573,7 @@ class BackgroundService {
     const pspData = data as Partial<PSPDetectionData>;
     return (
       typeof pspData.psp === 'string' &&
-      typeof pspData.tabId === 'number' &&
+      (pspData.tabId === undefined || typeof pspData.tabId === 'number') &&
       (pspData.url === undefined || typeof pspData.url === 'string') &&
       (pspData.detectionInfo === undefined ||
        typeof pspData.detectionInfo === 'object')
@@ -623,7 +623,9 @@ class BackgroundService {
       try {
         configData = await response.json();
       } catch (parseError) {
-        throw new Error(`Failed to parse PSP config JSON: ${parseError}`);
+        throw new Error('Failed to parse PSP config JSON', {
+          cause: parseError,
+        });
       }
 
       // Enhanced validation of the config structure
@@ -786,7 +788,7 @@ class BackgroundService {
    */
   async handleDetectPsp(
     data: PSPDetectionData,
-    sendResponse: (response?: null) => void,
+    sender: chrome.runtime.MessageSender,
   ): Promise<void> {
     logger.debug('Background: Received PSP detection message:', data);
 
@@ -794,16 +796,13 @@ class BackgroundService {
       const currentTabId = await this.getCurrentTabId();
       logger.debug('Background: Current tab ID:', currentTabId);
 
-      if (!data?.psp || data.tabId === null || data.tabId === undefined) {
+      const tabId = data.tabId ?? TypeConverters.toTabId(sender.tab?.id ?? -1);
+      if (tabId === null || tabId === undefined || !data?.psp) {
         logger.warn('Background: Invalid PSP detection data received');
-        sendResponse(null);
         return;
       }
 
       const pspName = data.psp;
-      const tabId = data.tabId;
-      const detectionInfo = data.detectionInfo;
-      const url = data.url;
 
       logger.debug(
         `Background: Processing PSP detection - PSP: ${pspName}, ` +
@@ -813,69 +812,72 @@ class BackgroundService {
       // Validate tab ID is valid number
       if (!Number.isInteger(tabId) || tabId < 0) {
         logger.warn(`Background: Invalid tab ID: ${tabId}`);
-        sendResponse(null);
         return;
       }
 
-      // Create a detection result object
-      let detectionResult: PSPDetectionResult;
-
       if (String(pspName) === PSP_DETECTION_EXEMPT) {
-        // Create exempt result for exempt domains
-        detectionResult = this.createExemptResult(EXEMPT_DOMAIN_REASON, url);
-
-        logger.debug('Background: Created exempt domain result');
-      } else {
-        // Validate PSP name is non-empty string
-        if (typeof pspName !== 'string' || pspName.trim().length === 0) {
-          logger.warn(`Background: Invalid PSP name: ${pspName}`);
-          sendResponse(null);
-          return;
-        }
-
-        // Create detected result for actual PSPs
-        detectionResult = PSPDetectionResult.detected(
-          pspName,
-          detectionInfo,
-        );
-
-        logger.debug(
-          `Background: Created PSP detection result for ${pspName}`,
-        );
+        const url = data.url ?? sender.tab?.url ?? 'unknown';
+        await this.setExemptTabState(tabId, url, EXEMPT_DOMAIN_REASON);
+        return;
       }
 
-      // Store detection result per tab
-      await this.setTabPsp(tabId, detectionResult);
+      const stored = await this.getTabPsps();
+      const existing: StoredTabPsp[] = stored[tabId] ?? [];
+      if (existing.some((p) => p.psp === data.psp)) {
+        return;
+      }
+
+      const entry: StoredTabPsp = {
+        psp: data.psp,
+        ...(data.detectionInfo !== undefined && {
+          detectionInfo: data.detectionInfo,
+        }),
+      };
+      stored[tabId] = [...existing, entry];
+      await this.setTabPsps(stored);
 
       // Update tab-specific data if this is for the current tab
       if (currentTabId !== null && tabId === currentTabId) {
-        await this.setDetectedPsp(detectionResult);
-
-        logger.debug(
-          'Background: Stored PSP result for current tab ' +
-          `${currentTabId}`,
+        await this.setDetectedPsp(
+          PSPDetectionResult.detected([
+            data.detectionInfo
+              ? {
+                psp: data.psp,
+                detectionInfo: data.detectionInfo,
+              }
+              : { psp: data.psp },
+          ]),
         );
 
-        // Handle different PSP detection states
-        if (String(pspName) === PSP_DETECTION_EXEMPT) {
-          logger.debug('Background: Updating icon for exempt domain');
-          this.showExemptDomainIcon();
-        } else {
-          logger.debug(`Background: Updating icon for PSP ${pspName}`);
-          this.updateIcon(String(pspName));
-        }
+        this.updateIcon(String(pspName));
       } else {
-        logger.warn(
-          `Background: Tab ID mismatch - detection for ${tabId}, ` +
-          `current ${currentTabId}`,
+        logger.debug(
+          `Background: Detection recorded for tab ${tabId}; ` +
+          `active tab is ${currentTabId}`,
         );
+      }
+
+      if (data.psp && data.detectionInfo && data.psp !== PSP_DETECTION_EXEMPT) {
+        const now = Date.now();
+        const historyEntry: HistoryEntry = {
+          id: `${tabId}_${now}`,
+          domain: this.getDomainFromSender(sender),
+          url: sender.tab?.url ?? '',
+          timestamp: now,
+          psps: [{
+            name: data.psp,
+            type: this.getProviderType(data.psp),
+            method: data.detectionInfo.method,
+            value: data.detectionInfo.value,
+            sourceType: data.detectionInfo.sourceType ?? 'pageUrl',
+          }],
+        };
+        await writeHistoryEntry(historyEntry);
       }
     } catch (error) {
       logger.error('Background: Error processing PSP detection:', error);
       this.resetIcon();
     }
-
-    sendResponse(null);
   }
 
   /**
@@ -883,19 +885,50 @@ class BackgroundService {
    * @private
    */
   async handleGetPsp(
+    sender: chrome.runtime.MessageSender,
     sendResponse: (response?: PSPResponse) => void,
   ): Promise<void> {
-    const currentTabId = await this.getCurrentTabId();
-    const detectedPsp = await this.getDetectedPsp();
     const tabPsps = await this.getTabPsps();
-
-    const pspResult = currentTabId
-      ? tabPsps[currentTabId.toString()] ??
-        detectedPsp ??
-        null
+    const senderTabId = sender.tab?.id
+      ? TypeConverters.toTabId(sender.tab.id)
       : null;
+    const activeTabId = await this.getActiveTabIdForPopup();
+    const currentTabId = await this.getCurrentTabId();
 
-    sendResponse({ psp: pspResult });
+    const preferredTabIds = [
+      senderTabId,
+      activeTabId,
+      currentTabId,
+    ].filter((id): id is number => id !== null);
+
+    let resolvedTabId: number | null = null;
+    let psps: StoredTabPsp[] = [];
+    for (const tabId of preferredTabIds) {
+      const entries = tabPsps[tabId] ?? [];
+      if (entries.length > 0) {
+        resolvedTabId = tabId;
+        psps = entries;
+        break;
+      }
+    }
+
+    if (resolvedTabId === null) {
+      if (senderTabId !== null) {
+        resolvedTabId = senderTabId;
+      } else if (activeTabId !== null) {
+        resolvedTabId = activeTabId;
+      }
+    }
+
+    if (resolvedTabId !== null) {
+      if (psps.length === 0) {
+        psps = tabPsps[resolvedTabId] ?? [];
+      }
+
+      await this.setCurrentTabId(resolvedTabId);
+    }
+
+    sendResponse({ psps });
   }
 
   /**
@@ -914,12 +947,9 @@ class BackgroundService {
     }
 
     const currentTabId = await this.getCurrentTabId();
-    const detectedPsp = await this.getDetectedPsp();
     const tabPsps = await this.getTabPsps();
 
-    const hasState = tabId !== null &&
-      (tabPsps[tabId.toString()] !== undefined ||
-       (currentTabId === tabId && detectedPsp !== null));
+    const hasState = tabPsps[tabId] !== undefined || currentTabId === tabId;
 
     sendResponse({ hasState });
   }
@@ -936,7 +966,7 @@ class BackgroundService {
     await this.setCurrentTabId(tabId);
 
     const tabPsps = await this.getTabPsps();
-    const detectedPsp = tabPsps[tabId.toString()] || null;
+    const detectedPsp = this.toDetectionResult(tabPsps[tabId] ?? []);
     await this.setDetectedPsp(detectedPsp);
 
     logger.debug(
@@ -966,7 +996,7 @@ class BackgroundService {
       }
 
       if (detectedPsp.type === 'detected') {
-        this.updateIcon(detectedPsp.psp);
+        this.updateIcon(detectedPsp.psps[0]?.psp ?? '');
         return;
       }
 
@@ -988,6 +1018,138 @@ class BackgroundService {
     }
 
     await this.injectContentScript(rawTabId);
+  }
+
+  private toDetectionResult(psps: StoredTabPsp[]): PSPDetectionResult | null {
+    if (psps.length === 0) return null;
+    if (psps.some((p) => p.psp === PSP_DETECTION_EXEMPT)) {
+      return this.createExemptResult(EXEMPT_DISABLED_REASON);
+    }
+
+    return PSPDetectionResult.detected(
+      psps.map((p) => {
+        const psp = TypeConverters.toPSPName(p.psp)!;
+        if (p.detectionInfo) {
+          return { psp, detectionInfo: p.detectionInfo };
+        }
+
+        return { psp };
+      }),
+    );
+  }
+
+  private getDomainFromSender(sender: chrome.runtime.MessageSender): string {
+    try {
+      return new URL(sender.tab?.url ?? '').hostname;
+    } catch {
+      return sender.tab?.url ?? 'unknown';
+    }
+  }
+
+  private async getActiveTabIdForPopup(): Promise<number | null> {
+    try {
+      const tabs = await chrome.tabs.query({
+        active: true,
+        currentWindow: true,
+      });
+      const activeTabId = tabs[0]?.id;
+      return TypeConverters.toTabId(activeTabId ?? -1);
+    } catch (error) {
+      logger.warn('Failed to query active tab for popup response:', error);
+      return this.getCurrentTabId();
+    }
+  }
+
+  private getProviderType(pspName: string): ProviderType {
+    const config = this.getCachedPspConfigSync();
+    if (!config) {
+      return 'PSP';
+    }
+
+    const normalizedName = pspName.toLowerCase();
+    const isOrchestrator = config.orchestrators?.list.some(
+      (provider) => provider.name.toLowerCase() === normalizedName,
+    );
+    if (isOrchestrator) {
+      return 'Orchestrator';
+    }
+
+    const isTsp = config.tsps?.list.some(
+      (provider) => provider.name.toLowerCase() === normalizedName,
+    );
+    if (isTsp) {
+      return 'TSP';
+    }
+
+    return 'PSP';
+  }
+
+  private async setupOptionalNetworkScanning(): Promise<void> {
+    const perms = await chrome.permissions.getAll();
+    if (perms.permissions?.includes('webRequest')) {
+      this.setupWebRequestListener();
+    }
+
+    chrome.permissions.onAdded?.addListener((permissions) => {
+      if (permissions.permissions?.includes('webRequest')) {
+        this.setupWebRequestListener();
+      }
+    });
+  }
+
+  private setupWebRequestListener(): void {
+    if (!chrome.webRequest?.onBeforeRequest) return;
+
+    chrome.webRequest.onBeforeRequest.addListener(
+      (details) => {
+        this.handleNetworkRequest(
+          details as chrome.webRequest.WebRequestDetails,
+        ).catch((err) => {
+          logger.warn('webRequest handler error:', err);
+        });
+
+        return undefined;
+      },
+      { urls: ['https://*/*'] },
+    );
+
+    logger.info('webRequest listener registered');
+  }
+
+  private async handleNetworkRequest(
+    details: chrome.webRequest.WebRequestDetails,
+  ): Promise<void> {
+    const { tabId, url } = details;
+    if (tabId < 0) return;
+
+    const config = this.inMemoryPspConfig;
+    if (!config) return;
+
+    const allProviders = getAllProviders(config);
+    for (const psp of allProviders) {
+      if (!psp.matchStrings?.length) continue;
+      for (const matchString of psp.matchStrings) {
+        if (!url.includes(matchString)) continue;
+
+        logger.info(`Network request matched ${psp.name}: ${url}`);
+        const tabIdValue = TypeConverters.toTabId(tabId);
+        if (!tabIdValue) return;
+        await this.handleDetectPsp(
+          {
+            psp: psp.name,
+            tabId: tabIdValue,
+            detectionInfo: {
+              method: 'matchString',
+              value: matchString,
+              sourceType: 'networkRequest',
+            },
+          },
+          { tab: { id: tabId, url } as chrome.tabs.Tab },
+        );
+
+        return;
+      }
+    }
   }
 
   /**
@@ -1033,6 +1195,25 @@ class BackgroundService {
    * Update extension icon
    * @private
    */
+  private setIconWithErrorHandling(
+    path: chrome.action.TabIconDetails['path'],
+    errorMessage: string,
+    onError?: () => void,
+  ): void {
+    chrome.action.setIcon({ path }, () => {
+      if (!chrome.runtime.lastError) {
+        return;
+      }
+
+      logger.error(errorMessage, chrome.runtime.lastError.message);
+      onError?.();
+    });
+  }
+
+  /**
+   * Update extension icon
+   * @private
+   */
   updateIcon(psp: string): void {
     logger.debug(`Background: Attempting to update icon for PSP: ${psp}`);
     const pspInfo = this.getPspInfo(psp);
@@ -1045,15 +1226,16 @@ class BackgroundService {
       };
       logger.debug('Background: Setting icon paths:', iconPaths);
 
-      chrome.action.setIcon({
-        path: iconPaths,
-      }, () => {
-        if (chrome.runtime.lastError) {
-          logger.error('Background: Failed to set icon:', chrome.runtime.lastError);
-        } else {
-          logger.debug(`Background: Successfully updated icon for ${psp}`);
-        }
-      });
+      this.setIconWithErrorHandling(
+        iconPaths,
+        `Background: Failed to set icon for ${psp}`,
+        () => {
+          this.setIconWithErrorHandling(
+            DEFAULT_ICONS,
+            'Background: Failed to set default icon fallback',
+          );
+        },
+      );
     } else {
       logger.warn(`Background: No PSP info found for: ${psp}`);
       logger.debug('Background: PSP not found in cached config');
@@ -1072,9 +1254,10 @@ class BackgroundService {
    */
   showExemptDomainIcon(): void {
     // Set default icon
-    chrome.action.setIcon({
-      path: DEFAULT_ICONS,
-    });
+    this.setIconWithErrorHandling(
+      DEFAULT_ICONS,
+      'Background: Failed to set exempt icon',
+    );
 
     // Add warning badge
     chrome.action.setBadgeText({ text: '🚫' });
@@ -1089,9 +1272,10 @@ class BackgroundService {
    * @private
    */
   resetIcon(): void {
-    chrome.action.setIcon({
-      path: DEFAULT_ICONS,
-    });
+    this.setIconWithErrorHandling(
+      DEFAULT_ICONS,
+      'Background: Failed to set default icon',
+    );
 
     // Add searching badge
     chrome.action.setBadgeText({ text: '🔍' });

@@ -111,7 +111,7 @@ export function createCrossOriginWindowMock(): Window & typeof globalThis {
  * These methods were moved from the main service as they're only used in tests
  */
 import type { PSP, PSPConfig, PSPName, URL } from '../types';
-import { PSPDetectorService } from '../services/psp-detector';
+import { type PSPDetectorService } from '../services/psp-detector';
 import { getAllProviders } from '../lib/utils';
 
 /**

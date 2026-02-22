@@ -34,6 +34,39 @@ jobs:
       - name: Validate project (lint, typecheck, unit tests, build)
         run: npm run validate
 
+      - name: Coverage
+        run: npm run test:coverage
+
+      - name: Semgrep
+        run: |
+          pip install semgrep --quiet
+          semgrep scan \
+            --config=p/javascript \
+            --config=p/security-audit \
+            --error \
+            --quiet
+
+      - name: Permissions audit
+        run: |
+          node --input-type=module <<'EOF'
+          import { readFileSync } from 'fs';
+          const manifest = JSON.parse(
+            readFileSync('assets/manifest.json', 'utf8')
+          );
+          const perms = [
+            ...(manifest.permissions ?? []),
+            ...(manifest.host_permissions ?? []),
+          ];
+          const broad = perms.filter(
+            p => p === '<all_urls>' || p === '*://*/*'
+          );
+          if (broad.length > 0) {
+            console.error('Broad permissions detected:', broad);
+            process.exit(1);
+          }
+          console.log('Permissions OK:', perms.join(', '));
+          EOF
+
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 

@@ -3,12 +3,11 @@
  * Handles UI updates and communication with background script.
  * @module popup
  */
-import { MessageAction, PSPDetectionResult } from './types';
+import { MessageAction, PSP_DETECTION_EXEMPT } from './types';
 import type { PSPConfig, PSPResponse } from './types';
 import { UIService } from './services/ui';
 import {
   logger,
-  getAllProviders,
   performanceUtils,
   errorUtils,
 } from './lib/utils';
@@ -32,52 +31,23 @@ class PopupManager {
       return;
     }
 
+    this.bindHistoryAction();
+
     try {
       await performanceUtils.measureAsync(async() => {
-        const detectedPspResult = await this.getDetectedPSPWithRetry();
-
-        // Handle exempt domain case
-        if (detectedPspResult?.type === 'exempt') {
+        const detectedPsps = await this.getDetectedPSPsWithRetry();
+        if (detectedPsps.some((entry) => entry.psp === PSP_DETECTION_EXEMPT)) {
           this.ui.showPSPDetectionDisabled();
           return;
         }
 
-        if (detectedPspResult?.type !== 'detected') {
-          // No PSP detection result - PSP detection ran but found nothing
+        if (detectedPsps.length === 0) {
           this.ui.showNoPSPDetected();
           return;
         }
 
         const pspConfig = await this.getPSPConfigWithCache();
-
-        // Use shared utility to get all providers
-        const allProviders = getAllProviders(pspConfig);
-        const psp = allProviders.find(
-          (p: { name: string }) => p.name === detectedPspResult.psp,
-        );
-
-        // Determine group-level notice if provider is in orchestrators or tsps
-        let groupNotice: string | undefined;
-        if (pspConfig.orchestrators?.list.some((o) => o.name === psp?.name)) {
-          groupNotice = pspConfig.orchestrators.notice;
-        } else if (pspConfig.tsps?.list.some((t) => t.name === psp?.name)) {
-          groupNotice = pspConfig.tsps.notice;
-        }
-
-        if (psp) {
-          // Prefer group-level notice if present
-          const displayPsp = {
-            ...psp,
-            notice: groupNotice ?? psp.notice ?? '',
-          };
-          this.ui.updatePSPDisplay(
-            displayPsp,
-            detectedPspResult.detectionInfo,
-          );
-        } else {
-          logger.error('PSP config not found for:', detectedPspResult.psp);
-          this.ui.showNoPSPDetected();
-        }
+        this.ui.renderMultiplePSPs(detectedPsps, pspConfig);
 
         this.isInitialized = true;
       }, 'Popup initialization');
@@ -91,9 +61,9 @@ class PopupManager {
    * Get the detected PSP from the background script with retry logic
    * @private
    */
-  private async getDetectedPSPWithRetry(): Promise<PSPDetectionResult | null> {
+  private async getDetectedPSPsWithRetry(): Promise<PSPResponse['psps']> {
     const retryFn = errorUtils.withRetry(
-      () => this.getDetectedPSP(),
+      () => this.getDetectedPSPs(),
       2, // 2 retry attempts
       500, // 500ms delay
     );
@@ -101,7 +71,7 @@ class PopupManager {
     return errorUtils.safeExecuteAsync(
       retryFn,
       'get detected PSP with retry',
-      null,
+      [],
     );
   }
 
@@ -109,7 +79,7 @@ class PopupManager {
    * Get the detected PSP from the background script
    * @private
    */
-  private async getDetectedPSP(): Promise<PSPDetectionResult | null> {
+  private async getDetectedPSPs(): Promise<PSPResponse['psps']> {
     const response = await this.sendMessage<PSPResponse>({
       action: MessageAction.GET_PSP,
     });
@@ -118,7 +88,7 @@ class PopupManager {
       throw new Error('Invalid response from background script');
     }
 
-    return response.psp;
+    return response.psps;
   }
 
   /**
@@ -178,7 +148,7 @@ class PopupManager {
       clearTimeout(timeoutId);
 
       if (error instanceof Error && error.name === 'AbortError') {
-        throw new Error('PSP config fetch timed out');
+        throw new Error('PSP config fetch timed out', { cause: error });
       }
 
       throw error;
@@ -238,6 +208,19 @@ class PopupManager {
   public cleanup(): void {
     // Popup cleanup - currently just logging
     logger.debug('Popup manager cleaned up');
+  }
+
+  private bindHistoryAction(): void {
+    const historyButton = document.getElementById('history-link');
+    if (!historyButton) {
+      return;
+    }
+
+    historyButton.addEventListener('click', () => {
+      chrome.runtime.openOptionsPage().catch((error) => {
+        logger.error('Failed to open history page:', error);
+      });
+    });
   }
 }
 

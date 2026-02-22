@@ -26,12 +26,21 @@ module.exports = {
     '<rootDir>/src/**/*.(test|spec).(ts|js)',
   ],
 
-  // Coverage configuration - disabled due to Node.js v24 compatibility issues
+  // Coverage configuration
   collectCoverage: false,
-  collectCoverageFrom: [],
+  collectCoverageFrom: [
+    'src/**/*.ts',
+    '!src/**/*.test.ts',
+  ],
+  coverageThreshold: {
+    './src/lib/history.ts': { lines: 80, functions: 80, branches: 70 },
+    './src/options-core.ts': { lines: 80, functions: 80, branches: 70 },
+    './src/services/psp-detector.ts': { lines: 80, functions: 80 },
+  },
 
   // Coverage reporter configuration
   coverageReporters: ['text', 'text-summary'],
+  coverageProvider: 'v8',
 
   // Setup files
   setupFilesAfterEnv: [],

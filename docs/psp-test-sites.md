@@ -2,6 +2,9 @@
 
 These demos from various payment providers can be used to test this extension.
 
+The Playwright integration suite (`npm run test:integration`) includes a subset
+of these URLs as automated regression checks.
+
 * Adyen: https://www.mystoredemo.io
 * BlueSnap: https://checkout.bluesnapdemo.com
 * Braintree: https://braintree.github.io/braintree-web-drop-in/

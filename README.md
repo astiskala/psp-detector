@@ -12,9 +12,10 @@ With PSP Detector, you can quickly find out which PSP is handling payments on a 
 
 ## Key Features:
 
-- Real-Time Detection: Identify the PSP used on any webpage with a simple click.
-- Logo & Description: View the provider’s logo alongside a brief overview of its services.
-- Direct Links: Quickly navigate to the PSP’s website for further exploration.
+- Real-Time Detection: Identify PSPs, orchestrators, and TSPs on the active tab.
+- History Dashboard: Track detections over time, filter/search, and export CSV.
+- Direct Links: Quickly navigate to provider websites or suggest coverage
+  improvements.
 
 ## How to Use:
 
@@ -198,8 +199,10 @@ npm run build:debug    # Development build with debug info
 ### Testing
 
 ```bash
-npm test              # Run all tests
-npm run test:watch    # Run tests in watch mode
+npm test                 # Run all tests
+npm run test:watch       # Run tests in watch mode
+npm run test:coverage.   # Run Jest coverage report
+npm run test:integration # Run Playwright integration/E2E tests
 ```
 
 ### Linting
@@ -207,18 +210,30 @@ npm run test:watch    # Run tests in watch mode
 ```bash
 npm run lint          # TypeScript/JavaScript linting with ESLint
 npm run lint:fix      # Auto-fix TypeScript/JavaScript issues
+npm run lint:deps     # dependency-cruiser architectural boundary checks
 npm run lint:html     # HTML linting with webhint
 npm run lint:manifest # Chrome extension manifest linting
 npm run lint:web      # Combined HTML and manifest linting
+npm run knip          # Unused files/dependencies/exports checks
 ```
+
+ESLint includes SonarJS quality rules plus JSDoc enforcement for public APIs.
 
 ### Quality Assurance
 
 ```bash
 npm run typecheck     # TypeScript type checking
 npm run ci            # Full CI pipeline (lint + typecheck + test)
-npm run validate      # Complete validation (fix + typecheck + build + test)
+npm run validate      # Complete validation (fix + lint + typecheck + knip + dep checks + build + tests + web lint)
 ```
+
+### Chrome Web Store Screenshots
+
+```bash
+npm run screenshots:store
+```
+
+Generated assets are saved to `docs/store-assets/`.
 
 ### Available Scripts
 
@@ -228,9 +243,13 @@ npm run validate      # Complete validation (fix + typecheck + build + test)
 - `test:watch` - Run tests in watch mode
 - `lint` - Run ESLint on TypeScript files
 - `lint:fix` - Auto-fix ESLint issues
+- `lint:deps` - Run dependency-cruiser rules on `src/`
 - `lint:html` - Lint HTML files with webhint
 - `lint:manifest` - Lint Chrome extension manifest
 - `lint:web` - Run both HTML and manifest linting
+- `knip` - Find unused files, dependencies, and exports
+- `test:integration` - Run Playwright integration/E2E tests
+- `screenshots:store` - Generate Chrome Web Store screenshot assets
 - `typecheck` - Run TypeScript compiler checks
 - `ci` - Complete CI pipeline
 - `validate` - Full validation before commit

@@ -33,7 +33,7 @@ describe('PSPDetectorService', () => {
     const result = service.detectPSP(url, content);
     expect(PSPDetectionResult.isDetected(result)).toBe(true);
     if (PSPDetectionResult.isDetected(result)) {
-      expect(result.psp).toBe('Stripe');
+      expect(result.psps[0]?.psp).toBe('Stripe');
     }
   });
 
@@ -43,7 +43,7 @@ describe('PSPDetectorService', () => {
     const result = service.detectPSP(url, content);
     expect(PSPDetectionResult.isDetected(result)).toBe(true);
     if (PSPDetectionResult.isDetected(result)) {
-      expect(result.psp).toBe('PayPal');
+      expect(result.psps[0]?.psp).toBe('PayPal');
     }
   });
 
@@ -129,7 +129,7 @@ describe('PSPDetectorService', () => {
     const stripeResult = pspDetectorService.detectPSP(stripeUrl, stripeContent);
     expect(PSPDetectionResult.isDetected(stripeResult)).toBe(true);
     if (PSPDetectionResult.isDetected(stripeResult)) {
-      expect(stripeResult.psp).toBe('Stripe');
+      expect(stripeResult.psps[0]?.psp).toBe('Stripe');
     }
 
     // Test subdomain match
@@ -138,7 +138,7 @@ describe('PSPDetectorService', () => {
     const adyenResult = pspDetectorService.detectPSP(adyenUrl, adyenContent);
     expect(PSPDetectionResult.isDetected(adyenResult)).toBe(true);
     if (PSPDetectionResult.isDetected(adyenResult)) {
-      expect(adyenResult.psp).toBe('Adyen');
+      expect(adyenResult.psps[0]?.psp).toBe('Adyen');
     }
 
     // Test no match (should be exempt due to example.com being in exempt
@@ -280,7 +280,7 @@ describe('PSPDetectorService', () => {
     );
     expect(PSPDetectionResult.isDetected(scriptResult)).toBe(true);
     if (PSPDetectionResult.isDetected(scriptResult)) {
-      expect(scriptResult.psp).toBe('Stripe');
+      expect(scriptResult.psps[0]?.psp).toBe('Stripe');
     }
 
     // Test hostname detection in iframe
@@ -293,7 +293,7 @@ describe('PSPDetectorService', () => {
     );
     expect(PSPDetectionResult.isDetected(iframeResult)).toBe(true);
     if (PSPDetectionResult.isDetected(iframeResult)) {
-      expect(iframeResult.psp).toBe('Stripe');
+      expect(iframeResult.psps[0]?.psp).toBe('Stripe');
     }
 
     // Test hostname detection in form action
@@ -303,7 +303,97 @@ describe('PSPDetectorService', () => {
     const formResult = pspDetectorService.detectPSP(checkoutUrl, formContent);
     expect(PSPDetectionResult.isDetected(formResult)).toBe(true);
     if (PSPDetectionResult.isDetected(formResult)) {
-      expect(formResult.psp).toBe('Stripe');
+      expect(formResult.psps[0]?.psp).toBe('Stripe');
+    }
+  });
+
+  it('returns all matching PSPs when multiple providers match', () => {
+    const multiConfig = {
+      psps: [
+        {
+          name: 'Stripe',
+          matchStrings: ['js.stripe.com'],
+          regex: null,
+          image: 'stripe',
+          summary: 'Stripe',
+          url: 'https://stripe.com',
+        },
+        {
+          name: 'Adyen',
+          matchStrings: ['checkoutshopper-live.adyen.com'],
+          regex: null,
+          image: 'adyen',
+          summary: 'Adyen',
+          url: 'https://adyen.com',
+        },
+      ],
+      orchestrators: { notice: '', list: [] },
+      tsps: { notice: '', list: [] },
+    };
+    service.initialize(multiConfig as unknown as PSPConfig);
+    service.setExemptDomains([]);
+
+    const result = service.detectPSP(
+      'https://example.com',
+      'js.stripe.com\ncheckoutshopper-live.adyen.com',
+    );
+
+    expect(result.type).toBe('detected');
+    if (result.type === 'detected') {
+      expect(result.psps).toHaveLength(2);
+      expect(result.psps[0]?.psp).toBe('Stripe');
+      expect(result.psps[1]?.psp).toBe('Adyen');
+    }
+  });
+
+  it('deduplicates same PSP across matchString and regex', () => {
+    const dedupConfig = {
+      psps: [{
+        name: 'Stripe',
+        matchStrings: ['js.stripe.com'],
+        regex: 'stripe\\.com',
+        image: 'stripe',
+        summary: 'Stripe',
+        url: 'https://stripe.com',
+      }],
+      orchestrators: { notice: '', list: [] },
+      tsps: { notice: '', list: [] },
+    };
+    service.initialize(dedupConfig as unknown as PSPConfig);
+    service.setExemptDomains([]);
+
+    const result = service.detectPSP('https://example.com', 'js.stripe.com');
+    expect(result.type).toBe('detected');
+    if (result.type === 'detected') {
+      expect(result.psps).toHaveLength(1);
+      expect(result.psps[0]?.psp).toBe('Stripe');
+    }
+  });
+
+  it('returns error for invalid url input', () => {
+    const result = service.detectPSP('', 'content');
+    expect(result.type).toBe('error');
+    if (result.type === 'error') {
+      expect(result.context).toBe('url_validation');
+    }
+  });
+
+  it('returns error for invalid content input type', () => {
+    const result = service.detectPSP('https://example.com', null as unknown as string);
+    expect(result.type).toBe('error');
+    if (result.type === 'error') {
+      expect(result.context).toBe('content_validation');
+    }
+  });
+
+  it('returns error when provider list is empty', () => {
+    const emptyConfig: PSPConfig = { psps: [] };
+    service.initialize(emptyConfig);
+    service.setExemptDomains([]);
+    const result = service.detectPSP('https://example.com', 'hello');
+    expect(result.type).toBe('error');
+    if (result.type === 'error') {
+      expect(result.context).toBe('config_validation');
     }
   });
 });

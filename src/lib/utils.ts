@@ -1,10 +1,15 @@
 
+import type { PSP, PSPConfig } from '../types/psp';
+
 /**
  * Create a safe URL by sanitizing the input
- * @param url - The URL to sanitize
  */
 const ALLOWED_URL_PROTOCOLS = new Set(['http:', 'https:', 'mailto:']);
 
+/**
+ * Create a safe URL by sanitizing the input.
+ * @param url - The URL to sanitize.
+ */
 export function createSafeUrl(url: string): string {
   try {
     const parsed = new globalThis.URL(url);
@@ -168,11 +173,10 @@ export const memoryUtils = {
 };
 
 /**
- * Get all PSPs, orchestrators, and TSPs as a single array
- * @param pspConfig - The PSP configuration object
- * @returns Array of all providers
+ * Get all PSPs, orchestrators, and TSPs as a single array.
+ * @param pspConfig - The PSP configuration object.
+ * @returns Array of all providers.
  */
-import type { PSPConfig, PSP } from '../types/psp';
 export function getAllProviders(pspConfig: PSPConfig): PSP[] {
   if (!pspConfig) return [];
   const psps = pspConfig.psps || [];

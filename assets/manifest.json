@@ -8,6 +8,9 @@
     "activeTab",
     "storage"
   ],
+  "optional_permissions": [
+    "webRequest"
+  ],
   "host_permissions": [
     "https://*/*"
   ],
@@ -25,6 +28,7 @@
       "128": "images/default_128.png"
     }
   },
+  "options_page": "options.html",
   "icons": {
     "48": "images/default_48.png",
     "128": "images/default_128.png"

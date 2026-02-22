@@ -5,4 +5,5 @@ export const STORAGE_KEYS = {
   CACHED_PSP_CONFIG: 'cachedPspConfig',
   CURRENT_TAB_ID: 'currentTabId',
   POPUP_PSP_CONFIG_CACHE: 'popup_psp_config_cache',
+  PSP_HISTORY: 'psp_history',
 } as const;

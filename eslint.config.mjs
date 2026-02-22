@@ -1,6 +1,8 @@
 import globals from 'globals';
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
+import jsdoc from 'eslint-plugin-jsdoc';
+import sonarjs from 'eslint-plugin-sonarjs';
 
 export default [
   // Ignore patterns
@@ -25,7 +27,7 @@ export default [
     },
     rules: {
       // Google TypeScript Style Guide rules
-      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-unused-vars': 'error',
       '@typescript-eslint/explicit-function-return-type': 'error',
       'prefer-const': 'error',
@@ -82,10 +84,58 @@ export default [
   // TypeScript source files
   {
     files: ['src/**/*.ts'],
+    ignores: ['src/**/*.test.ts', 'src/test-helpers/**'],
     languageOptions: {
+      parserOptions: {
+        projectService: true,
+      },
       globals: {
         ...globals.browser,
       },
+    },
+    plugins: {
+      jsdoc,
+      sonarjs,
+    },
+    rules: {
+      '@typescript-eslint/consistent-type-imports': [
+        'error',
+        { prefer: 'type-imports', fixStyle: 'inline-type-imports' },
+      ],
+      '@typescript-eslint/switch-exhaustiveness-check': 'error',
+      'no-console': 'error',
+      // SonarQube-style quality rules for maintainability and bug risk.
+      'sonarjs/no-all-duplicated-branches': 'error',
+      'sonarjs/no-duplicated-branches': 'error',
+      'sonarjs/no-identical-expressions': 'error',
+      'sonarjs/no-identical-conditions': 'error',
+      'sonarjs/no-ignored-return': 'error',
+      'sonarjs/no-collapsible-if': 'error',
+      'sonarjs/no-redundant-assignments': 'error',
+      'sonarjs/no-duplicate-string': ['warn', { threshold: 8 }],
+      'jsdoc/check-alignment': 'error',
+      'jsdoc/check-tag-names': 'error',
+      'jsdoc/require-description': 'error',
+      'jsdoc/require-jsdoc': ['error', {
+        publicOnly: true,
+        require: {
+          FunctionDeclaration: true,
+          ClassDeclaration: true,
+          MethodDefinition: false,
+        },
+      }],
+      'jsdoc/require-param-type': 'off',
+      'jsdoc/require-returns-type': 'off',
+      'jsdoc/require-param-description': 'off',
+      'jsdoc/require-returns-description': 'off',
+    },
+  },
+
+  // Console output is allowed only in logger utility and test code.
+  {
+    files: ['src/lib/utils.ts', 'src/**/*.test.ts', 'src/test-helpers/**/*.ts'],
+    rules: {
+      'no-console': 'off',
     },
   },
 
