@@ -19,6 +19,8 @@ const DEFAULT_PSP_ICON_PATH = 'images/default_48.png';
 const HISTORY_TABLE_ICON_SIZE = 16;
 const SEARCH_DEBOUNCE_MS = 120;
 let providerIconByName = new Map<string, string>();
+let providerUrlByName = new Map<string, string>();
+let providerSummaryByName = new Map<string, string>();
 
 type IdleScheduler = (
   callback: () => void,
@@ -423,12 +425,36 @@ function appendPspCellContent(
       'table-icon psp-icon',
     );
 
-    const text = document.createElement('span');
-    text.className = 'cell-label';
-    text.textContent = psp.name;
+    const key = normalizeProviderName(psp.name);
+    const providerUrl = providerUrlByName.get(key);
+    const providerSummary = providerSummaryByName.get(key);
+
+    let textEl: HTMLElement;
+    if (providerUrl) {
+      const anchor = document.createElement('a');
+      anchor.className = 'cell-label';
+      anchor.href = providerUrl;
+      anchor.textContent = psp.name;
+      anchor.target = '_blank';
+      anchor.rel = 'noopener noreferrer';
+      if (providerSummary) {
+        anchor.title = providerSummary;
+      }
+
+      textEl = anchor;
+    } else {
+      const span = document.createElement('span');
+      span.className = 'cell-label';
+      span.textContent = psp.name;
+      if (providerSummary) {
+        span.title = providerSummary;
+      }
+
+      textEl = span;
+    }
 
     item.appendChild(icon);
-    item.appendChild(text);
+    item.appendChild(textEl);
     list.appendChild(item);
   }
 
@@ -445,6 +471,8 @@ function isPspConfig(value: unknown): value is PSPConfig {
 
 async function loadProviderIcons(): Promise<void> {
   providerIconByName = new Map<string, string>();
+  providerUrlByName = new Map<string, string>();
+  providerSummaryByName = new Map<string, string>();
 
   try {
     const runtime = (
@@ -465,10 +493,15 @@ async function loadProviderIcons(): Promise<void> {
     }
 
     for (const provider of getAllProviders(json)) {
-      providerIconByName.set(
-        normalizeProviderName(provider.name),
-        `images/${provider.image}_48.png`,
-      );
+      const key = normalizeProviderName(provider.name);
+      providerIconByName.set(key, `images/${provider.image}_48.png`);
+      if (provider.url) {
+        providerUrlByName.set(key, String(provider.url));
+      }
+
+      if (provider.summary) {
+        providerSummaryByName.set(key, provider.summary);
+      }
     }
   } catch (error) {
     logger.warn('Failed to load PSP icon metadata for history table', error);

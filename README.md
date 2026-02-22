@@ -37,11 +37,13 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - BlueSnap
 - Cardknox
 - Cashfree Payments
+- CCBill
 - Cellulant
 - Chase Payment Solutions
 - Checkout.com
 - Cielo
 - Codapay
+- Computop
 - Conekta
 - CSG Forte
 - CX Pay
@@ -67,6 +69,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Global Payments
 - GMO Payment Gateway
 - Helcim
+- Iyzico
 - Judopay
 - KG Inicis
 - KSNET
@@ -79,6 +82,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Mollie
 - MONEI
 - Moneris
+- MultiSafepay
 - MyFatoorah
 - NETbilling
 - Network International
@@ -129,6 +133,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Tap Payments
 - Telr
 - Tilled
+- Toss Payments
 - Trust Payments
 - Tyro
 - WePay
@@ -162,6 +167,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Primer
 - ProcessOut
 - Rebilly
+- Recurly
 - Spreedly
 - Tranzzo
 - VGS (Very Good Security)

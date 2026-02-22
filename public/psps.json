@@ -79,7 +79,7 @@
         "sandbox.ipay88.com.ph"
       ],
       "image": "nttdata",
-      "summary": "NTT DATA (formerly iPay88) is a leading payment gateway provider in Southeast Asia, offering secure online payment solutions for merchants across Indonesia, Malaysia, and the Philippines.",
+      "summary": "NTT DATA (formerly iPay88) is a payment gateway provider in Southeast Asia, offering secure online payment solutions for merchants across Indonesia, Malaysia, and the Philippines.",
       "url": "https://www.nttdata.com/global/en/services/ipay88"
     },
     {
@@ -229,7 +229,7 @@
         "securestage.paytmpayments.com"
       ],
       "image": "paytm",
-      "summary": "Paytm is one of India's largest payment gateways, providing comprehensive payment solutions for businesses of all sizes. It supports multiple payment methods including UPI, credit/debit cards, net banking, and digital wallets. The platform offers features like recurring payments, payment links, and subscription management, with robust security measures and easy integration options.",
+      "summary": "Paytm is an Indian payment gateway providing comprehensive payment solutions for businesses of all sizes. It supports multiple payment methods including UPI, credit/debit cards, net banking, and digital wallets. The platform offers features like recurring payments, payment links, and subscription management, with robust security measures and easy integration options.",
       "url": "https://www.paytmpayments.com/payment-gateway"
     },
     {
@@ -325,7 +325,7 @@
         "siampay.com/b2c2"
       ],
       "image": "asiapay",
-      "summary": "AsiaPay is a leading payment gateway provider in Asia, offering secure online payment solutions under brands like PayDollar, PesoPay, and SiamPay. It supports credit cards, e-wallets, and alternative payment methods for merchants across the region.",
+      "summary": "AsiaPay is a payment gateway provider in Asia, offering secure online payment solutions under brands like PayDollar, PesoPay, and SiamPay. It supports credit cards, e-wallets, and alternative payment methods for merchants across the region.",
       "url": "https://www.asiapay.com"
     },
     {
@@ -364,7 +364,7 @@
         "sandbox.ngenius-payments.com"
       ],
       "image": "networkint",
-      "summary": "Network International is a leading payment solutions provider in the Middle East and Africa. It offers a comprehensive range of payment solutions including online payment gateway services, point-of-sale terminals, and merchant acquiring services. The platform supports various payment methods and provides robust security features for secure transactions.",
+      "summary": "Network International is a payment solutions provider in the Middle East and Africa. It offers a comprehensive range of payment solutions including online payment gateway services, point-of-sale terminals, and merchant acquiring services. The platform supports various payment methods and provides robust security features for secure transactions.",
       "url": "https://www.network.international"
     },
     {
@@ -441,7 +441,7 @@
         "uat1.billdesk.com"
       ],
       "image": "billdesk",
-      "summary": "BillDesk is one of India's pioneering payment gateways, specializing in electronic payment processing and bill payment solutions. It offers payment services including credit/debit cards, net banking, UPI, and various digital wallets. BillDesk provides secure payment aggregation services, recurring billing solutions, and serves various sectors including e-commerce, utilities, and financial institutions.",
+      "summary": "BillDesk is an Indian payment gateway specializing in electronic payment processing and bill payment solutions. It offers payment services including credit/debit cards, net banking, UPI, and various digital wallets. BillDesk provides secure payment aggregation services, recurring billing solutions, and serves various sectors including e-commerce, utilities, and financial institutions.",
       "url": "https://www.billdesk.com"
     },
     {
@@ -505,7 +505,7 @@
         "cieloecommerce.cielo.com.br"
       ],
       "image": "cielo",
-      "summary": "Cielo is one of Brazil's largest payment processors, providing solutions for both online and offline transactions. It supports credit and debit card payments, including installment options, making it a choice for e-commerce in Brazil.",
+      "summary": "Cielo is a Brazilian payment processor providing solutions for both online and offline transactions. It supports credit and debit card payments, including installment options, making it a choice for e-commerce in Brazil.",
       "url": "https://www.cielo.com.br"
     },
     {
@@ -606,7 +606,7 @@
         "pay.kcp.co.kr"
       ],
       "image": "kcp",
-      "summary": "KCP is a prominent payment gateway in South Korea, offering payment processing solutions for businesses across various industries. It supports multiple payment methods, including credit cards, bank transfers, and alternative payment channels, with a strong focus on security and integration.",
+      "summary": "KCP is a payment gateway in South Korea, offering payment processing solutions for businesses across various industries. It supports multiple payment methods, including credit cards, bank transfers, and alternative payment channels, with a strong focus on security and integration.",
       "url": "https://www.kcp.co.kr"
     },
     {
@@ -624,7 +624,7 @@
         "kspay.ksnet.to"
       ],
       "image": "ksnet",
-      "summary": "KSNET is a prominent South Korean payment service provider offering VAN (Value-Added Network) services and payment gateway solutions. Established in 1994, it supports credit card processing, bank transfers, and alternative payment methods for online and in-store transactions.",
+      "summary": "KSNET is a South Korean payment service provider offering VAN (Value-Added Network) services and payment gateway solutions. Established in 1994, it supports credit card processing, bank transfers, and alternative payment methods for online and in-store transactions.",
       "url": "https://www.ksnet.co.kr"
     },
     {
@@ -654,7 +654,7 @@
         "secure.3gdirectpay.com"
       ],
       "image": "dpo",
-      "summary": "DPO Group (Direct Pay Online) is a leading African payment service provider offering online payment solutions across the continent. It supports multiple payment methods including cards, mobile money, and bank transfers, providing businesses with a secure platform for processing payments across Africa.",
+      "summary": "DPO Group (Direct Pay Online) is an African payment service provider offering online payment solutions across the continent. It supports multiple payment methods including cards, mobile money, and bank transfers, providing businesses with a secure platform for processing payments across Africa.",
       "url": "https://www.dpogroup.com"
     },
     {
@@ -714,7 +714,7 @@
         "gatewayt.moneris.com"
       ],
       "image": "moneris",
-      "summary": "Moneris is a leading Canadian payment processor, providing secure and reliable payment solutions for businesses of all sizes. It supports card payments, e-commerce, and in-store transactions with advanced fraud protection and reporting tools.",
+      "summary": "Moneris is a Canadian payment processor providing secure and reliable payment solutions for businesses of all sizes. It supports card payments, e-commerce, and in-store transactions with advanced fraud protection and reporting tools.",
       "url": "https://www.moneris.com"
     },
     {
@@ -1131,7 +1131,7 @@
         "cdn.kushkipagos.com"
       ],
       "image": "kushki",
-      "summary": "Kushki is a major Latin American payment platform offering local payment methods across the region, connecting businesses to the digital economy.",
+      "summary": "Kushki is a Latin American payment platform offering local payment methods across the region, connecting businesses to the digital economy.",
       "url": "https://kushkipagos.com"
     },
     {
@@ -1141,7 +1141,7 @@
         "secure.peachpayments.com"
       ],
       "image": "peachpayments",
-      "summary": "Peach Payments is a leading African PSP providing enterprise-grade payment solutions in South Africa, Kenya, and Mauritius.",
+      "summary": "Peach Payments is an African PSP providing enterprise-grade payment solutions in South Africa, Kenya, and Mauritius.",
       "url": "https://peachpayments.com"
     },
     {
@@ -1151,7 +1151,7 @@
         "ksamerchant.geidea.net"
       ],
       "image": "geidea",
-      "summary": "Geidea is a dominant fintech in Saudi Arabia and Egypt, offering POS and e-commerce solutions for businesses.",
+      "summary": "Geidea is a fintech company in Saudi Arabia and Egypt, offering POS and e-commerce solutions for businesses.",
       "url": "https://geidea.net"
     },
     {
@@ -1170,7 +1170,7 @@
         "secure.telr.com"
       ],
       "image": "telr",
-      "summary": "Telr is an award-winning payment gateway in the UAE and Saudi Arabia, enabling businesses to accept payments online.",
+      "summary": "Telr is a payment gateway in the UAE and Saudi Arabia, enabling businesses to accept payments online.",
       "url": "https://telr.com"
     },
     {
@@ -1181,7 +1181,7 @@
         "pluralonline.com"
       ],
       "image": "pinelabs",
-      "summary": "Pine Labs is a major Asian merchant platform known for its POS solutions and online gateway 'Plural'.",
+      "summary": "Pine Labs is an Asian merchant platform offering POS solutions and the online gateway 'Plural'.",
       "url": "https://pinelabs.com"
     },
     {
@@ -1193,6 +1193,56 @@
       "image": "tilled",
       "summary": "Tilled is a PayFac-as-a-Service platform allowing software companies to monetize payments within their platforms.",
       "url": "https://tilled.com"
+    },
+    {
+      "name": "Toss Payments",
+      "matchStrings": [
+        "js.tosspayments.com"
+      ],
+      "image": "tosspayments",
+      "summary": "Toss Payments is a South Korean online payment gateway offering card processing, bank transfers, and mobile payments. Part of the Viva Republica group, it provides developer-friendly APIs and checkout tools for Korean e-commerce merchants.",
+      "url": "https://www.tosspayments.com"
+    },
+    {
+      "name": "Iyzico",
+      "matchStrings": [
+        "cdn.iyzipay.com",
+        "sandbox-api.iyzipay.com",
+        "api.iyzipay.com"
+      ],
+      "image": "iyzico",
+      "summary": "Iyzico is a Turkish online payment gateway, now part of PayU. It provides card processing, fraud prevention, and marketplace payment solutions for Turkish and international e-commerce merchants.",
+      "url": "https://www.iyzico.com"
+    },
+    {
+      "name": "MultiSafepay",
+      "matchStrings": [
+        "pay.multisafepay.com",
+        "testpay.multisafepay.com",
+        "api.multisafepay.com"
+      ],
+      "image": "multisafepay",
+      "summary": "MultiSafepay is a Dutch payment service provider and card acquirer offering online payment solutions across Europe. It supports credit cards, local payment methods, and provides a unified platform for merchants to manage transactions.",
+      "url": "https://www.multisafepay.com"
+    },
+    {
+      "name": "CCBill",
+      "matchStrings": [
+        "js.ccbill.com",
+        "bill.ccbill.com"
+      ],
+      "image": "ccbill",
+      "summary": "CCBill is a payment processor specializing in online card payments for digital content, subscriptions, and SaaS businesses. It offers global acquiring, fraud prevention, and subscription management tools.",
+      "url": "https://www.ccbill.com"
+    },
+    {
+      "name": "Computop",
+      "matchStrings": [
+        "computop-paygate.com"
+      ],
+      "image": "computop",
+      "summary": "Computop is a German enterprise payment gateway providing card acquiring and processing services for large retailers. It supports omnichannel payments across online, mobile, and in-store channels with advanced fraud prevention and global reach.",
+      "url": "https://www.computop.com"
     }
   ],
   "orchestrators": {
@@ -1420,6 +1470,15 @@
         "url": "https://rebilly.com"
       },
       {
+        "name": "Recurly",
+        "matchStrings": [
+          "js.recurly.com"
+        ],
+        "image": "recurly",
+        "summary": "Recurly is a subscription billing and payment orchestration platform. It integrates with multiple payment gateways, manages hosted payment fields, fraud prevention, and revenue optimization for subscription businesses.",
+        "url": "https://recurly.com"
+      },
+      {
         "name": "Paytiko",
         "matchStrings": [
           "core.paytiko.com"
@@ -1468,7 +1527,7 @@
           "book-directonline.com"
         ],
         "image": "siteminder",
-        "summary": "SiteMinder is the world's leading open hotel commerce platform and booking engine.",
+        "summary": "SiteMinder is a hotel commerce platform and booking engine.",
         "url": "https://siteminder.com"
       },
       {

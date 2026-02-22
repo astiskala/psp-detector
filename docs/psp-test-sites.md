@@ -23,3 +23,4 @@ of these URLs as automated regression checks.
 * Skrill: https://pay.skrill.com/assets/skrill-demo/ecommerce.html
 * Square: https://square.github.io/web-payments-showcase/
 * Stripe: https://checkout.stripe.dev/checkout
+* Toss Payments: https://developers.tosspayments.com/sandbox
