@@ -93,16 +93,18 @@ async function setCurrentTabId(page: Page, tabId: number): Promise<void> {
 
 async function createMerchantTab(
   page: Page,
-  pathSuffix: string,
+  _pathSuffix: string,
 ): Promise<number> {
-  const tabId = await page.evaluate(async(suffix) => {
+  // Use about:blank to avoid network-dependent navigation that could trigger
+  // delayed onUpdated 'loading' events and wipe the seeded detection cache.
+  const tabId = await page.evaluate(async() => {
     const tab = await chrome.tabs.create({
       active: false,
-      url: `https://example.com/psp-detector/${suffix}`,
+      url: 'about:blank',
     });
 
     return tab.id ?? null;
-  }, pathSuffix);
+  });
 
   if (typeof tabId !== 'number') {
     throw new TypeError('Failed to create merchant tab for extension E2E test');
