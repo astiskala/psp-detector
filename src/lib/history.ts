@@ -70,8 +70,8 @@ export async function writeHistoryEntry(entry: HistoryEntry): Promise<void> {
     if (status.kind === 'merge') {
       const existing = history[status.index];
       if (existing === undefined) {
-        // Should not happen given findEntryStatus returned a valid index, but guard for TS
-        throw new Error('Unexpected undefined entry at merge index');
+        logger.error('Unexpected undefined entry at merge index; skipping merge');
+        return;
       }
       const existingNames = new Set(existing.psps.map((p) => p.name));
       const newPsps: HistoryPSPMatch[] = entry.psps.filter(
@@ -85,11 +85,13 @@ export async function writeHistoryEntry(entry: HistoryEntry): Promise<void> {
 
       const merged: HistoryEntry = {
         ...existing,
+        timestamp: entry.timestamp, // update to most recent detection time
         psps: [...existing.psps, ...newPsps],
       };
+      // Remove old entry and prepend merged entry at position 0 to preserve newest-first invariant
       const updated = [
-        ...history.slice(0, status.index),
         merged,
+        ...history.slice(0, status.index),
         ...history.slice(status.index + 1),
       ];
       await chrome.storage.local.set({ [STORAGE_KEYS.PSP_HISTORY]: updated });
@@ -106,6 +108,10 @@ export async function writeHistoryEntry(entry: HistoryEntry): Promise<void> {
     await chrome.storage.local.set({ [STORAGE_KEYS.PSP_HISTORY]: updated });
   } catch (err) {
     logger.warn('History write failed, attempting eviction:', err);
+    // Note: the eviction retry path bypasses merge/debounce logic to avoid
+    // further async complexity. This could theoretically produce a duplicate
+    // on transient (non-quota) failures, but is acceptable given the rarity
+    // of quota errors in practice.
     try {
       const history = await readHistory();
       const trimmed = history.slice(0, HISTORY_MAX_ENTRIES - 101);

@@ -225,6 +225,45 @@ describe('writeHistoryEntry', () => {
     expect(stripeMatches).toHaveLength(1);
   });
 
+  it('moves merged entry to position 0 when interleaved with a different URL', async() => {
+    const BASE_TS = 100_000;
+    // First: Stripe detected on checkout page
+    await writeHistoryEntry(makeEntry({
+      id: 'tab1_stripe',
+      timestamp: BASE_TS,
+      url: 'https://example.com/checkout',
+      psps: [{ name: 'Stripe', method: 'regex', value: 'js.stripe.com', sourceType: 'networkRequest' }],
+    }));
+    // Second: different URL navigated to (ends up at position 0)
+    await writeHistoryEntry(makeEntry({
+      id: 'tab2_other',
+      timestamp: BASE_TS + 2_000,
+      url: 'https://shop.example.com/pay',
+      domain: 'shop.example.com',
+      psps: [{ name: 'PayPal', method: 'regex', value: 'paypal.com', sourceType: 'networkRequest' }],
+    }));
+    // Third: Adyen detected on the same checkout page as the first entry (within 30s)
+    await writeHistoryEntry(makeEntry({
+      id: 'tab1_adyen',
+      timestamp: BASE_TS + 5_000,
+      url: 'https://example.com/checkout',
+      psps: [{ name: 'Adyen', method: 'regex', value: 'checkoutshopper-live.adyen.com', sourceType: 'networkRequest' }],
+    }));
+
+    const history = await readHistory();
+    // Two distinct URLs → two entries total
+    expect(history).toHaveLength(2);
+    // The merged checkout entry (Stripe+Adyen) must be at position 0 (newest-first)
+    expect(history[0]?.url).toBe('https://example.com/checkout');
+    const pspNames = history[0]?.psps.map((p) => p.name);
+    expect(pspNames).toContain('Stripe');
+    expect(pspNames).toContain('Adyen');
+    // Its timestamp reflects the most recent detection
+    expect(history[0]?.timestamp).toBe(BASE_TS + 5_000);
+    // The other URL entry is behind it
+    expect(history[1]?.url).toBe('https://shop.example.com/pay');
+  });
+
   it('creates separate entries for different URLs within the merge window', async() => {
     const BASE_TS = 100_000;
     const entryA = makeEntry({
