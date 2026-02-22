@@ -1031,12 +1031,14 @@ class BackgroundService {
         logger.warn('Skipping stored entry with empty PSP name');
         continue;
       }
+
       if (p.detectionInfo) {
         matches.push({ psp, detectionInfo: p.detectionInfo });
       } else {
         matches.push({ psp });
       }
     }
+
     return PSPDetectionResult.detected(matches);
   }
 
@@ -1065,7 +1067,10 @@ class BackgroundService {
   private getProviderType(pspName: string): ProviderType {
     const config = this.getCachedPspConfigSync();
     if (!config) {
-      logger.debug(`getProviderType: config not yet loaded, defaulting to 'PSP' for ${pspName}`);
+      logger.debug(
+        `getProviderType: config not loaded, defaulting to PSP for ${pspName}`,
+      );
+
       return 'PSP';
     }
 

@@ -21,7 +21,8 @@ type EntryStatus =
  *
  * Returns:
  *   { kind: 'merge', index }  — same URL within HISTORY_ENTRY_MERGE_WINDOW_MS
- *   { kind: 'debounce' }      — same URL within HISTORY_ENTRY_DEBOUNCE_MS (but outside merge window)
+ *   { kind: 'debounce' }      — same URL within HISTORY_ENTRY_DEBOUNCE_MS
+ *                               (but outside merge window)
  *   { kind: 'none' }          — outside all windows, write a new entry
  */
 function findEntryStatus(
@@ -33,7 +34,8 @@ function findEntryStatus(
 
   for (let i = 0; i < history.length; i++) {
     const existing = history[i];
-    // history is newest-first; stop scanning once entries are older than debounce window
+
+    // history is newest-first; stop once entries are older than debounce window
     if (existing === undefined || existing.timestamp < lowerBound) {
       break;
     }
@@ -42,6 +44,7 @@ function findEntryStatus(
       if (existing.timestamp >= mergeThreshold) {
         return { kind: 'merge', index: i };
       }
+
       return { kind: 'debounce' };
     }
   }
@@ -75,6 +78,7 @@ export async function writeHistoryEntry(entry: HistoryEntry): Promise<void> {
         logger.error('Unexpected undefined entry at merge index; skipping merge');
         return;
       }
+
       const existingNames = new Set(existing.psps.map((p) => p.name));
       const newPsps: HistoryPSPMatch[] = entry.psps.filter(
         (p) => !existingNames.has(p.name),
@@ -90,7 +94,9 @@ export async function writeHistoryEntry(entry: HistoryEntry): Promise<void> {
         timestamp: entry.timestamp, // update to most recent detection time
         psps: [...existing.psps, ...newPsps],
       };
-      // Remove old entry and prepend merged entry at position 0 to preserve newest-first invariant
+
+      // Remove old entry and prepend merged entry at position 0
+      // to preserve the newest-first invariant.
       const updated = [
         merged,
         ...history.slice(0, status.index),
@@ -110,6 +116,7 @@ export async function writeHistoryEntry(entry: HistoryEntry): Promise<void> {
     await chrome.storage.local.set({ [STORAGE_KEYS.PSP_HISTORY]: updated });
   } catch (err) {
     logger.warn('History write failed, attempting eviction:', err);
+
     // Note: the eviction retry path bypasses merge/debounce logic to avoid
     // further async complexity. This could theoretically produce a duplicate
     // on transient (non-quota) failures, but is acceptable given the rarity

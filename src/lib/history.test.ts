@@ -119,6 +119,7 @@ describe('writeHistoryEntry', () => {
   it('debounces repeated visits to the same URL within the debounce window', async() => {
     const baseline = makeEntry({ id: 'a', timestamp: 1_000 });
     await writeHistoryEntry(baseline);
+
     // More than 30s after baseline but within 5 min — should debounce
     await writeHistoryEntry(
       makeEntry({
@@ -218,8 +219,10 @@ describe('writeHistoryEntry', () => {
     await writeHistoryEntry(stripe2);
 
     const history = await readHistory();
+
     // Still one entry
     expect(history).toHaveLength(1);
+
     // Only one Stripe entry in psps
     const stripeMatches = history[0]?.psps.filter((p) => p.name === 'Stripe');
     expect(stripeMatches).toHaveLength(1);
@@ -227,6 +230,7 @@ describe('writeHistoryEntry', () => {
 
   it('moves merged entry to position 0 when interleaved with a different URL', async() => {
     const BASE_TS = 100_000;
+
     // First: Stripe detected on checkout page
     await writeHistoryEntry(makeEntry({
       id: 'tab1_stripe',
@@ -234,6 +238,7 @@ describe('writeHistoryEntry', () => {
       url: 'https://example.com/checkout',
       psps: [{ name: 'Stripe', method: 'regex', value: 'js.stripe.com', sourceType: 'networkRequest' }],
     }));
+
     // Second: different URL navigated to (ends up at position 0)
     await writeHistoryEntry(makeEntry({
       id: 'tab2_other',
@@ -242,7 +247,8 @@ describe('writeHistoryEntry', () => {
       domain: 'shop.example.com',
       psps: [{ name: 'PayPal', method: 'regex', value: 'paypal.com', sourceType: 'networkRequest' }],
     }));
-    // Third: Adyen detected on the same checkout page as the first entry (within 30s)
+
+    // Third: Adyen detected on same checkout page as first entry (within 30s)
     await writeHistoryEntry(makeEntry({
       id: 'tab1_adyen',
       timestamp: BASE_TS + 5_000,
@@ -251,15 +257,19 @@ describe('writeHistoryEntry', () => {
     }));
 
     const history = await readHistory();
+
     // Two distinct URLs → two entries total
     expect(history).toHaveLength(2);
-    // The merged checkout entry (Stripe+Adyen) must be at position 0 (newest-first)
+
+    // The merged checkout entry (Stripe+Adyen) must be at position 0
     expect(history[0]?.url).toBe('https://example.com/checkout');
     const pspNames = history[0]?.psps.map((p) => p.name);
     expect(pspNames).toContain('Stripe');
     expect(pspNames).toContain('Adyen');
+
     // Its timestamp reflects the most recent detection
     expect(history[0]?.timestamp).toBe(BASE_TS + 5_000);
+
     // The other URL entry is behind it
     expect(history[1]?.url).toBe('https://shop.example.com/pay');
   });
