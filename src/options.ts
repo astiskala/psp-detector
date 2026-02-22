@@ -227,13 +227,20 @@ function getHistoryEntryHostname(entry: HistoryEntry): string {
   }
 }
 
-function buildDomainFaviconUrl(entry: HistoryEntry): string {
-  const hostname = getHistoryEntryHostname(entry);
-  if (!hostname) {
-    return DEFAULT_PSP_ICON_PATH;
+function buildDomainFaviconUrl(entry: HistoryEntry): string | null {
+  const url = entry.url.trim();
+  if (!url) {
+    return null;
   }
 
-  return `https://icons.duckduckgo.com/ip3/${encodeURIComponent(hostname)}.ico`;
+  const extensionId = (
+    globalThis as typeof globalThis & { chrome?: typeof chrome }
+  ).chrome?.runtime?.id;
+  if (!extensionId) {
+    return null;
+  }
+
+  return `chrome-extension://${extensionId}/_favicon/?pageUrl=${encodeURIComponent(url)}&size=16`;
 }
 
 function createTableIcon(
@@ -260,6 +267,23 @@ function createTableIcon(
   return icon;
 }
 
+function createLetterAvatar(domain: string): HTMLElement {
+  const letter = domain.trim().charAt(0).toUpperCase() || '?';
+  const avatar = document.createElement('div');
+  avatar.className = 'table-icon domain-icon domain-letter-avatar';
+  avatar.textContent = letter;
+  avatar.style.width = `${HISTORY_TABLE_ICON_SIZE}px`;
+  avatar.style.height = `${HISTORY_TABLE_ICON_SIZE}px`;
+  avatar.style.lineHeight = `${HISTORY_TABLE_ICON_SIZE}px`;
+  avatar.style.fontSize = '10px';
+  avatar.style.textAlign = 'center';
+  avatar.style.backgroundColor = 'var(--accent, #2563eb)';
+  avatar.style.color = '#fff';
+  avatar.style.borderRadius = '2px';
+  avatar.style.flexShrink = '0';
+  return avatar;
+}
+
 function appendDomainCellContent(
   cell: HTMLTableCellElement,
   entry: HistoryEntry,
@@ -268,17 +292,36 @@ function appendDomainCellContent(
   wrap.className = 'table-cell-with-icon';
 
   const hostname = getHistoryEntryHostname(entry);
-  const icon = createTableIcon(
-    buildDomainFaviconUrl(entry),
-    `${hostname || entry.domain} favicon`,
-    'table-icon domain-icon',
-  );
+  const faviconUrl = buildDomainFaviconUrl(entry);
+
+  let iconElement: HTMLElement;
+  if (faviconUrl) {
+    const img = document.createElement('img');
+    img.className = 'table-icon domain-icon';
+    img.alt = `${hostname || entry.domain} favicon`;
+    img.src = faviconUrl;
+    img.width = HISTORY_TABLE_ICON_SIZE;
+    img.height = HISTORY_TABLE_ICON_SIZE;
+    img.decoding = 'async';
+    img.loading = 'lazy';
+    img.addEventListener(
+      'error',
+      () => {
+        const avatar = createLetterAvatar(hostname || entry.domain);
+        img.replaceWith(avatar);
+      },
+      { once: true },
+    );
+    iconElement = img;
+  } else {
+    iconElement = createLetterAvatar(hostname || entry.domain);
+  }
 
   const text = document.createElement('span');
   text.className = 'cell-label';
   text.textContent = entry.domain;
 
-  wrap.appendChild(icon);
+  wrap.appendChild(iconElement);
   wrap.appendChild(text);
   cell.appendChild(wrap);
 }
@@ -419,13 +462,18 @@ function renderTable(entries: HistoryEntry[]): void {
   }
 }
 
-function bindControls(allHistory: HistoryEntry[]): void {
+interface HistoryRef {
+  getHistory: () => HistoryEntry[];
+  setHistory: (h: HistoryEntry[]) => void;
+}
+
+function bindControls(historyRef: HistoryRef): void {
   const search = document.getElementById('search') as HTMLInputElement | null;
   const pspFilter = document.getElementById('pspFilter') as HTMLSelectElement | null;
 
   const getFilteredEntries = (): HistoryEntry[] =>
     filterEntries(
-      allHistory,
+      historyRef.getHistory(),
       search?.value ?? '',
       pspFilter?.value ?? '',
     );
@@ -458,7 +506,7 @@ function bindControls(allHistory: HistoryEntry[]): void {
 
     clearHistory()
       .then(() => {
-        allHistory.length = 0;
+        historyRef.setHistory([]);
         renderStats([]);
         renderTable([]);
         renderCharts([]);
@@ -471,12 +519,17 @@ function bindControls(allHistory: HistoryEntry[]): void {
 
 async function init(): Promise<void> {
   await loadProviderIcons();
-  const history = await readHistory();
-  renderStats(history);
-  populatePspFilter(history);
-  renderTable(history);
-  renderCharts(history);
-  bindControls(history);
+  let allHistory = await readHistory();
+  renderStats(allHistory);
+  populatePspFilter(allHistory);
+  renderTable(allHistory);
+  renderCharts(allHistory);
+  bindControls({
+    getHistory: () => allHistory,
+    setHistory: (h) => {
+      allHistory = h;
+    },
+  });
 }
 
 document.addEventListener('DOMContentLoaded', () => {

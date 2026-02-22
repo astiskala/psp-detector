@@ -57,7 +57,7 @@ export function buildCSV(entries: HistoryEntry[]): string {
     ].join(',');
   });
 
-  return [header, ...rows].join('\n');
+  return [header, ...rows].join('\r\n');
 }
 
 /**

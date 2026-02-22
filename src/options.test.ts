@@ -37,7 +37,7 @@ describe('formatDate', () => {
 describe('buildCSV', () => {
   it('includes headers and one data row', () => {
     const csv = buildCSV([entry]);
-    const lines = csv.split('\n');
+    const lines = csv.split('\r\n');
     expect(lines[0]).toContain('Date');
     expect(lines[0]).toContain('Domain');
     expect(lines[0]).toContain('Types');
@@ -61,7 +61,7 @@ describe('buildCSV', () => {
 
   it('returns only headers for empty input', () => {
     const csv = buildCSV([]);
-    expect(csv.split('\n')).toHaveLength(1);
+    expect(csv.split('\r\n')).toHaveLength(1);
   });
 });
 
