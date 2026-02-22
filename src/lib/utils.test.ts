@@ -289,7 +289,7 @@ describe('utils', () => {
 
   describe('memory utilities', () => {
     it('checkMemoryUsage warns when heap usage is high', () => {
-      const performanceLike = window.performance as unknown as {
+      const performanceLike = globalThis.performance as unknown as {
         memory?: {
           usedJSHeapSize: number;
           totalJSHeapSize: number;

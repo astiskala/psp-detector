@@ -20,9 +20,11 @@ describe('build artifacts', () => {
     expect(code.includes('export {')).toBe(false);
     expect(code.includes('export default')).toBe(false);
     expect(code.includes('import ')).toBe(false);
-    expect(() => {
-      new vm.Script(code);
-    }).not.toThrow();
+
+    // Verify the bundle is valid JavaScript by parsing it in a VM sandbox.
+    // The code is read from our own build output (not user input).
+    const script = new vm.Script(code); // NOSONAR: trusted build artifact
+    expect(script).toBeDefined();
   });
 
   it('onboarding.js is emitted as classic script (no ESM import/export syntax)', () => {
@@ -39,9 +41,11 @@ describe('build artifacts', () => {
     expect(code.includes('export {')).toBe(false);
     expect(code.includes('export default')).toBe(false);
     expect(code.includes('import ')).toBe(false);
-    expect(() => {
-      new vm.Script(code);
-    }).not.toThrow();
+
+    // Verify the bundle is valid JavaScript by parsing it in a VM sandbox.
+    // The code is read from our own build output (not user input).
+    const script = new vm.Script(code); // NOSONAR: trusted build artifact
+    expect(script).toBeDefined();
   });
 
   it('popup includes a history-link action', () => {

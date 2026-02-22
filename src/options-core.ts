@@ -119,11 +119,11 @@ export function getHistoryStats(history: HistoryEntry[]): HistoryStats {
  */
 export function formatHistorySummary(stats: HistoryStats): string {
   const topPspSummary =
-    stats.topPsp !== null ? ` · Top: ${stats.topPsp}` : '';
+    stats.topPsp === null ? '' : ` · Top: ${stats.topPsp}`;
   return (
     `${stats.uniqueDomains} sites scanned · ` +
-    `${stats.uniquePsps} unique PSPs` +
-    topPspSummary
+    `${stats.uniquePsps} unique PSPs${
+      topPspSummary}`
   );
 }
 

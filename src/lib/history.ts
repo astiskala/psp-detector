@@ -16,7 +16,8 @@ function normalizeDomain(domain: string): string {
 }
 
 function getSortedUniquePspNames(entry: HistoryEntry): string[] {
-  return [...new Set(entry.psps.map((psp) => psp.name))].sort();
+  return [...new Set(entry.psps.map((psp) => psp.name))]
+    .sort((a, b) => a.localeCompare(b));
 }
 
 function hasSameDomainAndPspCombination(
@@ -222,8 +223,8 @@ export async function writeHistoryEntry(entry: HistoryEntry): Promise<void> {
       await chrome.storage.local.set({
         [STORAGE_KEYS.PSP_HISTORY]: [entry, ...trimmed],
       });
-    } catch (retryErr) {
-      logger.error('History write failed after eviction:', retryErr);
+    } catch (error_) {
+      logger.error('History write failed after eviction:', error_);
     }
   }
 }

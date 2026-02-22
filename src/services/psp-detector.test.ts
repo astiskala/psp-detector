@@ -383,7 +383,7 @@ describe('PSPDetectorService', () => {
       psps: [{
         name: STRIPE_NAME,
         matchStrings: [STRIPE_MATCH],
-        regex: 'stripe\\.com',
+        regex: String.raw`stripe\.com`,
         image: 'stripe',
         summary: STRIPE_NAME,
         url: STRIPE_URL,

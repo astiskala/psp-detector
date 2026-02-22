@@ -129,8 +129,13 @@ class BackgroundService {
     // Handle service worker suspension/revival
     chrome.runtime.onSuspend.addListener(() => {
       logger.info('Service worker suspending');
-      void this.persistState();
-      void this.flushTabPspCache();
+      this.persistState().catch((err) =>
+        logger.error('Failed to persist state on suspend:', err),
+      );
+
+      this.flushTabPspCache().catch((err) =>
+        logger.error('Failed to flush tab PSP cache on suspend:', err),
+      );
     });
 
     // Message handling
@@ -286,7 +291,9 @@ class BackgroundService {
     }
 
     this.tabPspPersistTimer = setTimeout(() => {
-      void this.flushTabPspCache();
+      this.flushTabPspCache().catch((err) =>
+        logger.error('Failed to flush tab PSP cache:', err),
+      );
     }, TAB_STATE_PERSIST_DEBOUNCE_MS);
   }
 
@@ -1422,7 +1429,7 @@ class BackgroundService {
       .replace(/^https?:\/\//u, '')
       .split('/')[0]
       ?.replace(/^\*\./u, '')
-      .replace(/[:*]/gu, '')
+      .replaceAll(':', '').replaceAll('*', '')
       .toLowerCase();
 
     if (hostCandidate === undefined || hostCandidate.length === 0) {

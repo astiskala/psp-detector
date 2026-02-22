@@ -115,7 +115,10 @@ async function detectAndAssert(page: Page, site: SiteCase): Promise<void> {
       requestCount: requests.length,
       htmlPrefixSample: snippet,
     };
-    throw new Error('PSP detection mismatch for ' + site.url + '\n' + JSON.stringify(diag, null, 2));
+    throw new Error(
+      `PSP detection mismatch for ${site.url}\n${
+        JSON.stringify(diag, null, 2)}`,
+    );
   }
 }
 

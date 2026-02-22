@@ -153,7 +153,7 @@ describe('content bootstrap', () => {
     const windowState = globalThis as typeof globalThis & WindowContentState;
     expect(windowState.pspDetectorContentScript?.initialized).toBe(true);
 
-    window.dispatchEvent(new Event('beforeunload'));
+    globalThis.dispatchEvent(new Event('beforeunload'));
     expect(domObserverCleanupMock).toHaveBeenCalledTimes(1);
   });
 

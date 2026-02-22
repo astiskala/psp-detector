@@ -14,10 +14,17 @@ const strictTypeScriptRules = {
   '@typescript-eslint/strict-boolean-expressions': 'error',
   '@typescript-eslint/prefer-nullish-coalescing': 'error',
   '@typescript-eslint/prefer-optional-chain': 'error',
+  '@typescript-eslint/no-meaningless-void-operator': 'error',
+  '@typescript-eslint/no-confusing-void-expression': [
+    'error',
+    { ignoreArrowShorthand: true },
+  ],
   complexity: ['error', { max: 15 }],
   'max-depth': ['error', { max: 4 }],
   'max-statements': ['warn', { max: 30 }],
   'no-console': 'error',
+  'no-void': ['error', { allowAsStatement: false }],
+  'prefer-template': 'error',
 
   // SonarQube-style quality rules for maintainability and bug risk.
   'sonarjs/no-all-duplicated-branches': 'error',
@@ -28,6 +35,7 @@ const strictTypeScriptRules = {
   'sonarjs/no-collapsible-if': 'error',
   'sonarjs/no-redundant-assignments': 'error',
   'sonarjs/no-duplicate-string': ['warn', { threshold: 5 }],
+  'sonarjs/no-inverted-boolean-check': 'error',
   'jsdoc/check-alignment': 'error',
   'jsdoc/check-tag-names': 'error',
   'jsdoc/require-description': 'error',
@@ -78,7 +86,11 @@ export default [
     rules: {
       // Google TypeScript Style Guide rules
       '@typescript-eslint/no-explicit-any': 'error',
-      '@typescript-eslint/no-unused-vars': 'error',
+      '@typescript-eslint/no-unused-vars': ['error', {
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+        destructuredArrayIgnorePattern: '^_',
+      }],
       '@typescript-eslint/explicit-function-return-type': 'error',
       'prefer-const': 'error',
       '@typescript-eslint/no-var-requires': 'error',

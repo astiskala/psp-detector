@@ -371,7 +371,9 @@ function appendDomainCellContent(
   const faviconUrl = buildDomainFaviconUrl(entry);
 
   let iconElement: HTMLElement;
-  if (faviconUrl !== null) {
+  if (faviconUrl === null) {
+    iconElement = createLetterAvatar(hostname || entry.domain);
+  } else {
     const img = document.createElement('img');
     img.className = 'table-icon domain-icon';
     img.alt = `${hostname || entry.domain} favicon`;
@@ -390,8 +392,6 @@ function appendDomainCellContent(
     );
 
     iconElement = img;
-  } else {
-    iconElement = createLetterAvatar(hostname || entry.domain);
   }
 
   const text = document.createElement('span');

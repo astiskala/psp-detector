@@ -105,7 +105,7 @@ async function createMerchantTab(
   }, pathSuffix);
 
   if (typeof tabId !== 'number') {
-    throw new Error('Failed to create merchant tab for extension E2E test');
+    throw new TypeError('Failed to create merchant tab for extension E2E test');
   }
 
   return tabId;
@@ -212,8 +212,7 @@ async function expectHistoryRowsAndMetadata(optionsPage: Page): Promise<void> {
 
 test(
   'popup renders seeded detections and keeps button sizing consistent',
-  async({ page }, testInfo) => {
-    void page;
+  async({ page: _page }, testInfo) => {
     const context = await launchExtensionContext(
       testInfo.outputPath('ext-user-data-popup'),
     );
@@ -298,8 +297,7 @@ test(
 
 test(
   'popup restores detected PSPs when current tab switches back',
-  async({ page }, testInfo) => {
-    void page;
+  async({ page: _page }, testInfo) => {
     const context = await launchExtensionContext(
       testInfo.outputPath('ext-user-data-tab-switch'),
     );
@@ -337,8 +335,7 @@ test(
 
 test(
   'history page opened from popup shows charts and detection metadata columns',
-  async({ page }, testInfo) => {
-    void page;
+  async({ page: _page }, testInfo) => {
     const context = await launchExtensionContext(
       testInfo.outputPath('ext-user-data-history'),
     );
@@ -367,8 +364,7 @@ test(
 
 test(
   'performance budget: popup renders seeded detections quickly',
-  async({ page }, testInfo) => {
-    void page;
+  async({ page: _page }, testInfo) => {
     const context = await launchExtensionContext(
       testInfo.outputPath('ext-user-data-perf-budget'),
     );

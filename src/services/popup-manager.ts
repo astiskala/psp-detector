@@ -202,12 +202,12 @@ export class PopupManager {
     });
 
     if (typeof response !== 'object' || response === null) {
-      throw new Error('Invalid response from background script');
+      throw new TypeError('Invalid response from background script');
     }
 
     const typedResponse = response as Partial<PSPResponse>;
     if (!Array.isArray(typedResponse.psps)) {
-      throw new Error('Invalid PSP response shape');
+      throw new TypeError('Invalid PSP response shape');
     }
 
     return typedResponse.psps;
