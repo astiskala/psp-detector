@@ -14,6 +14,9 @@ const DEFAULT_CHECKOUT_URL = 'https://example.com/checkout';
 const STRIPE_NETWORK_SIGNAL = 'js.stripe.com';
 const STRIPE_SCRIPT_SIGNAL = 'js.stripe.com/v3';
 const SHOP_PAY_URL = 'https://shop.example.com/pay';
+const CHECKOUT_DOMAIN = 'checkout.example.com';
+const CHECKOUT_START_URL = 'https://checkout.example.com/start';
+const CHECKOUT_REVIEW_URL = 'https://checkout.example.com/review';
 
 beforeEach(() => {
   storedData[STORAGE_KEYS.PSP_HISTORY] = [];
@@ -144,6 +147,77 @@ describe('writeHistoryEntry', () => {
       makeEntry({
         id: 'b',
         timestamp: baseline.timestamp + HISTORY_ENTRY_DEBOUNCE_MS + 1_000,
+      }),
+    );
+
+    const history = await readHistory();
+    expect(history).toHaveLength(2);
+    expect(history[0]?.id).toBe('b');
+    expect(history[1]?.id).toBe('a');
+  });
+
+  it('debounces consecutive entries with same domain and PSP combination', async() => {
+    const baseline = makeEntry({
+      id: 'a',
+      domain: CHECKOUT_DOMAIN,
+      url: CHECKOUT_START_URL,
+      timestamp: 1_000,
+      psps: [{
+        name: 'Stripe',
+        method: 'matchString',
+        value: STRIPE_NETWORK_SIGNAL,
+        sourceType: 'networkRequest',
+      }],
+    });
+    await writeHistoryEntry(baseline);
+
+    await writeHistoryEntry(
+      makeEntry({
+        id: 'b',
+        domain: CHECKOUT_DOMAIN,
+        url: CHECKOUT_REVIEW_URL,
+        timestamp: baseline.timestamp + HISTORY_ENTRY_MERGE_WINDOW_MS + 1_000,
+        psps: [{
+          name: 'Stripe',
+          method: 'matchString',
+          value: STRIPE_NETWORK_SIGNAL,
+          sourceType: 'networkRequest',
+        }],
+      }),
+    );
+
+    const history = await readHistory();
+    expect(history).toHaveLength(1);
+    expect(history[0]?.id).toBe('a');
+  });
+
+  it('writes a new entry for same domain and PSP combo after debounce window', async() => {
+    const baseline = makeEntry({
+      id: 'a',
+      domain: CHECKOUT_DOMAIN,
+      url: CHECKOUT_START_URL,
+      timestamp: 1_000,
+      psps: [{
+        name: 'Stripe',
+        method: 'matchString',
+        value: STRIPE_NETWORK_SIGNAL,
+        sourceType: 'networkRequest',
+      }],
+    });
+    await writeHistoryEntry(baseline);
+
+    await writeHistoryEntry(
+      makeEntry({
+        id: 'b',
+        domain: CHECKOUT_DOMAIN,
+        url: CHECKOUT_REVIEW_URL,
+        timestamp: baseline.timestamp + HISTORY_ENTRY_DEBOUNCE_MS + 1_000,
+        psps: [{
+          name: 'Stripe',
+          method: 'matchString',
+          value: STRIPE_NETWORK_SIGNAL,
+          sourceType: 'networkRequest',
+        }],
       }),
     );
 

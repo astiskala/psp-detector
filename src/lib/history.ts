@@ -11,6 +11,36 @@ type EntryStatus =
   | { kind: 'debounce' }
   | { kind: 'none' };
 
+function normalizeDomain(domain: string): string {
+  return domain.trim().toLowerCase();
+}
+
+function getSortedUniquePspNames(entry: HistoryEntry): string[] {
+  return [...new Set(entry.psps.map((psp) => psp.name))].sort();
+}
+
+function hasSameDomainAndPspCombination(
+  left: HistoryEntry,
+  right: HistoryEntry,
+): boolean {
+  if (normalizeDomain(left.domain) !== normalizeDomain(right.domain)) {
+    return false;
+  }
+
+  const leftNames = getSortedUniquePspNames(left);
+  const rightNames = getSortedUniquePspNames(right);
+
+  if (
+    leftNames.length === 0 ||
+    rightNames.length === 0 ||
+    leftNames.length !== rightNames.length
+  ) {
+    return false;
+  }
+
+  return leftNames.every((name, index) => name === rightNames[index]);
+}
+
 function sourcePriority(sourceType: string | undefined): number {
   switch (sourceType) {
   case undefined:
@@ -81,7 +111,8 @@ function mergeHistoryPsps(
  * Returns:
  *   { kind: 'merge', index }  — same URL within HISTORY_ENTRY_MERGE_WINDOW_MS
  *   { kind: 'debounce' }      — same URL within HISTORY_ENTRY_DEBOUNCE_MS
- *                               (but outside merge window)
+ *                               (but outside merge window), or most-recent
+ *                               entry has same domain + PSP combination
  *   { kind: 'none' }          — outside all windows, write a new entry
  */
 function findEntryStatus(
@@ -106,6 +137,15 @@ function findEntryStatus(
 
       return { kind: 'debounce' };
     }
+  }
+
+  const newest = history[0];
+  if (
+    newest !== undefined &&
+    newest.timestamp >= lowerBound &&
+    hasSameDomainAndPspCombination(newest, entry)
+  ) {
+    return { kind: 'debounce' };
   }
 
   return { kind: 'none' };
@@ -162,7 +202,7 @@ export async function writeHistoryEntry(entry: HistoryEntry): Promise<void> {
     }
 
     if (status.kind === 'debounce') {
-      logger.debug('Skipping repeated page visit within debounce window');
+      logger.debug('Skipping repeated detection within debounce window');
       return;
     }
 
