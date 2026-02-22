@@ -138,7 +138,7 @@ export function getPSPByPSPName(
     }
 
     const providers = getAllProviders(config);
-    return providers.find(psp => psp.name === pspName) || null;
+    return providers.find(psp => psp.name === pspName) ?? null;
   } catch {
     return null;
   }

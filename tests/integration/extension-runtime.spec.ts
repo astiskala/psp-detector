@@ -48,9 +48,7 @@ async function launchExtensionContext(
 
 async function getExtensionId(context: BrowserContext): Promise<string> {
   let [serviceWorker] = context.serviceWorkers();
-  if (!serviceWorker) {
-    serviceWorker = await context.waitForEvent('serviceworker');
-  }
+  serviceWorker ??= await context.waitForEvent('serviceworker');
 
   return new URL(serviceWorker.url()).host;
 }

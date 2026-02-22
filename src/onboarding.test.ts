@@ -29,11 +29,15 @@ function setupChromeMocks(
     .fn()
     .mockImplementation(
       async(permissionRequest: chrome.permissions.Permissions) => {
-        if (permissionRequest.permissions?.includes('webRequest')) {
+        if (
+          permissionRequest.permissions?.includes('webRequest') === true
+        ) {
           return permissionState.webRequest;
         }
 
-        if (permissionRequest.origins?.includes('https://*/*')) {
+        if (
+          permissionRequest.origins?.includes('https://*/*') === true
+        ) {
           return permissionState.host;
         }
 
@@ -45,11 +49,15 @@ function setupChromeMocks(
     .mockImplementation(
       async(permissionRequest: chrome.permissions.Permissions) => {
         if (requestGrantResult) {
-          if (permissionRequest.origins?.includes('https://*/*')) {
+          if (
+            permissionRequest.origins?.includes('https://*/*') === true
+          ) {
             permissionState.host = true;
           }
 
-          if (permissionRequest.permissions?.includes('webRequest')) {
+          if (
+            permissionRequest.permissions?.includes('webRequest') === true
+          ) {
             permissionState.webRequest = true;
           }
         }

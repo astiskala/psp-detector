@@ -55,12 +55,19 @@ function loadConfig(): PSPConfig {
     } as PSP;
   };
 
-  const buildGroup = (g?: RawGroup): PSPGroup | undefined =>
-    g && g.list
-      ? { notice: g.notice || '', list: g.list.map(convert).filter(Boolean) as PSP[] }
-      : undefined;
+  const buildGroup = (group?: RawGroup): PSPGroup | undefined => {
+    const providers = group?.list;
+    if (providers === undefined) {
+      return undefined;
+    }
 
-  const psps = (raw.psps || []).map(convert).filter(Boolean) as PSP[];
+    return {
+      notice: group?.notice ?? '',
+      list: providers.map(convert).filter(Boolean) as PSP[],
+    };
+  };
+
+  const psps = (raw.psps ?? []).map(convert).filter(Boolean) as PSP[];
   return {
     psps,
     orchestrators: buildGroup(raw.orchestrators),

@@ -38,7 +38,8 @@ describe('PSP image assets', () => {
     ];
     for (const psp of config.psps) {
       for (const field of requiredFields) {
-        if (!psp[field]) {
+        const value = psp[field];
+        if (typeof value !== 'string' || value.trim() === '') {
           throw new Error(
             `Missing required field '${field}' for PSP: ${JSON.stringify(psp)}`,
           );

@@ -156,6 +156,24 @@ async function flushAsync(waitMs = 0): Promise<void> {
   });
 }
 
+function getRequiredElementById<T extends HTMLElement>(id: string): T {
+  const element = document.getElementById(id);
+  if (element === null) {
+    throw new Error(`Missing #${id} element`);
+  }
+
+  return element as T;
+}
+
+function getRequiredElement<T extends Element>(selector: string): T {
+  const element = document.querySelector(selector);
+  if (element === null) {
+    throw new Error(`Missing ${selector} element`);
+  }
+
+  return element as T;
+}
+
 describe('options page wiring', () => {
   beforeEach(() => {
     jest.restoreAllMocks();
@@ -214,87 +232,64 @@ describe('options page wiring', () => {
     document.dispatchEvent(new Event('DOMContentLoaded'));
     await flushAsync();
 
-    expect(document.getElementById('stats')?.textContent).toContain(
-      'sites scanned',
+    const stats = getRequiredElementById<HTMLElement>('stats');
+    expect(stats.textContent).toContain('sites scanned');
+
+    const pspFilter = getRequiredElementById<HTMLSelectElement>('pspFilter');
+    expect(pspFilter.options.length).toBeGreaterThan(1);
+
+    const historyBody = getRequiredElementById<HTMLTableSectionElement>(
+      'historyBody',
     );
+    expect(historyBody.querySelectorAll('tr').length).toBe(3);
 
-    expect(
-      (document.getElementById('pspFilter') as HTMLSelectElement | null)
-        ?.options.length,
-    ).toBeGreaterThan(1);
-
-    expect(
-      document.getElementById('historyBody')?.querySelectorAll('tr').length,
-    ).toBe(3);
-
-    const firstDomainIcon = document.querySelector(
-      '.domain-icon',
-    ) as HTMLImageElement | null;
-    firstDomainIcon?.dispatchEvent(new Event('error'));
+    const firstDomainIcon = getRequiredElement<HTMLImageElement>('.domain-icon');
+    firstDomainIcon.dispatchEvent(new Event('error'));
     expect(document.querySelector('.domain-letter-avatar')).not.toBeNull();
 
-    const firstPspIcon = document.querySelector(
-      '.psp-icon',
-    ) as HTMLImageElement | null;
-    firstPspIcon?.dispatchEvent(new Event('error'));
-    expect(firstPspIcon?.src).toContain('images/default_48.png');
+    const firstPspIcon = getRequiredElement<HTMLImageElement>('.psp-icon');
+    firstPspIcon.dispatchEvent(new Event('error'));
+    expect(firstPspIcon.src).toContain('images/default_48.png');
 
-    const search = document.getElementById('search') as HTMLInputElement | null;
-    if (search === null) {
-      throw new Error('Missing #search element');
-    }
+    const search = getRequiredElementById<HTMLInputElement>('search');
 
     search.value = 'does-not-exist';
     search.dispatchEvent(new Event('input'));
     await flushAsync(160);
-    expect(
-      document.getElementById('historyBody')?.querySelectorAll('tr').length,
-    ).toBe(0);
+    expect(historyBody.querySelectorAll('tr').length).toBe(0);
 
-    expect(
-      (document.getElementById('emptyState') as HTMLElement | null)?.hidden,
-    ).toBe(false);
+    const emptyState = getRequiredElementById<HTMLElement>('emptyState');
+    expect(emptyState.hidden).toBe(false);
 
     search.value = '';
     search.dispatchEvent(new Event('input'));
     await flushAsync(160);
 
-    const pspFilter = document.getElementById(
-      'pspFilter',
-    ) as HTMLSelectElement | null;
-    if (pspFilter === null) {
-      throw new Error('Missing #pspFilter element');
-    }
-
     pspFilter.value = 'Stripe';
     pspFilter.dispatchEvent(new Event('change'));
     await flushAsync();
-    expect(
-      document.getElementById('historyBody')?.querySelectorAll('tr').length,
-    ).toBe(1);
+    expect(historyBody.querySelectorAll('tr').length).toBe(1);
 
-    (document.getElementById('exportBtn') as HTMLButtonElement | null)?.click();
+    getRequiredElementById<HTMLButtonElement>('exportBtn').click();
     expect(createObjectURL).toHaveBeenCalledTimes(1);
     expect(anchorClickSpy).toHaveBeenCalledTimes(1);
     expect(revokeObjectURL).toHaveBeenCalledTimes(1);
 
     confirmSpy.mockReturnValueOnce(false);
-    (document.getElementById('clearBtn') as HTMLButtonElement | null)?.click();
+    getRequiredElementById<HTMLButtonElement>('clearBtn').click();
     await flushAsync();
     expect(clearHistoryMock).not.toHaveBeenCalled();
 
     confirmSpy.mockReturnValueOnce(true);
     clearHistoryMock.mockResolvedValueOnce(undefined);
-    (document.getElementById('clearBtn') as HTMLButtonElement | null)?.click();
+    getRequiredElementById<HTMLButtonElement>('clearBtn').click();
     await flushAsync();
     expect(clearHistoryMock).toHaveBeenCalledTimes(1);
-    expect(
-      document.getElementById('historyBody')?.querySelectorAll('tr').length,
-    ).toBe(0);
+    expect(historyBody.querySelectorAll('tr').length).toBe(0);
 
     confirmSpy.mockReturnValueOnce(true);
     clearHistoryMock.mockRejectedValueOnce(new Error('Clear failed'));
-    (document.getElementById('clearBtn') as HTMLButtonElement | null)?.click();
+    getRequiredElementById<HTMLButtonElement>('clearBtn').click();
     await flushAsync();
     expect(loggerMock.error).toHaveBeenCalledWith(
       'Failed to clear history',

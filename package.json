@@ -7,13 +7,14 @@
     "build:debug": "DEBUG=true node build.mjs",
     "build": "node build.mjs",
     "check": "gts check",
-    "ci": "npm run lint && npm run lint:web && npm run lint:deps && npm run typecheck && npm run test",
+    "ci": "npm run lint && npm run lint:scripts && npm run lint:web && npm run lint:deps && npm run typecheck && npm run test",
     "clean": "gts clean",
     "fix": "gts fix",
     "knip": "knip --config knip.json",
     "lint:deps": "depcruise --config .dependency-cruiser.cjs src",
     "lint:html": "hint public/popup.html public/options.html docs/privacy-policy.html",
     "lint:manifest": "hint assets/manifest.json",
+    "lint:scripts": "eslint --no-error-on-unmatched-pattern \".dependency-cruiser.cjs\" \"**/*.{js,cjs,mjs}\"",
     "lint:web": "npm run lint:html && npm run lint:manifest",
     "lint": "gts lint",
     "precommit": "npm run validate",
@@ -22,7 +23,7 @@
     "test:watch": "jest --watch",
     "test": "npm run build && jest",
     "typecheck": "tsc --noEmit",
-    "validate": "npm run fix && npm run lint && npm run typecheck && npm run knip && npm run lint:deps && npm run build && npm run test && npm run lint:web"
+    "validate": "npm run fix && npm run lint && npm run lint:scripts && npm run typecheck && npm run knip && npm run lint:deps && npm run build && npm run test && npm run lint:web"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
