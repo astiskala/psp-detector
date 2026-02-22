@@ -34,6 +34,7 @@ interface ChromeMockContext {
   onRemoved: EventMock<TabRemovedListener>;
   tabsCreate: jest.Mock<Promise<unknown>, [chrome.tabs.CreateProperties]>;
   tabsQuery: jest.Mock<Promise<chrome.tabs.Tab[]>, [chrome.tabs.QueryInfo]>;
+  tabsGet: jest.Mock<Promise<chrome.tabs.Tab>, [number]>;
   executeScript: jest.Mock;
   permissionContains: jest.Mock<
     Promise<boolean>,
@@ -138,6 +139,11 @@ function setupChromeMocks(options: ChromeMockOptions = {}): ChromeMockContext {
   const tabsQuery = jest.fn().mockResolvedValue([
     { id: 12, url: activeTabUrl } as chrome.tabs.Tab,
   ]);
+  const tabsGet = jest
+    .fn()
+    .mockImplementation(async(tabId: number): Promise<chrome.tabs.Tab> => {
+      return { id: tabId, url: activeTabUrl } as chrome.tabs.Tab;
+    });
   const executeScript = jest.fn().mockResolvedValue([]);
   const permissionContains = jest.fn().mockResolvedValue(hasHostPermission);
   const permissionRequest = jest.fn().mockResolvedValue(false);
@@ -203,6 +209,7 @@ function setupChromeMocks(options: ChromeMockOptions = {}): ChromeMockContext {
       onRemoved: { addListener: onRemoved.addListener },
       create: tabsCreate,
       query: tabsQuery,
+      get: tabsGet,
     },
     storage: {
       local: {
@@ -244,6 +251,7 @@ function setupChromeMocks(options: ChromeMockOptions = {}): ChromeMockContext {
     onRemoved,
     tabsCreate,
     tabsQuery,
+    tabsGet,
     executeScript,
     permissionContains,
     localSet,
@@ -561,5 +569,98 @@ describe('background service onboarding and re-detect flow', () => {
     const tabEntries = tabPsps?.['91'] ?? [];
     expect(tabEntries).toHaveLength(1);
     expect(tabEntries[0]).toMatchObject({ psp: 'Stripe' });
+  });
+
+  it('upgrades network match to higher-priority DOM source for the same PSP', async() => {
+    const mocks = setupChromeMocks({
+      hasWebRequestPermission: true,
+      activeTabUrl: 'https://checkout.example.com',
+      pspConfig: {
+        psps: [{
+          name: 'Stripe',
+          matchStrings: ['js.stripe.com'],
+          image: 'stripe',
+          summary: 'Stripe',
+          url: 'https://stripe.com',
+        }],
+      },
+    });
+    await import('./background');
+    await flushAsyncTasks();
+
+    const messageListener = mocks.onMessage.getListener();
+    if (messageListener === null) {
+      throw new Error('Expected onMessage listener to be registered');
+    }
+
+    const getConfigResponse = jest.fn();
+    messageListener(
+      { action: MessageAction.GET_PSP_CONFIG },
+      {} as chrome.runtime.MessageSender,
+      getConfigResponse,
+    );
+
+    await flushAsyncTasks();
+
+    const networkListener = mocks.webRequestAddListener.mock.calls[0]?.[0] as
+      | ((details: chrome.webRequest.WebRequestDetails) => void)
+      | undefined;
+    if (networkListener === undefined) {
+      throw new Error('Expected webRequest listener to be registered');
+    }
+
+    networkListener({
+      tabId: 91,
+      url: 'https://js.stripe.com/v3/elements.js',
+      type: 'script',
+    } as chrome.webRequest.WebRequestDetails);
+
+    await flushAsyncTasks();
+
+    const detectResponse = jest.fn();
+    messageListener(
+      {
+        action: MessageAction.DETECT_PSP,
+        data: {
+          psp: 'Stripe',
+          tabId: 91,
+          detectionInfo: {
+            method: 'matchString',
+            value: 'js.stripe.com',
+            sourceType: 'scriptSrc',
+          },
+        },
+      },
+      {
+        tab: {
+          id: 91,
+          url: 'https://checkout.example.com',
+        } as chrome.tabs.Tab,
+      } as chrome.runtime.MessageSender,
+      detectResponse,
+    );
+
+    await flushAsyncTasks();
+    expect(detectResponse).toHaveBeenCalledWith(null);
+
+    const pspResponse = jest.fn();
+    messageListener(
+      { action: MessageAction.GET_PSP },
+      { tab: { id: 91 } as chrome.tabs.Tab } as chrome.runtime.MessageSender,
+      pspResponse,
+    );
+
+    await flushAsyncTasks();
+
+    expect(pspResponse).toHaveBeenLastCalledWith({
+      psps: [
+        expect.objectContaining({
+          psp: 'Stripe',
+          detectionInfo: expect.objectContaining({
+            sourceType: 'scriptSrc',
+          }) as unknown,
+        }),
+      ],
+    });
   });
 });

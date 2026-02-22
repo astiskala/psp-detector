@@ -38,6 +38,27 @@ const NETWORK_REQUEST_TYPES: `${chrome.webRequest.ResourceType}`[] = [
   'sub_frame',
 ];
 
+const sourcePriority = (sourceType?: string): number => {
+  switch (sourceType) {
+  case undefined:
+    return -1;
+  case 'networkRequest':
+    return 0;
+  case 'pageUrl':
+    return 1;
+  case 'linkHref':
+    return 2;
+  case 'formAction':
+    return 3;
+  case 'iframeSrc':
+    return 4;
+  case 'scriptSrc':
+    return 5;
+  default:
+    return -1;
+  }
+};
+
 interface NetworkMatcher {
   pspName: NonNullable<PSPDetectionData['psp']>;
   matchString: string;
@@ -959,8 +980,35 @@ class BackgroundService {
     detectionInfo?: PSPDetectionData['detectionInfo'],
   ): Promise<boolean> {
     const existing = this.tabPspCache.get(tabId) ?? [];
-    if (existing.some((entry) => entry.psp === pspName)) {
-      return false;
+    const existingIndex = existing.findIndex((entry) => entry.psp === pspName);
+    if (existingIndex !== -1) {
+      const existingEntry = existing[existingIndex];
+      if (existingEntry === undefined) {
+        return false;
+      }
+
+      const shouldUpgrade = this.shouldUpgradeDetectionInfo(
+        existingEntry.detectionInfo,
+        detectionInfo,
+      );
+      if (!shouldUpgrade) {
+        return false;
+      }
+
+      const nextEntry: StoredTabPsp =
+        detectionInfo === undefined
+          ? { psp: pspName }
+          : { psp: pspName, detectionInfo };
+      const updatedEntries = [...existing];
+      updatedEntries[existingIndex] = nextEntry;
+      this.tabPspCache.set(tabId, updatedEntries);
+
+      const matchedProviders =
+        this.networkMatchedProvidersByTab.get(tabId) ?? new Set<string>();
+      matchedProviders.add(pspName);
+      this.networkMatchedProvidersByTab.set(tabId, matchedProviders);
+      this.markTabPspCacheDirty();
+      return true;
     }
 
     const nextEntry: StoredTabPsp =
@@ -974,6 +1022,22 @@ class BackgroundService {
     this.networkMatchedProvidersByTab.set(tabId, matchedProviders);
     this.markTabPspCacheDirty();
     return true;
+  }
+
+  private shouldUpgradeDetectionInfo(
+    existingInfo: StoredTabPsp['detectionInfo'] | undefined,
+    incomingInfo: PSPDetectionData['detectionInfo'] | undefined,
+  ): boolean {
+    if (incomingInfo === undefined) {
+      return false;
+    }
+
+    if (existingInfo === undefined) {
+      return true;
+    }
+
+    return sourcePriority(incomingInfo.sourceType) >
+      sourcePriority(existingInfo.sourceType);
   }
 
   private buildDetectedResult(
@@ -1509,6 +1573,7 @@ class BackgroundService {
       }
 
       logger.info(`Network request matched ${matcher.pspName}: ${url}`);
+      const tabUrl = await this.resolveTabUrlForNetworkDetection(tabId, url);
       await this.handleDetectPsp(
         {
           psp: matcher.pspName,
@@ -1519,12 +1584,31 @@ class BackgroundService {
             sourceType: 'networkRequest',
           },
         },
-        { tab: { id: tabId, url } as chrome.tabs.Tab },
+        { tab: { id: tabId, url: tabUrl } as chrome.tabs.Tab },
       );
 
       matchedProvidersForTab.add(matcher.pspName);
       return;
     }
+  }
+
+  private async resolveTabUrlForNetworkDetection(
+    tabId: number,
+    fallbackUrl: string,
+  ): Promise<string> {
+    try {
+      const tab = await chrome.tabs.get(tabId);
+      if (typeof tab.url === 'string' && tab.url.length > 0) {
+        return tab.url;
+      }
+    } catch (error) {
+      logger.debug(
+        `Unable to resolve tab URL for network match on tab ${tabId}:`,
+        error,
+      );
+    }
+
+    return fallbackUrl;
   }
 
   /**

@@ -228,6 +228,80 @@ describe('writeHistoryEntry', () => {
     expect(stripeMatches).toHaveLength(1);
   });
 
+  it('replaces a network-only match when a higher-priority source arrives', async() => {
+    const BASE_TS = 100_000;
+    const networkStripe = makeEntry({
+      id: 'tab1_stripe_network',
+      timestamp: BASE_TS,
+      psps: [
+        {
+          name: 'Stripe',
+          method: 'matchString',
+          value: 'js.stripe.com',
+          sourceType: 'networkRequest',
+        },
+      ],
+    });
+    const scriptStripe = makeEntry({
+      id: 'tab1_stripe_script',
+      timestamp: BASE_TS + 2_000,
+      psps: [
+        {
+          name: 'Stripe',
+          method: 'matchString',
+          value: 'js.stripe.com/v3',
+          sourceType: 'scriptSrc',
+        },
+      ],
+    });
+
+    await writeHistoryEntry(networkStripe);
+    await writeHistoryEntry(scriptStripe);
+
+    const history = await readHistory();
+    expect(history).toHaveLength(1);
+    const stripe = history[0]?.psps.find((p) => p.name === 'Stripe');
+    expect(stripe?.sourceType).toBe('scriptSrc');
+    expect(stripe?.value).toBe('js.stripe.com/v3');
+  });
+
+  it('keeps existing high-priority source when a lower-priority match arrives', async() => {
+    const BASE_TS = 100_000;
+    const scriptStripe = makeEntry({
+      id: 'tab1_stripe_script',
+      timestamp: BASE_TS,
+      psps: [
+        {
+          name: 'Stripe',
+          method: 'matchString',
+          value: 'js.stripe.com/v3',
+          sourceType: 'scriptSrc',
+        },
+      ],
+    });
+    const networkStripe = makeEntry({
+      id: 'tab1_stripe_network',
+      timestamp: BASE_TS + 2_000,
+      psps: [
+        {
+          name: 'Stripe',
+          method: 'matchString',
+          value: 'js.stripe.com',
+          sourceType: 'networkRequest',
+        },
+      ],
+    });
+
+    await writeHistoryEntry(scriptStripe);
+    await writeHistoryEntry(networkStripe);
+
+    const history = await readHistory();
+    expect(history).toHaveLength(1);
+    const stripe = history[0]?.psps.find((p) => p.name === 'Stripe');
+    expect(stripe?.sourceType).toBe('scriptSrc');
+    expect(stripe?.value).toBe('js.stripe.com/v3');
+  });
+
   it('moves merged entry to position 0 when interleaved with a different URL', async() => {
     const BASE_TS = 100_000;
 

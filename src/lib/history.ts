@@ -11,6 +11,65 @@ type EntryStatus =
   | { kind: 'debounce' }
   | { kind: 'none' };
 
+function sourcePriority(sourceType: string | undefined): number {
+  switch (sourceType) {
+  case undefined:
+    return -1;
+  case 'networkRequest':
+    return 0;
+  case 'pageUrl':
+    return 1;
+  case 'linkHref':
+    return 2;
+  case 'formAction':
+    return 3;
+  case 'iframeSrc':
+    return 4;
+  case 'scriptSrc':
+    return 5;
+  default:
+    return -1;
+  }
+}
+
+function shouldReplaceMatch(
+  existing: HistoryPSPMatch,
+  incoming: HistoryPSPMatch,
+): boolean {
+  return sourcePriority(incoming.sourceType) >
+    sourcePriority(existing.sourceType);
+}
+
+function mergeHistoryPsps(
+  existing: readonly HistoryPSPMatch[],
+  incoming: readonly HistoryPSPMatch[],
+): HistoryPSPMatch[] | null {
+  const mergedPsps = [...existing];
+  let hasChanges = false;
+  for (const incomingMatch of incoming) {
+    const existingIndex = mergedPsps.findIndex(
+      (match) => match.name === incomingMatch.name,
+    );
+    if (existingIndex === -1) {
+      mergedPsps.push(incomingMatch);
+      hasChanges = true;
+      continue;
+    }
+
+    const existingMatch = mergedPsps[existingIndex];
+    if (existingMatch === undefined) {
+      continue;
+    }
+
+    if (shouldReplaceMatch(existingMatch, incomingMatch)) {
+      mergedPsps[existingIndex] = incomingMatch;
+      hasChanges = true;
+    }
+  }
+
+  return hasChanges ? mergedPsps : null;
+}
+
 /**
  * Determine how a new entry relates to existing history.
  *
@@ -79,20 +138,16 @@ export async function writeHistoryEntry(entry: HistoryEntry): Promise<void> {
         return;
       }
 
-      const existingNames = new Set(existing.psps.map((p) => p.name));
-      const newPsps: HistoryPSPMatch[] = entry.psps.filter(
-        (p) => !existingNames.has(p.name),
-      );
-
-      if (newPsps.length === 0) {
-        logger.debug('Skipping merge: no new PSPs to add to existing entry');
+      const mergedPsps = mergeHistoryPsps(existing.psps, entry.psps);
+      if (mergedPsps === null) {
+        logger.debug('Skipping merge: no new or higher-priority PSP matches');
         return;
       }
 
       const merged: HistoryEntry = {
         ...existing,
         timestamp: entry.timestamp, // update to most recent detection time
-        psps: [...existing.psps, ...newPsps],
+        psps: mergedPsps,
       };
 
       // Remove old entry and prepend merged entry at position 0
