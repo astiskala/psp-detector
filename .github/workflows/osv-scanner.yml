@@ -10,6 +10,7 @@ on:
 permissions:
   security-events: write
   contents: read
+  actions: read
 
 jobs:
   osv-scan:
@@ -20,3 +21,4 @@ jobs:
     permissions:
       security-events: write
       contents: read
+      actions: read
