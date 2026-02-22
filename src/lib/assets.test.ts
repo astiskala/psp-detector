@@ -38,7 +38,8 @@ describe('PSP image assets', () => {
     ];
     for (const psp of config.psps) {
       for (const field of requiredFields) {
-        if (!psp[field]) {
+        const value = psp[field];
+        if (typeof value !== 'string' || value.trim() === '') {
           throw new Error(
             `Missing required field '${field}' for PSP: ${JSON.stringify(psp)}`,
           );
@@ -57,7 +58,7 @@ describe('PSP image assets', () => {
     }
 
     if (missing.length) {
-      console.error('\n' + missing.join('\n'));
+      console.error(`\n${  missing.join('\n')}`);
     }
 
     expect(missing.length).toBe(0);
@@ -75,7 +76,7 @@ describe('PSP image assets', () => {
     }
 
     if (missing.length) {
-      console.error('\n' + missing.join('\n'));
+      console.error(`\n${  missing.join('\n')}`);
     }
 
     expect(missing.length).toBe(0);
@@ -88,12 +89,13 @@ describe('PSP image assets', () => {
         continue;
       }
 
-      let regex: RegExp | null = null;
-      try {
-        regex = new RegExp(psp.regex, 'i');
-      } catch {
-        throw new Error(`Invalid regex for PSP '${psp.name}': ${psp.regex}`);
-      }
+      const regex = (() : RegExp => {
+        try {
+          return new RegExp(psp.regex, 'i');
+        } catch {
+          throw new Error(`Invalid regex for PSP '${psp.name}': ${psp.regex}`);
+        }
+      })();
 
       // Should not match a generic URL like google.com or example.com
       expect(regex.test('https://google.com')).toBe(false);

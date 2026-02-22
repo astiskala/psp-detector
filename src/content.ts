@@ -9,10 +9,12 @@ import { DOMObserverService } from './services/dom-observer';
 import {
   MessageAction,
   TypeConverters,
-  PSPDetectionResult,
+  type PSPDetectionResult,
   PSP_DETECTION_EXEMPT,
   type ChromeMessage,
   type PSPConfigResponse,
+  type PSPMatch,
+  type SourceType,
 } from './types';
 import {
   logger,
@@ -47,6 +49,21 @@ const scheduleIdle = (callback: () => void): void => {
   }
 };
 
+interface ScanSources {
+  scriptSrcs: string[];
+  iframeSrcs: string[];
+  formActions: string[];
+  linkHrefs: string[];
+  iframeElements: HTMLIFrameElement[];
+}
+
+const RELEVANT_LINK_RELS = new Set([
+  'preconnect',
+  'dns-prefetch',
+  'preload',
+  'modulepreload',
+]);
+
 class ContentScript {
   private readonly pspDetector: PSPDetectorService;
   private readonly domObserver: DOMObserverService;
@@ -56,6 +73,8 @@ class ContentScript {
   private lastDetectionTime = 0;
   private readonly detectionCooldown = 500; // 500ms cooldown between detections
   private readonly maxIframeProcessing = 10; // Limit iframe processing
+  private readonly iframeReadConcurrency = 3;
+  private readonly iframeLoadTimeoutMs = 300;
 
   constructor() {
     this.pspDetector = new PSPDetectorService();
@@ -131,7 +150,8 @@ class ContentScript {
       const response = await this.sendMessage<{ exemptDomains: string[] }>({
         action: MessageAction.GET_EXEMPT_DOMAINS,
       });
-      if (response?.exemptDomains) {
+
+      if (Array.isArray(response.exemptDomains)) {
         this.pspDetector.setExemptDomains(response.exemptDomains);
       }
     } catch (error) {
@@ -148,7 +168,12 @@ class ContentScript {
       const response = await this.sendMessage<PSPConfigResponse>({
         action: MessageAction.GET_PSP_CONFIG,
       });
-      if (response?.config) {
+
+      if (
+        typeof response === 'object' &&
+        response !== null &&
+        'config' in response
+      ) {
         this.pspDetector.initialize(response.config);
       }
     } catch (error) {
@@ -161,7 +186,7 @@ class ContentScript {
    * @private
    */
   private setupDOMObserver(): void {
-    this.domObserver.initialize(() => this.detectPSP(), 3000);
+    this.domObserver.initialize((mutations) => this.detectPSP(mutations), 3000);
     this.domObserver.startObserving();
   }
 
@@ -169,7 +194,7 @@ class ContentScript {
    * Detect PSP on the current page
    * @private
    */
-  private async detectPSP(): Promise<void> {
+  private async detectPSP(mutations?: MutationRecord[]): Promise<void> {
     const now = Date.now();
 
     // Implement cooldown to prevent excessive detection calls
@@ -191,12 +216,17 @@ class ContentScript {
     }
 
     // Collect relevant URLs to scan instead of full HTML - optimize performance
-    const scanSources = this.collectScanSources();
-    const iframeContent = await this.getIframeContent();
+    const scanSources = this.collectScanSources(mutations);
+    const iframeContent = await this.getIframeContent(
+      scanSources.iframeElements,
+    );
 
     const scanContent = [
       document.URL,
-      ...scanSources,
+      ...scanSources.scriptSrcs,
+      ...scanSources.iframeSrcs,
+      ...scanSources.formActions,
+      ...scanSources.linkHrefs,
       ...iframeContent,
     ].join('\n');
 
@@ -204,10 +234,23 @@ class ContentScript {
 
     switch (result.type) {
     case 'detected':
-      await this.handlePSPDetection(result);
+      for (const match of result.psps) {
+        const sourceType = match.detectionInfo
+          ? this.determineSourceType(match.detectionInfo.value, scanSources)
+          : 'pageUrl';
+
+        const taggedMatch: PSPMatch = match.detectionInfo
+          ? {
+            ...match,
+            detectionInfo: { ...match.detectionInfo, sourceType },
+          }
+          : { ...match };
+        await this.handlePSPMatch(taggedMatch);
+      }
+
       break;
     case 'exempt':
-      await this.handlePSPDetection({ type: 'exempt', reason: result.reason, url: result.url });
+      await this.handlePSPDetection(result);
       break;
     case 'none':
       // No PSP detected, continue monitoring
@@ -222,43 +265,148 @@ class ContentScript {
    * Collect scan sources optimized for performance
    * @private
    */
-  private collectScanSources(): string[] {
-    const sources: string[] = [];
+  private collectScanSources(mutations?: MutationRecord[]): ScanSources {
+    const scriptSrcs: string[] = [];
+    const iframeSrcs: string[] = [];
+    const formActions: string[] = [];
+    const linkHrefs: string[] = [];
+    const iframeElements: HTMLIFrameElement[] = [];
+    const seenIframes = new Set<string>();
 
-    document.querySelectorAll(
-      'script[src], iframe[src], form[action], link[href]',
-    ).forEach((element) => {
+    const addElementSources = (element: Element): void => {
       switch (element.tagName) {
       case 'SCRIPT': {
         const src = (element as HTMLScriptElement).src;
-        if (src) sources.push(src);
+        if (src) {
+          scriptSrcs.push(src);
+        }
+
         break;
       }
 
       case 'IFRAME': {
-        const src = (element as HTMLIFrameElement).src;
-        if (src) sources.push(src);
+        const iframe = element as HTMLIFrameElement;
+        const src = iframe.src;
+        if (src) {
+          iframeSrcs.push(src);
+          if (!seenIframes.has(src)) {
+            seenIframes.add(src);
+            iframeElements.push(iframe);
+          }
+        }
+
         break;
       }
 
       case 'FORM': {
         const action = (element as HTMLFormElement).action;
-        if (action) sources.push(action);
+        if (action) {
+          formActions.push(action);
+        }
+
         break;
       }
 
       case 'LINK': {
-        const href = (element as HTMLLinkElement).href;
-        if (href) sources.push(href);
+        const link = element as HTMLLinkElement;
+        if (!this.shouldScanLinkElement(link)) {
+          break;
+        }
+
+        const href = link.href;
+        if (href) {
+          linkHrefs.push(href);
+        }
+
         break;
       }
 
       default:
         break;
       }
-    });
+    };
 
-    return sources;
+    const scanElementTree = (root: Element): void => {
+      addElementSources(root);
+      root
+        .querySelectorAll('script[src], iframe[src], form[action], link[href]')
+        .forEach(addElementSources);
+    };
+
+    const scanAddedNodes = (nodes: NodeList): void => {
+      for (const node of nodes) {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          scanElementTree(node as Element);
+        }
+      }
+    };
+
+    if (Array.isArray(mutations) && mutations.length > 0) {
+      for (const mutation of mutations) {
+        if (mutation.type === 'childList') {
+          scanAddedNodes(mutation.addedNodes);
+          continue;
+        }
+
+        if (mutation.type === 'attributes' &&
+            mutation.target.nodeType === Node.ELEMENT_NODE) {
+          addElementSources(mutation.target as Element);
+        }
+      }
+    } else {
+      document.querySelectorAll(
+        'script[src], iframe[src], form[action], link[href]',
+      ).forEach((element) => {
+        addElementSources(element);
+      });
+    }
+
+    return {
+      scriptSrcs,
+      iframeSrcs,
+      formActions,
+      linkHrefs,
+      iframeElements,
+    };
+  }
+
+  private shouldScanLinkElement(link: HTMLLinkElement): boolean {
+    const relValues = link.rel
+      .toLowerCase()
+      .split(/\s+/u)
+      .filter((token) => token.length > 0);
+    if (relValues.length === 0) {
+      return false;
+    }
+
+    if (!relValues.some((rel) => RELEVANT_LINK_RELS.has(rel))) {
+      return false;
+    }
+
+    const relSet = new Set(relValues);
+    if (relSet.has('preconnect') || relSet.has('dns-prefetch')) {
+      return true;
+    }
+
+    if (
+      (relSet.has('preload') || relSet.has('modulepreload')) &&
+      link.as.toLowerCase() === 'script'
+    ) {
+      return true;
+    }
+
+    return false;
+  }
+
+  private determineSourceType(
+    value: string,
+    sources: ScanSources,
+  ): SourceType {
+    if (sources.scriptSrcs.some((s) => s.includes(value))) return 'scriptSrc';
+    if (sources.iframeSrcs.some((s) => s.includes(value))) return 'iframeSrc';
+    if (sources.formActions.some((s) => s.includes(value))) return 'formAction';
+    if (sources.linkHrefs.some((s) => s.includes(value))) return 'linkHref';
+    return 'pageUrl';
   }
 
   /**
@@ -267,20 +415,16 @@ class ContentScript {
    */
   private async handlePSPDetection(result: PSPDetectionResult): Promise<void> {
     try {
-      const pspName = this.getPspNameForResult(result);
-
-      if (pspName) {
-        if (this.reportedPSPs.has(pspName)) {
-          logger.debug(`PSP ${pspName} already reported, skipping duplicate`);
+      const tabId = await this.getActiveTabId();
+      if (tabId !== null && result.type === 'exempt') {
+        const exemptPsp = TypeConverters.toPSPName(PSP_DETECTION_EXEMPT);
+        if (exemptPsp === null) {
           return;
         }
 
-        this.reportedPSPs.add(pspName);
-      }
-
-      const tabId = await this.getActiveTabId();
-      if (tabId && pspName) {
-        await this.reportDetectionToBackground(tabId, pspName, result);
+        await this.reportDetectionToBackground(tabId, PSP_DETECTION_EXEMPT, {
+          psp: exemptPsp,
+        });
       }
 
       // Mark as detected for all PSPs, including exempt domains
@@ -300,6 +444,23 @@ class ContentScript {
     }
   }
 
+  private async handlePSPMatch(match: PSPMatch): Promise<void> {
+    if (this.reportedPSPs.has(match.psp)) {
+      logger.debug(`PSP ${match.psp} already reported, skipping`);
+      return;
+    }
+
+    this.reportedPSPs.add(match.psp);
+    const tabId = await this.getActiveTabId();
+
+    if (tabId !== null) {
+      await this.reportDetectionToBackground(tabId, match.psp, match);
+    }
+
+    this.pspDetected = true;
+    this.domObserver.stopObserving();
+  }
+
   private async getActiveTabId(): Promise<
     ReturnType<typeof TypeConverters.toTabId> | null
     > {
@@ -314,11 +475,8 @@ class ContentScript {
   private async reportDetectionToBackground(
     tabId: ReturnType<typeof TypeConverters.toTabId>,
     pspName: string,
-    result: PSPDetectionResult,
+    match: PSPMatch,
   ): Promise<void> {
-    const detectionInfo = result.type === 'detected' ? result.detectionInfo : undefined;
-    const url = result.type === 'exempt' ? result.url : undefined;
-
     logger.debug(
       'Content: Sending PSP detection to background - ' +
       `PSP: ${pspName}, TabID: ${tabId}`,
@@ -329,26 +487,13 @@ class ContentScript {
       data: {
         psp: TypeConverters.toPSPName(pspName),
         tabId,
-        detectionInfo,
-        url,
+        detectionInfo: match.detectionInfo,
       },
     };
 
     logger.debug('Content: Message data:', messageData);
     await this.sendMessage(messageData);
     logger.debug('Content: Successfully sent PSP detection message to background');
-  }
-
-  private getPspNameForResult(result: PSPDetectionResult): string | null {
-    if (result.type === 'detected') {
-      return result.psp;
-    }
-
-    if (result.type === 'exempt') {
-      return PSP_DETECTION_EXEMPT;
-    }
-
-    return null;
   }
 
   /**
@@ -372,7 +517,9 @@ class ContentScript {
         if (isServiceWorkerRestartError(errorMessage)) {
           if (isLastAttempt) {
             logger.warn('Failed to communicate with service worker after retries');
-            throw new Error('Service worker communication failed');
+            throw new Error('Service worker communication failed', {
+              cause: error,
+            });
           }
 
           // Wait briefly before retry to allow service worker to restart
@@ -400,7 +547,7 @@ class ContentScript {
     return await new Promise<T>((resolve, reject) => {
       chrome.runtime.sendMessage(message, (response) => {
         if (chrome.runtime.lastError) {
-          reject(new Error(chrome.runtime.lastError.message || 'Unknown error'));
+          reject(new Error(chrome.runtime.lastError.message ?? 'Unknown error'));
           return;
         }
 
@@ -427,51 +574,104 @@ class ContentScript {
    * Get iframe content for PSP detection (optimized with caching and security)
    * @private
    */
-  private async getIframeContent(): Promise<string[]> {
+  private async getIframeContent(
+    iframeCandidates: HTMLIFrameElement[],
+  ): Promise<string[]> {
     const iframeContent: string[] = [];
-    const iframes = document.querySelectorAll('iframe[src]');
-    let processedCount = 0;
+    const uniqueIframes: HTMLIFrameElement[] = [];
+    const seenSrcs = new Set<string>();
 
-    for (const iframe of iframes) {
-      // Limit iframe processing for performance
-      if (processedCount >= this.maxIframeProcessing) {
+    for (const iframe of iframeCandidates) {
+      const src = iframe.src;
+      if (!src || seenSrcs.has(src)) {
+        continue;
+      }
+
+      seenSrcs.add(src);
+      uniqueIframes.push(iframe);
+      if (uniqueIframes.length >= this.maxIframeProcessing) {
         logger.debug(
           `Iframe processing limit reached (${this.maxIframeProcessing})`,
         );
 
         break;
       }
-
-      const htmlIframe = iframe as HTMLIFrameElement;
-      const src = htmlIframe.src;
-
-      // Skip if already processed or invalid
-      if (!src || this.processedIframes.has(src)) {
-        continue;
-      }
-
-      // Only scan iframes we can access (same-origin or allowed domains)
-      if (this.canAccessIframe(src)) {
-        this.processedIframes.add(src);
-        processedCount++;
-
-        try {
-          // Reduce wait time for better performance
-          await new Promise(resolve => setTimeout(resolve, 200));
-
-          const iframeDoc = htmlIframe.contentDocument ||
-                           htmlIframe.contentWindow?.document;
-          if (iframeDoc) {
-            // Get nested sources more efficiently
-            this.extractNestedSources(iframeDoc, iframeContent);
-          }
-        } catch (error) {
-          logger.debug('Skipping iframe content due to access error', error);
-        }
-      }
     }
 
+    const tasks = uniqueIframes.map((iframe) => async(): Promise<void> => {
+      const src = iframe.src;
+      if (
+        !src ||
+        this.processedIframes.has(src) ||
+        !this.canAccessIframe(src)
+      ) {
+        return;
+      }
+
+      this.processedIframes.add(src);
+
+      try {
+        const iframeDoc = await this.getAccessibleIframeDocument(iframe);
+        if (iframeDoc) {
+          this.extractNestedSources(iframeDoc, iframeContent);
+        }
+      } catch (error) {
+        logger.debug('Skipping iframe content due to access error', error);
+      }
+    });
+    await this.runTasksWithConcurrency(tasks, this.iframeReadConcurrency);
+
     return iframeContent;
+  }
+
+  private async runTasksWithConcurrency(
+    tasks: (() => Promise<void>)[],
+    concurrency: number,
+  ): Promise<void> {
+    if (tasks.length === 0) {
+      return;
+    }
+
+    const poolSize = Math.max(1, Math.min(concurrency, tasks.length));
+    let nextIndex = 0;
+    const workers = Array.from({ length: poolSize }, async() => {
+      while (nextIndex < tasks.length) {
+        const currentIndex = nextIndex;
+        nextIndex += 1;
+        const task = tasks[currentIndex];
+        if (task === undefined) {
+          return;
+        }
+
+        await task();
+      }
+    });
+    await Promise.all(workers);
+  }
+
+  private async getAccessibleIframeDocument(
+    iframe: HTMLIFrameElement,
+  ): Promise<Document | null> {
+    const existingDoc =
+      iframe.contentDocument ?? iframe.contentWindow?.document;
+    if (existingDoc) {
+      return existingDoc;
+    }
+
+    if (iframe.contentWindow === null) {
+      return null;
+    }
+
+    await Promise.race([
+      new Promise<void>((resolve) => {
+        iframe.addEventListener('load', () => resolve(), { once: true });
+      }),
+      new Promise<void>((resolve) => {
+        setTimeout(resolve, this.iframeLoadTimeoutMs);
+      }),
+    ]);
+
+    return iframe.contentDocument ?? iframe.contentWindow?.document ?? null;
   }
 
   /**
@@ -568,7 +768,7 @@ const startContentScript = async(options: {
   resetForNewPage: boolean;
   logMessage?: string;
 }): Promise<void> => {
-  if (options.logMessage) {
+  if (options.logMessage !== undefined) {
     logger.debug(options.logMessage);
   }
 
@@ -603,7 +803,10 @@ const startContentScript = async(options: {
 // Allow re-initialization if URL has changed (new page navigation)
 // OR if background script has lost state (extension context restored)
 const bootstrap = async(): Promise<void> => {
-  if (existingScript?.initialized && existingScript.url === currentUrl) {
+  if (
+    existingScript?.initialized === true &&
+    existingScript.url === currentUrl
+  ) {
     try {
       const hasBackgroundState = await checkBackgroundState();
       if (hasBackgroundState) {
@@ -629,14 +832,14 @@ const bootstrap = async(): Promise<void> => {
     }
   }
 
-  const logMessage = existingScript?.initialized
+  const logMessage = existingScript?.initialized === true
     ? `Content script URL changed from ${existingScript.url} to ` +
       `${currentUrl}, re-initializing`
     : `Content script initializing for new page: ${currentUrl}`;
 
   await startContentScript({
     resetState: false,
-    resetForNewPage: !!existingScript?.initialized,
+    resetForNewPage: existingScript?.initialized === true,
     logMessage,
   });
 };

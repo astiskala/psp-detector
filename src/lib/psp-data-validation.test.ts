@@ -12,9 +12,9 @@ describe('PSP Data Validation', () => {
   };
 
   const getAllProviders = (config: PSPConfig): (PSP & { type: string })[] => {
-    const psps = config.psps || [];
-    const orchestrators = config.orchestrators?.list || [];
-    const tsps = config.tsps?.list || [];
+    const psps = config.psps;
+    const orchestrators = config.orchestrators?.list ?? [];
+    const tsps = config.tsps?.list ?? [];
     return [
       ...psps.map(p => ({ ...p, type: 'psp' })),
       ...orchestrators.map(p => ({ ...p, type: 'orchestrator' })),

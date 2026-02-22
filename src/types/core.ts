@@ -18,4 +18,5 @@ export enum MessageAction {
   GET_TAB_ID = 'getTabId',
   GET_EXEMPT_DOMAINS = 'getExemptDomains',
   CHECK_TAB_STATE = 'checkTabState',
+  REDETECT_CURRENT_TAB = 'redetectCurrentTab',
 }

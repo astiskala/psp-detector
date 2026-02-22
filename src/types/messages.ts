@@ -4,7 +4,7 @@
 import type { PSPName, TabId } from './branded';
 import type { PSPConfig } from './psp';
 import type { MessageAction } from './core';
-import type { PSPDetectionResult } from './detection';
+import type { SourceType } from './detection';
 
 /**
  * Chrome runtime message structure
@@ -12,6 +12,15 @@ import type { PSPDetectionResult } from './detection';
 export interface ChromeMessage {
   action: MessageAction;
   data?: unknown;
+}
+
+export interface StoredTabPsp {
+  psp: string;
+  detectionInfo?: {
+    method: 'matchString' | 'regex';
+    value: string;
+    sourceType?: SourceType;
+  };
 }
 
 /**
@@ -23,8 +32,9 @@ export interface PSPDetectionData {
   detectionInfo?: {
     method: 'matchString' | 'regex';
     value: string;
+    sourceType?: SourceType;
   };
-  url?: string; // URL for exempt domains
+  url?: string;
 }
 
 /**
@@ -38,5 +48,5 @@ export interface PSPConfigResponse {
  * PSP response
  */
 export interface PSPResponse {
-  psp: PSPDetectionResult | null;
+  psps: StoredTabPsp[];
 }

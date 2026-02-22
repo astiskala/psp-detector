@@ -1,6 +1,11 @@
-import type { PSPConfig } from '../types';
+import type { PSPConfig, PSPMatch } from '../types';
 import { PSPDetectionResult, TypeConverters } from '../types';
-import { safeCompileRegex, logger, getAllProviders } from '../lib/utils';
+import {
+  safeCompileRegex,
+  logger,
+  getAllProviders,
+  normalizeStringArray,
+} from '../lib/utils';
 
 /**
  * Service for detecting Payment Service Providers (PSPs) on a page.
@@ -30,11 +35,7 @@ export class PSPDetectorService {
    * Set the exempt domains list
    */
   public setExemptDomains(domains: string[]): void {
-    // Normalize & dedupe while preserving original order of first occurrence
-    const seen = new Set<string>();
-    this.exemptDomains = (domains || [])
-      .map(d => d.trim().toLowerCase())
-      .filter(d => d.length > 0 && !seen.has(d) && seen.add(d));
+    this.exemptDomains = normalizeStringArray(domains);
   }
 
   /**
@@ -62,8 +63,15 @@ export class PSPDetectorService {
     try {
       const truncatedContent = this.buildTruncatedContent(url, content);
 
-      /* Use cached providers if available */
-      const providers = this.providerCache || getAllProviders(this.pspConfig!);
+      const providers = this.providerCache;
+      if (providers === null) {
+        logger.warn('PSP detector provider cache unavailable');
+        return PSPDetectionResult.error(
+          new Error('PSP providers are not initialized'),
+          'config_validation',
+        );
+      }
+
       if (providers.length === 0) {
         logger.warn('No PSP providers available for detection');
         return PSPDetectionResult.error(
@@ -72,16 +80,17 @@ export class PSPDetectorService {
         );
       }
 
-      const matchResult = this.detectByMatchStrings(
-        providers,
-        truncatedContent,
+      const matches = this.collectAllMatches(providers, truncatedContent);
+      if (matches.length === 0) {
+        return PSPDetectionResult.none(providers.length);
+      }
+
+      logger.info(
+        `Detected ${matches.length} PSP(s):`,
+        matches.map((m) => m.psp),
       );
-      if (matchResult) return matchResult;
 
-      const regexResult = this.detectByRegex(providers, truncatedContent);
-      if (regexResult) return regexResult;
-
-      return PSPDetectionResult.none(providers.length);
+      return PSPDetectionResult.detected(matches);
     } catch (error) {
       logger.error('Error during PSP detection:', error);
       return PSPDetectionResult.error(
@@ -131,7 +140,11 @@ export class PSPDetectorService {
 
       // In browser context, use window.top.location.href as specified in
       // requirements. But only if it's not localhost (test environment)
-      if (topHref && !topHref.includes('localhost')) {
+      if (
+        typeof topHref === 'string' &&
+        topHref.length > 0 &&
+        !topHref.includes('localhost')
+      ) {
         urlToCheck = topHref;
       }
     } catch (error) {
@@ -190,46 +203,62 @@ export class PSPDetectorService {
     return pageContent.substring(0, this.maxContentSize);
   }
 
-  private detectByMatchStrings(
+  private collectAllMatches(
     providers: ReturnType<typeof getAllProviders>,
-    truncatedContent: string,
-  ): PSPDetectionResult | null {
-    for (const psp of providers) {
-      if (!psp.matchStrings?.length) continue;
+    content: string,
+  ): PSPMatch[] {
+    const matched = new Set<string>();
+    const results: PSPMatch[] = [];
 
-      for (const matchString of psp.matchStrings) {
-        if (truncatedContent.includes(matchString)) {
-          logger.info('PSP detected via matchStrings:', psp.name);
-          return PSPDetectionResult.detected(psp.name, {
-            method: 'matchString',
-            value: matchString,
+    // Phase 1: matchStrings (provider order preserved)
+    for (const psp of providers) {
+      const matchStrings = psp.matchStrings;
+      if (
+        matched.has(psp.name) ||
+        matchStrings === undefined ||
+        matchStrings.length === 0
+      ) {
+        continue;
+      }
+
+      for (const matchString of matchStrings) {
+        if (content.includes(matchString)) {
+          results.push({
+            psp: psp.name,
+            detectionInfo: {
+              method: 'matchString',
+              value: matchString,
+            },
           });
+
+          matched.add(psp.name);
+          break;
         }
       }
     }
 
-    return null;
-  }
-
-  private detectByRegex(
-    providers: ReturnType<typeof getAllProviders>,
-    truncatedContent: string,
-  ): PSPDetectionResult | null {
+    // Phase 2: regex (only PSPs not already matched)
     for (const psp of providers) {
+      if (matched.has(psp.name)) continue;
+
       try {
-        if (psp.compiledRegex?.test(truncatedContent)) {
-          logger.info('PSP detected via regex:', psp.name);
-          return PSPDetectionResult.detected(psp.name, {
-            method: 'regex',
-            value: psp.regex || 'unknown',
+        if (psp.compiledRegex?.test(content) === true) {
+          results.push({
+            psp: psp.name,
+            detectionInfo: {
+              method: 'regex',
+              value: psp.regex ?? 'unknown',
+            },
           });
+
+          matched.add(psp.name);
         }
       } catch (regexError) {
         logger.warn(`Regex test failed for PSP ${psp.name}:`, regexError);
       }
     }
 
-    return null;
+    return results;
   }
 
   /**

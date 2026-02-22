@@ -1,8 +1,8 @@
 .DS_Store
 .tsbuildinfo
-dist
-node_modules
+*.tsbuildinfo
 coverage
+dist
 hint-report
-tsconfig.tsbuildinfo
+node_modules
 test-results

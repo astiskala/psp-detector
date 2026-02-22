@@ -26,12 +26,25 @@ module.exports = {
     '<rootDir>/src/**/*.(test|spec).(ts|js)',
   ],
 
-  // Coverage configuration - disabled due to Node.js v24 compatibility issues
+  // Coverage configuration
   collectCoverage: false,
-  collectCoverageFrom: [],
+  collectCoverageFrom: [
+    'src/**/*.ts',
+    '!src/**/*.test.ts',
+  ],
+
+  // Note: src/options.ts is excluded from unit test coverage thresholds because
+  // it contains only DOM wiring code (no pure logic). It is covered by the
+  // Playwright integration tests in tests/integration/options-page.spec.ts.
+  coverageThreshold: {
+    './src/lib/history.ts': { lines: 80, functions: 80, branches: 70 },
+    './src/options-core.ts': { lines: 80, functions: 80, branches: 70 },
+    './src/services/psp-detector.ts': { lines: 80, functions: 80 },
+  },
 
   // Coverage reporter configuration
   coverageReporters: ['text', 'text-summary'],
+  coverageProvider: 'v8',
 
   // Setup files
   setupFilesAfterEnv: [],

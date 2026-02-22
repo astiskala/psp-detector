@@ -1,7 +1,4 @@
 #!/usr/bin/env node
-/* eslint-env node */
-/* global process, Buffer */
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
 /* eslint-disable max-len */
 /**
  * get-site-logo.mjs

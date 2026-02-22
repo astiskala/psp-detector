@@ -1,0 +1,667 @@
+import type { PSPConfig } from './types';
+import type { HistoryEntry } from './types/history';
+import { clearHistory, readHistory } from './lib/history';
+import { getAllProviders, logger } from './lib/utils';
+import {
+  buildCSV,
+  filterEntries,
+  formatDate,
+  formatHistorySummary,
+  getHistoryStats,
+  getProviderTypeDistribution,
+  getPspDistribution,
+  getSourceTypeDistribution,
+  getUniquePspNames,
+  type DistributionSlice,
+} from './options-core';
+
+const DEFAULT_PSP_ICON_PATH = 'images/default_48.png';
+const HISTORY_TABLE_ICON_SIZE = 16;
+const SEARCH_DEBOUNCE_MS = 120;
+let providerIconByName = new Map<string, string>();
+let providerUrlByName = new Map<string, string>();
+let providerSummaryByName = new Map<string, string>();
+
+type IdleScheduler = (
+  callback: () => void,
+  options?: { timeout?: number },
+) => number;
+
+function scheduleIdle(callback: () => void): void {
+  const requestIdle = (globalThis as unknown as {
+    requestIdleCallback?: IdleScheduler;
+  }).requestIdleCallback;
+  if (typeof requestIdle === 'function') {
+    requestIdle(callback, { timeout: 200 });
+    return;
+  }
+
+  setTimeout(callback, 0);
+}
+
+function setText(id: string, text: string): void {
+  const element = document.getElementById(id);
+  if (element) element.textContent = text;
+}
+
+const CHART_COLORS = [
+  '#2563eb',
+  '#10b981',
+  '#f59e0b',
+  '#ef4444',
+  '#8b5cf6',
+  '#0ea5e9',
+  '#84cc16',
+  '#f97316',
+  '#14b8a6',
+  '#e11d48',
+];
+
+function getChartColor(index: number): string {
+  return CHART_COLORS[index % CHART_COLORS.length] ?? '#2563eb';
+}
+
+function renderStats(history: HistoryEntry[]): void {
+  const stats = getHistoryStats(history);
+  setText('stats', formatHistorySummary(stats));
+}
+
+function readCssVar(name: string, fallback: string): string {
+  const value = getComputedStyle(document.documentElement)
+    .getPropertyValue(name)
+    .trim();
+  return value || fallback;
+}
+
+function buildLegend(
+  legendId: string,
+  slices: DistributionSlice[],
+  colors: string[],
+): void {
+  const legend = document.getElementById(legendId);
+  if (!legend) {
+    return;
+  }
+
+  while (legend.firstChild) {
+    legend.firstChild.remove();
+  }
+
+  if (slices.length === 0) {
+    const empty = document.createElement('li');
+    empty.className = 'chart-legend-item';
+    empty.textContent = 'No data available yet.';
+    legend.appendChild(empty);
+    return;
+  }
+
+  for (const [index, slice] of slices.entries()) {
+    const item = document.createElement('li');
+    item.className = 'chart-legend-item';
+
+    const swatch = document.createElement('span');
+    swatch.className = 'legend-swatch';
+    swatch.style.backgroundColor = colors[index] ?? '#2563eb';
+
+    const label = document.createElement('span');
+    label.textContent =
+      `${slice.label}: ${slice.percent.toFixed(1)}% (${slice.count})`;
+
+    item.appendChild(swatch);
+    item.appendChild(label);
+    legend.appendChild(item);
+  }
+}
+
+interface PieChartContext {
+  ctx: CanvasRenderingContext2D;
+  width: number;
+  height: number;
+  centerX: number;
+  centerY: number;
+  radius: number;
+}
+
+function getPieChartContext(canvasId: string): PieChartContext | null {
+  const canvas = document.getElementById(canvasId) as HTMLCanvasElement | null;
+  if (!canvas) {
+    return null;
+  }
+
+  const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    return null;
+  }
+
+  const width = canvas.width;
+  const height = canvas.height;
+  return {
+    ctx,
+    width,
+    height,
+    centerX: width / 2,
+    centerY: height / 2,
+    radius: Math.min(width, height) / 2 - 12,
+  };
+}
+
+function drawEmptyPieChart(
+  chart: PieChartContext,
+  legendId: string,
+  slices: DistributionSlice[],
+): void {
+  const background = readCssVar('--surface', '#f9fafb');
+  const border = readCssVar('--border', '#e5e7eb');
+  const text = readCssVar('--text-secondary', '#6b7280');
+
+  chart.ctx.fillStyle = background;
+  chart.ctx.strokeStyle = border;
+  chart.ctx.lineWidth = 2;
+  chart.ctx.beginPath();
+  chart.ctx.arc(chart.centerX, chart.centerY, chart.radius, 0, Math.PI * 2);
+  chart.ctx.fill();
+  chart.ctx.stroke();
+  chart.ctx.fillStyle = text;
+  chart.ctx.font = '12px system-ui, -apple-system, sans-serif';
+  chart.ctx.textAlign = 'center';
+  chart.ctx.textBaseline = 'middle';
+  chart.ctx.fillText('No data', chart.centerX, chart.centerY);
+
+  buildLegend(legendId, slices, []);
+}
+
+function drawPieSlices(
+  chart: PieChartContext,
+  slices: DistributionSlice[],
+  colors: string[],
+): void {
+  const total = slices.reduce((sum, slice) => sum + slice.count, 0);
+  let start = -Math.PI / 2;
+
+  for (const [index, slice] of slices.entries()) {
+    const sweep = (slice.count / total) * Math.PI * 2;
+    chart.ctx.beginPath();
+    chart.ctx.moveTo(chart.centerX, chart.centerY);
+    chart.ctx.arc(
+      chart.centerX,
+      chart.centerY,
+      chart.radius,
+      start,
+      start + sweep,
+    );
+
+    chart.ctx.closePath();
+    chart.ctx.fillStyle = colors[index] ?? '#2563eb';
+    chart.ctx.fill();
+    start += sweep;
+  }
+}
+
+function drawPieChartCenterHole(chart: PieChartContext): void {
+  chart.ctx.beginPath();
+  chart.ctx.arc(
+    chart.centerX,
+    chart.centerY,
+    chart.radius * 0.46,
+    0,
+    Math.PI * 2,
+  );
+
+  chart.ctx.fillStyle = readCssVar('--bg', '#ffffff');
+  chart.ctx.fill();
+}
+
+function drawPieChart(
+  canvasId: string,
+  legendId: string,
+  slices: DistributionSlice[],
+): void {
+  const chart = getPieChartContext(canvasId);
+  if (!chart) {
+    return;
+  }
+
+  chart.ctx.clearRect(0, 0, chart.width, chart.height);
+
+  if (slices.length === 0) {
+    drawEmptyPieChart(chart, legendId, slices);
+    return;
+  }
+
+  const colors = slices.map((_, index) => getChartColor(index));
+  drawPieSlices(chart, slices, colors);
+  drawPieChartCenterHole(chart);
+  buildLegend(legendId, slices, colors);
+}
+
+function renderCharts(history: HistoryEntry[]): void {
+  drawPieChart('pspChart', 'pspChartLegend', getPspDistribution(history));
+  drawPieChart(
+    'sourceChart',
+    'sourceChartLegend',
+    getSourceTypeDistribution(history),
+  );
+
+  drawPieChart(
+    'typeChart',
+    'typeChartLegend',
+    getProviderTypeDistribution(history),
+  );
+}
+
+function appendCodeList(cell: HTMLTableCellElement, values: string[]): void {
+  if (values.length === 0) {
+    cell.textContent = '-';
+    return;
+  }
+
+  for (const [index, value] of values.entries()) {
+    const code = document.createElement('code');
+    code.textContent = value;
+    cell.appendChild(code);
+
+    if (index < values.length - 1) {
+      cell.appendChild(document.createElement('br'));
+    }
+  }
+}
+
+function normalizeProviderName(name: string): string {
+  return name.trim().toLowerCase();
+}
+
+function buildProviderSlug(name: string): string {
+  return normalizeProviderName(name)
+    .replace(/\.com$/u, '')
+    .replaceAll(/[^a-z0-9]/gu, '');
+}
+
+function getProviderIconPath(pspName: string): string {
+  const mappedIconPath = providerIconByName.get(normalizeProviderName(pspName));
+  if (mappedIconPath !== undefined) {
+    return mappedIconPath;
+  }
+
+  const slug = buildProviderSlug(pspName);
+  if (slug.length > 0) {
+    return `images/${slug}_48.png`;
+  }
+
+  return DEFAULT_PSP_ICON_PATH;
+}
+
+function getHistoryEntryHostname(entry: HistoryEntry): string {
+  const domain = entry.domain.trim();
+  if (domain.length > 0 && !domain.includes('/')) {
+    return domain;
+  }
+
+  try {
+    return new globalThis.URL(entry.url).hostname || domain;
+  } catch {
+    return domain;
+  }
+}
+
+function buildDomainFaviconUrl(entry: HistoryEntry): string | null {
+  const url = entry.url.trim();
+  if (!url) {
+    return null;
+  }
+
+  const extensionId = (
+    globalThis as typeof globalThis & { chrome?: typeof chrome }
+  ).chrome?.runtime?.id;
+  if (!extensionId) {
+    return null;
+  }
+
+  return `chrome-extension://${extensionId}/_favicon/?pageUrl=${encodeURIComponent(url)}&size=16`;
+}
+
+function createTableIcon(
+  src: string,
+  alt: string,
+  className: string,
+): HTMLImageElement {
+  const icon = document.createElement('img');
+  icon.className = className;
+  icon.alt = alt;
+  icon.src = src;
+  icon.width = HISTORY_TABLE_ICON_SIZE;
+  icon.height = HISTORY_TABLE_ICON_SIZE;
+  icon.decoding = 'async';
+  icon.loading = 'lazy';
+  icon.addEventListener(
+    'error',
+    () => {
+      icon.src = DEFAULT_PSP_ICON_PATH;
+    },
+    { once: true },
+  );
+
+  return icon;
+}
+
+function createLetterAvatar(domain: string): HTMLElement {
+  const letter = domain.trim().charAt(0).toUpperCase() || '?';
+  const avatar = document.createElement('div');
+  avatar.className = 'table-icon domain-icon domain-letter-avatar';
+  avatar.textContent = letter;
+  avatar.style.width = `${HISTORY_TABLE_ICON_SIZE}px`;
+  avatar.style.height = `${HISTORY_TABLE_ICON_SIZE}px`;
+  avatar.style.lineHeight = `${HISTORY_TABLE_ICON_SIZE}px`;
+  avatar.style.fontSize = '10px';
+  avatar.style.textAlign = 'center';
+  avatar.style.backgroundColor = 'var(--accent, #2563eb)';
+  avatar.style.color = '#fff';
+  avatar.style.borderRadius = '2px';
+  avatar.style.flexShrink = '0';
+  return avatar;
+}
+
+function appendDomainCellContent(
+  cell: HTMLTableCellElement,
+  entry: HistoryEntry,
+): void {
+  const wrap = document.createElement('div');
+  wrap.className = 'table-cell-with-icon';
+
+  const hostname = getHistoryEntryHostname(entry);
+  const faviconUrl = buildDomainFaviconUrl(entry);
+
+  let iconElement: HTMLElement;
+  if (faviconUrl === null) {
+    iconElement = createLetterAvatar(hostname || entry.domain);
+  } else {
+    const img = document.createElement('img');
+    img.className = 'table-icon domain-icon';
+    img.alt = `${hostname || entry.domain} favicon`;
+    img.src = faviconUrl;
+    img.width = HISTORY_TABLE_ICON_SIZE;
+    img.height = HISTORY_TABLE_ICON_SIZE;
+    img.decoding = 'async';
+    img.loading = 'lazy';
+    img.addEventListener(
+      'error',
+      () => {
+        const avatar = createLetterAvatar(hostname || entry.domain);
+        img.replaceWith(avatar);
+      },
+      { once: true },
+    );
+
+    iconElement = img;
+  }
+
+  const text = document.createElement('span');
+  text.className = 'cell-label';
+  text.textContent = entry.domain;
+
+  wrap.appendChild(iconElement);
+  wrap.appendChild(text);
+  cell.appendChild(wrap);
+}
+
+function createPspTextElement(
+  name: string,
+  providerUrl: string | undefined,
+  providerSummary: string | undefined,
+): HTMLElement {
+  if (providerUrl !== undefined && providerUrl !== '') {
+    const anchor = document.createElement('a');
+    anchor.className = 'cell-label';
+    anchor.href = providerUrl;
+    anchor.textContent = name;
+    anchor.target = '_blank';
+    anchor.rel = 'noopener noreferrer';
+    if (providerSummary !== undefined && providerSummary !== '') {
+      anchor.title = providerSummary;
+    }
+
+    return anchor;
+  }
+
+  const span = document.createElement('span');
+  span.className = 'cell-label';
+  span.textContent = name;
+  if (providerSummary !== undefined && providerSummary !== '') {
+    span.title = providerSummary;
+  }
+
+  return span;
+}
+
+function appendPspCellContent(
+  cell: HTMLTableCellElement,
+  entry: HistoryEntry,
+): void {
+  if (entry.psps.length === 0) {
+    cell.textContent = '-';
+    return;
+  }
+
+  const list = document.createElement('div');
+  list.className = 'psp-list';
+
+  for (const psp of entry.psps) {
+    const item = document.createElement('div');
+    item.className = 'psp-item';
+
+    const icon = createTableIcon(
+      getProviderIconPath(psp.name),
+      `${psp.name} icon`,
+      'table-icon psp-icon',
+    );
+
+    const key = normalizeProviderName(psp.name);
+    const textEl = createPspTextElement(
+      psp.name,
+      providerUrlByName.get(key),
+      providerSummaryByName.get(key),
+    );
+
+    item.appendChild(icon);
+    item.appendChild(textEl);
+    list.appendChild(item);
+  }
+
+  cell.appendChild(list);
+}
+
+function isPspConfig(value: unknown): value is PSPConfig {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  return Array.isArray((value as Partial<PSPConfig>).psps);
+}
+
+async function loadProviderIcons(): Promise<void> {
+  providerIconByName = new Map<string, string>();
+  providerUrlByName = new Map<string, string>();
+  providerSummaryByName = new Map<string, string>();
+
+  try {
+    const runtime = (
+      globalThis as typeof globalThis & { chrome?: typeof chrome }
+    ).chrome?.runtime;
+    const configUrl = runtime?.getURL?.('psps.json') ?? 'psps.json';
+    const response = await fetch(configUrl);
+
+    if (!response.ok) {
+      throw new Error(
+        `Failed to fetch PSP config for icons: ${response.status}`,
+      );
+    }
+
+    const json = (await response.json()) as unknown;
+    if (!isPspConfig(json)) {
+      throw new Error('Invalid PSP config shape while loading icon metadata');
+    }
+
+    for (const provider of getAllProviders(json)) {
+      const key = normalizeProviderName(provider.name);
+      providerIconByName.set(key, `images/${provider.image}_48.png`);
+      providerUrlByName.set(key, String(provider.url));
+      providerSummaryByName.set(key, provider.summary);
+    }
+  } catch (error) {
+    logger.warn('Failed to load PSP icon metadata for history table', error);
+  }
+}
+
+function populatePspFilter(history: HistoryEntry[]): void {
+  const select = document.getElementById('pspFilter') as HTMLSelectElement | null;
+  if (!select) return;
+
+  for (const name of getUniquePspNames(history)) {
+    const option = document.createElement('option');
+    option.value = name;
+    option.textContent = name;
+    select.appendChild(option);
+  }
+}
+
+function renderTable(entries: HistoryEntry[]): void {
+  const body = document.getElementById('historyBody');
+  const emptyState = document.getElementById('emptyState');
+  if (!body || !emptyState) return;
+
+  while (body.firstChild) {
+    body.firstChild.remove();
+  }
+
+  if (entries.length === 0) {
+    emptyState.hidden = false;
+    return;
+  }
+
+  emptyState.hidden = true;
+
+  for (const entry of entries) {
+    const row = document.createElement('tr');
+
+    const dateCell = document.createElement('td');
+    dateCell.textContent = formatDate(entry.timestamp);
+
+    const domainCell = document.createElement('td');
+    appendDomainCellContent(domainCell, entry);
+
+    const pspsCell = document.createElement('td');
+    appendPspCellContent(pspsCell, entry);
+
+    const typeCell = document.createElement('td');
+    appendCodeList(typeCell, entry.psps.map((psp) => psp.type ?? 'PSP'));
+
+    const sourceCell = document.createElement('td');
+    appendCodeList(sourceCell, entry.psps.map((psp) => psp.sourceType));
+
+    const signalCell = document.createElement('td');
+    appendCodeList(
+      signalCell,
+      entry.psps.map((psp) => `${psp.method}: ${psp.value}`),
+    );
+
+    row.appendChild(dateCell);
+    row.appendChild(domainCell);
+    row.appendChild(pspsCell);
+    row.appendChild(typeCell);
+    row.appendChild(sourceCell);
+    row.appendChild(signalCell);
+    body.appendChild(row);
+  }
+}
+
+interface HistoryRef {
+  getHistory: () => HistoryEntry[];
+  setHistory: (h: HistoryEntry[]) => void;
+}
+
+function bindControls(historyRef: HistoryRef): void {
+  const search = document.getElementById('search') as HTMLInputElement | null;
+  const pspFilter = document.getElementById('pspFilter') as HTMLSelectElement | null;
+  let searchRefreshTimer: ReturnType<typeof setTimeout> | null = null;
+
+  const getFilteredEntries = (): HistoryEntry[] =>
+    filterEntries(
+      historyRef.getHistory(),
+      search?.value ?? '',
+      pspFilter?.value ?? '',
+    );
+
+  const refresh = (deferCharts: boolean): void => {
+    const filtered = getFilteredEntries();
+    renderTable(filtered);
+
+    if (deferCharts) {
+      scheduleIdle(() => renderCharts(filtered));
+      return;
+    }
+
+    renderCharts(filtered);
+  };
+
+  search?.addEventListener('input', () => {
+    if (searchRefreshTimer !== null) {
+      clearTimeout(searchRefreshTimer);
+    }
+
+    searchRefreshTimer = setTimeout(() => {
+      refresh(true);
+      searchRefreshTimer = null;
+    }, SEARCH_DEBOUNCE_MS);
+  });
+
+  pspFilter?.addEventListener('change', () => refresh(true));
+
+  document.getElementById('exportBtn')?.addEventListener('click', () => {
+    const filtered = getFilteredEntries();
+    const csv = buildCSV(filtered);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `psp-history-${new Date().toISOString().split('T')[0]}.csv`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  });
+
+  document.getElementById('clearBtn')?.addEventListener('click', () => {
+    if (!confirm('Clear all PSP detection history? This cannot be undone.')) {
+      return;
+    }
+
+    clearHistory()
+      .then(() => {
+        historyRef.setHistory([]);
+        renderStats([]);
+        renderTable([]);
+        scheduleIdle(() => renderCharts([]));
+      })
+      .catch((error) => {
+        logger.error('Failed to clear history', error);
+      });
+  });
+}
+
+async function init(): Promise<void> {
+  await loadProviderIcons();
+  let allHistory = await readHistory();
+  renderStats(allHistory);
+  populatePspFilter(allHistory);
+  renderTable(allHistory);
+  renderCharts(allHistory);
+  bindControls({
+    getHistory: () => allHistory,
+    setHistory: (h) => {
+      allHistory = h;
+    },
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  init().catch((error) => {
+    logger.error('Failed to initialize options page', error);
+  });
+});

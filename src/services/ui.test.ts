@@ -21,6 +21,7 @@ describe('UIService', () => {
           </div>
           <div class="header-content">
             <h1 id="psp-name">Detecting PSP...</h1>
+            <p id="psp-subtitle">Analyzing current page</p>
           </div>
         </div>
         <div class="popup-body">
@@ -40,6 +41,7 @@ describe('UIService', () => {
             <div id="psp-url">
               <a href="#" target="_blank">Learn more</a>
             </div>
+            <button id="history-link" type="button">View History</button>
           </div>
         </div>
       </div>
@@ -166,10 +168,10 @@ describe('UIService', () => {
     const detectionDetails = document.getElementById('psp-detection-details');
 
     expect(detectedDomain?.style.display).toBe('block');
-    expect(detectionDetails?.textContent).toBe('stripe.com');
+    expect(detectionDetails?.textContent).toBe('Detection Signal: stripe.com');
 
     const header = detectedDomain?.querySelector('h3');
-    expect(header?.textContent).toBe('Detected via Match String');
+    expect(header?.textContent).toBe('Detection Source: Match String');
   });
 
   it('should update PSP display with regex detection details', () => {
@@ -193,10 +195,12 @@ describe('UIService', () => {
     const detectionDetails = document.getElementById('psp-detection-details');
 
     expect(detectedDomain?.style.display).toBe('block');
-    expect(detectionDetails?.textContent).toBe('/stripe[.-]?(js|checkout)/i');
+    expect(detectionDetails?.textContent).toBe(
+      'Detection Signal: /stripe[.-]?(js|checkout)/i',
+    );
 
     const header = detectedDomain?.querySelector('h3');
-    expect(header?.textContent).toBe('Detected via Regex Pattern');
+    expect(header?.textContent).toBe('Detection Source: Regex Pattern');
   });
 
   it('should hide detection details when no detection info provided', () => {
@@ -213,5 +217,46 @@ describe('UIService', () => {
 
     const detectedDomain = document.getElementById('psp-detected-domain');
     expect(detectedDomain?.style.display).toBe('none');
+  });
+
+  it('renders multiple PSP cards with labeled source and signal evidence', () => {
+    service.renderMultiplePSPs(
+      [
+        {
+          psp: 'Stripe',
+          detectionInfo: {
+            method: 'matchString',
+            value: 'js.stripe.com',
+            sourceType: 'scriptSrc',
+          },
+        },
+      ],
+      {
+        psps: [
+          {
+            name: TypeConverters.toPSPName('Stripe')!,
+            matchStrings: ['js.stripe.com'],
+            url: TypeConverters.toURL('https://stripe.com')!,
+            image: 'stripe',
+            summary: 'Stripe summary',
+          },
+        ],
+      },
+    );
+
+    expect(elements['name']?.textContent).toBe('1 PSP detected');
+    expect(document.querySelectorAll('.psp-card')).toHaveLength(1);
+    expect(document.querySelectorAll('.evidence-label')[0]?.textContent).toBe(
+      'Detection Source:',
+    );
+
+    expect(document.querySelectorAll('.evidence-label')[1]?.textContent).toBe(
+      'Detection Signal:',
+    );
+
+    expect(document.querySelector('.source-pill')?.textContent).toBe('scriptSrc');
+    expect(document.querySelector('.match-value')?.textContent).toBe(
+      'js.stripe.com',
+    );
   });
 });

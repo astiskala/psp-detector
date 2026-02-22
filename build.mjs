@@ -11,12 +11,14 @@ const mainEntryPoints = {
   content: './src/content.ts',
   background: './src/background.ts',
   popup: './src/popup.ts',
+  options: './src/options.ts',
+  onboarding: './src/onboarding.ts',
 };
 
 const sharedConfig = {
   bundle: true,
   minify: !process.env.DEBUG,
-  sourcemap: !process.env.NO_SOURCEMAP,
+  sourcemap: process.env.DEBUG ? !process.env.NO_SOURCEMAP : false,
   target: 'esnext',
   format: 'esm',
   platform: 'browser',
@@ -93,7 +95,7 @@ async function buildFiles() {
     const year = now.getFullYear();
     const mmdd = (now.getMonth() + 1) * 100 + now.getDate();
     const hhmm = now.getHours() * 100 + now.getMinutes();
-    const version = `2.${year}.${mmdd}.${hhmm}`;
+    const version = `3.${year}.${mmdd}.${hhmm}`;
 
     // 2) bump package.json in-place
     const pkgPath = path.join(__dirname, 'package.json');

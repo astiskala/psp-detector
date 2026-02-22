@@ -14,6 +14,13 @@ import {
   isURLExempt,
 } from '../test-helpers/utilities';
 
+const STRIPE_NAME = 'Stripe';
+const STRIPE_URL = 'https://stripe.com';
+const STRIPE_MATCH = 'js.stripe.com';
+const STRIPE_CHECKOUT_MATCH = 'checkout.stripe.com';
+const STRIPE_SCRIPT_TAG = '<script src="https://js.stripe.com/v3/"></script>';
+const STRIPE_SUMMARY = 'Stripe summary';
+
 describe('PSPDetectorService', () => {
   let service: PSPDetectorService;
 
@@ -29,11 +36,11 @@ describe('PSPDetectorService', () => {
 
   it('should detect Stripe PSP', () => {
     const url = 'https://checkout.stripe.com';
-    const content = '<script src="https://js.stripe.com/v3/"></script>';
+    const content = STRIPE_SCRIPT_TAG;
     const result = service.detectPSP(url, content);
     expect(PSPDetectionResult.isDetected(result)).toBe(true);
     if (PSPDetectionResult.isDetected(result)) {
-      expect(result.psp).toBe('Stripe');
+      expect(result.psps[0]?.psp).toBe(STRIPE_NAME);
     }
   });
 
@@ -43,7 +50,7 @@ describe('PSPDetectorService', () => {
     const result = service.detectPSP(url, content);
     expect(PSPDetectionResult.isDetected(result)).toBe(true);
     if (PSPDetectionResult.isDetected(result)) {
-      expect(result.psp).toBe('PayPal');
+      expect(result.psps[0]?.psp).toBe('PayPal');
     }
   });
 
@@ -56,15 +63,15 @@ describe('PSPDetectorService', () => {
 
   it('should return error result if not initialized', () => {
     const uninit = new PSPDetectorService();
-    const result = uninit.detectPSP('https://stripe.com', 'stripe');
+    const result = uninit.detectPSP(STRIPE_URL, 'stripe');
     expect(PSPDetectionResult.isError(result)).toBe(true);
   });
 
   it('should get PSP by PSPName', () => {
     expect(
-      getPSPByPSPName(service, TypeConverters.toPSPName('Stripe')!),
+      getPSPByPSPName(service, TypeConverters.toPSPName(STRIPE_NAME)!),
     ).toMatchObject({
-      name: 'Stripe',
+      name: STRIPE_NAME,
       regex: String.raw`stripe\.com`,
     });
 
@@ -75,14 +82,14 @@ describe('PSPDetectorService', () => {
 
   it('should return exempt result for exempt domains', () => {
     const url = 'https://example.com/checkout';
-    const content = '<script src="https://js.stripe.com/v3/"></script>';
+    const content = STRIPE_SCRIPT_TAG;
     const result = service.detectPSP(url, content);
     expect(PSPDetectionResult.isExempt(result)).toBe(true);
   });
 
   it('should treat subdomains of an exempt domain as exempt', () => {
     const url = 'https://shop.example.com/checkout';
-    const content = '<script src="https://js.stripe.com/v3/"></script>';
+    const content = STRIPE_SCRIPT_TAG;
     const result = service.detectPSP(url, content);
     expect(PSPDetectionResult.isExempt(result)).toBe(true);
   });
@@ -92,7 +99,7 @@ describe('PSPDetectorService', () => {
     normalizedService.initialize(TEST_PSP_CONFIGS.MULTI_PSP);
     normalizedService.setExemptDomains(['  ExAmPle.CoM  ']);
     const url = 'https://payments.example.com/checkout';
-    const content = '<script src="https://js.stripe.com/v3/"></script>';
+    const content = STRIPE_SCRIPT_TAG;
     const result = normalizedService.detectPSP(url, content);
     expect(PSPDetectionResult.isExempt(result)).toBe(true);
   });
@@ -101,11 +108,11 @@ describe('PSPDetectorService', () => {
     const configWithMatchStrings: PSPConfig = {
       psps: [
         {
-          name: TypeConverters.toPSPName('Stripe')!,
-          matchStrings: ['checkout.stripe.com', 'js.stripe.com'],
-          url: TypeConverters.toURL('https://stripe.com')!,
+          name: TypeConverters.toPSPName(STRIPE_NAME)!,
+          matchStrings: [STRIPE_CHECKOUT_MATCH, STRIPE_MATCH],
+          url: TypeConverters.toURL(STRIPE_URL)!,
           image: 'stripe',
-          summary: 'Stripe summary',
+          summary: STRIPE_SUMMARY,
         },
         {
           name: TypeConverters.toPSPName('Adyen')!,
@@ -125,11 +132,11 @@ describe('PSPDetectorService', () => {
 
     // Test direct hostname match
     const stripeUrl = 'https://checkout.stripe.com/session/pay_123';
-    const stripeContent = '<div>Stripe checkout</div>';
+    const stripeContent = `<div>${STRIPE_NAME} checkout</div>`;
     const stripeResult = pspDetectorService.detectPSP(stripeUrl, stripeContent);
     expect(PSPDetectionResult.isDetected(stripeResult)).toBe(true);
     if (PSPDetectionResult.isDetected(stripeResult)) {
-      expect(stripeResult.psp).toBe('Stripe');
+      expect(stripeResult.psps[0]?.psp).toBe(STRIPE_NAME);
     }
 
     // Test subdomain match
@@ -138,7 +145,7 @@ describe('PSPDetectorService', () => {
     const adyenResult = pspDetectorService.detectPSP(adyenUrl, adyenContent);
     expect(PSPDetectionResult.isDetected(adyenResult)).toBe(true);
     if (PSPDetectionResult.isDetected(adyenResult)) {
-      expect(adyenResult.psp).toBe('Adyen');
+      expect(adyenResult.psps[0]?.psp).toBe('Adyen');
     }
 
     // Test no match (should be exempt due to example.com being in exempt
@@ -257,11 +264,11 @@ describe('PSPDetectorService', () => {
     const configWithMatchStrings: PSPConfig = {
       psps: [
         {
-          name: TypeConverters.toPSPName('Stripe')!,
-          matchStrings: ['js.stripe.com', 'checkout.stripe.com'],
-          url: TypeConverters.toURL('https://stripe.com')!,
+          name: TypeConverters.toPSPName(STRIPE_NAME)!,
+          matchStrings: [STRIPE_MATCH, STRIPE_CHECKOUT_MATCH],
+          url: TypeConverters.toURL(STRIPE_URL)!,
           image: 'stripe',
-          summary: 'Stripe summary',
+          summary: STRIPE_SUMMARY,
         },
       ],
     };
@@ -273,14 +280,14 @@ describe('PSPDetectorService', () => {
     // Test hostname detection in script tag
     const shopUrl = 'https://shop.merchant.com/checkout';
     const stripeScriptContent =
-      '<script src="https://js.stripe.com/v3/"></script><div>Payment form</div>';
+      `${STRIPE_SCRIPT_TAG}<div>Payment form</div>`;
     const scriptResult = pspDetectorService.detectPSP(
       shopUrl,
       stripeScriptContent,
     );
     expect(PSPDetectionResult.isDetected(scriptResult)).toBe(true);
     if (PSPDetectionResult.isDetected(scriptResult)) {
-      expect(scriptResult.psp).toBe('Stripe');
+      expect(scriptResult.psps[0]?.psp).toBe(STRIPE_NAME);
     }
 
     // Test hostname detection in iframe
@@ -293,7 +300,7 @@ describe('PSPDetectorService', () => {
     );
     expect(PSPDetectionResult.isDetected(iframeResult)).toBe(true);
     if (PSPDetectionResult.isDetected(iframeResult)) {
-      expect(iframeResult.psp).toBe('Stripe');
+      expect(iframeResult.psps[0]?.psp).toBe(STRIPE_NAME);
     }
 
     // Test hostname detection in form action
@@ -303,7 +310,122 @@ describe('PSPDetectorService', () => {
     const formResult = pspDetectorService.detectPSP(checkoutUrl, formContent);
     expect(PSPDetectionResult.isDetected(formResult)).toBe(true);
     if (PSPDetectionResult.isDetected(formResult)) {
-      expect(formResult.psp).toBe('Stripe');
+      expect(formResult.psps[0]?.psp).toBe(STRIPE_NAME);
+    }
+  });
+
+  it('detects Global Payments from js-cert hosted-field iframe source', () => {
+    const globalPaymentsConfig: PSPConfig = {
+      psps: [{
+        name: TypeConverters.toPSPName('Global Payments')!,
+        matchStrings: ['js-cert.globalpay.com'],
+        url: TypeConverters.toURL('https://www.globalpayments.com')!,
+        image: 'globalpayments',
+        summary: 'Global Payments summary',
+      }],
+    };
+
+    const pspDetectorService = new PSPDetectorService();
+    pspDetectorService.initialize(globalPaymentsConfig);
+    pspDetectorService.setExemptDomains([]);
+
+    const result = pspDetectorService.detectPSP(
+      'https://demo.globalpay.com/merchants/dropin-ui',
+      '<iframe src="https://js-cert.globalpay.com/4.1.13/field.html#token"></iframe>',
+    );
+    expect(PSPDetectionResult.isDetected(result)).toBe(true);
+    if (PSPDetectionResult.isDetected(result)) {
+      expect(result.psps[0]?.psp).toBe('Global Payments');
+    }
+  });
+
+  it('returns all matching PSPs when multiple providers match', () => {
+    const multiConfig = {
+      psps: [
+        {
+          name: STRIPE_NAME,
+          matchStrings: [STRIPE_MATCH],
+          regex: null,
+          image: 'stripe',
+          summary: STRIPE_NAME,
+          url: STRIPE_URL,
+        },
+        {
+          name: 'Adyen',
+          matchStrings: ['checkoutshopper-live.adyen.com'],
+          regex: null,
+          image: 'adyen',
+          summary: 'Adyen',
+          url: 'https://adyen.com',
+        },
+      ],
+      orchestrators: { notice: '', list: [] },
+      tsps: { notice: '', list: [] },
+    };
+    service.initialize(multiConfig as unknown as PSPConfig);
+    service.setExemptDomains([]);
+
+    const result = service.detectPSP(
+      'https://example.com',
+      `${STRIPE_MATCH}\ncheckoutshopper-live.adyen.com`,
+    );
+
+    expect(result.type).toBe('detected');
+    if (result.type === 'detected') {
+      expect(result.psps).toHaveLength(2);
+      expect(result.psps[0]?.psp).toBe(STRIPE_NAME);
+      expect(result.psps[1]?.psp).toBe('Adyen');
+    }
+  });
+
+  it('deduplicates same PSP across matchString and regex', () => {
+    const dedupConfig = {
+      psps: [{
+        name: STRIPE_NAME,
+        matchStrings: [STRIPE_MATCH],
+        regex: String.raw`stripe\.com`,
+        image: 'stripe',
+        summary: STRIPE_NAME,
+        url: STRIPE_URL,
+      }],
+      orchestrators: { notice: '', list: [] },
+      tsps: { notice: '', list: [] },
+    };
+    service.initialize(dedupConfig as unknown as PSPConfig);
+    service.setExemptDomains([]);
+
+    const result = service.detectPSP('https://example.com', STRIPE_MATCH);
+    expect(result.type).toBe('detected');
+    if (result.type === 'detected') {
+      expect(result.psps).toHaveLength(1);
+      expect(result.psps[0]?.psp).toBe(STRIPE_NAME);
+    }
+  });
+
+  it('returns error for invalid url input', () => {
+    const result = service.detectPSP('', 'content');
+    expect(result.type).toBe('error');
+    if (result.type === 'error') {
+      expect(result.context).toBe('url_validation');
+    }
+  });
+
+  it('returns error for invalid content input type', () => {
+    const result = service.detectPSP('https://example.com', null as unknown as string);
+    expect(result.type).toBe('error');
+    if (result.type === 'error') {
+      expect(result.context).toBe('content_validation');
+    }
+  });
+
+  it('returns error when provider list is empty', () => {
+    const emptyConfig: PSPConfig = { psps: [] };
+    service.initialize(emptyConfig);
+    service.setExemptDomains([]);
+    const result = service.detectPSP('https://example.com', 'hello');
+    expect(result.type).toBe('error');
+    if (result.type === 'error') {
+      expect(result.context).toBe('config_validation');
     }
   });
 });
