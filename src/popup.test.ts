@@ -437,7 +437,7 @@ describe('PopupManager', () => {
       await import('./popup');
       document.dispatchEvent(new Event('DOMContentLoaded'));
       await flushAsyncTasks();
-      window.dispatchEvent(new Event('beforeunload'));
+      globalThis.dispatchEvent(new Event('beforeunload'));
 
       expect(document.getElementById('permission-state')?.style.display).toBe(
         'block',

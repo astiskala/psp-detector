@@ -61,10 +61,10 @@ describe('DOMObserverService', () => {
   });
 
   it('forwards relevant attribute mutation records', async() => {
-    const originalMutationObserver = global.MutationObserver;
+    const originalMutationObserver = globalThis.MutationObserver;
 
     try {
-      global.MutationObserver = class {
+      globalThis.MutationObserver = class {
         constructor(observerCallback: MutationCallback) {
           this.callback = observerCallback;
           this.observe = jest.fn(() => {
@@ -104,7 +104,7 @@ describe('DOMObserverService', () => {
         | undefined;
       expect(firstCallArgs?.[0]?.[0]?.type).toBe('attributes');
     } finally {
-      global.MutationObserver = originalMutationObserver;
+      globalThis.MutationObserver = originalMutationObserver;
     }
   });
 
@@ -151,8 +151,8 @@ describe('DOMObserverService', () => {
 
   it('should handle observer start errors gracefully', () => {
     // Mock observer.observe to throw error
-    const originalMutationObserver = global.MutationObserver;
-    global.MutationObserver = class {
+    const originalMutationObserver = globalThis.MutationObserver;
+    globalThis.MutationObserver = class {
       constructor(callback: MutationCallback) {
         this.callback = callback;
         this.observe = jest.fn(() => {
@@ -183,7 +183,7 @@ describe('DOMObserverService', () => {
     expect(consoleSpy).toHaveBeenCalled();
 
     // Restore
-    global.MutationObserver = originalMutationObserver;
+    globalThis.MutationObserver = originalMutationObserver;
     consoleSpy.mockRestore();
   });
 

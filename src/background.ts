@@ -69,10 +69,10 @@ class BackgroundService {
   private inMemoryPspConfig: PSPConfig | null = null;
   private inMemoryExemptDomains: string[] | null = null;
   private webRequestListenerRegistered = false;
-  private tabPspCache = new Map<number, StoredTabPsp[]>();
+  private readonly tabPspCache = new Map<number, StoredTabPsp[]>();
   private tabPspPersistTimer: ReturnType<typeof setTimeout> | null = null;
   private tabPspPersistDirty = false;
-  private networkMatchersByToken = new Map<string, NetworkMatcher[]>();
+  private readonly networkMatchersByToken = new Map<string, NetworkMatcher[]>();
   private fallbackNetworkMatchers: NetworkMatcher[] = [];
   private readonly networkMatchedProvidersByTab =
     new Map<number, Set<string>>();
