@@ -10,6 +10,7 @@ import {
   PSPDetectionResult,
   PSP_DETECTION_EXEMPT,
   type PSP,
+  type PSPMatch,
   type ChromeMessage,
   type PSPDetectionData,
   type PSPConfigResponse,
@@ -32,6 +33,7 @@ class BackgroundService {
   private isInitialized = false;
   private inMemoryPspConfig: PSPConfig | null = null;
   private inMemoryExemptDomains: string[] | null = null;
+  private webRequestListenerRegistered = false;
 
   public async initialize(): Promise<void> {
     await this.initializeServiceWorker();
@@ -920,12 +922,8 @@ class BackgroundService {
       }
     }
 
-    if (resolvedTabId !== null) {
-      if (psps.length === 0) {
-        psps = tabPsps[resolvedTabId] ?? [];
-      }
-
-      await this.setCurrentTabId(resolvedTabId);
+    if (resolvedTabId !== null && psps.length === 0) {
+      psps = tabPsps[resolvedTabId] ?? [];
     }
 
     sendResponse({ psps });
@@ -1026,16 +1024,20 @@ class BackgroundService {
       return this.createExemptResult(EXEMPT_DISABLED_REASON);
     }
 
-    return PSPDetectionResult.detected(
-      psps.map((p) => {
-        const psp = TypeConverters.toPSPName(p.psp)!;
-        if (p.detectionInfo) {
-          return { psp, detectionInfo: p.detectionInfo };
-        }
-
-        return { psp };
-      }),
-    );
+    const matches: PSPMatch[] = [];
+    for (const p of psps) {
+      const psp = TypeConverters.toPSPName(p.psp);
+      if (!psp) {
+        logger.warn('Skipping stored entry with empty PSP name');
+        continue;
+      }
+      if (p.detectionInfo) {
+        matches.push({ psp, detectionInfo: p.detectionInfo });
+      } else {
+        matches.push({ psp });
+      }
+    }
+    return PSPDetectionResult.detected(matches);
   }
 
   private getDomainFromSender(sender: chrome.runtime.MessageSender): string {
@@ -1063,6 +1065,7 @@ class BackgroundService {
   private getProviderType(pspName: string): ProviderType {
     const config = this.getCachedPspConfigSync();
     if (!config) {
+      logger.debug(`getProviderType: config not yet loaded, defaulting to 'PSP' for ${pspName}`);
       return 'PSP';
     }
 
@@ -1098,8 +1101,10 @@ class BackgroundService {
   }
 
   private setupWebRequestListener(): void {
+    if (this.webRequestListenerRegistered) return;
     if (!chrome.webRequest?.onBeforeRequest) return;
 
+    this.webRequestListenerRegistered = true;
     chrome.webRequest.onBeforeRequest.addListener(
       (details) => {
         this.handleNetworkRequest(
