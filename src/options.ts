@@ -312,6 +312,7 @@ function appendDomainCellContent(
       },
       { once: true },
     );
+
     iconElement = img;
   } else {
     iconElement = createLetterAvatar(hostname || entry.domain);
