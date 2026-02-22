@@ -50,7 +50,7 @@ describe('build artifacts', () => {
     expect(html.includes('id="history-link"')).toBe(true);
   });
 
-  it('onboarding page includes host-access instructions', () => {
+  it('onboarding page includes permission instructions', () => {
     const onboardingHtml = path.join(
       __dirname,
       '..',
@@ -60,7 +60,7 @@ describe('build artifacts', () => {
     );
     const html = fs.readFileSync(onboardingHtml, 'utf8');
     expect(html.includes('id="grant-host-access"')).toBe(true);
-    expect(html.includes('Grant site access')).toBe(true);
+    expect(html.includes('Grant required permissions')).toBe(true);
   });
 
   it('extension pages reference the shared stylesheet', () => {

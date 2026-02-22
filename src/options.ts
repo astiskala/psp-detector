@@ -17,7 +17,25 @@ import {
 
 const DEFAULT_PSP_ICON_PATH = 'images/default_48.png';
 const HISTORY_TABLE_ICON_SIZE = 16;
+const SEARCH_DEBOUNCE_MS = 120;
 let providerIconByName = new Map<string, string>();
+
+type IdleScheduler = (
+  callback: () => void,
+  options?: { timeout?: number },
+) => number;
+
+function scheduleIdle(callback: () => void): void {
+  const requestIdle = (globalThis as unknown as {
+    requestIdleCallback?: IdleScheduler;
+  }).requestIdleCallback;
+  if (typeof requestIdle === 'function') {
+    requestIdle(callback, { timeout: 200 });
+    return;
+  }
+
+  setTimeout(callback, 0);
+}
 
 function setText(id: string, text: string): void {
   const element = document.getElementById(id);
@@ -475,6 +493,7 @@ interface HistoryRef {
 function bindControls(historyRef: HistoryRef): void {
   const search = document.getElementById('search') as HTMLInputElement | null;
   const pspFilter = document.getElementById('pspFilter') as HTMLSelectElement | null;
+  let searchRefreshTimer: ReturnType<typeof setTimeout> | null = null;
 
   const getFilteredEntries = (): HistoryEntry[] =>
     filterEntries(
@@ -483,14 +502,30 @@ function bindControls(historyRef: HistoryRef): void {
       pspFilter?.value ?? '',
     );
 
-  const refresh = (): void => {
+  const refresh = (deferCharts: boolean): void => {
     const filtered = getFilteredEntries();
     renderTable(filtered);
+
+    if (deferCharts) {
+      scheduleIdle(() => renderCharts(filtered));
+      return;
+    }
+
     renderCharts(filtered);
   };
 
-  search?.addEventListener('input', refresh);
-  pspFilter?.addEventListener('change', refresh);
+  search?.addEventListener('input', () => {
+    if (searchRefreshTimer !== null) {
+      clearTimeout(searchRefreshTimer);
+    }
+
+    searchRefreshTimer = setTimeout(() => {
+      refresh(true);
+      searchRefreshTimer = null;
+    }, SEARCH_DEBOUNCE_MS);
+  });
+
+  pspFilter?.addEventListener('change', () => refresh(true));
 
   document.getElementById('exportBtn')?.addEventListener('click', () => {
     const filtered = getFilteredEntries();
@@ -514,7 +549,7 @@ function bindControls(historyRef: HistoryRef): void {
         historyRef.setHistory([]);
         renderStats([]);
         renderTable([]);
-        renderCharts([]);
+        scheduleIdle(() => renderCharts([]));
       })
       .catch((error) => {
         logger.error('Failed to clear history', error);

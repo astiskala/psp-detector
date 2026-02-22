@@ -16,6 +16,7 @@ const SITES: SiteCase[] = [
   { url: 'https://flow-demo.sandbox.checkout.com', expected: 'Checkout.com' },
   { url: 'https://cbcheckoutapp.herokuapp.com', expected: 'Chargebee' },
   { url: 'https://fs-react-devrels.vercel.app', expected: 'FastSpring' },
+  { url: 'https://demo.globalpay.com/merchants/dropin-ui', expected: 'Global Payments' },
   { url: 'https://demos.nuvei.com/intdemo-ecom/checkout/', expected: 'Nuvei' },
   { url: 'https://pay.skrill.com/assets/skrill-demo/ecommerce.html', expected: 'Skrill' },
   { url: 'https://dev.shift4.com/examples/checkout', expected: 'Shift4' },

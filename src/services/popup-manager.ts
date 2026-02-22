@@ -21,32 +21,43 @@ import { STORAGE_KEYS } from '../lib/storage-keys';
 export class PopupManager {
   private readonly ui: UIService;
   private isInitialized = false;
+  private permissionButtonBound = false;
 
   constructor() {
     this.ui = new UIService();
   }
 
   /**
-   * Check whether the optional host permission is granted.
-   * If not (or if the check itself fails), show the permission-request UI
-   * and return false.
+   * Check whether optional permissions needed for best-effort detection are
+   * granted.
    * @private
    */
-  private async checkHostPermission(): Promise<boolean> {
+  private async checkDetectionPermissions(): Promise<{
+    hasHostPermission: boolean;
+    hasWebRequestPermission: boolean;
+  }> {
     try {
-      const granted = await chrome.permissions.contains({
-        origins: ['https://*/*'],
-      });
+      const [hasHostPermission, hasWebRequestPermission] = await Promise.all([
+        chrome.permissions.contains({
+          origins: ['https://*/*'],
+        }),
+        chrome.permissions.contains({
+          permissions: ['webRequest'],
+        }),
+      ]);
 
-      if (!granted) {
+      if (!hasHostPermission || !hasWebRequestPermission) {
         this.showPermissionRequest();
       }
 
-      return granted;
+      return { hasHostPermission, hasWebRequestPermission };
     } catch (error) {
-      logger.error('Failed to check host permission:', error);
+      logger.error('Failed to check optional permissions:', error);
       this.showPermissionRequest();
-      return false;
+      return {
+        hasHostPermission: false,
+        hasWebRequestPermission: false,
+      };
     }
   }
 
@@ -59,10 +70,14 @@ export class PopupManager {
     this.setElementDisplay('permission-state', 'block');
 
     const btn = document.getElementById('grant-permission-btn');
-    if (!btn) return;
+    if (!btn || this.permissionButtonBound) return;
+    this.permissionButtonBound = true;
 
     btn.addEventListener('click', () => {
-      chrome.permissions.request({ origins: ['https://*/*'] })
+      chrome.permissions.request({
+        origins: ['https://*/*'],
+        permissions: ['webRequest'],
+      })
         .then(async(granted) => {
           if (granted) {
             this.hidePermissionRequest();
@@ -86,6 +101,14 @@ export class PopupManager {
   }
 
   /**
+   * Hide permission-request panel without changing loading/content state.
+   * @private
+   */
+  private hidePermissionPanel(): void {
+    this.setElementDisplay('permission-state', 'none');
+  }
+
+  /**
    * Set display style for a DOM element by id.
    * @private
    */
@@ -103,24 +126,29 @@ export class PopupManager {
       return;
     }
 
-    const hasPermission = await this.checkHostPermission();
-    if (!hasPermission) {
-      return;
-    }
+    const permissionState = await this.checkDetectionPermissions();
+    const hasPermission = permissionState.hasHostPermission &&
+      permissionState.hasWebRequestPermission;
 
     try {
       await performanceUtils.measureAsync(async() => {
         const detectedPsps = await this.getDetectedPSPsWithRetry();
         if (detectedPsps.some((entry) => entry.psp === PSP_DETECTION_EXEMPT)) {
+          this.hidePermissionPanel();
           this.ui.showPSPDetectionDisabled();
           return;
         }
 
         if (detectedPsps.length === 0) {
           this.ui.showNoPSPDetected();
+          if (hasPermission) {
+            this.hidePermissionPanel();
+          }
+
           return;
         }
 
+        this.hidePermissionPanel();
         const pspConfig = await this.getPSPConfigWithCache();
         this.ui.renderMultiplePSPs(detectedPsps, pspConfig);
 

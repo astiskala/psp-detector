@@ -307,6 +307,31 @@ describe('PSPDetectorService', () => {
     }
   });
 
+  it('detects Global Payments from js-cert hosted-field iframe source', () => {
+    const globalPaymentsConfig: PSPConfig = {
+      psps: [{
+        name: TypeConverters.toPSPName('Global Payments')!,
+        matchStrings: ['js-cert.globalpay.com'],
+        url: TypeConverters.toURL('https://www.globalpayments.com')!,
+        image: 'globalpayments',
+        summary: 'Global Payments summary',
+      }],
+    };
+
+    const pspDetectorService = new PSPDetectorService();
+    pspDetectorService.initialize(globalPaymentsConfig);
+    pspDetectorService.setExemptDomains([]);
+
+    const result = pspDetectorService.detectPSP(
+      'https://demo.globalpay.com/merchants/dropin-ui',
+      '<iframe src="https://js-cert.globalpay.com/4.1.13/field.html#token"></iframe>',
+    );
+    expect(PSPDetectionResult.isDetected(result)).toBe(true);
+    if (PSPDetectionResult.isDetected(result)) {
+      expect(result.psps[0]?.psp).toBe('Global Payments');
+    }
+  });
+
   it('returns all matching PSPs when multiple providers match', () => {
     const multiConfig = {
       psps: [

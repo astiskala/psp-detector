@@ -130,10 +130,15 @@ test('options page loads and renders history without script syntax errors', asyn
     'matchString: checkoutshopper-live.adyen.com',
   );
 
-  await expect(row.locator('img.domain-icon')).toHaveAttribute(
-    'src',
-    /icons\.duckduckgo\.com\/ip3\/checkout\.example\.com\.ico/i,
-  );
+  const domainIconImage = row.locator('img.domain-icon');
+  if (await domainIconImage.count() > 0) {
+    await expect(domainIconImage).toHaveAttribute(
+      'src',
+      /_favicon\/\?pageUrl=.*checkout\.example\.com/i,
+    );
+  } else {
+    await expect(row.locator('.domain-letter-avatar.domain-icon')).toHaveCount(1);
+  }
 
   const pspIcons = row.locator('img.psp-icon');
   await expect(pspIcons).toHaveCount(2);

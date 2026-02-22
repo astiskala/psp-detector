@@ -98,15 +98,31 @@ export async function fetchWithTimeout(
  */
 const DEVELOPMENT_ENV = 'development';
 const LOG_PREFIX = '[PSP Detector] ';
+const RUNTIME_DEBUG_FLAG = '__PSP_DETECTOR_DEBUG__' as const;
+
+interface RuntimeDebugWindow {
+  __PSP_DETECTOR_DEBUG__?: boolean;
+}
+
+const isDebugLoggingEnabled = (): boolean => {
+  if (process.env['NODE_ENV'] === DEVELOPMENT_ENV) {
+    return true;
+  }
+
+  const win = globalThis as typeof globalThis & RuntimeDebugWindow;
+  return win[RUNTIME_DEBUG_FLAG] === true;
+};
 
 export const logger = {
   debug: (message: string, ...args: unknown[]): void => {
-    if (process.env['NODE_ENV'] === DEVELOPMENT_ENV) {
+    if (isDebugLoggingEnabled()) {
       console.debug(LOG_PREFIX + message, ...args);
     }
   },
   info: (message: string, ...args: unknown[]): void => {
-    console.log(LOG_PREFIX + message, ...args);
+    if (isDebugLoggingEnabled()) {
+      console.log(LOG_PREFIX + message, ...args);
+    }
   },
   warn: (message: string, ...args: unknown[]): void => {
     console.warn(LOG_PREFIX + message, ...args);
@@ -115,12 +131,12 @@ export const logger = {
     console.error(LOG_PREFIX + message, ...args);
   },
   time: (label: string): void => {
-    if (process.env['NODE_ENV'] === DEVELOPMENT_ENV) {
+    if (isDebugLoggingEnabled()) {
       console.time(LOG_PREFIX + label);
     }
   },
   timeEnd: (label: string): void => {
-    if (process.env['NODE_ENV'] === DEVELOPMENT_ENV) {
+    if (isDebugLoggingEnabled()) {
       console.timeEnd(LOG_PREFIX + label);
     }
   },

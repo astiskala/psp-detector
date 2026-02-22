@@ -265,6 +265,7 @@
       "matchStrings": [
         "apis.globalpay.com",
         "apis.sandbox.globalpay.com",
+        "js-cert.globalpay.com",
         "js.globalpay.com",
         "pay.realexpayments.com",
         "pay.sandbox.realexpayments.com"

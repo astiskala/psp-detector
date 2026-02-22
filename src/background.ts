@@ -31,12 +31,30 @@ import { writeHistoryEntry } from './lib/history';
 import type { HistoryEntry, ProviderType } from './types/history';
 
 const BADGE_COLOR = '#6B7280';
+const TAB_STATE_PERSIST_DEBOUNCE_MS = 300;
+const NETWORK_REQUEST_TYPES: `${chrome.webRequest.ResourceType}`[] = [
+  'script',
+  'xmlhttprequest',
+  'sub_frame',
+];
+
+interface NetworkMatcher {
+  pspName: NonNullable<PSPDetectionData['psp']>;
+  matchString: string;
+}
 
 class BackgroundService {
   private isInitialized = false;
   private inMemoryPspConfig: PSPConfig | null = null;
   private inMemoryExemptDomains: string[] | null = null;
   private webRequestListenerRegistered = false;
+  private tabPspCache = new Map<number, StoredTabPsp[]>();
+  private tabPspPersistTimer: ReturnType<typeof setTimeout> | null = null;
+  private tabPspPersistDirty = false;
+  private networkMatchersByToken = new Map<string, NetworkMatcher[]>();
+  private fallbackNetworkMatchers: NetworkMatcher[] = [];
+  private readonly networkMatchedProvidersByTab =
+    new Map<number, Set<string>>();
 
   public async initialize(): Promise<void> {
     await this.initializeServiceWorker();
@@ -90,7 +108,8 @@ class BackgroundService {
     // Handle service worker suspension/revival
     chrome.runtime.onSuspend.addListener(() => {
       logger.info('Service worker suspending');
-      this.persistState();
+      void this.persistState();
+      void this.flushTabPspCache();
     });
 
     // Message handling
@@ -127,6 +146,13 @@ class BackgroundService {
     });
 
     await chrome.storage.session.set({ [STORAGE_KEYS.TAB_PSPS]: {} });
+    this.tabPspCache.clear();
+    this.networkMatchedProvidersByTab.clear();
+    this.tabPspPersistDirty = false;
+    if (this.tabPspPersistTimer !== null) {
+      clearTimeout(this.tabPspPersistTimer);
+      this.tabPspPersistTimer = null;
+    }
 
     await this.clearCachedConfig();
     await this.loadExemptDomains();
@@ -163,6 +189,7 @@ class BackgroundService {
       ]);
 
       this.inMemoryPspConfig = null;
+      this.rebuildNetworkMatcherIndex(null);
     } catch (error) {
       logger.warn('Failed to clear cached PSP config:', error);
     }
@@ -188,6 +215,8 @@ class BackgroundService {
         this.inMemoryPspConfig = null;
       }
 
+      this.rebuildNetworkMatcherIndex(this.inMemoryPspConfig);
+
       this.inMemoryExemptDomains = normalizeStringArray(
         localResult[STORAGE_KEYS.EXEMPT_DOMAINS] as string[],
       );
@@ -196,13 +225,69 @@ class BackgroundService {
         number,
         StoredTabPsp[]
       >;
-      const tabStateCount = Object.keys(tabPsps).length;
+      this.hydrateTabPspCache(tabPsps);
+      const tabStateCount = this.tabPspCache.size;
       logger.info(
         `State restored from storage (tabs: ${tabStateCount}, ` +
         `exemptDomains: ${this.inMemoryExemptDomains.length})`,
       );
     } catch (error) {
       logger.error('Failed to restore state:', error);
+    }
+  }
+
+  private hydrateTabPspCache(tabPsps: Record<number, StoredTabPsp[]>): void {
+    this.tabPspCache.clear();
+
+    for (const [tabIdKey, entries] of Object.entries(tabPsps)) {
+      const tabId = Number(tabIdKey);
+      if (!Number.isInteger(tabId) || tabId < 0 || !Array.isArray(entries)) {
+        continue;
+      }
+
+      this.tabPspCache.set(tabId, [...entries]);
+    }
+  }
+
+  private cloneTabPspCache(): Record<number, StoredTabPsp[]> {
+    const cloned: Record<number, StoredTabPsp[]> = {};
+    for (const [tabId, entries] of this.tabPspCache.entries()) {
+      cloned[tabId] = [...entries];
+    }
+
+    return cloned;
+  }
+
+  private markTabPspCacheDirty(): void {
+    this.tabPspPersistDirty = true;
+    if (this.tabPspPersistTimer !== null) {
+      clearTimeout(this.tabPspPersistTimer);
+    }
+
+    this.tabPspPersistTimer = setTimeout(() => {
+      void this.flushTabPspCache();
+    }, TAB_STATE_PERSIST_DEBOUNCE_MS);
+  }
+
+  private async flushTabPspCache(): Promise<void> {
+    if (this.tabPspPersistTimer !== null) {
+      clearTimeout(this.tabPspPersistTimer);
+      this.tabPspPersistTimer = null;
+    }
+
+    if (!this.tabPspPersistDirty) {
+      return;
+    }
+
+    try {
+      await chrome.storage.session.set({
+        [STORAGE_KEYS.TAB_PSPS]: this.cloneTabPspCache(),
+      });
+
+      this.tabPspPersistDirty = false;
+    } catch (error) {
+      logger.error('Failed to persist tab PSP cache:', error);
+      this.markTabPspCacheDirty();
     }
   }
 
@@ -228,6 +313,7 @@ class BackgroundService {
    */
   private async persistState(): Promise<void> {
     try {
+      await this.flushTabPspCache();
       const currentTabId = await this.getCurrentTabId();
       const detectedPsp = await this.getDetectedPsp();
 
@@ -293,48 +379,14 @@ class BackgroundService {
   }
 
   /**
-   * Get tab PSPs from storage
-   * @private
-   */
-  private async getTabPsps(): Promise<Record<number, StoredTabPsp[]>> {
-    try {
-      const result = await chrome.storage.session.get({
-        [STORAGE_KEYS.TAB_PSPS]: {} as Record<number, StoredTabPsp[]>,
-      });
-      const tabPsps = result[STORAGE_KEYS.TAB_PSPS] as Record<
-        number,
-        StoredTabPsp[]
-      >;
-      return tabPsps;
-    } catch (error) {
-      logger.error('Failed to get tab PSPs:', error);
-      return {};
-    }
-  }
-
-  /**
-   * Set tab PSP data in storage
-   * @private
-   */
-  private async setTabPsps(
-    tabPsps: Record<number, StoredTabPsp[]>,
-  ): Promise<void> {
-    try {
-      await chrome.storage.session.set({ [STORAGE_KEYS.TAB_PSPS]: tabPsps });
-    } catch (error) {
-      logger.error('Failed to set tab PSPs:', error);
-    }
-  }
-
-  /**
    * Clean up data for a removed tab
    * @private
    */
   private async cleanupTabData(tabId: number): Promise<void> {
     try {
-      const tabPsps = await this.getTabPsps();
-      delete tabPsps[tabId];
-      await this.setTabPsps(tabPsps);
+      this.tabPspCache.delete(tabId);
+      this.networkMatchedProvidersByTab.delete(tabId);
+      this.markTabPspCacheDirty();
 
       logger.debug(`Cleaned up data for tab ${tabId}`);
     } catch (error) {
@@ -498,9 +550,13 @@ class BackgroundService {
   ): Promise<void> {
     const exemptResult = this.createExemptResult(reason, url);
     await this.setDetectedPsp(exemptResult);
-    const tabPsps = await this.getTabPsps();
-    tabPsps[tabId] = [{ psp: PSP_DETECTION_EXEMPT }];
-    await this.setTabPsps(tabPsps);
+    this.tabPspCache.set(tabId, [{ psp: PSP_DETECTION_EXEMPT }]);
+    this.networkMatchedProvidersByTab.set(
+      tabId,
+      new Set([PSP_DETECTION_EXEMPT]),
+    );
+
+    this.markTabPspCacheDirty();
     this.showExemptDomainIcon();
   }
 
@@ -771,6 +827,7 @@ class BackgroundService {
 
       // Also update in-memory cache
       this.inMemoryPspConfig = candidate;
+      this.rebuildNetworkMatcherIndex(candidate);
       return candidate;
     } catch (error) {
       logger.error('Failed to get cached PSP config:', error);
@@ -791,6 +848,7 @@ class BackgroundService {
 
       // Also store in memory for sync access
       this.inMemoryPspConfig = config;
+      this.rebuildNetworkMatcherIndex(config);
     } catch (error) {
       logger.error('Failed to cache PSP config:', error);
     }
@@ -900,8 +958,7 @@ class BackgroundService {
     pspName: NonNullable<PSPDetectionData['psp']>,
     detectionInfo?: PSPDetectionData['detectionInfo'],
   ): Promise<boolean> {
-    const stored = await this.getTabPsps();
-    const existing = stored[tabId] ?? [];
+    const existing = this.tabPspCache.get(tabId) ?? [];
     if (existing.some((entry) => entry.psp === pspName)) {
       return false;
     }
@@ -910,8 +967,12 @@ class BackgroundService {
       detectionInfo === undefined
         ? { psp: pspName }
         : { psp: pspName, detectionInfo };
-    stored[tabId] = [...existing, nextEntry];
-    await this.setTabPsps(stored);
+    this.tabPspCache.set(tabId, [...existing, nextEntry]);
+    const matchedProviders =
+      this.networkMatchedProvidersByTab.get(tabId) ?? new Set<string>();
+    matchedProviders.add(pspName);
+    this.networkMatchedProvidersByTab.set(tabId, matchedProviders);
+    this.markTabPspCacheDirty();
     return true;
   }
 
@@ -982,7 +1043,6 @@ class BackgroundService {
     sender: chrome.runtime.MessageSender,
     sendResponse: (response?: PSPResponse) => void,
   ): Promise<void> {
-    const tabPsps = await this.getTabPsps();
     const senderTabId = typeof sender.tab?.id === 'number'
       ? TypeConverters.toTabId(sender.tab.id)
       : null;
@@ -998,7 +1058,7 @@ class BackgroundService {
     let resolvedTabId: number | null = null;
     let psps: StoredTabPsp[] = [];
     for (const tabId of preferredTabIds) {
-      const entries = tabPsps[tabId] ?? [];
+      const entries = this.tabPspCache.get(tabId) ?? [];
       if (entries.length > 0) {
         resolvedTabId = tabId;
         psps = entries;
@@ -1015,7 +1075,7 @@ class BackgroundService {
     }
 
     if (resolvedTabId !== null && psps.length === 0) {
-      psps = tabPsps[resolvedTabId] ?? [];
+      psps = this.tabPspCache.get(resolvedTabId) ?? [];
     }
 
     sendResponse({ psps });
@@ -1039,9 +1099,7 @@ class BackgroundService {
     }
 
     const currentTabId = await this.getCurrentTabId();
-    const tabPsps = await this.getTabPsps();
-
-    const hasState = tabPsps[tabId] !== undefined || currentTabId === tabId;
+    const hasState = this.tabPspCache.has(tabId) || currentTabId === tabId;
 
     sendResponse({ hasState });
   }
@@ -1057,8 +1115,9 @@ class BackgroundService {
     logger.debug(`Background: Tab activated - ID: ${tabId}`);
     await this.setCurrentTabId(tabId);
 
-    const tabPsps = await this.getTabPsps();
-    const detectedPsp = this.toDetectionResult(tabPsps[tabId] ?? []);
+    const detectedPsp = this.toDetectionResult(
+      this.tabPspCache.get(tabId) ?? [],
+    );
     await this.setDetectedPsp(detectedPsp);
 
     logger.debug(
@@ -1253,6 +1312,140 @@ class BackgroundService {
     return 'PSP';
   }
 
+  private rebuildNetworkMatcherIndex(config: PSPConfig | null): void {
+    this.networkMatchersByToken.clear();
+    this.fallbackNetworkMatchers = [];
+
+    if (!config) {
+      return;
+    }
+
+    for (const provider of getAllProviders(config)) {
+      const matchStrings = provider.matchStrings;
+      if (!Array.isArray(matchStrings) || matchStrings.length === 0) {
+        continue;
+      }
+
+      for (const rawMatchString of matchStrings) {
+        const matchString = rawMatchString.trim().toLowerCase();
+        if (matchString.length === 0) {
+          continue;
+        }
+
+        const matcher: NetworkMatcher = {
+          pspName: provider.name,
+          matchString,
+        };
+        const token = this.extractMatcherToken(matchString);
+        if (token === null) {
+          this.fallbackNetworkMatchers.push(matcher);
+          continue;
+        }
+
+        const bucket = this.networkMatchersByToken.get(token);
+        if (bucket !== undefined) {
+          bucket.push(matcher);
+          continue;
+        }
+
+        this.networkMatchersByToken.set(token, [matcher]);
+      }
+    }
+  }
+
+  private extractMatcherToken(matchString: string): string | null {
+    const hostCandidate = matchString
+      .replace(/^https?:\/\//u, '')
+      .split('/')[0]
+      ?.replace(/^\*\./u, '')
+      .replace(/[:*]/gu, '')
+      .toLowerCase();
+
+    if (hostCandidate === undefined || hostCandidate.length === 0) {
+      return null;
+    }
+
+    if (
+      hostCandidate.includes('\\') ||
+      hostCandidate.includes('[') ||
+      hostCandidate.includes('(')
+    ) {
+      return null;
+    }
+
+    const hostParts = hostCandidate
+      .split('.')
+      .map((part) => part.trim())
+      .filter((part) => part.length > 0);
+
+    if (hostParts.length >= 2) {
+      return hostParts.slice(-2).join('.');
+    }
+
+    return hostParts[0] ?? null;
+  }
+
+  private extractRequestTokens(requestUrl: string): string[] {
+    try {
+      const host = new URL(requestUrl).hostname.toLowerCase();
+      const hostParts = host.split('.').filter((part) => part.length > 0);
+      if (hostParts.length === 0) {
+        return [];
+      }
+
+      const tokens = new Set<string>([host]);
+      for (let i = 1; i < hostParts.length; i++) {
+        const suffix = hostParts.slice(i).join('.');
+        if (suffix.length > 0) {
+          tokens.add(suffix);
+        }
+      }
+
+      return [...tokens];
+    } catch {
+      return [];
+    }
+  }
+
+  private getCandidateNetworkMatchers(url: string): NetworkMatcher[] {
+    const seen = new Set<string>();
+    const candidates: NetworkMatcher[] = [];
+    const requestTokens = this.extractRequestTokens(url);
+
+    for (const token of requestTokens) {
+      const bucket = this.networkMatchersByToken.get(token);
+      if (bucket === undefined) {
+        continue;
+      }
+
+      for (const matcher of bucket) {
+        const key = `${matcher.pspName}|${matcher.matchString}`;
+        if (seen.has(key)) {
+          continue;
+        }
+
+        seen.add(key);
+        candidates.push(matcher);
+      }
+    }
+
+    if (candidates.length > 0) {
+      return candidates;
+    }
+
+    for (const matcher of this.fallbackNetworkMatchers) {
+      const key = `${matcher.pspName}|${matcher.matchString}`;
+      if (seen.has(key)) {
+        continue;
+      }
+
+      seen.add(key);
+      candidates.push(matcher);
+    }
+
+    return candidates;
+  }
+
   private async setupOptionalNetworkScanning(): Promise<void> {
     const perms = await chrome.permissions.getAll();
     if (perms.permissions?.includes('webRequest') === true) {
@@ -1282,7 +1475,10 @@ class BackgroundService {
 
         return undefined;
       },
-      { urls: ['https://*/*'] },
+      {
+        urls: ['https://*/*'],
+        types: [...NETWORK_REQUEST_TYPES],
+      },
     );
 
     logger.info('webRequest listener registered');
@@ -1294,37 +1490,40 @@ class BackgroundService {
     const { tabId, url } = details;
     if (tabId < 0) return;
 
-    const config = this.inMemoryPspConfig;
-    if (!config) return;
+    const tabIdValue = TypeConverters.toTabId(tabId);
+    if (tabIdValue === null) return;
 
-    const allProviders = getAllProviders(config);
-    for (const psp of allProviders) {
-      const matchStrings = psp.matchStrings;
-      if (matchStrings === undefined || matchStrings.length === 0) {
+    const matchedProvidersForTab =
+      this.networkMatchedProvidersByTab.get(tabId) ??
+      new Set<string>();
+    this.networkMatchedProvidersByTab.set(tabId, matchedProvidersForTab);
+
+    const candidates = this.getCandidateNetworkMatchers(url);
+    for (const matcher of candidates) {
+      if (matchedProvidersForTab.has(matcher.pspName)) {
         continue;
       }
 
-      for (const matchString of matchStrings) {
-        if (!url.includes(matchString)) continue;
-
-        logger.info(`Network request matched ${psp.name}: ${url}`);
-        const tabIdValue = TypeConverters.toTabId(tabId);
-        if (tabIdValue === null) return;
-        await this.handleDetectPsp(
-          {
-            psp: psp.name,
-            tabId: tabIdValue,
-            detectionInfo: {
-              method: 'matchString',
-              value: matchString,
-              sourceType: 'networkRequest',
-            },
-          },
-          { tab: { id: tabId, url } as chrome.tabs.Tab },
-        );
-
-        return;
+      if (!url.toLowerCase().includes(matcher.matchString)) {
+        continue;
       }
+
+      logger.info(`Network request matched ${matcher.pspName}: ${url}`);
+      await this.handleDetectPsp(
+        {
+          psp: matcher.pspName,
+          tabId: tabIdValue,
+          detectionInfo: {
+            method: 'matchString',
+            value: matcher.matchString,
+            sourceType: 'networkRequest',
+          },
+        },
+        { tab: { id: tabId, url } as chrome.tabs.Tab },
+      );
+
+      matchedProvidersForTab.add(matcher.pspName);
+      return;
     }
   }
 

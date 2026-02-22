@@ -145,8 +145,12 @@ function createHistoryEntries(): HistoryEntry[] {
   ];
 }
 
-async function flushAsync(): Promise<void> {
+async function flushAsync(waitMs = 0): Promise<void> {
   await Promise.resolve();
+  await new Promise<void>((resolve) => {
+    setTimeout(resolve, waitMs);
+  });
+
   await new Promise<void>((resolve) => {
     setTimeout(resolve, 0);
   });
@@ -242,7 +246,7 @@ describe('options page wiring', () => {
 
     search.value = 'does-not-exist';
     search.dispatchEvent(new Event('input'));
-    await flushAsync();
+    await flushAsync(160);
     expect(
       document.getElementById('historyBody')?.querySelectorAll('tr').length,
     ).toBe(0);
@@ -253,7 +257,7 @@ describe('options page wiring', () => {
 
     search.value = '';
     search.dispatchEvent(new Event('input'));
-    await flushAsync();
+    await flushAsync(160);
 
     const pspFilter = document.getElementById(
       'pspFilter',

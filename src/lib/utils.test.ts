@@ -93,6 +93,35 @@ describe('utils', () => {
     expect(() => logger.error('error')).not.toThrow();
   });
 
+  it('logger.info is disabled in production unless runtime debug flag is set', () => {
+    const originalEnv = process.env['NODE_ENV'];
+    const runtimeWindow = globalThis as typeof globalThis & {
+      __PSP_DETECTOR_DEBUG__?: boolean;
+    };
+    const originalDebugFlag = runtimeWindow.__PSP_DETECTOR_DEBUG__;
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {
+      // No-op for testing
+    });
+
+    process.env['NODE_ENV'] = 'production';
+    delete runtimeWindow.__PSP_DETECTOR_DEBUG__;
+
+    logger.info('should-not-log');
+    expect(logSpy).not.toHaveBeenCalled();
+
+    runtimeWindow.__PSP_DETECTOR_DEBUG__ = true;
+    logger.info('should-log');
+    expect(logSpy).toHaveBeenCalledWith('[PSP Detector] should-log');
+
+    logSpy.mockRestore();
+    process.env['NODE_ENV'] = originalEnv;
+    if (originalDebugFlag === undefined) {
+      delete runtimeWindow.__PSP_DETECTOR_DEBUG__;
+    } else {
+      runtimeWindow.__PSP_DETECTOR_DEBUG__ = originalDebugFlag;
+    }
+  });
+
   it('debouncedMutation delays function calls', (done) => {
     const mockFn = jest.fn();
     const debouncedFn = debouncedMutation(mockFn, 50);

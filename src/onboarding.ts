@@ -1,6 +1,11 @@
 import { MessageAction } from './types';
 import { logger } from './lib/utils';
 
+interface DetectionPermissionState {
+  hasHostPermission: boolean;
+  hasWebRequestPermission: boolean;
+}
+
 function getElementByIdOrThrow<T extends HTMLElement>(id: string): T {
   const element = document.getElementById(id);
   if (!element) {
@@ -10,31 +15,51 @@ function getElementByIdOrThrow<T extends HTMLElement>(id: string): T {
   return element as T;
 }
 
+async function getDetectionPermissionState(
+): Promise<DetectionPermissionState> {
+  const [hasHostPermission, hasWebRequestPermission] = await Promise.all([
+    chrome.permissions.contains({
+      origins: ['https://*/*'],
+    }),
+    chrome.permissions.contains({
+      permissions: ['webRequest'],
+    }),
+  ]);
+
+  return { hasHostPermission, hasWebRequestPermission };
+}
+
 async function updatePermissionStatus(
   statusElement: HTMLElement,
   grantButton: HTMLButtonElement,
 ): Promise<void> {
   try {
-    const granted = await chrome.permissions.contains({
-      origins: ['https://*/*'],
-    });
-    if (granted) {
-      statusElement.textContent = 'Site access is enabled. PSP detection is ready.';
+    const permissionState = await getDetectionPermissionState();
+    const hasDetectionPermissions = permissionState.hasHostPermission &&
+      permissionState.hasWebRequestPermission;
+    if (hasDetectionPermissions) {
+      statusElement.textContent =
+        'Required permissions are enabled. PSP detection is ready.';
+
       statusElement.classList.add('ready');
       grantButton.disabled = true;
-      grantButton.textContent = 'Permission granted';
+      grantButton.textContent = 'Permissions granted';
     } else {
-      statusElement.textContent = 'Site access is not enabled yet.';
+      statusElement.textContent = 'Required permissions are not enabled yet.';
       statusElement.classList.remove('ready');
       grantButton.disabled = false;
-      grantButton.textContent = 'Grant site access';
+      grantButton.textContent = 'Grant required permissions';
     }
   } catch (error) {
-    logger.warn('Failed to check onboarding host permission state:', error);
+    logger.warn(
+      'Failed to check onboarding optional permission state:',
+      error,
+    );
+
     statusElement.textContent = 'Unable to verify permission status.';
     statusElement.classList.remove('ready');
     grantButton.disabled = false;
-    grantButton.textContent = 'Grant site access';
+    grantButton.textContent = 'Grant required permissions';
   }
 }
 
@@ -45,6 +70,7 @@ async function requestPermissionFromOnboarding(
   try {
     const granted = await chrome.permissions.request({
       origins: ['https://*/*'],
+      permissions: ['webRequest'],
     });
     if (!granted) {
       statusElement.textContent =
@@ -64,7 +90,11 @@ async function requestPermissionFromOnboarding(
 
     await updatePermissionStatus(statusElement, grantButton);
   } catch (error) {
-    logger.error('Failed to request host permission from onboarding:', error);
+    logger.error(
+      'Failed to request optional permissions from onboarding:',
+      error,
+    );
+
     statusElement.textContent = 'Permission request failed. Please try again.';
     statusElement.classList.remove('ready');
   }

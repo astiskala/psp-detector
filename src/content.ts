@@ -54,7 +54,15 @@ interface ScanSources {
   iframeSrcs: string[];
   formActions: string[];
   linkHrefs: string[];
+  iframeElements: HTMLIFrameElement[];
 }
+
+const RELEVANT_LINK_RELS = new Set([
+  'preconnect',
+  'dns-prefetch',
+  'preload',
+  'modulepreload',
+]);
 
 class ContentScript {
   private readonly pspDetector: PSPDetectorService;
@@ -65,6 +73,8 @@ class ContentScript {
   private lastDetectionTime = 0;
   private readonly detectionCooldown = 500; // 500ms cooldown between detections
   private readonly maxIframeProcessing = 10; // Limit iframe processing
+  private readonly iframeReadConcurrency = 3;
+  private readonly iframeLoadTimeoutMs = 300;
 
   constructor() {
     this.pspDetector = new PSPDetectorService();
@@ -176,7 +186,7 @@ class ContentScript {
    * @private
    */
   private setupDOMObserver(): void {
-    this.domObserver.initialize(() => this.detectPSP(), 3000);
+    this.domObserver.initialize((mutations) => this.detectPSP(mutations), 3000);
     this.domObserver.startObserving();
   }
 
@@ -184,7 +194,7 @@ class ContentScript {
    * Detect PSP on the current page
    * @private
    */
-  private async detectPSP(): Promise<void> {
+  private async detectPSP(mutations?: MutationRecord[]): Promise<void> {
     const now = Date.now();
 
     // Implement cooldown to prevent excessive detection calls
@@ -206,8 +216,10 @@ class ContentScript {
     }
 
     // Collect relevant URLs to scan instead of full HTML - optimize performance
-    const scanSources = this.collectScanSources();
-    const iframeContent = await this.getIframeContent();
+    const scanSources = this.collectScanSources(mutations);
+    const iframeContent = await this.getIframeContent(
+      scanSources.iframeElements,
+    );
 
     const scanContent = [
       document.URL,
@@ -253,46 +265,137 @@ class ContentScript {
    * Collect scan sources optimized for performance
    * @private
    */
-  private collectScanSources(): ScanSources {
+  private collectScanSources(mutations?: MutationRecord[]): ScanSources {
     const scriptSrcs: string[] = [];
     const iframeSrcs: string[] = [];
     const formActions: string[] = [];
     const linkHrefs: string[] = [];
+    const iframeElements: HTMLIFrameElement[] = [];
+    const seenIframes = new Set<string>();
 
-    document.querySelectorAll(
-      'script[src], iframe[src], form[action], link[href]',
-    ).forEach((element) => {
+    const addElementSources = (element: Element): void => {
       switch (element.tagName) {
       case 'SCRIPT': {
         const src = (element as HTMLScriptElement).src;
-        if (src) scriptSrcs.push(src);
+        if (src) {
+          scriptSrcs.push(src);
+        }
+
         break;
       }
 
       case 'IFRAME': {
-        const src = (element as HTMLIFrameElement).src;
-        if (src) iframeSrcs.push(src);
+        const iframe = element as HTMLIFrameElement;
+        const src = iframe.src;
+        if (src) {
+          iframeSrcs.push(src);
+          if (!seenIframes.has(src)) {
+            seenIframes.add(src);
+            iframeElements.push(iframe);
+          }
+        }
+
         break;
       }
 
       case 'FORM': {
         const action = (element as HTMLFormElement).action;
-        if (action) formActions.push(action);
+        if (action) {
+          formActions.push(action);
+        }
+
         break;
       }
 
       case 'LINK': {
-        const href = (element as HTMLLinkElement).href;
-        if (href) linkHrefs.push(href);
+        const link = element as HTMLLinkElement;
+        if (!this.shouldScanLinkElement(link)) {
+          break;
+        }
+
+        const href = link.href;
+        if (href) {
+          linkHrefs.push(href);
+        }
+
         break;
       }
 
       default:
         break;
       }
-    });
+    };
 
-    return { scriptSrcs, iframeSrcs, formActions, linkHrefs };
+    const scanElementTree = (root: Element): void => {
+      addElementSources(root);
+      root
+        .querySelectorAll('script[src], iframe[src], form[action], link[href]')
+        .forEach(addElementSources);
+    };
+
+    const scanAddedNodes = (nodes: NodeList): void => {
+      for (const node of nodes) {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          scanElementTree(node as Element);
+        }
+      }
+    };
+
+    if (Array.isArray(mutations) && mutations.length > 0) {
+      for (const mutation of mutations) {
+        if (mutation.type === 'childList') {
+          scanAddedNodes(mutation.addedNodes);
+          continue;
+        }
+
+        if (mutation.type === 'attributes' &&
+            mutation.target.nodeType === Node.ELEMENT_NODE) {
+          addElementSources(mutation.target as Element);
+        }
+      }
+    } else {
+      document.querySelectorAll(
+        'script[src], iframe[src], form[action], link[href]',
+      ).forEach((element) => {
+        addElementSources(element);
+      });
+    }
+
+    return {
+      scriptSrcs,
+      iframeSrcs,
+      formActions,
+      linkHrefs,
+      iframeElements,
+    };
+  }
+
+  private shouldScanLinkElement(link: HTMLLinkElement): boolean {
+    const relValues = link.rel
+      .toLowerCase()
+      .split(/\s+/u)
+      .filter((token) => token.length > 0);
+    if (relValues.length === 0) {
+      return false;
+    }
+
+    if (!relValues.some((rel) => RELEVANT_LINK_RELS.has(rel))) {
+      return false;
+    }
+
+    const relSet = new Set(relValues);
+    if (relSet.has('preconnect') || relSet.has('dns-prefetch')) {
+      return true;
+    }
+
+    if (
+      (relSet.has('preload') || relSet.has('modulepreload')) &&
+      link.as.toLowerCase() === 'script'
+    ) {
+      return true;
+    }
+
+    return false;
   }
 
   private determineSourceType(
@@ -471,51 +574,104 @@ class ContentScript {
    * Get iframe content for PSP detection (optimized with caching and security)
    * @private
    */
-  private async getIframeContent(): Promise<string[]> {
+  private async getIframeContent(
+    iframeCandidates: HTMLIFrameElement[],
+  ): Promise<string[]> {
     const iframeContent: string[] = [];
-    const iframes = document.querySelectorAll('iframe[src]');
-    let processedCount = 0;
+    const uniqueIframes: HTMLIFrameElement[] = [];
+    const seenSrcs = new Set<string>();
 
-    for (const iframe of iframes) {
-      // Limit iframe processing for performance
-      if (processedCount >= this.maxIframeProcessing) {
+    for (const iframe of iframeCandidates) {
+      const src = iframe.src;
+      if (!src || seenSrcs.has(src)) {
+        continue;
+      }
+
+      seenSrcs.add(src);
+      uniqueIframes.push(iframe);
+      if (uniqueIframes.length >= this.maxIframeProcessing) {
         logger.debug(
           `Iframe processing limit reached (${this.maxIframeProcessing})`,
         );
 
         break;
       }
-
-      const htmlIframe = iframe as HTMLIFrameElement;
-      const src = htmlIframe.src;
-
-      // Skip if already processed or invalid
-      if (!src || this.processedIframes.has(src)) {
-        continue;
-      }
-
-      // Only scan iframes we can access (same-origin or allowed domains)
-      if (this.canAccessIframe(src)) {
-        this.processedIframes.add(src);
-        processedCount++;
-
-        try {
-          // Reduce wait time for better performance
-          await new Promise(resolve => setTimeout(resolve, 200));
-
-          const iframeDoc = htmlIframe.contentDocument ??
-            htmlIframe.contentWindow?.document;
-          if (iframeDoc) {
-            // Get nested sources more efficiently
-            this.extractNestedSources(iframeDoc, iframeContent);
-          }
-        } catch (error) {
-          logger.debug('Skipping iframe content due to access error', error);
-        }
-      }
     }
 
+    const tasks = uniqueIframes.map((iframe) => async(): Promise<void> => {
+      const src = iframe.src;
+      if (
+        !src ||
+        this.processedIframes.has(src) ||
+        !this.canAccessIframe(src)
+      ) {
+        return;
+      }
+
+      this.processedIframes.add(src);
+
+      try {
+        const iframeDoc = await this.getAccessibleIframeDocument(iframe);
+        if (iframeDoc) {
+          this.extractNestedSources(iframeDoc, iframeContent);
+        }
+      } catch (error) {
+        logger.debug('Skipping iframe content due to access error', error);
+      }
+    });
+    await this.runTasksWithConcurrency(tasks, this.iframeReadConcurrency);
+
     return iframeContent;
+  }
+
+  private async runTasksWithConcurrency(
+    tasks: (() => Promise<void>)[],
+    concurrency: number,
+  ): Promise<void> {
+    if (tasks.length === 0) {
+      return;
+    }
+
+    const poolSize = Math.max(1, Math.min(concurrency, tasks.length));
+    let nextIndex = 0;
+    const workers = Array.from({ length: poolSize }, async() => {
+      while (nextIndex < tasks.length) {
+        const currentIndex = nextIndex;
+        nextIndex += 1;
+        const task = tasks[currentIndex];
+        if (task === undefined) {
+          return;
+        }
+
+        await task();
+      }
+    });
+    await Promise.all(workers);
+  }
+
+  private async getAccessibleIframeDocument(
+    iframe: HTMLIFrameElement,
+  ): Promise<Document | null> {
+    const existingDoc =
+      iframe.contentDocument ?? iframe.contentWindow?.document;
+    if (existingDoc) {
+      return existingDoc;
+    }
+
+    if (iframe.contentWindow === null) {
+      return null;
+    }
+
+    await Promise.race([
+      new Promise<void>((resolve) => {
+        iframe.addEventListener('load', () => resolve(), { once: true });
+      }),
+      new Promise<void>((resolve) => {
+        setTimeout(resolve, this.iframeLoadTimeoutMs);
+      }),
+    ]);
+
+    return iframe.contentDocument ?? iframe.contentWindow?.document ?? null;
   }
 
   /**

@@ -30,6 +30,84 @@ describe('DOMObserverService', () => {
     expect(service.isActive()).toBe(true);
   });
 
+  it('passes relevant mutation records to callback', async() => {
+    service.initialize(callback, 0);
+    service.startObserving();
+
+    await waitFor(TEST_TIMEOUTS.DOM_MUTATION_DELAY);
+
+    const firstCallArgs = callback.mock.calls[0] as
+      | [MutationRecord[] | undefined]
+      | undefined;
+    expect(firstCallArgs?.[0]).toBeDefined();
+    expect(Array.isArray(firstCallArgs?.[0])).toBe(true);
+  });
+
+  it('observes relevant attribute changes for dynamic sources', () => {
+    service.initialize(callback, 0);
+    service.startObserving();
+
+    const observerRef = service as unknown as {
+      observer: { observe: jest.Mock } | null;
+    };
+    const observeMock = observerRef.observer?.observe;
+    expect(observeMock).toBeDefined();
+
+    const options = observeMock?.mock.calls[0]?.[1] as MutationObserverInit;
+    expect(options.attributes).toBe(true);
+    expect(options.attributeFilter).toEqual(
+      expect.arrayContaining(['src', 'href', 'action', 'rel', 'as']),
+    );
+  });
+
+  it('forwards relevant attribute mutation records', async() => {
+    const originalMutationObserver = global.MutationObserver;
+
+    try {
+      global.MutationObserver = class {
+        constructor(observerCallback: MutationCallback) {
+          this.callback = observerCallback;
+          this.observe = jest.fn(() => {
+            const iframe = document.createElement('iframe');
+            iframe.src = 'https://assets.braintreegateway.com/frame.html';
+            const mutation = {
+              type: 'attributes',
+              target: iframe,
+              attributeName: 'src',
+            } as unknown as MutationRecord;
+            setTimeout(
+              () =>
+                this.callback([mutation], this as unknown as MutationObserver),
+              0,
+            );
+          });
+
+          this.disconnect = jest.fn();
+        }
+        callback: MutationCallback;
+        observe: jest.Mock;
+        disconnect: jest.Mock;
+        takeRecords(): MutationRecord[] {
+          return [];
+        }
+      } as unknown as typeof MutationObserver;
+
+      service = new DOMObserverService();
+      service.initialize(callback, 0);
+      service.startObserving();
+
+      await waitFor(TEST_TIMEOUTS.DEBOUNCE_SHORT);
+
+      expect(callback).toHaveBeenCalled();
+      const firstCallArgs = callback.mock.calls[0] as
+        | [MutationRecord[] | undefined]
+        | undefined;
+      expect(firstCallArgs?.[0]?.[0]?.type).toBe('attributes');
+    } finally {
+      global.MutationObserver = originalMutationObserver;
+    }
+  });
+
   it('should stop observing mutations', async() => {
     service.initialize(callback, 0);
     service.startObserving();

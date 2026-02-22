@@ -97,6 +97,28 @@ function setupChromeMock(): ChromeMocks {
   };
 }
 
+interface OptionalPermissionState {
+  host: boolean;
+  webRequest: boolean;
+}
+
+function bindPermissionState(
+  chromeMocks: ChromeMocks,
+  state: OptionalPermissionState,
+): void {
+  chromeMocks.contains.mockImplementation(async(permissionRequest) => {
+    if (permissionRequest.permissions?.includes('webRequest')) {
+      return state.webRequest;
+    }
+
+    if (permissionRequest.origins?.includes('https://*/*')) {
+      return state.host;
+    }
+
+    return false;
+  });
+}
+
 async function flushAsyncTasks(): Promise<void> {
   await Promise.resolve();
   await Promise.resolve();
@@ -140,6 +162,7 @@ describe('PopupManager', () => {
 
   it('shows permission request state when host permission is missing', async() => {
     chromeMocks.contains.mockResolvedValue(false);
+    mockSendMessageResponses(chromeMocks.sendMessage, [{ psps: [] }]);
     const popup = new PopupManager();
 
     await popup.initialize();
@@ -152,16 +175,53 @@ describe('PopupManager', () => {
       'none',
     );
 
-    expect(chromeMocks.sendMessage).not.toHaveBeenCalled();
+    expect(chromeMocks.sendMessage).toHaveBeenCalledTimes(1);
+    expect(chromeMocks.sendMessage.mock.calls[0]?.[0]).toEqual({
+      action: MessageAction.GET_PSP,
+    });
   });
 
-  it('requests permission from button and re-initializes on grant', async() => {
-    chromeMocks.contains
-      .mockResolvedValueOnce(false)
-      .mockResolvedValueOnce(true);
+  it('shows permission request state when webRequest permission is missing',
+    async() => {
+      bindPermissionState(chromeMocks, {
+        host: true,
+        webRequest: false,
+      });
 
-    chromeMocks.request.mockResolvedValue(true);
+      mockSendMessageResponses(chromeMocks.sendMessage, [{ psps: [] }]);
+      const popup = new PopupManager();
+
+      await popup.initialize();
+
+      expect(document.getElementById('permission-state')?.style.display).toBe(
+        'block',
+      );
+
+      expect(document.getElementById('loading-state')?.style.display).toBe(
+        'none',
+      );
+
+      expect(chromeMocks.sendMessage).toHaveBeenCalledTimes(1);
+      expect(chromeMocks.sendMessage.mock.calls[0]?.[0]).toEqual({
+        action: MessageAction.GET_PSP,
+      });
+    });
+
+  it('requests permission from button and re-initializes on grant', async() => {
+    const permissionState: OptionalPermissionState = {
+      host: false,
+      webRequest: false,
+    };
+    bindPermissionState(chromeMocks, permissionState);
+
+    chromeMocks.request.mockImplementation(async() => {
+      permissionState.host = true;
+      permissionState.webRequest = true;
+      return true;
+    });
+
     mockSendMessageResponses(chromeMocks.sendMessage, [
+      { psps: [] },
       { success: true },
       { psps: [] },
     ]);
@@ -173,18 +233,26 @@ describe('PopupManager', () => {
     await flushAsyncTasks();
     await flushAsyncTasks();
 
-    expect(chromeMocks.request).toHaveBeenCalledWith({ origins: ['https://*/*'] });
+    expect(chromeMocks.request).toHaveBeenCalledWith({
+      origins: ['https://*/*'],
+      permissions: ['webRequest'],
+    });
+
     expect(document.getElementById('permission-state')?.style.display).toBe(
       'none',
     );
 
-    expect(chromeMocks.contains).toHaveBeenCalledTimes(2);
-    expect(chromeMocks.sendMessage).toHaveBeenCalledTimes(2);
+    expect(chromeMocks.contains.mock.calls.length).toBeGreaterThanOrEqual(4);
+    expect(chromeMocks.sendMessage).toHaveBeenCalledTimes(3);
     expect(chromeMocks.sendMessage.mock.calls[0]?.[0]).toEqual({
-      action: MessageAction.REDETECT_CURRENT_TAB,
+      action: MessageAction.GET_PSP,
     });
 
     expect(chromeMocks.sendMessage.mock.calls[1]?.[0]).toEqual({
+      action: MessageAction.REDETECT_CURRENT_TAB,
+    });
+
+    expect(chromeMocks.sendMessage.mock.calls[2]?.[0]).toEqual({
       action: MessageAction.GET_PSP,
     });
   });
@@ -360,6 +428,7 @@ describe('PopupManager', () => {
   it('DOMContentLoaded bootstrap initializes popup and beforeunload cleanup runs',
     async() => {
       chromeMocks.contains.mockResolvedValue(false);
+      mockSendMessageResponses(chromeMocks.sendMessage, [{ psps: [] }]);
 
       await import('./popup');
       document.dispatchEvent(new Event('DOMContentLoaded'));

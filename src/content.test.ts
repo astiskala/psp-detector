@@ -14,6 +14,8 @@ interface RuntimeMessage {
   action: MessageAction | string;
 }
 
+type MutationCallbackArg = (mutations?: MutationRecord[]) => Promise<void>;
+
 interface WindowContentState {
   pspDetectorContentScript?: {
     initialized: boolean;
@@ -45,6 +47,7 @@ function setupContentDOM(): void {
     <iframe src="https://frames.example.com/frame"></iframe>
     <form action="https://checkout.example.com/pay" method="post"></form>
     <link rel="preconnect" href="https://assets.example.com" />
+    <link rel="canonical" href="https://merchant.example.com/checkout" />
   `;
 }
 
@@ -145,6 +148,7 @@ describe('content bootstrap', () => {
     expect(scanContent).toContain('cdn.test.com/script.js');
     expect(scanContent).toContain('checkout.example.com/pay');
     expect(scanContent).toContain('assets.example.com');
+    expect(scanContent).not.toContain('merchant.example.com/checkout');
 
     const windowState = globalThis as typeof globalThis & WindowContentState;
     expect(windowState.pspDetectorContentScript?.initialized).toBe(true);
@@ -171,5 +175,40 @@ describe('content bootstrap', () => {
 
     expect(setExemptDomainsMock).not.toHaveBeenCalled();
     expect(domObserverStartObservingMock).not.toHaveBeenCalled();
+  });
+
+  it('detects iframe src added via attributes mutation', async() => {
+    setupChromeRuntimeMock(false);
+
+    await import('./content');
+    await flushAsyncTasks();
+
+    const mutationCallback = domObserverInitializeMock.mock.calls[0]?.[0] as
+      | MutationCallbackArg
+      | undefined;
+    expect(mutationCallback).toBeDefined();
+
+    detectPSPMock.mockClear();
+
+    const iframe = document.createElement('iframe');
+    document.body.appendChild(iframe);
+    iframe.src =
+      'https://assets.braintreegateway.com/web/3.123.2/html/hosted-fields-frame.min.html';
+
+    const mutation = {
+      type: 'attributes',
+      target: iframe,
+      attributeName: 'src',
+    } as unknown as MutationRecord;
+
+    // Respect detection cooldown before triggering a mutation-driven scan.
+    await new Promise<void>((resolve) => {
+      setTimeout(resolve, 550);
+    });
+
+    await mutationCallback?.([mutation]);
+
+    const scanContent = detectPSPMock.mock.calls[0]?.[1] as string | undefined;
+    expect(scanContent).toContain('assets.braintreegateway.com/web/3.123.2');
   });
 });

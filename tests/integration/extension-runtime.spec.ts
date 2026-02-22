@@ -337,9 +337,9 @@ test(
         optionsPage.getByRole('columnheader', { name: 'Detection Signal' }),
       ).toBeVisible();
 
-      await expect(optionsPage.locator('#historyBody tr')).toHaveCount(2);
-      await expect(optionsPage.locator('#historyBody img.domain-icon'))
-        .toHaveCount(2);
+      await expect(optionsPage.locator('#historyBody tr')).toHaveCount(1);
+      await expect(optionsPage.locator('#historyBody .domain-icon'))
+        .toHaveCount(1);
 
       await expect(optionsPage.locator('#historyBody img.psp-icon'))
         .toHaveCount(2);
@@ -374,6 +374,39 @@ test(
       await expect(optionsPage.locator('body')).not.toContainText(
         /\b\d+\s+signals\b/i,
       );
+    } finally {
+      await context.close();
+    }
+  },
+);
+
+test(
+  'performance budget: popup renders seeded detections quickly',
+  async({ page }, testInfo) => {
+    void page;
+    const context = await launchExtensionContext(
+      testInfo.outputPath('ext-user-data-perf-budget'),
+    );
+
+    try {
+      const extensionId = await getExtensionId(context);
+      const popupPage = await openPopupPage(context, extensionId);
+      await resetStoredRuntimeState(popupPage);
+
+      const merchantTabId = await createMerchantTab(popupPage, 'perf-budget');
+      await seedDetectionsForTab(popupPage, merchantTabId);
+      await expect.poll(async() => getPspCount(popupPage)).toBe(2);
+
+      const start = Date.now();
+      await popupPage.reload({ waitUntil: 'domcontentloaded' });
+      await expect(popupPage.locator('.psp-card')).toHaveCount(2);
+      const elapsedMs = Date.now() - start;
+
+      console.info(
+        `[perf] popup render with seeded detections: ${elapsedMs}ms`,
+      );
+
+      expect(elapsedMs).toBeLessThan(3000);
     } finally {
       await context.close();
     }

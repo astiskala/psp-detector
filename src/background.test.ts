@@ -29,7 +29,9 @@ interface EventMock<T extends (...args: never[]) => unknown> {
 
 interface ChromeMockContext {
   onInstalled: EventMock<InstalledListener>;
+  onSuspend: EventMock<SuspendListener>;
   onMessage: EventMock<MessageListener>;
+  onRemoved: EventMock<TabRemovedListener>;
   tabsCreate: jest.Mock<Promise<unknown>, [chrome.tabs.CreateProperties]>;
   tabsQuery: jest.Mock<Promise<chrome.tabs.Tab[]>, [chrome.tabs.QueryInfo]>;
   executeScript: jest.Mock;
@@ -39,7 +41,9 @@ interface ChromeMockContext {
   >;
   localSet: jest.Mock<Promise<void>, [Record<string, unknown>]>;
   localRemove: jest.Mock<Promise<void>, [string | string[]]>;
+  sessionGet: jest.Mock;
   sessionSet: jest.Mock<Promise<void>, [Record<string, unknown>]>;
+  webRequestAddListener: jest.Mock;
   getURL: jest.Mock<string, [string]>;
 }
 
@@ -47,6 +51,8 @@ interface ChromeMockOptions {
   activeTabUrl?: string;
   exemptDomains?: string[];
   hasHostPermission?: boolean;
+  hasWebRequestPermission?: boolean;
+  pspConfig?: Record<string, unknown>;
 }
 
 function createEventMock<
@@ -87,12 +93,12 @@ function readStorage(
   );
 }
 
-function createFetchResponse(exemptDomains: string[]): Response {
+function createFetchResponse(payload: unknown): Response {
   return {
     ok: true,
     status: 200,
     statusText: 'OK',
-    json: async() => ({ exemptDomains }),
+    json: async() => payload,
   } as Response;
 }
 
@@ -100,6 +106,16 @@ function setupChromeMocks(options: ChromeMockOptions = {}): ChromeMockContext {
   const activeTabUrl = options.activeTabUrl ?? 'https://shop.example.com/cart';
   const exemptDomains = options.exemptDomains ?? [];
   const hasHostPermission = options.hasHostPermission ?? true;
+  const hasWebRequestPermission = options.hasWebRequestPermission ?? false;
+  const pspConfig = options.pspConfig ?? {
+    psps: [{
+      name: 'Stripe',
+      matchStrings: ['js.stripe.com'],
+      image: 'stripe',
+      summary: 'Stripe',
+      url: 'https://stripe.com',
+    }],
+  };
 
   const localStore: Record<string, unknown> = {};
   const sessionStore: Record<string, unknown> = {
@@ -125,7 +141,9 @@ function setupChromeMocks(options: ChromeMockOptions = {}): ChromeMockContext {
   const executeScript = jest.fn().mockResolvedValue([]);
   const permissionContains = jest.fn().mockResolvedValue(hasHostPermission);
   const permissionRequest = jest.fn().mockResolvedValue(false);
-  const permissionGetAll = jest.fn().mockResolvedValue({ permissions: [] });
+  const permissionGetAll = jest.fn().mockResolvedValue({
+    permissions: hasWebRequestPermission ? ['webRequest'] : [],
+  });
 
   const localGet = jest
     .fn()
@@ -157,9 +175,16 @@ function setupChromeMocks(options: ChromeMockOptions = {}): ChromeMockContext {
       Object.assign(sessionStore, items);
     });
 
-  const fetchMock = jest
-    .fn()
-    .mockImplementation(async() => createFetchResponse(exemptDomains));
+  const fetchMock = jest.fn().mockImplementation(async(resource: unknown) => {
+    const url = typeof resource === 'string' ? resource : String(resource);
+    if (url.includes('psps.json')) {
+      return createFetchResponse(pspConfig);
+    }
+
+    return createFetchResponse({ exemptDomains });
+  });
+
+  const webRequestAddListener = jest.fn();
 
   globalThis.fetch = fetchMock as unknown as typeof fetch;
 
@@ -207,28 +232,36 @@ function setupChromeMocks(options: ChromeMockOptions = {}): ChromeMockContext {
     },
     webRequest: {
       onBeforeRequest: {
-        addListener: jest.fn(),
+        addListener: webRequestAddListener,
       },
     },
   } as unknown as typeof chrome;
 
   return {
     onInstalled,
+    onSuspend,
     onMessage,
+    onRemoved,
     tabsCreate,
     tabsQuery,
     executeScript,
     permissionContains,
     localSet,
     localRemove,
+    sessionGet,
     sessionSet,
+    webRequestAddListener,
     getURL,
   };
 }
 
-async function flushAsyncTasks(): Promise<void> {
+async function flushAsyncTasks(waitMs = 0): Promise<void> {
   await Promise.resolve();
   await Promise.resolve();
+  await new Promise<void>((resolve) => {
+    setTimeout(resolve, waitMs);
+  });
+
   await new Promise<void>((resolve) => {
     setTimeout(resolve, 0);
   });
@@ -339,5 +372,194 @@ describe('background service onboarding and re-detect flow', () => {
         type: 'exempt',
       }) as unknown,
     });
+  });
+
+  it('keeps tab PSP state in memory instead of re-reading session storage', async() => {
+    const mocks = setupChromeMocks();
+    await import('./background');
+    await flushAsyncTasks();
+
+    const messageListener = mocks.onMessage.getListener();
+    if (messageListener === null) {
+      throw new Error('Expected onMessage listener to be registered');
+    }
+
+    const sendResponse = jest.fn();
+    messageListener(
+      { action: MessageAction.GET_PSP },
+      { tab: { id: 12 } as chrome.tabs.Tab } as chrome.runtime.MessageSender,
+      sendResponse,
+    );
+
+    await flushAsyncTasks();
+
+    messageListener(
+      { action: MessageAction.GET_PSP },
+      { tab: { id: 12 } as chrome.tabs.Tab } as chrome.runtime.MessageSender,
+      sendResponse,
+    );
+
+    await flushAsyncTasks();
+
+    // One session read at restoreState; subsequent calls use in-memory cache.
+    expect(mocks.sessionGet).toHaveBeenCalledTimes(1);
+  });
+
+  it('flushes debounced tab PSP persistence on suspend', async() => {
+    const mocks = setupChromeMocks();
+    await import('./background');
+    await flushAsyncTasks();
+
+    const messageListener = mocks.onMessage.getListener();
+    const onSuspendListener = mocks.onSuspend.getListener();
+    if (messageListener === null || onSuspendListener === null) {
+      throw new Error('Expected listeners to be registered');
+    }
+
+    const sendResponse = jest.fn();
+    messageListener(
+      {
+        action: MessageAction.DETECT_PSP,
+        data: {
+          psp: 'Primer',
+          tabId: 77,
+          detectionInfo: {
+            method: 'matchString',
+            value: 'api.primer.io',
+            sourceType: 'networkRequest',
+          },
+        },
+      },
+      { tab: { id: 77, url: 'https://shop.example.com' } as chrome.tabs.Tab },
+      sendResponse,
+    );
+
+    await flushAsyncTasks();
+
+    expect(sendResponse).toHaveBeenCalledWith(null);
+    expect(mocks.sessionSet).not.toHaveBeenCalled();
+
+    onSuspendListener();
+    await flushAsyncTasks();
+
+    expect(mocks.sessionSet).toHaveBeenCalledWith({
+      [STORAGE_KEYS.TAB_PSPS]: expect.objectContaining({
+        77: expect.arrayContaining([
+          expect.objectContaining({ psp: 'Primer' }),
+        ]),
+      }),
+    });
+  });
+
+  it('registers webRequest listener with narrowed request types', async() => {
+    const mocks = setupChromeMocks({ hasWebRequestPermission: true });
+    await import('./background');
+    await flushAsyncTasks();
+
+    expect(mocks.webRequestAddListener).toHaveBeenCalledTimes(1);
+    const requestFilter = mocks.webRequestAddListener.mock.calls[0]?.[1] as
+      | Record<string, unknown>
+      | undefined;
+    expect(requestFilter).toEqual({
+      urls: ['https://*/*'],
+      types: ['script', 'xmlhttprequest', 'sub_frame'],
+    });
+  });
+
+  it('deduplicates repeated network matches per tab', async() => {
+    const mocks = setupChromeMocks({
+      hasWebRequestPermission: true,
+      pspConfig: {
+        psps: [{
+          name: 'Stripe',
+          matchStrings: ['js.stripe.com'],
+          image: 'stripe',
+          summary: 'Stripe',
+          url: 'https://stripe.com',
+        }],
+      },
+    });
+    await import('./background');
+    await flushAsyncTasks();
+
+    const messageListener = mocks.onMessage.getListener();
+    if (messageListener === null) {
+      throw new Error('Expected onMessage listener to be registered');
+    }
+
+    const getConfigResponse = jest.fn();
+    messageListener(
+      { action: MessageAction.GET_PSP_CONFIG },
+      {} as chrome.runtime.MessageSender,
+      getConfigResponse,
+    );
+
+    await flushAsyncTasks();
+
+    const networkListener = mocks.webRequestAddListener.mock.calls[0]?.[0] as
+      | ((details: chrome.webRequest.WebRequestDetails) => void)
+      | undefined;
+    if (networkListener === undefined) {
+      throw new Error('Expected webRequest listener to be registered');
+    }
+
+    networkListener({
+      tabId: 91,
+      url: 'https://js.stripe.com/v3/elements.js',
+      type: 'script',
+    } as chrome.webRequest.WebRequestDetails);
+
+    await flushAsyncTasks();
+
+    const sendResponse = jest.fn();
+    messageListener(
+      { action: MessageAction.GET_PSP },
+      { tab: { id: 91 } as chrome.tabs.Tab } as chrome.runtime.MessageSender,
+      sendResponse,
+    );
+
+    await flushAsyncTasks();
+    expect(sendResponse).toHaveBeenLastCalledWith({
+      psps: [expect.objectContaining({ psp: 'Stripe' })],
+    });
+
+    networkListener({
+      tabId: 91,
+      url: 'https://js.stripe.com/v3/elements.js',
+      type: 'script',
+    } as chrome.webRequest.WebRequestDetails);
+
+    await flushAsyncTasks();
+
+    const secondResponse = jest.fn();
+    messageListener(
+      { action: MessageAction.GET_PSP },
+      { tab: { id: 91 } as chrome.tabs.Tab } as chrome.runtime.MessageSender,
+      secondResponse,
+    );
+
+    await flushAsyncTasks();
+    expect(secondResponse).toHaveBeenLastCalledWith({
+      psps: [expect.objectContaining({ psp: 'Stripe' })],
+    });
+
+    const onSuspendListener = mocks.onSuspend.getListener();
+    if (onSuspendListener === null) {
+      throw new Error('Expected onSuspend listener to be registered');
+    }
+
+    onSuspendListener();
+    await flushAsyncTasks();
+
+    expect(mocks.sessionSet).toHaveBeenCalled();
+    const persisted = mocks.sessionSet.mock.calls.at(-1)?.[0] as
+      | Record<string, unknown>
+      | undefined;
+    const tabPsps = persisted?.[STORAGE_KEYS.TAB_PSPS] as
+      | Record<string, { psp: string }[]>
+      | undefined;
+    const tabEntries = tabPsps?.['91'] ?? [];
+    expect(tabEntries).toHaveLength(1);
+    expect(tabEntries[0]).toMatchObject({ psp: 'Stripe' });
   });
 });

@@ -18,7 +18,7 @@ const mainEntryPoints = {
 const sharedConfig = {
   bundle: true,
   minify: !process.env.DEBUG,
-  sourcemap: !process.env.NO_SOURCEMAP,
+  sourcemap: process.env.DEBUG ? !process.env.NO_SOURCEMAP : false,
   target: 'esnext',
   format: 'esm',
   platform: 'browser',
