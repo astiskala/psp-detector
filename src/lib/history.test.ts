@@ -2,6 +2,7 @@ import { STORAGE_KEYS } from './storage-keys';
 import { HISTORY_MAX_ENTRIES } from '../types/history';
 import {
   HISTORY_ENTRY_DEBOUNCE_MS,
+  HISTORY_ENTRY_MERGE_WINDOW_MS,
   writeHistoryEntry,
   readHistory,
   clearHistory,
@@ -45,7 +46,7 @@ describe('writeHistoryEntry', () => {
   it('appends to history, newest first', async() => {
     await writeHistoryEntry(makeEntry({ id: 'a', timestamp: 1 }));
     await writeHistoryEntry(
-      makeEntry({ id: 'b', timestamp: 2, domain: 'shop.example.com' }),
+      makeEntry({ id: 'b', timestamp: 2, domain: 'shop.example.com', url: 'https://shop.example.com/checkout' }),
     );
 
     const history = await readHistory();
@@ -61,10 +62,11 @@ describe('writeHistoryEntry', () => {
           id: `old_${i}`,
           timestamp: i,
           domain: `site-${i}.example.com`,
+          url: `https://site-${i}.example.com/checkout`,
         }),
     );
 
-    await writeHistoryEntry(makeEntry({ id: 'new', timestamp: 9999 }));
+    await writeHistoryEntry(makeEntry({ id: 'new', timestamp: 9999, url: 'https://example.com/new' }));
     const history = await readHistory();
     expect(history).toHaveLength(HISTORY_MAX_ENTRIES);
     expect(history[0]?.id).toBe('new');
@@ -78,6 +80,7 @@ describe('writeHistoryEntry', () => {
           id: `old_${i}`,
           timestamp: i,
           domain: `site-${i}.example.com`,
+          url: `https://site-${i}.example.com/checkout`,
         }),
     );
 
@@ -92,7 +95,7 @@ describe('writeHistoryEntry', () => {
       Object.assign(storedData, data);
     });
 
-    await writeHistoryEntry(makeEntry({ id: 'retry', timestamp: 10_000 }));
+    await writeHistoryEntry(makeEntry({ id: 'retry', timestamp: 10_000, url: 'https://example.com/retry' }));
 
     const history = await readHistory();
     expect(history[0]?.id).toBe('retry');
@@ -111,13 +114,16 @@ describe('writeHistoryEntry', () => {
     ).resolves.toBeUndefined();
   });
 
-  it('debounces duplicate entries for the same detection in a short window', async() => {
+  // --- Debounce window (Tier 2: 30s–5min same URL → skip) ---
+
+  it('debounces repeated visits to the same URL within the debounce window', async() => {
     const baseline = makeEntry({ id: 'a', timestamp: 1_000 });
     await writeHistoryEntry(baseline);
+    // More than 30s after baseline but within 5 min — should debounce
     await writeHistoryEntry(
       makeEntry({
         id: 'b',
-        timestamp: baseline.timestamp + HISTORY_ENTRY_DEBOUNCE_MS - 1_000,
+        timestamp: baseline.timestamp + HISTORY_ENTRY_MERGE_WINDOW_MS + 1_000,
       }),
     );
 
@@ -126,7 +132,7 @@ describe('writeHistoryEntry', () => {
     expect(history[0]?.id).toBe('a');
   });
 
-  it('writes duplicate detections again after debounce window', async() => {
+  it('writes a new entry for the same URL after the debounce window expires', async() => {
     const baseline = makeEntry({ id: 'a', timestamp: 1_000 });
     await writeHistoryEntry(baseline);
     await writeHistoryEntry(
@@ -142,27 +148,118 @@ describe('writeHistoryEntry', () => {
     expect(history[1]?.id).toBe('a');
   });
 
-  it('does not debounce when detection evidence changes', async() => {
-    const baseline = makeEntry({ id: 'a', timestamp: 1_000 });
-    await writeHistoryEntry(baseline);
-    await writeHistoryEntry(
-      makeEntry({
-        id: 'b',
-        timestamp: baseline.timestamp + 2_000,
-        psps: [
-          {
-            name: 'Adyen',
-            method: 'regex',
-            value: String.raw`checkoutshopper-live\.adyen\.com`,
-            sourceType: 'networkRequest',
-          },
-        ],
-      }),
-    );
+  // --- Merge window (Tier 1: within 30s, same URL → merge PSPs) ---
+
+  it('merges two PSPs arriving within the merge window into one entry', async() => {
+    const BASE_TS = 100_000;
+    const stripeEntry = makeEntry({
+      id: 'tab1_stripe',
+      timestamp: BASE_TS,
+      psps: [
+        {
+          name: 'Stripe',
+          method: 'regex',
+          value: 'js.stripe.com',
+          sourceType: 'networkRequest',
+        },
+      ],
+    });
+    const adyenEntry = makeEntry({
+      id: 'tab1_adyen',
+      timestamp: BASE_TS + 5_000, // 5s later, within 30s merge window
+      psps: [
+        {
+          name: 'Adyen',
+          method: 'regex',
+          value: 'checkoutshopper-live.adyen.com',
+          sourceType: 'networkRequest',
+        },
+      ],
+    });
+
+    await writeHistoryEntry(stripeEntry);
+    await writeHistoryEntry(adyenEntry);
+
+    const history = await readHistory();
+    expect(history).toHaveLength(1);
+    const pspNames = history[0]?.psps.map((p) => p.name);
+    expect(pspNames).toContain('Stripe');
+    expect(pspNames).toContain('Adyen');
+  });
+
+  it('does not duplicate a PSP already in the merged entry', async() => {
+    const BASE_TS = 100_000;
+    const stripe1 = makeEntry({
+      id: 'tab1_stripe1',
+      timestamp: BASE_TS,
+      psps: [
+        {
+          name: 'Stripe',
+          method: 'regex',
+          value: 'js.stripe.com',
+          sourceType: 'networkRequest',
+        },
+      ],
+    });
+    const stripe2 = makeEntry({
+      id: 'tab1_stripe2',
+      timestamp: BASE_TS + 3_000, // same PSP arriving again within merge window
+      psps: [
+        {
+          name: 'Stripe',
+          method: 'regex',
+          value: 'js.stripe.com',
+          sourceType: 'networkRequest',
+        },
+      ],
+    });
+
+    await writeHistoryEntry(stripe1);
+    await writeHistoryEntry(stripe2);
+
+    const history = await readHistory();
+    // Still one entry
+    expect(history).toHaveLength(1);
+    // Only one Stripe entry in psps
+    const stripeMatches = history[0]?.psps.filter((p) => p.name === 'Stripe');
+    expect(stripeMatches).toHaveLength(1);
+  });
+
+  it('creates separate entries for different URLs within the merge window', async() => {
+    const BASE_TS = 100_000;
+    const entryA = makeEntry({
+      id: 'tab1_a',
+      timestamp: BASE_TS,
+      url: 'https://example.com/checkout',
+      psps: [
+        {
+          name: 'Stripe',
+          method: 'regex',
+          value: 'js.stripe.com',
+          sourceType: 'networkRequest',
+        },
+      ],
+    });
+    const entryB = makeEntry({
+      id: 'tab2_b',
+      timestamp: BASE_TS + 5_000, // within 30s but different URL
+      url: 'https://shop.example.com/pay',
+      domain: 'shop.example.com',
+      psps: [
+        {
+          name: 'Adyen',
+          method: 'regex',
+          value: 'checkoutshopper-live.adyen.com',
+          sourceType: 'networkRequest',
+        },
+      ],
+    });
+
+    await writeHistoryEntry(entryA);
+    await writeHistoryEntry(entryB);
 
     const history = await readHistory();
     expect(history).toHaveLength(2);
-    expect(history[0]?.id).toBe('b');
   });
 });
 
