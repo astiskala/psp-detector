@@ -60,7 +60,7 @@ function buildLegend(
   }
 
   while (legend.firstChild) {
-    legend.removeChild(legend.firstChild);
+    legend.firstChild.remove();
   }
 
   if (slices.length === 0) {
@@ -197,7 +197,7 @@ function normalizeProviderName(name: string): string {
 function buildProviderSlug(name: string): string {
   return normalizeProviderName(name)
     .replace(/\.com$/u, '')
-    .replace(/[^a-z0-9]/gu, '');
+    .replaceAll(/[^a-z0-9]/gu, '');
 }
 
 function getProviderIconPath(pspName: string): string {
@@ -419,7 +419,7 @@ function renderTable(entries: HistoryEntry[]): void {
   if (!body || !emptyState) return;
 
   while (body.firstChild) {
-    body.removeChild(body.firstChild);
+    body.firstChild.remove();
   }
 
   if (entries.length === 0) {
