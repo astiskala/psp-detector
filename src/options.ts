@@ -403,6 +403,35 @@ function appendDomainCellContent(
   cell.appendChild(wrap);
 }
 
+function createPspTextElement(
+  name: string,
+  providerUrl: string | undefined,
+  providerSummary: string | undefined,
+): HTMLElement {
+  if (providerUrl !== undefined && providerUrl !== '') {
+    const anchor = document.createElement('a');
+    anchor.className = 'cell-label';
+    anchor.href = providerUrl;
+    anchor.textContent = name;
+    anchor.target = '_blank';
+    anchor.rel = 'noopener noreferrer';
+    if (providerSummary !== undefined && providerSummary !== '') {
+      anchor.title = providerSummary;
+    }
+
+    return anchor;
+  }
+
+  const span = document.createElement('span');
+  span.className = 'cell-label';
+  span.textContent = name;
+  if (providerSummary !== undefined && providerSummary !== '') {
+    span.title = providerSummary;
+  }
+
+  return span;
+}
+
 function appendPspCellContent(
   cell: HTMLTableCellElement,
   entry: HistoryEntry,
@@ -426,32 +455,11 @@ function appendPspCellContent(
     );
 
     const key = normalizeProviderName(psp.name);
-    const providerUrl = providerUrlByName.get(key);
-    const providerSummary = providerSummaryByName.get(key);
-
-    let textEl: HTMLElement;
-    if (providerUrl) {
-      const anchor = document.createElement('a');
-      anchor.className = 'cell-label';
-      anchor.href = providerUrl;
-      anchor.textContent = psp.name;
-      anchor.target = '_blank';
-      anchor.rel = 'noopener noreferrer';
-      if (providerSummary) {
-        anchor.title = providerSummary;
-      }
-
-      textEl = anchor;
-    } else {
-      const span = document.createElement('span');
-      span.className = 'cell-label';
-      span.textContent = psp.name;
-      if (providerSummary) {
-        span.title = providerSummary;
-      }
-
-      textEl = span;
-    }
+    const textEl = createPspTextElement(
+      psp.name,
+      providerUrlByName.get(key),
+      providerSummaryByName.get(key),
+    );
 
     item.appendChild(icon);
     item.appendChild(textEl);
@@ -495,13 +503,8 @@ async function loadProviderIcons(): Promise<void> {
     for (const provider of getAllProviders(json)) {
       const key = normalizeProviderName(provider.name);
       providerIconByName.set(key, `images/${provider.image}_48.png`);
-      if (provider.url) {
-        providerUrlByName.set(key, String(provider.url));
-      }
-
-      if (provider.summary) {
-        providerSummaryByName.set(key, provider.summary);
-      }
+      providerUrlByName.set(key, String(provider.url));
+      providerSummaryByName.set(key, provider.summary);
     }
   } catch (error) {
     logger.warn('Failed to load PSP icon metadata for history table', error);
