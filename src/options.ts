@@ -37,6 +37,10 @@ const CHART_COLORS = [
   '#e11d48',
 ];
 
+function getChartColor(index: number): string {
+  return CHART_COLORS[index % CHART_COLORS.length] ?? '#2563eb';
+}
+
 function renderStats(history: HistoryEntry[]): void {
   const stats = getHistoryStats(history);
   setText('stats', formatHistorySummary(stats));
@@ -77,7 +81,7 @@ function buildLegend(
 
     const swatch = document.createElement('span');
     swatch.className = 'legend-swatch';
-    swatch.style.backgroundColor = colors[index]!;
+    swatch.style.backgroundColor = colors[index] ?? '#2563eb';
 
     const label = document.createElement('span');
     label.textContent =
@@ -135,7 +139,7 @@ function drawPieChart(
 
   const total = slices.reduce((sum, slice) => sum + slice.count, 0);
   const colors = slices.map(
-    (_, index) => CHART_COLORS[index % CHART_COLORS.length]!,
+    (_, index) => getChartColor(index),
   );
   let start = -Math.PI / 2;
 
@@ -145,7 +149,7 @@ function drawPieChart(
     ctx.moveTo(centerX, centerY);
     ctx.arc(centerX, centerY, radius, start, start + sweep);
     ctx.closePath();
-    ctx.fillStyle = colors[index]!;
+    ctx.fillStyle = colors[index] ?? '#2563eb';
     ctx.fill();
     start += sweep;
   }
@@ -202,7 +206,7 @@ function buildProviderSlug(name: string): string {
 
 function getProviderIconPath(pspName: string): string {
   const mappedIconPath = providerIconByName.get(normalizeProviderName(pspName));
-  if (mappedIconPath) {
+  if (mappedIconPath !== undefined) {
     return mappedIconPath;
   }
 
@@ -295,7 +299,7 @@ function appendDomainCellContent(
   const faviconUrl = buildDomainFaviconUrl(entry);
 
   let iconElement: HTMLElement;
-  if (faviconUrl) {
+  if (faviconUrl !== null) {
     const img = document.createElement('img');
     img.className = 'table-icon domain-icon';
     img.alt = `${hostname || entry.domain} favicon`;

@@ -5,87 +5,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>PSP Detector - History</title>
+  <link rel="stylesheet" href="common.css" />
   <style>
-    :root {
-      --bg: #ffffff;
-      --surface: #f9fafb;
-      --surface-elevated: #f3f4f6;
-      --border: #e5e7eb;
-      --text: #111827;
-      --text-secondary: #6b7280;
-      --accent: #2563eb;
-      --danger: #dc2626;
-      font-family: system-ui, -apple-system, sans-serif;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #111827;
-        --surface: #1f2937;
-        --surface-elevated: #253041;
-        --border: #374151;
-        --text: #f9fafb;
-        --text-secondary: #9ca3af;
-        --accent: #60a5fa;
-        --danger: #f87171;
-      }
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      background: var(--bg);
-      color: var(--text);
-      padding: 24px;
-      min-height: 100vh;
-    }
-
-    .page-header {
-      align-items: flex-start;
-      background: linear-gradient(140deg, var(--surface), var(--surface-elevated));
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 16px;
-      justify-content: space-between;
-      margin-bottom: 16px;
-      padding: 16px;
-    }
-
-    .brand-wrap {
-      align-items: center;
-      display: flex;
-      gap: 12px;
-      min-width: 280px;
-    }
-
-    .brand-logo {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      height: 44px;
-      object-fit: contain;
-      padding: 4px;
-      width: 44px;
-    }
-
-    h1 {
-      font-size: 22px;
-      font-weight: 700;
-      line-height: 1.2;
-      margin-bottom: 6px;
-    }
-
-    .stats {
-      color: var(--text-secondary);
-      font-size: 13px;
-    }
-
     .header-actions {
       align-items: center;
       display: flex;
@@ -97,27 +18,37 @@
     .controls {
       display: flex;
       gap: 8px;
-      margin-bottom: 16px;
       flex-wrap: wrap;
+    }
+
+    .field-control {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 13px;
+      min-height: 38px;
+      padding: 10px 12px;
+    }
+
+    .search-control {
+      flex: 1;
+      min-width: 200px;
     }
 
     .chart-grid {
       display: grid;
       gap: 12px;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      margin-bottom: 16px;
     }
 
     .chart-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
       padding: 12px;
     }
 
     .chart-card h2 {
       font-size: 14px;
-      margin-bottom: 8px;
+      margin: 0 0 8px;
     }
 
     .chart-canvas-wrap {
@@ -137,6 +68,7 @@
       display: grid;
       gap: 6px;
       list-style: none;
+      margin: 0;
       max-height: 120px;
       overflow: auto;
       padding: 0;
@@ -159,71 +91,28 @@
       width: 10px;
     }
 
-    input[type="search"] {
-      flex: 1;
-      min-width: 200px;
-      padding: 10px 12px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: var(--surface);
-      color: var(--text);
-      font-size: 13px;
-    }
-
-    select {
-      padding: 10px 12px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: var(--surface);
-      color: var(--text);
-      font-size: 13px;
-    }
-
-    button {
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: var(--surface);
-      color: var(--text);
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 600;
-      min-height: 38px;
-      padding: 0 14px;
-      transition: background-color 0.15s ease, border-color 0.15s ease;
-    }
-
-    button:hover {
-      background: var(--surface-elevated);
-      border-color: var(--text-secondary);
-    }
-
-    button.danger {
-      color: var(--danger);
-      border-color: var(--danger);
-    }
-
     .table-wrap {
       overflow-x: auto;
     }
 
     table {
-      width: 100%;
       border-collapse: collapse;
       font-size: 13px;
+      width: 100%;
     }
 
     th {
-      text-align: left;
-      padding: 8px 12px;
       border-bottom: 2px solid var(--border);
       color: var(--text-secondary);
       font-weight: 700;
+      padding: 8px 12px;
+      text-align: left;
       white-space: nowrap;
     }
 
     td {
-      padding: 8px 12px;
       border-bottom: 1px solid var(--border);
+      padding: 8px 12px;
       vertical-align: top;
     }
 
@@ -286,103 +175,94 @@
     }
 
     .empty {
-      text-align: center;
       color: var(--text-secondary);
       padding: 48px;
+      text-align: center;
     }
 
     @media (max-width: 800px) {
-      body {
-        padding: 14px;
-      }
-
-      .page-header {
-        gap: 12px;
-        padding: 12px;
-      }
-
-      .brand-wrap {
-        min-width: 0;
-      }
-
       .header-actions {
-        width: 100%;
         justify-content: flex-start;
+        width: 100%;
       }
 
-      .controls {
-        margin-bottom: 12px;
-      }
-
-      input[type="search"] {
+      .search-control {
         min-width: 0;
       }
     }
   </style>
 </head>
 
-<body>
+<body class="app-page">
   <header class="page-header">
     <div class="brand-wrap">
       <img class="brand-logo" src="images/default_48.png" alt="PSP Detector logo" />
       <div>
-        <h1>PSP Detector - History</h1>
-        <p class="stats" id="stats">Loading...</p>
+        <h1 class="page-title">PSP Detector - History</h1>
+        <p class="page-subtitle" id="stats">Loading...</p>
       </div>
     </div>
     <div class="header-actions">
-      <button id="exportBtn">Export CSV</button>
-      <button class="danger" id="clearBtn">Clear History</button>
+      <button class="btn btn-secondary" id="exportBtn">Export CSV</button>
+      <button class="btn btn-danger" id="clearBtn">Clear History</button>
     </div>
   </header>
 
-  <div class="controls">
-    <input type="search" id="search" placeholder="Search domains, PSPs, or detection signals..." autocomplete="off" />
-    <select id="pspFilter">
-      <option value="">All PSPs</option>
-    </select>
-  </div>
+  <main class="page-content">
+    <div class="controls">
+      <input
+        type="search"
+        id="search"
+        class="field-control search-control"
+        placeholder="Search domains, PSPs, or detection signals..."
+        autocomplete="off"
+      />
+      <select id="pspFilter" class="field-control">
+        <option value="">All PSPs</option>
+      </select>
+    </div>
 
-  <section class="chart-grid" aria-label="Detection breakdown charts">
-    <article class="chart-card">
-      <h2>PSP Detection Share</h2>
-      <div class="chart-canvas-wrap">
-        <canvas id="pspChart" width="200" height="200" aria-label="PSP share chart"></canvas>
-      </div>
-      <ul id="pspChartLegend" class="chart-legend"></ul>
-    </article>
-    <article class="chart-card">
-      <h2>Detection Source Share</h2>
-      <div class="chart-canvas-wrap">
-        <canvas id="sourceChart" width="200" height="200" aria-label="Detection source share chart"></canvas>
-      </div>
-      <ul id="sourceChartLegend" class="chart-legend"></ul>
-    </article>
-    <article class="chart-card">
-      <h2>Provider Type Share</h2>
-      <div class="chart-canvas-wrap">
-        <canvas id="typeChart" width="200" height="200" aria-label="Provider type share chart"></canvas>
-      </div>
-      <ul id="typeChartLegend" class="chart-legend"></ul>
-    </article>
-  </section>
+    <section class="chart-grid" aria-label="Detection breakdown charts">
+      <article class="chart-card surface-card">
+        <h2>Detected PSPs</h2>
+        <div class="chart-canvas-wrap">
+          <canvas id="pspChart" width="200" height="200" aria-label="PSP share chart"></canvas>
+        </div>
+        <ul id="pspChartLegend" class="chart-legend"></ul>
+      </article>
+      <article class="chart-card surface-card">
+        <h2>Detection Source</h2>
+        <div class="chart-canvas-wrap">
+          <canvas id="sourceChart" width="200" height="200" aria-label="Detection source share chart"></canvas>
+        </div>
+        <ul id="sourceChartLegend" class="chart-legend"></ul>
+      </article>
+      <article class="chart-card surface-card">
+        <h2>Provider Type</h2>
+        <div class="chart-canvas-wrap">
+          <canvas id="typeChart" width="200" height="200" aria-label="Provider type share chart"></canvas>
+        </div>
+        <ul id="typeChartLegend" class="chart-legend"></ul>
+      </article>
+    </section>
 
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Date / Time</th>
-          <th>Domain</th>
-          <th>PSP(s)</th>
-          <th>Type</th>
-          <th>Detection Source</th>
-          <th>Detection Signal</th>
-        </tr>
-      </thead>
-      <tbody id="historyBody"></tbody>
-    </table>
-    <p class="empty" id="emptyState" hidden>No history yet.</p>
-  </div>
+    <div class="table-wrap surface-card">
+      <table>
+        <thead>
+          <tr>
+            <th>Date / Time</th>
+            <th>Domain</th>
+            <th>PSP(s)</th>
+            <th>Type</th>
+            <th>Detection Source</th>
+            <th>Detection Signal</th>
+          </tr>
+        </thead>
+        <tbody id="historyBody"></tbody>
+      </table>
+      <p class="empty" id="emptyState" hidden>No history yet.</p>
+    </div>
+  </main>
 
   <script src="options.js"></script>
 </body>

@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PSP Detector - Setup</title>
+  <link rel="stylesheet" href="common.css" />
+  <style>
+    .setup-card {
+      padding: 24px;
+    }
+
+    .setup-title {
+      font-size: 19px;
+      line-height: 1.3;
+      margin: 0 0 10px;
+    }
+
+    .intro {
+      color: var(--text-secondary);
+      margin: 0 0 16px;
+    }
+
+    .steps {
+      margin: 0 0 20px;
+      padding-left: 20px;
+    }
+
+    .steps li {
+      margin-bottom: 10px;
+    }
+
+    .tip {
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--warning);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      margin: 0 0 16px;
+      padding: 10px 12px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    #permission-status {
+      color: var(--text-secondary);
+      font-weight: 600;
+      margin-top: 14px;
+    }
+
+    #permission-status.ready {
+      color: var(--success);
+    }
+
+    @media (max-width: 800px) {
+      .setup-card {
+        padding: 16px;
+      }
+    }
+  </style>
+</head>
+
+<body class="app-page">
+  <header class="page-header">
+    <div class="brand-wrap">
+      <img class="brand-logo" src="images/default_48.png" alt="PSP Detector logo" />
+      <div>
+        <h1 class="page-title">PSP Detector - Setup</h1>
+        <p class="page-subtitle">Enable site access once to start automatic detection.</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-content">
+    <section class="setup-card surface-card">
+      <h2 class="setup-title">Quick Start</h2>
+      <p class="intro">
+        PSP Detector scans the current page for payment provider signals.
+        When a PSP is detected, the extension icon updates. Click the icon to
+        view provider details and matching evidence.
+      </p>
+      <ol class="steps">
+        <li>Click <strong>Grant site access</strong> below.</li>
+        <li>Open any checkout page and wait for the icon to update.</li>
+        <li>Click the extension icon to inspect detected PSP details.</li>
+      </ol>
+      <p class="tip">
+        <strong>Tip:</strong> Pin PSP Detector from the extensions menu
+        (puzzle icon) for one-click access in your toolbar.
+      </p>
+      <div class="actions">
+        <button id="grant-host-access" class="btn btn-primary" type="button">
+          Grant site access
+        </button>
+      </div>
+      <div id="permission-status" aria-live="polite">
+        Checking permission status...
+      </div>
+    </section>
+  </main>
+
+  <script src="onboarding.js"></script>
+</body>
+
+</html>

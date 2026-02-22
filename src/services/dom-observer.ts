@@ -74,13 +74,18 @@ export class DOMObserverService {
   public startObserving(): void {
     if (!this.observer || this.isObserving) return;
     const start = (): void => {
-      if (!document.body) {
+      if (document.body === null) {
         document.addEventListener('DOMContentLoaded', start, { once: true });
         return;
       }
 
       try {
-        this.observer!.observe(document.body, {
+        const observer = this.observer;
+        if (observer === null) {
+          return;
+        }
+
+        observer.observe(document.body, {
           childList: true,
           subtree: true,
         });

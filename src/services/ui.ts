@@ -1,6 +1,8 @@
 import type { PSP, PSPConfig, StoredTabPsp } from '../types';
 import { createSafeUrl, logger } from '../lib/utils';
 
+type UIState = 'error' | 'no-psp' | 'disabled' | 'success';
+
 /**
  * UI service for updating the popup with PSP information.
  * @class
@@ -67,8 +69,7 @@ export class UIService {
     detectionInfo?: { method: string; value: string },
   ): void {
     try {
-      this.hideLoadingState();
-      this.showContentState();
+      this.transitionToContent();
       this.setUIState('success');
 
       this.updateTextContent('name', psp.name);
@@ -95,8 +96,7 @@ export class UIService {
     psps: StoredTabPsp[],
     config: PSPConfig,
   ): void {
-    this.hideLoadingState();
-    this.showContentState();
+    this.transitionToContent();
 
     const description = this.elements['description'];
     if (!description) {
@@ -138,8 +138,7 @@ export class UIService {
    * Show no PSP detected state
    */
   public showNoPSPDetected(): void {
-    this.hideLoadingState();
-    this.showContentState();
+    this.transitionToContent();
     this.setUIState('no-psp');
     this.showStatusIcon('🔍');
     this.hideDetectionDetails();
@@ -166,8 +165,7 @@ export class UIService {
    *
    */
   public showPSPDetectionDisabled(): void {
-    this.hideLoadingState();
-    this.showContentState();
+    this.transitionToContent();
     this.setUIState('disabled');
     this.showStatusIcon('🚫');
     this.hideDetectionDetails();
@@ -193,8 +191,7 @@ export class UIService {
    *
    */
   public showError(): void {
-    this.hideLoadingState();
-    this.showContentState();
+    this.transitionToContent();
     this.setUIState('error');
     this.showStatusIcon('⚠️');
     this.hideDetectionDetails();
@@ -234,7 +231,7 @@ export class UIService {
       return;
     }
 
-    if (notice) {
+    if (typeof notice === 'string' && notice.length > 0) {
       noticeElement.style.display = 'block';
       noticeElement.classList.add('show');
       this.updateTextContent('notice', notice);
@@ -311,11 +308,20 @@ export class UIService {
   }
 
   /**
+   * Transition UI from loading state to rendered content state.
+   * @private
+   */
+  private transitionToContent(): void {
+    this.hideLoadingState();
+    this.showContentState();
+  }
+
+  /**
    * Set UI state by adding appropriate CSS class
    * @private
    *
    */
-  private setUIState(state: string): void {
+  private setUIState(state: UIState): void {
     if (!this.elements['container']) return;
 
     // Remove existing state classes
@@ -414,7 +420,7 @@ export class UIService {
     const card = document.createElement('div');
     card.className = 'psp-card';
 
-    if (config?.image) {
+    if (typeof config?.image === 'string' && config.image.length > 0) {
       const img = document.createElement('img');
       const fallbackImageSrc = chrome.runtime.getURL('images/default_48.png');
       img.onerror = (): void => {

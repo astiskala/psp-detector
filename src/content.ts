@@ -140,7 +140,8 @@ class ContentScript {
       const response = await this.sendMessage<{ exemptDomains: string[] }>({
         action: MessageAction.GET_EXEMPT_DOMAINS,
       });
-      if (response?.exemptDomains) {
+
+      if (Array.isArray(response.exemptDomains)) {
         this.pspDetector.setExemptDomains(response.exemptDomains);
       }
     } catch (error) {
@@ -157,7 +158,12 @@ class ContentScript {
       const response = await this.sendMessage<PSPConfigResponse>({
         action: MessageAction.GET_PSP_CONFIG,
       });
-      if (response?.config) {
+
+      if (
+        typeof response === 'object' &&
+        response !== null &&
+        'config' in response
+      ) {
         this.pspDetector.initialize(response.config);
       }
     } catch (error) {
@@ -307,9 +313,14 @@ class ContentScript {
   private async handlePSPDetection(result: PSPDetectionResult): Promise<void> {
     try {
       const tabId = await this.getActiveTabId();
-      if (tabId && result.type === 'exempt') {
+      if (tabId !== null && result.type === 'exempt') {
+        const exemptPsp = TypeConverters.toPSPName(PSP_DETECTION_EXEMPT);
+        if (exemptPsp === null) {
+          return;
+        }
+
         await this.reportDetectionToBackground(tabId, PSP_DETECTION_EXEMPT, {
-          psp: TypeConverters.toPSPName(PSP_DETECTION_EXEMPT)!,
+          psp: exemptPsp,
         });
       }
 
@@ -339,7 +350,7 @@ class ContentScript {
     this.reportedPSPs.add(match.psp);
     const tabId = await this.getActiveTabId();
 
-    if (tabId) {
+    if (tabId !== null) {
       await this.reportDetectionToBackground(tabId, match.psp, match);
     }
 
@@ -433,7 +444,7 @@ class ContentScript {
     return await new Promise<T>((resolve, reject) => {
       chrome.runtime.sendMessage(message, (response) => {
         if (chrome.runtime.lastError) {
-          reject(new Error(chrome.runtime.lastError.message || 'Unknown error'));
+          reject(new Error(chrome.runtime.lastError.message ?? 'Unknown error'));
           return;
         }
 
@@ -492,8 +503,8 @@ class ContentScript {
           // Reduce wait time for better performance
           await new Promise(resolve => setTimeout(resolve, 200));
 
-          const iframeDoc = htmlIframe.contentDocument ||
-                           htmlIframe.contentWindow?.document;
+          const iframeDoc = htmlIframe.contentDocument ??
+            htmlIframe.contentWindow?.document;
           if (iframeDoc) {
             // Get nested sources more efficiently
             this.extractNestedSources(iframeDoc, iframeContent);
@@ -601,7 +612,7 @@ const startContentScript = async(options: {
   resetForNewPage: boolean;
   logMessage?: string;
 }): Promise<void> => {
-  if (options.logMessage) {
+  if (options.logMessage !== undefined) {
     logger.debug(options.logMessage);
   }
 
@@ -636,7 +647,10 @@ const startContentScript = async(options: {
 // Allow re-initialization if URL has changed (new page navigation)
 // OR if background script has lost state (extension context restored)
 const bootstrap = async(): Promise<void> => {
-  if (existingScript?.initialized && existingScript.url === currentUrl) {
+  if (
+    existingScript?.initialized === true &&
+    existingScript.url === currentUrl
+  ) {
     try {
       const hasBackgroundState = await checkBackgroundState();
       if (hasBackgroundState) {
@@ -662,14 +676,14 @@ const bootstrap = async(): Promise<void> => {
     }
   }
 
-  const logMessage = existingScript?.initialized
+  const logMessage = existingScript?.initialized === true
     ? `Content script URL changed from ${existingScript.url} to ` +
       `${currentUrl}, re-initializing`
     : `Content script initializing for new page: ${currentUrl}`;
 
   await startContentScript({
     resetState: false,
-    resetForNewPage: !!existingScript?.initialized,
+    resetForNewPage: existingScript?.initialized === true,
     logMessage,
   });
 };

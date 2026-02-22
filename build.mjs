@@ -12,6 +12,7 @@ const mainEntryPoints = {
   background: './src/background.ts',
   popup: './src/popup.ts',
   options: './src/options.ts',
+  onboarding: './src/onboarding.ts',
 };
 
 const sharedConfig = {

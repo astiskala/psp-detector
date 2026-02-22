@@ -1,6 +1,11 @@
 import type { PSPConfig, PSPMatch } from '../types';
 import { PSPDetectionResult, TypeConverters } from '../types';
-import { safeCompileRegex, logger, getAllProviders } from '../lib/utils';
+import {
+  safeCompileRegex,
+  logger,
+  getAllProviders,
+  normalizeStringArray,
+} from '../lib/utils';
 
 /**
  * Service for detecting Payment Service Providers (PSPs) on a page.
@@ -30,11 +35,7 @@ export class PSPDetectorService {
    * Set the exempt domains list
    */
   public setExemptDomains(domains: string[]): void {
-    // Normalize & dedupe while preserving original order of first occurrence
-    const seen = new Set<string>();
-    this.exemptDomains = (domains || [])
-      .map(d => d.trim().toLowerCase())
-      .filter(d => d.length > 0 && !seen.has(d) && seen.add(d));
+    this.exemptDomains = normalizeStringArray(domains);
   }
 
   /**
@@ -62,8 +63,15 @@ export class PSPDetectorService {
     try {
       const truncatedContent = this.buildTruncatedContent(url, content);
 
-      /* Use cached providers if available */
-      const providers = this.providerCache || getAllProviders(this.pspConfig!);
+      const providers = this.providerCache;
+      if (providers === null) {
+        logger.warn('PSP detector provider cache unavailable');
+        return PSPDetectionResult.error(
+          new Error('PSP providers are not initialized'),
+          'config_validation',
+        );
+      }
+
       if (providers.length === 0) {
         logger.warn('No PSP providers available for detection');
         return PSPDetectionResult.error(
@@ -132,7 +140,11 @@ export class PSPDetectorService {
 
       // In browser context, use window.top.location.href as specified in
       // requirements. But only if it's not localhost (test environment)
-      if (topHref && !topHref.includes('localhost')) {
+      if (
+        typeof topHref === 'string' &&
+        topHref.length > 0 &&
+        !topHref.includes('localhost')
+      ) {
         urlToCheck = topHref;
       }
     } catch (error) {
@@ -200,8 +212,16 @@ export class PSPDetectorService {
 
     // Phase 1: matchStrings (provider order preserved)
     for (const psp of providers) {
-      if (matched.has(psp.name) || !psp.matchStrings?.length) continue;
-      for (const matchString of psp.matchStrings) {
+      const matchStrings = psp.matchStrings;
+      if (
+        matched.has(psp.name) ||
+        matchStrings === undefined ||
+        matchStrings.length === 0
+      ) {
+        continue;
+      }
+
+      for (const matchString of matchStrings) {
         if (content.includes(matchString)) {
           results.push({
             psp: psp.name,
@@ -222,7 +242,7 @@ export class PSPDetectorService {
       if (matched.has(psp.name)) continue;
 
       try {
-        if (psp.compiledRegex?.test(content)) {
+        if (psp.compiledRegex?.test(content) === true) {
           results.push({
             psp: psp.name,
             detectionInfo: {

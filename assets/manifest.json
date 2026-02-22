@@ -4,8 +4,9 @@
   "version": "",
   "description": "Chrome extension to detect Payment Service Providers on web pages",
   "permissions": [
-    "scripting",
     "activeTab",
+    "favicon",
+    "scripting",
     "storage"
   ],
   "optional_permissions": [

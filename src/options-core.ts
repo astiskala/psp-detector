@@ -92,15 +92,21 @@ export function filterEntries(
 export function getHistoryStats(history: HistoryEntry[]): HistoryStats {
   const uniqueDomains = new Set(history.map((entry) => entry.domain)).size;
   const pspCounts = new Map<string, number>();
+  let topPsp: string | null = null;
+  let topCount = 0;
 
   for (const entry of history) {
     for (const psp of entry.psps) {
-      pspCounts.set(psp.name, (pspCounts.get(psp.name) ?? 0) + 1);
+      const nextCount = (pspCounts.get(psp.name) ?? 0) + 1;
+      pspCounts.set(psp.name, nextCount);
+
+      if (nextCount > topCount) {
+        topCount = nextCount;
+        topPsp = psp.name;
+      }
     }
   }
 
-  const topPsp = [...pspCounts.entries()]
-    .sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
   return {
     uniqueDomains,
     uniquePsps: pspCounts.size,
@@ -112,7 +118,8 @@ export function getHistoryStats(history: HistoryEntry[]): HistoryStats {
  * Format a user-facing stats summary line for the history header.
  */
 export function formatHistorySummary(stats: HistoryStats): string {
-  const topPspSummary = stats.topPsp ? ` · Top: ${stats.topPsp}` : '';
+  const topPspSummary =
+    stats.topPsp !== null ? ` · Top: ${stats.topPsp}` : '';
   return (
     `${stats.uniqueDomains} sites scanned · ` +
     `${stats.uniquePsps} unique PSPs` +
