@@ -1332,7 +1332,15 @@ class BackgroundService {
     // Without it, executeScript will throw in service-worker context.
     const hasHostPermission = await chrome.permissions.contains({
       origins: ['https://*/*'],
+    }).catch(() => {
+      logger.debug(
+        `Skipping content script injection for tab ${tabId}: ` +
+        'could not check host permission',
+      );
+
+      return null;
     });
+
     if (!hasHostPermission) {
       logger.debug(
         `Skipping content script injection for tab ${tabId}: ` +

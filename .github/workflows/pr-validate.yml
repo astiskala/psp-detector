@@ -53,6 +53,9 @@ jobs:
           const manifest = JSON.parse(
             readFileSync('assets/manifest.json', 'utf8')
           );
+          // optional_host_permissions is deliberately excluded — broad origins
+          // are permitted there because the user must explicitly grant them at
+          // runtime.
           const perms = [
             ...(manifest.permissions ?? []),
             ...(manifest.host_permissions ?? []),

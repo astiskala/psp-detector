@@ -23,19 +23,26 @@ class PopupManager {
 
   /**
    * Check whether the optional host permission is granted.
-   * If not, show a permission-request UI and return false.
+   * If not (or if the check itself fails), show the permission-request UI
+   * and return false.
    * @private
    */
   private async checkHostPermission(): Promise<boolean> {
-    const granted = await chrome.permissions.contains({
-      origins: ['https://*/*'],
-    });
+    try {
+      const granted = await chrome.permissions.contains({
+        origins: ['https://*/*'],
+      });
 
-    if (!granted) {
+      if (!granted) {
+        this.showPermissionRequest();
+      }
+
+      return granted;
+    } catch (error) {
+      logger.error('Failed to check host permission:', error);
       this.showPermissionRequest();
+      return false;
     }
-
-    return granted;
   }
 
   /**
@@ -53,20 +60,31 @@ class PopupManager {
     if (!btn) return;
 
     btn.addEventListener('click', () => {
-      chrome.permissions.request(
-        { origins: ['https://*/*'] },
-        (granted) => {
+      chrome.permissions.request({ origins: ['https://*/*'] })
+        .then((granted) => {
           if (granted) {
-            if (permEl) permEl.style.display = 'none';
-            const loadingState = document.getElementById('loading-state');
-            if (loadingState) loadingState.style.display = 'block';
+            this.hidePermissionRequest();
             this.initialize().catch((error) => {
               logger.error('Popup re-initialization failed:', error);
             });
           }
-        },
-      );
+        })
+        .catch((error) => {
+          logger.error('Permission request failed:', error);
+        });
     });
+  }
+
+  /**
+   * Hide the permission-request panel and restore the loading state.
+   * @private
+   */
+  private hidePermissionRequest(): void {
+    const permEl = document.getElementById('permission-state');
+    if (permEl) permEl.style.display = 'none';
+
+    const loadingEl = document.getElementById('loading-state');
+    if (loadingEl) loadingEl.style.display = 'block';
   }
 
   /**
@@ -78,8 +96,6 @@ class PopupManager {
       logger.debug('Popup already initialized');
       return;
     }
-
-    this.bindHistoryAction();
 
     const hasPermission = await this.checkHostPermission();
     if (!hasPermission) {
@@ -263,7 +279,7 @@ class PopupManager {
     logger.debug('Popup manager cleaned up');
   }
 
-  private bindHistoryAction(): void {
+  public bindHistoryAction(): void {
     const historyButton = document.getElementById('history-link');
     if (!historyButton) {
       return;
@@ -280,6 +296,10 @@ class PopupManager {
 // Initialize popup
 document.addEventListener('DOMContentLoaded', () => {
   const popup = new PopupManager();
+
+  // Bind one-time actions before initialize() so they are never registered
+  // more than once, even when initialize() is re-called after permission grant.
+  popup.bindHistoryAction();
 
   // Add cleanup on window unload
   window.addEventListener('beforeunload', () => {
