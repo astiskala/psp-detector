@@ -207,7 +207,7 @@ npm run build:debug    # Development build with debug info
 ```bash
 npm test                 # Run all tests
 npm run test:watch       # Run tests in watch mode
-npm run test:coverage.   # Run Jest coverage report
+npm run test:coverage    # Run Jest coverage report
 npm run test:integration # Run Playwright integration/E2E tests
 ```
 
@@ -215,11 +215,11 @@ npm run test:integration # Run Playwright integration/E2E tests
 
 ```bash
 npm run lint          # TypeScript/JavaScript linting with ESLint
-npm run lint:fix      # Auto-fix TypeScript/JavaScript issues
 npm run lint:deps     # dependency-cruiser architectural boundary checks
 npm run lint:html     # HTML linting with webhint
 npm run lint:manifest # Chrome extension manifest linting
 npm run lint:web      # Combined HTML and manifest linting
+npm run fix           # Auto-fix TypeScript/JavaScript issues
 npm run knip          # Unused files/dependencies/exports checks
 ```
 

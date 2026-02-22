@@ -18,7 +18,7 @@
     "lint:web": "npm run lint:html && npm run lint:manifest",
     "lint": "gts lint",
     "precommit": "npm run validate",
-    "test:coverage": "jest --coverage",
+    "test:coverage": "npm run build && jest --coverage",
     "test:integration": "npm run build && npx playwright install chromium && playwright test",
     "test:watch": "jest --watch",
     "test": "npm run build && jest",
