@@ -22,6 +22,54 @@ class PopupManager {
   }
 
   /**
+   * Check whether the optional host permission is granted.
+   * If not, show a permission-request UI and return false.
+   * @private
+   */
+  private async checkHostPermission(): Promise<boolean> {
+    const granted = await chrome.permissions.contains({
+      origins: ['https://*/*'],
+    });
+
+    if (!granted) {
+      this.showPermissionRequest();
+    }
+
+    return granted;
+  }
+
+  /**
+   * Show the permission-request panel and wire up the grant button.
+   * @private
+   */
+  private showPermissionRequest(): void {
+    const loadingEl = document.getElementById('loading-state');
+    if (loadingEl) loadingEl.style.display = 'none';
+
+    const permEl = document.getElementById('permission-state');
+    if (permEl) permEl.style.display = 'block';
+
+    const btn = document.getElementById('grant-permission-btn');
+    if (!btn) return;
+
+    btn.addEventListener('click', () => {
+      chrome.permissions.request(
+        { origins: ['https://*/*'] },
+        (granted) => {
+          if (granted) {
+            if (permEl) permEl.style.display = 'none';
+            const loadingState = document.getElementById('loading-state');
+            if (loadingState) loadingState.style.display = 'block';
+            this.initialize().catch((error) => {
+              logger.error('Popup re-initialization failed:', error);
+            });
+          }
+        },
+      );
+    });
+  }
+
+  /**
    * Initialize the popup with performance monitoring and enhanced error
    * handling
    */
@@ -32,6 +80,11 @@ class PopupManager {
     }
 
     this.bindHistoryAction();
+
+    const hasPermission = await this.checkHostPermission();
+    if (!hasPermission) {
+      return;
+    }
 
     try {
       await performanceUtils.measureAsync(async() => {

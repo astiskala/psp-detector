@@ -58,7 +58,7 @@ jobs:
             ...(manifest.host_permissions ?? []),
           ];
           const broad = perms.filter(
-            p => p === '<all_urls>' || p === '*://*/*'
+            p => p === '<all_urls>' || p === '*://*/*' || p === 'https://*/*'
           );
           if (broad.length > 0) {
             console.error('Broad permissions detected:', broad);

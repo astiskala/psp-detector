@@ -421,6 +421,16 @@
     </div>
 
     <div class="popup-body">
+      <div id="permission-state" style="display: none;">
+        <p style="margin: 0 0 12px; color: var(--on-surface-variant); font-size: 13px;">
+          PSP Detector needs permission to scan websites for payment providers.
+        </p>
+        <button id="grant-permission-btn" class="secondary-action" type="button"
+          style="width: 100%; justify-content: center;">
+          Grant permissions to detect PSPs on all sites
+        </button>
+      </div>
+
       <div class="loading-state" id="loading-state">
         <div class="loading-spinner"></div>
         <p>Analyzing payment providers...</p>

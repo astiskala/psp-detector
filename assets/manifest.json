@@ -11,7 +11,7 @@
   "optional_permissions": [
     "webRequest"
   ],
-  "host_permissions": [
+  "optional_host_permissions": [
     "https://*/*"
   ],
   "content_security_policy": {
@@ -28,7 +28,10 @@
       "128": "images/default_128.png"
     }
   },
-  "options_page": "options.html",
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
   "icons": {
     "48": "images/default_48.png",
     "128": "images/default_128.png"

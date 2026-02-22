@@ -1328,6 +1328,20 @@ class BackgroundService {
    * @private
    */
   async injectContentScript(tabId: number): Promise<void> {
+    // Check optional host permission before attempting injection.
+    // Without it, executeScript will throw in service-worker context.
+    const hasHostPermission = await chrome.permissions.contains({
+      origins: ['https://*/*'],
+    });
+    if (!hasHostPermission) {
+      logger.debug(
+        `Skipping content script injection for tab ${tabId}: ` +
+        'optional host permission not granted',
+      );
+
+      return;
+    }
+
     try {
       await chrome.scripting.executeScript({
         target: { tabId },
