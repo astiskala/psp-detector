@@ -10,6 +10,10 @@ import {
 import type { HistoryEntry } from '../types/history';
 
 const storedData: Record<string, unknown> = {};
+const DEFAULT_CHECKOUT_URL = 'https://example.com/checkout';
+const STRIPE_NETWORK_SIGNAL = 'js.stripe.com';
+const STRIPE_SCRIPT_SIGNAL = 'js.stripe.com/v3';
+const SHOP_PAY_URL = 'https://shop.example.com/pay';
 
 beforeEach(() => {
   storedData[STORAGE_KEYS.PSP_HISTORY] = [];
@@ -30,7 +34,7 @@ beforeEach(() => {
 const makeEntry = (overrides: Partial<HistoryEntry> = {}): HistoryEntry => ({
   id: 'tab1_1000',
   domain: 'example.com',
-  url: 'https://example.com/checkout',
+  url: DEFAULT_CHECKOUT_URL,
   timestamp: 1000,
   psps: [],
   ...overrides,
@@ -160,7 +164,7 @@ describe('writeHistoryEntry', () => {
         {
           name: 'Stripe',
           method: 'regex',
-          value: 'js.stripe.com',
+          value: STRIPE_NETWORK_SIGNAL,
           sourceType: 'networkRequest',
         },
       ],
@@ -197,7 +201,7 @@ describe('writeHistoryEntry', () => {
         {
           name: 'Stripe',
           method: 'regex',
-          value: 'js.stripe.com',
+          value: STRIPE_NETWORK_SIGNAL,
           sourceType: 'networkRequest',
         },
       ],
@@ -209,7 +213,7 @@ describe('writeHistoryEntry', () => {
         {
           name: 'Stripe',
           method: 'regex',
-          value: 'js.stripe.com',
+          value: STRIPE_NETWORK_SIGNAL,
           sourceType: 'networkRequest',
         },
       ],
@@ -237,7 +241,7 @@ describe('writeHistoryEntry', () => {
         {
           name: 'Stripe',
           method: 'matchString',
-          value: 'js.stripe.com',
+          value: STRIPE_NETWORK_SIGNAL,
           sourceType: 'networkRequest',
         },
       ],
@@ -249,7 +253,7 @@ describe('writeHistoryEntry', () => {
         {
           name: 'Stripe',
           method: 'matchString',
-          value: 'js.stripe.com/v3',
+          value: STRIPE_SCRIPT_SIGNAL,
           sourceType: 'scriptSrc',
         },
       ],
@@ -262,7 +266,7 @@ describe('writeHistoryEntry', () => {
     expect(history).toHaveLength(1);
     const stripe = history[0]?.psps.find((p) => p.name === 'Stripe');
     expect(stripe?.sourceType).toBe('scriptSrc');
-    expect(stripe?.value).toBe('js.stripe.com/v3');
+    expect(stripe?.value).toBe(STRIPE_SCRIPT_SIGNAL);
   });
 
   it('keeps existing high-priority source when a lower-priority match arrives', async() => {
@@ -274,7 +278,7 @@ describe('writeHistoryEntry', () => {
         {
           name: 'Stripe',
           method: 'matchString',
-          value: 'js.stripe.com/v3',
+          value: STRIPE_SCRIPT_SIGNAL,
           sourceType: 'scriptSrc',
         },
       ],
@@ -286,7 +290,7 @@ describe('writeHistoryEntry', () => {
         {
           name: 'Stripe',
           method: 'matchString',
-          value: 'js.stripe.com',
+          value: STRIPE_NETWORK_SIGNAL,
           sourceType: 'networkRequest',
         },
       ],
@@ -299,7 +303,7 @@ describe('writeHistoryEntry', () => {
     expect(history).toHaveLength(1);
     const stripe = history[0]?.psps.find((p) => p.name === 'Stripe');
     expect(stripe?.sourceType).toBe('scriptSrc');
-    expect(stripe?.value).toBe('js.stripe.com/v3');
+    expect(stripe?.value).toBe(STRIPE_SCRIPT_SIGNAL);
   });
 
   it('moves merged entry to position 0 when interleaved with a different URL', async() => {
@@ -309,15 +313,15 @@ describe('writeHistoryEntry', () => {
     await writeHistoryEntry(makeEntry({
       id: 'tab1_stripe',
       timestamp: BASE_TS,
-      url: 'https://example.com/checkout',
-      psps: [{ name: 'Stripe', method: 'regex', value: 'js.stripe.com', sourceType: 'networkRequest' }],
+      url: DEFAULT_CHECKOUT_URL,
+      psps: [{ name: 'Stripe', method: 'regex', value: STRIPE_NETWORK_SIGNAL, sourceType: 'networkRequest' }],
     }));
 
     // Second: different URL navigated to (ends up at position 0)
     await writeHistoryEntry(makeEntry({
       id: 'tab2_other',
       timestamp: BASE_TS + 2_000,
-      url: 'https://shop.example.com/pay',
+      url: SHOP_PAY_URL,
       domain: 'shop.example.com',
       psps: [{ name: 'PayPal', method: 'regex', value: 'paypal.com', sourceType: 'networkRequest' }],
     }));
@@ -326,7 +330,7 @@ describe('writeHistoryEntry', () => {
     await writeHistoryEntry(makeEntry({
       id: 'tab1_adyen',
       timestamp: BASE_TS + 5_000,
-      url: 'https://example.com/checkout',
+      url: DEFAULT_CHECKOUT_URL,
       psps: [{ name: 'Adyen', method: 'regex', value: 'checkoutshopper-live.adyen.com', sourceType: 'networkRequest' }],
     }));
 
@@ -336,7 +340,7 @@ describe('writeHistoryEntry', () => {
     expect(history).toHaveLength(2);
 
     // The merged checkout entry (Stripe+Adyen) must be at position 0
-    expect(history[0]?.url).toBe('https://example.com/checkout');
+    expect(history[0]?.url).toBe(DEFAULT_CHECKOUT_URL);
     const pspNames = history[0]?.psps.map((p) => p.name);
     expect(pspNames).toContain('Stripe');
     expect(pspNames).toContain('Adyen');
@@ -345,7 +349,7 @@ describe('writeHistoryEntry', () => {
     expect(history[0]?.timestamp).toBe(BASE_TS + 5_000);
 
     // The other URL entry is behind it
-    expect(history[1]?.url).toBe('https://shop.example.com/pay');
+    expect(history[1]?.url).toBe(SHOP_PAY_URL);
   });
 
   it('creates separate entries for different URLs within the merge window', async() => {
@@ -353,12 +357,12 @@ describe('writeHistoryEntry', () => {
     const entryA = makeEntry({
       id: 'tab1_a',
       timestamp: BASE_TS,
-      url: 'https://example.com/checkout',
+      url: DEFAULT_CHECKOUT_URL,
       psps: [
         {
           name: 'Stripe',
           method: 'regex',
-          value: 'js.stripe.com',
+          value: STRIPE_NETWORK_SIGNAL,
           sourceType: 'networkRequest',
         },
       ],
@@ -366,7 +370,7 @@ describe('writeHistoryEntry', () => {
     const entryB = makeEntry({
       id: 'tab2_b',
       timestamp: BASE_TS + 5_000, // within 30s but different URL
-      url: 'https://shop.example.com/pay',
+      url: SHOP_PAY_URL,
       domain: 'shop.example.com',
       psps: [
         {

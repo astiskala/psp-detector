@@ -149,6 +149,67 @@ async function openPopupPage(
   return popupPage;
 }
 
+async function openHistoryPage(
+  context: BrowserContext,
+  popupPage: Page,
+): Promise<Page> {
+  const [optionsPage] = await Promise.all([
+    context.waitForEvent('page'),
+    popupPage.click('#history-link'),
+  ]);
+  await optionsPage.waitForLoadState('domcontentloaded');
+  return optionsPage;
+}
+
+async function expectHistoryChartsAndColumns(
+  optionsPage: Page,
+  extensionId: string,
+): Promise<void> {
+  await expect(optionsPage).toHaveURL(
+    new RegExp(`chrome-extension://${extensionId}/options.html`),
+  );
+
+  await expect(optionsPage.locator('#pspChart')).toBeVisible();
+  await expect(optionsPage.locator('#sourceChart')).toBeVisible();
+  await expect(optionsPage.locator('#typeChart')).toBeVisible();
+  await expect(optionsPage.locator('#sourceChartLegend')).toContainText('scriptSrc');
+  await expect(optionsPage.locator('#sourceChartLegend'))
+    .toContainText('networkRequest');
+
+  await expect(optionsPage.locator('#typeChartLegend')).toContainText('PSP');
+  await expect(optionsPage.locator('#typeChartLegend')).toContainText('Orchestrator');
+  await expect(optionsPage.getByRole('columnheader', { name: 'Type' })).toBeVisible();
+  await expect(optionsPage.getByRole('columnheader', { name: 'Detection Source' }))
+    .toBeVisible();
+
+  await expect(optionsPage.getByRole('columnheader', { name: 'Detection Signal' }))
+    .toBeVisible();
+}
+
+async function expectHistoryRowsAndMetadata(optionsPage: Page): Promise<void> {
+  await expect(optionsPage.locator('#historyBody tr')).toHaveCount(1);
+  await expect(optionsPage.locator('#historyBody .domain-icon')).toHaveCount(1);
+  await expect(optionsPage.locator('#historyBody img.psp-icon')).toHaveCount(2);
+
+  const pspIconSources = await optionsPage
+    .locator('#historyBody img.psp-icon')
+    .evaluateAll((elements) =>
+      elements.map((element) => (element as HTMLImageElement).src),
+    );
+  expect(pspIconSources.some((src) => src.includes('checkout_48.png'))).toBe(true);
+  expect(pspIconSources.some((src) => src.includes('primer_48.png'))).toBe(true);
+
+  await expect(optionsPage.locator('#historyBody')).toContainText('scriptSrc');
+  await expect(optionsPage.locator('#historyBody')).toContainText('networkRequest');
+  await expect(optionsPage.locator('#historyBody'))
+    .toContainText('matchString: checkout-web-components.checkout.com');
+
+  await expect(optionsPage.locator('#historyBody'))
+    .toContainText('matchString: api.primer.io');
+
+  await expect(optionsPage.locator('body')).not.toContainText(/\b\d+\s+signals\b/i);
+}
+
 test(
   'popup renders seeded detections and keeps button sizing consistent',
   async({ page }, testInfo) => {
@@ -295,83 +356,9 @@ test(
       await expect.poll(async() => getPspCount(popupPage)).toBe(2);
       await popupPage.reload({ waitUntil: 'domcontentloaded' });
 
-      const [optionsPage] = await Promise.all([
-        context.waitForEvent('page'),
-        popupPage.click('#history-link'),
-      ]);
-      await optionsPage.waitForLoadState('domcontentloaded');
-
-      await expect(optionsPage).toHaveURL(
-        new RegExp(`chrome-extension://${extensionId}/options.html`),
-      );
-
-      await expect(optionsPage.locator('#pspChart')).toBeVisible();
-      await expect(optionsPage.locator('#sourceChart')).toBeVisible();
-      await expect(optionsPage.locator('#typeChart')).toBeVisible();
-      await expect(optionsPage.locator('#sourceChartLegend')).toContainText(
-        'scriptSrc',
-      );
-
-      await expect(optionsPage.locator('#sourceChartLegend')).toContainText(
-        'networkRequest',
-      );
-
-      await expect(optionsPage.locator('#typeChartLegend')).toContainText(
-        'PSP',
-      );
-
-      await expect(optionsPage.locator('#typeChartLegend')).toContainText(
-        'Orchestrator',
-      );
-
-      await expect(optionsPage.getByRole('columnheader', { name: 'Type' }))
-        .toBeVisible();
-
-      await expect(
-        optionsPage.getByRole('columnheader', { name: 'Detection Source' }),
-      ).toBeVisible();
-
-      await expect(
-        optionsPage.getByRole('columnheader', { name: 'Detection Signal' }),
-      ).toBeVisible();
-
-      await expect(optionsPage.locator('#historyBody tr')).toHaveCount(1);
-      await expect(optionsPage.locator('#historyBody .domain-icon'))
-        .toHaveCount(1);
-
-      await expect(optionsPage.locator('#historyBody img.psp-icon'))
-        .toHaveCount(2);
-
-      const pspIconSources = await optionsPage
-        .locator('#historyBody img.psp-icon')
-        .evaluateAll((elements) =>
-          elements.map((element) => (element as HTMLImageElement).src),
-        );
-      expect(pspIconSources.some((src) => src.includes('checkout_48.png')))
-        .toBe(true);
-
-      expect(pspIconSources.some((src) => src.includes('primer_48.png')))
-        .toBe(true);
-
-      await expect(optionsPage.locator('#historyBody')).toContainText(
-        'scriptSrc',
-      );
-
-      await expect(optionsPage.locator('#historyBody')).toContainText(
-        'networkRequest',
-      );
-
-      await expect(optionsPage.locator('#historyBody')).toContainText(
-        'matchString: checkout-web-components.checkout.com',
-      );
-
-      await expect(optionsPage.locator('#historyBody')).toContainText(
-        'matchString: api.primer.io',
-      );
-
-      await expect(optionsPage.locator('body')).not.toContainText(
-        /\b\d+\s+signals\b/i,
-      );
+      const optionsPage = await openHistoryPage(context, popupPage);
+      await expectHistoryChartsAndColumns(optionsPage, extensionId);
+      await expectHistoryRowsAndMetadata(optionsPage);
     } finally {
       await context.close();
     }

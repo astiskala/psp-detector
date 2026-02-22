@@ -56,6 +56,66 @@ interface ChromeMockOptions {
   pspConfig?: Record<string, unknown>;
 }
 
+const DEFAULT_ACTIVE_TAB_URL = 'https://shop.example.com/cart';
+const ON_MESSAGE_LISTENER_ERROR = 'Expected onMessage listener to be registered';
+const WEBREQUEST_LISTENER_ERROR = 'Expected webRequest listener to be registered';
+
+interface NormalizedChromeMockOptions {
+  activeTabUrl: string;
+  exemptDomains: string[];
+  hasHostPermission: boolean;
+  hasWebRequestPermission: boolean;
+  pspConfig: Record<string, unknown>;
+}
+
+interface ChromeEventMocks {
+  onInstalled: EventMock<InstalledListener>;
+  onStartup: EventMock<StartupListener>;
+  onSuspend: EventMock<SuspendListener>;
+  onMessage: EventMock<MessageListener>;
+  onActivated: EventMock<TabActivatedListener>;
+  onUpdated: EventMock<TabUpdatedListener>;
+  onRemoved: EventMock<TabRemovedListener>;
+  onPermissionAdded: EventMock<PermissionAddedListener>;
+}
+
+function createDefaultPSPConfig(): Record<string, unknown> {
+  return {
+    psps: [{
+      name: 'Stripe',
+      matchStrings: ['js.stripe.com'],
+      image: 'stripe',
+      summary: 'Stripe',
+      url: 'https://stripe.com',
+    }],
+  };
+}
+
+function normalizeChromeMockOptions(
+  options: ChromeMockOptions,
+): NormalizedChromeMockOptions {
+  return {
+    activeTabUrl: options.activeTabUrl ?? DEFAULT_ACTIVE_TAB_URL,
+    exemptDomains: options.exemptDomains ?? [],
+    hasHostPermission: options.hasHostPermission ?? true,
+    hasWebRequestPermission: options.hasWebRequestPermission ?? false,
+    pspConfig: options.pspConfig ?? createDefaultPSPConfig(),
+  };
+}
+
+function createChromeEventMocks(): ChromeEventMocks {
+  return {
+    onInstalled: createEventMock<InstalledListener>(),
+    onStartup: createEventMock<StartupListener>(),
+    onSuspend: createEventMock<SuspendListener>(),
+    onMessage: createEventMock<MessageListener>(),
+    onActivated: createEventMock<TabActivatedListener>(),
+    onUpdated: createEventMock<TabUpdatedListener>(),
+    onRemoved: createEventMock<TabRemovedListener>(),
+    onPermissionAdded: createEventMock<PermissionAddedListener>(),
+  };
+}
+
 function createEventMock<
   T extends(...args: never[]) => unknown,
 >(): EventMock<T> {
@@ -104,19 +164,14 @@ function createFetchResponse(payload: unknown): Response {
 }
 
 function setupChromeMocks(options: ChromeMockOptions = {}): ChromeMockContext {
-  const activeTabUrl = options.activeTabUrl ?? 'https://shop.example.com/cart';
-  const exemptDomains = options.exemptDomains ?? [];
-  const hasHostPermission = options.hasHostPermission ?? true;
-  const hasWebRequestPermission = options.hasWebRequestPermission ?? false;
-  const pspConfig = options.pspConfig ?? {
-    psps: [{
-      name: 'Stripe',
-      matchStrings: ['js.stripe.com'],
-      image: 'stripe',
-      summary: 'Stripe',
-      url: 'https://stripe.com',
-    }],
-  };
+  const normalized = normalizeChromeMockOptions(options);
+  const {
+    activeTabUrl,
+    exemptDomains,
+    hasHostPermission,
+    hasWebRequestPermission,
+    pspConfig,
+  } = normalized;
 
   const localStore: Record<string, unknown> = {};
   const sessionStore: Record<string, unknown> = {
@@ -125,14 +180,17 @@ function setupChromeMocks(options: ChromeMockOptions = {}): ChromeMockContext {
     } as Record<number, { psp: string }[]>,
   };
 
-  const onInstalled = createEventMock<InstalledListener>();
-  const onStartup = createEventMock<StartupListener>();
-  const onSuspend = createEventMock<SuspendListener>();
-  const onMessage = createEventMock<MessageListener>();
-  const onActivated = createEventMock<TabActivatedListener>();
-  const onUpdated = createEventMock<TabUpdatedListener>();
-  const onRemoved = createEventMock<TabRemovedListener>();
-  const onPermissionAdded = createEventMock<PermissionAddedListener>();
+  const eventMocks = createChromeEventMocks();
+  const {
+    onInstalled,
+    onStartup,
+    onSuspend,
+    onMessage,
+    onActivated,
+    onUpdated,
+    onRemoved,
+    onPermissionAdded,
+  } = eventMocks;
 
   const getURL = jest.fn((assetPath: string) => `chrome-extension://test/${assetPath}`);
   const tabsCreate = jest.fn().mockResolvedValue({ id: 999 });
@@ -275,6 +333,49 @@ async function flushAsyncTasks(waitMs = 0): Promise<void> {
   });
 }
 
+function getRegisteredMessageListener(
+  mocks: ChromeMockContext,
+): MessageListener {
+  const messageListener = mocks.onMessage.getListener();
+  if (messageListener === null) {
+    throw new Error(ON_MESSAGE_LISTENER_ERROR);
+  }
+
+  return messageListener;
+}
+
+function getRegisteredWebRequestListener(
+  mocks: ChromeMockContext,
+): (details: chrome.webRequest.WebRequestDetails) => void {
+  const networkListener = mocks.webRequestAddListener.mock.calls[0]?.[0] as
+    | ((details: chrome.webRequest.WebRequestDetails) => void)
+    | undefined;
+  if (networkListener === undefined) {
+    throw new Error(WEBREQUEST_LISTENER_ERROR);
+  }
+
+  return networkListener;
+}
+
+async function getDetectedPspsForTab(
+  messageListener: MessageListener,
+  tabId: number,
+): Promise<unknown> {
+  const sendResponse = jest.fn();
+  messageListener(
+    { action: MessageAction.GET_PSP },
+    { tab: { id: tabId } as chrome.tabs.Tab } as chrome.runtime.MessageSender,
+    sendResponse,
+  );
+
+  await flushAsyncTasks();
+
+  const payload = sendResponse.mock.calls.at(-1)?.[0] as
+    | { psps?: unknown }
+    | undefined;
+  return payload?.psps ?? [];
+}
+
 describe('background service onboarding and re-detect flow', () => {
   beforeEach(() => {
     jest.resetModules();
@@ -318,7 +419,7 @@ describe('background service onboarding and re-detect flow', () => {
 
     const messageListener = mocks.onMessage.getListener();
     if (messageListener === null) {
-      throw new Error('Expected onMessage listener to be registered');
+      throw new Error(ON_MESSAGE_LISTENER_ERROR);
     }
 
     const sendResponse = jest.fn();
@@ -357,7 +458,7 @@ describe('background service onboarding and re-detect flow', () => {
 
     const messageListener = mocks.onMessage.getListener();
     if (messageListener === null) {
-      throw new Error('Expected onMessage listener to be registered');
+      throw new Error(ON_MESSAGE_LISTENER_ERROR);
     }
 
     const sendResponse = jest.fn();
@@ -389,7 +490,7 @@ describe('background service onboarding and re-detect flow', () => {
 
     const messageListener = mocks.onMessage.getListener();
     if (messageListener === null) {
-      throw new Error('Expected onMessage listener to be registered');
+      throw new Error(ON_MESSAGE_LISTENER_ERROR);
     }
 
     const sendResponse = jest.fn();
@@ -490,10 +591,7 @@ describe('background service onboarding and re-detect flow', () => {
     await import('./background');
     await flushAsyncTasks();
 
-    const messageListener = mocks.onMessage.getListener();
-    if (messageListener === null) {
-      throw new Error('Expected onMessage listener to be registered');
-    }
+    const messageListener = getRegisteredMessageListener(mocks);
 
     const getConfigResponse = jest.fn();
     messageListener(
@@ -504,12 +602,7 @@ describe('background service onboarding and re-detect flow', () => {
 
     await flushAsyncTasks();
 
-    const networkListener = mocks.webRequestAddListener.mock.calls[0]?.[0] as
-      | ((details: chrome.webRequest.WebRequestDetails) => void)
-      | undefined;
-    if (networkListener === undefined) {
-      throw new Error('Expected webRequest listener to be registered');
-    }
+    const networkListener = getRegisteredWebRequestListener(mocks);
 
     networkListener({
       tabId: 91,
@@ -519,17 +612,8 @@ describe('background service onboarding and re-detect flow', () => {
 
     await flushAsyncTasks();
 
-    const sendResponse = jest.fn();
-    messageListener(
-      { action: MessageAction.GET_PSP },
-      { tab: { id: 91 } as chrome.tabs.Tab } as chrome.runtime.MessageSender,
-      sendResponse,
-    );
-
-    await flushAsyncTasks();
-    expect(sendResponse).toHaveBeenLastCalledWith({
-      psps: [expect.objectContaining({ psp: 'Stripe' })],
-    });
+    const firstPsps = await getDetectedPspsForTab(messageListener, 91);
+    expect(firstPsps).toEqual([expect.objectContaining({ psp: 'Stripe' })]);
 
     networkListener({
       tabId: 91,
@@ -539,17 +623,8 @@ describe('background service onboarding and re-detect flow', () => {
 
     await flushAsyncTasks();
 
-    const secondResponse = jest.fn();
-    messageListener(
-      { action: MessageAction.GET_PSP },
-      { tab: { id: 91 } as chrome.tabs.Tab } as chrome.runtime.MessageSender,
-      secondResponse,
-    );
-
-    await flushAsyncTasks();
-    expect(secondResponse).toHaveBeenLastCalledWith({
-      psps: [expect.objectContaining({ psp: 'Stripe' })],
-    });
+    const secondPsps = await getDetectedPspsForTab(messageListener, 91);
+    expect(secondPsps).toEqual([expect.objectContaining({ psp: 'Stripe' })]);
 
     const onSuspendListener = mocks.onSuspend.getListener();
     if (onSuspendListener === null) {
@@ -590,7 +665,7 @@ describe('background service onboarding and re-detect flow', () => {
 
     const messageListener = mocks.onMessage.getListener();
     if (messageListener === null) {
-      throw new Error('Expected onMessage listener to be registered');
+      throw new Error(ON_MESSAGE_LISTENER_ERROR);
     }
 
     const getConfigResponse = jest.fn();
@@ -606,7 +681,7 @@ describe('background service onboarding and re-detect flow', () => {
       | ((details: chrome.webRequest.WebRequestDetails) => void)
       | undefined;
     if (networkListener === undefined) {
-      throw new Error('Expected webRequest listener to be registered');
+      throw new Error(WEBREQUEST_LISTENER_ERROR);
     }
 
     networkListener({

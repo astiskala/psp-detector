@@ -13,18 +13,20 @@ import {
 import { TypeConverters } from '../types';
 import type { PSPConfig } from '../types';
 
+const EXAMPLE_URL = 'https://example.com';
+
 describe('utils', () => {
 
   describe('URL utilities', () => {
     it('should create safe URL for valid URLs', () => {
       // Arrange
-      const validUrl = 'https://example.com';
+      const validUrl = EXAMPLE_URL;
 
       // Act
       const result = createSafeUrl(validUrl);
 
       // Assert
-      expect(result).toBe('https://example.com/');
+      expect(result).toBe(`${EXAMPLE_URL}/`);
     });
 
     it('should return hash fallback for invalid URLs', () => {
@@ -214,14 +216,14 @@ describe('utils', () => {
       globalThis.fetch = fetchMock as unknown as typeof fetch;
 
       try {
-        const result = await fetchWithTimeout('https://example.com', 100, {
+        const result = await fetchWithTimeout(EXAMPLE_URL, 100, {
           method: 'POST',
           headers: { 'x-test': '1' },
         });
 
         expect(result).toBe(response);
         expect(fetchMock).toHaveBeenCalledWith(
-          'https://example.com',
+          EXAMPLE_URL,
           expect.objectContaining({
             method: 'POST',
             headers: { 'x-test': '1' },
@@ -249,7 +251,7 @@ describe('utils', () => {
       globalThis.fetch = fetchMock as unknown as typeof fetch;
 
       try {
-        const requestPromise = fetchWithTimeout('https://example.com', 5);
+        const requestPromise = fetchWithTimeout(EXAMPLE_URL, 5);
         jest.advanceTimersByTime(10);
         await expect(requestPromise).rejects.toMatchObject({
           name: 'AbortError',
@@ -273,7 +275,7 @@ describe('utils', () => {
       controller.abort();
 
       try {
-        await fetchWithTimeout('https://example.com', 1000, {
+        await fetchWithTimeout(EXAMPLE_URL, 1000, {
           signal: controller.signal,
         });
 

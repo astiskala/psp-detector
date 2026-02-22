@@ -174,6 +174,80 @@ function getRequiredElement<T extends Element>(selector: string): T {
   return element as T;
 }
 
+interface OptionsPageSuccessMocks {
+  fetchMock: jest.Mock;
+  readHistoryMock: jest.MockedFunction<typeof readHistory>;
+  clearHistoryMock: jest.MockedFunction<typeof clearHistory>;
+  loggerMock: LoggerMock;
+  createObjectURL: jest.Mock<string, []>;
+  revokeObjectURL: jest.Mock<void, []>;
+  anchorClickSpy: jest.SpyInstance<void, [], HTMLAnchorElement>;
+  confirmSpy: jest.SpyInstance<
+    boolean,
+    [message?: string | undefined],
+    typeof globalThis
+  >;
+}
+
+function getLoggerMock(): LoggerMock {
+  return logger as unknown as LoggerMock;
+}
+
+function setupSuccessMocks(): OptionsPageSuccessMocks {
+  const fetchMock = jest.fn().mockResolvedValue({
+    ok: true,
+    status: 200,
+    json: async() => createProviderConfig(),
+  } as unknown as Response);
+  globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+  const readHistoryMock = jest
+    .mocked(readHistory)
+    .mockResolvedValue(createHistoryEntries());
+  const clearHistoryMock = jest
+    .mocked(clearHistory)
+    .mockResolvedValue(undefined);
+  const loggerMock = getLoggerMock();
+
+  const createObjectURL = jest.fn(() => 'blob:test-download');
+  const revokeObjectURL = jest.fn();
+  Object.defineProperty(globalThis.URL, 'createObjectURL', {
+    value: createObjectURL,
+    configurable: true,
+    writable: true,
+  });
+
+  Object.defineProperty(globalThis.URL, 'revokeObjectURL', {
+    value: revokeObjectURL,
+    configurable: true,
+    writable: true,
+  });
+
+  const anchorClickSpy = jest
+    .spyOn(HTMLAnchorElement.prototype, 'click')
+    .mockImplementation((): void => {
+      return;
+    });
+  const confirmSpy = jest.spyOn(globalThis, 'confirm').mockReturnValue(false);
+
+  return {
+    fetchMock,
+    readHistoryMock,
+    clearHistoryMock,
+    loggerMock,
+    createObjectURL,
+    revokeObjectURL,
+    anchorClickSpy,
+    confirmSpy,
+  };
+}
+
+async function initializeOptionsPage(waitMs = 0): Promise<void> {
+  await import('./options');
+  document.dispatchEvent(new Event('DOMContentLoaded'));
+  await flushAsync(waitMs);
+}
+
 describe('options page wiring', () => {
   beforeEach(() => {
     jest.restoreAllMocks();
@@ -184,53 +258,14 @@ describe('options page wiring', () => {
     jest.mocked(readHistory).mockReset();
     jest.mocked(clearHistory).mockReset();
 
-    const loggerMock = logger as unknown as LoggerMock;
+    const loggerMock = getLoggerMock();
     loggerMock.warn.mockReset();
     loggerMock.error.mockReset();
   });
 
-  it('handles init, render, controls, and initialization errors', async() => {
-    const fetchMock = jest.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: async() => createProviderConfig(),
-    } as unknown as Response);
-    globalThis.fetch = fetchMock as unknown as typeof fetch;
-
-    const history = createHistoryEntries();
-    const readHistoryMock = jest
-      .mocked(readHistory)
-      .mockResolvedValue(history);
-    const clearHistoryMock = jest
-      .mocked(clearHistory)
-      .mockResolvedValue(undefined);
-    const loggerMock = logger as unknown as LoggerMock;
-
-    const createObjectURL = jest.fn(() => 'blob:test-download');
-    const revokeObjectURL = jest.fn();
-    Object.defineProperty(globalThis.URL, 'createObjectURL', {
-      value: createObjectURL,
-      configurable: true,
-      writable: true,
-    });
-
-    Object.defineProperty(globalThis.URL, 'revokeObjectURL', {
-      value: revokeObjectURL,
-      configurable: true,
-      writable: true,
-    });
-
-    const anchorClickSpy = jest
-      .spyOn(HTMLAnchorElement.prototype, 'click')
-      .mockImplementation((): void => {
-        return;
-      });
-    const confirmSpy = jest.spyOn(globalThis, 'confirm').mockReturnValue(false);
-
-    await import('./options');
-
-    document.dispatchEvent(new Event('DOMContentLoaded'));
-    await flushAsync();
+  it('renders history, handles icons, and supports filtering', async() => {
+    setupSuccessMocks();
+    await initializeOptionsPage();
 
     const stats = getRequiredElementById<HTMLElement>('stats');
     expect(stats.textContent).toContain('sites scanned');
@@ -269,6 +304,22 @@ describe('options page wiring', () => {
     pspFilter.dispatchEvent(new Event('change'));
     await flushAsync();
     expect(historyBody.querySelectorAll('tr').length).toBe(1);
+  });
+
+  it('exports history and applies clear confirmation behavior', async() => {
+    const {
+      clearHistoryMock,
+      confirmSpy,
+      createObjectURL,
+      revokeObjectURL,
+      anchorClickSpy,
+      loggerMock,
+    } = setupSuccessMocks();
+    await initializeOptionsPage();
+
+    const historyBody = getRequiredElementById<HTMLTableSectionElement>(
+      'historyBody',
+    );
 
     getRequiredElementById<HTMLButtonElement>('exportBtn').click();
     expect(createObjectURL).toHaveBeenCalledTimes(1);
@@ -295,6 +346,10 @@ describe('options page wiring', () => {
       'Failed to clear history',
       expect.any(Error),
     );
+  });
+
+  it('logs initialization errors when metadata or history loading fails', async() => {
+    const { fetchMock, readHistoryMock, loggerMock } = setupSuccessMocks();
 
     fetchMock.mockResolvedValueOnce({
       ok: false,
@@ -303,9 +358,7 @@ describe('options page wiring', () => {
     } as unknown as Response);
 
     readHistoryMock.mockRejectedValueOnce(new Error('Read failed'));
-
-    document.dispatchEvent(new Event('DOMContentLoaded'));
-    await flushAsync();
+    await initializeOptionsPage();
 
     expect(loggerMock.warn).toHaveBeenCalledWith(
       'Failed to load PSP icon metadata for history table',

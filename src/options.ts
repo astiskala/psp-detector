@@ -111,72 +111,124 @@ function buildLegend(
   }
 }
 
+interface PieChartContext {
+  ctx: CanvasRenderingContext2D;
+  width: number;
+  height: number;
+  centerX: number;
+  centerY: number;
+  radius: number;
+}
+
+function getPieChartContext(canvasId: string): PieChartContext | null {
+  const canvas = document.getElementById(canvasId) as HTMLCanvasElement | null;
+  if (!canvas) {
+    return null;
+  }
+
+  const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    return null;
+  }
+
+  const width = canvas.width;
+  const height = canvas.height;
+  return {
+    ctx,
+    width,
+    height,
+    centerX: width / 2,
+    centerY: height / 2,
+    radius: Math.min(width, height) / 2 - 12,
+  };
+}
+
+function drawEmptyPieChart(
+  chart: PieChartContext,
+  legendId: string,
+  slices: DistributionSlice[],
+): void {
+  const background = readCssVar('--surface', '#f9fafb');
+  const border = readCssVar('--border', '#e5e7eb');
+  const text = readCssVar('--text-secondary', '#6b7280');
+
+  chart.ctx.fillStyle = background;
+  chart.ctx.strokeStyle = border;
+  chart.ctx.lineWidth = 2;
+  chart.ctx.beginPath();
+  chart.ctx.arc(chart.centerX, chart.centerY, chart.radius, 0, Math.PI * 2);
+  chart.ctx.fill();
+  chart.ctx.stroke();
+  chart.ctx.fillStyle = text;
+  chart.ctx.font = '12px system-ui, -apple-system, sans-serif';
+  chart.ctx.textAlign = 'center';
+  chart.ctx.textBaseline = 'middle';
+  chart.ctx.fillText('No data', chart.centerX, chart.centerY);
+
+  buildLegend(legendId, slices, []);
+}
+
+function drawPieSlices(
+  chart: PieChartContext,
+  slices: DistributionSlice[],
+  colors: string[],
+): void {
+  const total = slices.reduce((sum, slice) => sum + slice.count, 0);
+  let start = -Math.PI / 2;
+
+  for (const [index, slice] of slices.entries()) {
+    const sweep = (slice.count / total) * Math.PI * 2;
+    chart.ctx.beginPath();
+    chart.ctx.moveTo(chart.centerX, chart.centerY);
+    chart.ctx.arc(
+      chart.centerX,
+      chart.centerY,
+      chart.radius,
+      start,
+      start + sweep,
+    );
+
+    chart.ctx.closePath();
+    chart.ctx.fillStyle = colors[index] ?? '#2563eb';
+    chart.ctx.fill();
+    start += sweep;
+  }
+}
+
+function drawPieChartCenterHole(chart: PieChartContext): void {
+  chart.ctx.beginPath();
+  chart.ctx.arc(
+    chart.centerX,
+    chart.centerY,
+    chart.radius * 0.46,
+    0,
+    Math.PI * 2,
+  );
+
+  chart.ctx.fillStyle = readCssVar('--bg', '#ffffff');
+  chart.ctx.fill();
+}
+
 function drawPieChart(
   canvasId: string,
   legendId: string,
   slices: DistributionSlice[],
 ): void {
-  const canvas = document.getElementById(canvasId) as HTMLCanvasElement | null;
-  if (!canvas) {
+  const chart = getPieChartContext(canvasId);
+  if (!chart) {
     return;
   }
 
-  const ctx = canvas.getContext('2d');
-  if (!ctx) {
-    return;
-  }
-
-  const width = canvas.width;
-  const height = canvas.height;
-  const centerX = width / 2;
-  const centerY = height / 2;
-  const radius = Math.min(width, height) / 2 - 12;
-  const background = readCssVar('--surface', '#f9fafb');
-  const border = readCssVar('--border', '#e5e7eb');
-  const text = readCssVar('--text-secondary', '#6b7280');
-
-  ctx.clearRect(0, 0, width, height);
+  chart.ctx.clearRect(0, 0, chart.width, chart.height);
 
   if (slices.length === 0) {
-    ctx.fillStyle = background;
-    ctx.strokeStyle = border;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = text;
-    ctx.font = '12px system-ui, -apple-system, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('No data', centerX, centerY);
-
-    buildLegend(legendId, slices, []);
+    drawEmptyPieChart(chart, legendId, slices);
     return;
   }
 
-  const total = slices.reduce((sum, slice) => sum + slice.count, 0);
-  const colors = slices.map(
-    (_, index) => getChartColor(index),
-  );
-  let start = -Math.PI / 2;
-
-  for (const [index, slice] of slices.entries()) {
-    const sweep = (slice.count / total) * Math.PI * 2;
-    ctx.beginPath();
-    ctx.moveTo(centerX, centerY);
-    ctx.arc(centerX, centerY, radius, start, start + sweep);
-    ctx.closePath();
-    ctx.fillStyle = colors[index] ?? '#2563eb';
-    ctx.fill();
-    start += sweep;
-  }
-
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, radius * 0.46, 0, Math.PI * 2);
-  ctx.fillStyle = readCssVar('--bg', '#ffffff');
-  ctx.fill();
-
+  const colors = slices.map((_, index) => getChartColor(index));
+  drawPieSlices(chart, slices, colors);
+  drawPieChartCenterHole(chart);
   buildLegend(legendId, slices, colors);
 }
 
