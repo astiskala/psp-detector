@@ -14,8 +14,10 @@ type EntryStatus =
 /**
  * Determine how a new entry relates to existing history.
  *
- * Invariant: history is sorted newest-first. We can break early once we
- * reach an entry older than the debounce lower bound.
+ * Invariant: `history` MUST be sorted newest-first. This function relies on
+ * that ordering to break the scan early once entries fall outside the debounce
+ * window. The invariant is maintained by the caller (`writeHistoryEntry`),
+ * which always prepends new entries rather than appending them.
  *
  * Returns:
  *   { kind: 'merge', index }  — same URL within HISTORY_ENTRY_MERGE_WINDOW_MS
