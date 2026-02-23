@@ -97,7 +97,7 @@ async function detectAndAssert(page: Page, site: SiteCase): Promise<void> {
   detector.setExemptDomains([]);
   const result = detector.detectPSP(site.url, surface);
   const matchedNames = PSPDetectionResult.isDetected(result)
-    ? result.psps.map((match) => match.psp)
+    ? result.psps.map((match): string => match.psp)
     : [];
   if (!matchedNames.includes(site.expected)) {
     // Provide concise diagnostics

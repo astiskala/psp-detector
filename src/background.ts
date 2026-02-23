@@ -17,9 +17,9 @@ import {
   type PSPConfig,
   type PSPResponse,
   type StoredTabPsp,
+  type URL as BrandedURL,
 } from './types';
 import { DEFAULT_ICONS } from './types/background';
-import type { URL as BrandedURL } from './types/branded';
 import {
   logger,
   getAllProviders,
@@ -508,14 +508,8 @@ class BackgroundService {
    * Create a standardized exempt PSP detection result
    * @private
    */
-  private createExemptResult(
-    reason: string,
-    url?: string,
-  ): PSPDetectionResult {
-    return PSPDetectionResult.exempt(
-      reason,
-      (url ?? 'unknown') as BrandedURL,
-    );
+  private createExemptResult(reason: string): PSPDetectionResult {
+    return PSPDetectionResult.exempt(reason, 'unknown' as BrandedURL);
   }
 
   /**
@@ -622,7 +616,6 @@ class BackgroundService {
     return (
       typeof pspData.psp === 'string' &&
       (pspData.tabId === undefined || typeof pspData.tabId === 'number') &&
-      (pspData.url === undefined || typeof pspData.url === 'string') &&
       (pspData.detectionInfo === undefined ||
        typeof pspData.detectionInfo === 'object')
     );

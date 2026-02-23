@@ -1,6 +1,6 @@
 {
   "name": "psp-detector",
-  "version": "3.2026.223.833",
+  "version": "3.2026.223.852",
   "description": "Chrome extension to detect Payment Service Providers on web pages",
   "private": true,
   "scripts": {
@@ -36,6 +36,7 @@
     "@types/node": "^25.3.0",
     "@typescript-eslint/eslint-plugin": "^8.56.0",
     "@typescript-eslint/parser": "^8.56.0",
+    "cheerio": "^1.2.0",
     "dependency-cruiser": "^17.3.8",
     "esbuild": "^0.27.3",
     "eslint": "^10.0.1",
@@ -48,7 +49,6 @@
     "jest-environment-jsdom": "^30.2.0",
     "jiti": "^2.6.1",
     "knip": "^5.85.0",
-    "node-gyp": "^12.2.0",
     "sharp": "^0.34.5",
     "ts-jest": "^29.4.6",
     "typescript": "^5.9.3",
@@ -58,22 +58,17 @@
     "@playwright/test": "^1.58.2"
   },
   "overrides": {
-    "@isaacs/brace-expansion": "^5.0.1",
     "fast-xml-parser": "^5.3.6",
+    "glob": "^11.0.3",
+    "minimatch": "^10.2.1",
     "npmlog": "^7.0.1",
     "are-we-there-yet": "^4.0.2",
     "gauge": "^5.0.2",
-    "glob": "^11.0.3",
     "got": "^14.4.7",
-    "minimatch": "^10.2.1",
     "tar": "^7.5.8",
     "tar-fs": "^3.1.0",
     "tmp": "^0.2.5",
     "typescript": "^5.9.3",
     "ws": "^8.18.3"
-  },
-  "dependencies": {
-    "cheerio": "^1.2.0",
-    "fs-extra": "^11.3.3"
   }
 }

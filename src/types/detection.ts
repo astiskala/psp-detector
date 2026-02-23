@@ -69,4 +69,9 @@ export const PSPDetectionResult = {
     ...(context !== undefined && { context }),
   }),
 
+  isDetected: (
+    result: PSPDetectionResult,
+  ): result is { readonly type: 'detected'; readonly psps: readonly PSPMatch[] } =>
+    result.type === 'detected',
+
 };

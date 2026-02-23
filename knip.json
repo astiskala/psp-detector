@@ -19,9 +19,7 @@
     "@eslint/markdown",
     "@hint/hint-meta-theme-color",
     "@typescript-eslint/eslint-plugin",
-    "@typescript-eslint/parser",
-    "jiti",
-    "node-gyp"
+    "@typescript-eslint/parser"
   ],
   "ignoreUnresolved": ["tslib"],
   "ignoreExportsUsedInFile": true
