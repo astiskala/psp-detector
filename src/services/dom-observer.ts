@@ -1,7 +1,6 @@
 import {
   logger,
   debouncedMutation,
-  memoryUtils,
 } from '../lib/utils';
 
 /**
@@ -189,17 +188,9 @@ export class DOMObserverService {
    * Clean up the observer
    */
   public cleanup(): void {
-    const cleanupFunctions = [
-      (): void => this.stopObserving(),
-      (): void => {
-        this.observer = null;
-      },
-      (): void => {
-        this.onMutationCallback = null;
-      },
-    ];
-
-    memoryUtils.cleanup(cleanupFunctions);
+    this.stopObserving();
+    this.observer = null;
+    this.onMutationCallback = null;
   }
 
   /**

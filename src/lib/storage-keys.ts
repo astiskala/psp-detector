@@ -1,5 +1,4 @@
 export const STORAGE_KEYS = {
-  DETECTED_PSP: 'detectedPsp',
   TAB_PSPS: 'tabPsps',
   EXEMPT_DOMAINS: 'exemptDomains',
   CACHED_PSP_CONFIG: 'cachedPspConfig',

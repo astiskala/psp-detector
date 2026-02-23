@@ -172,78 +172,6 @@ export function debouncedMutation<T extends(...args: unknown[]) => unknown>(
   };
 }
 
-/**
- * Memory management utilities for cleanup and performance monitoring
- */
-export const memoryUtils = {
-  /**
-   * Clean up event listeners and observers
-   * @param cleanupFns - Array of cleanup functions
-   */
-  cleanup: (cleanupFns: (() => void)[]): void => {
-    cleanupFns.forEach((fn) => {
-      try {
-        fn();
-      } catch (cleanupError) {
-        logger.error('Cleanup function failed:', cleanupError);
-      }
-    });
-  },
-
-  /**
-   * Monitor memory usage and warn if high
-   * @param context - Context for logging
-   */
-  checkMemoryUsage: (context: string): void => {
-    const win = (globalThis as unknown as { window?: Window }).window;
-
-    if (win && 'performance' in win && 'memory' in (win.performance as unknown as object)) {
-      const memory = (win.performance as unknown as {
-        memory: {
-          usedJSHeapSize: number;
-          totalJSHeapSize: number;
-          jsHeapSizeLimit: number;
-        };
-      }).memory;
-
-      const usagePercent =
-        (memory.usedJSHeapSize / memory.jsHeapSizeLimit) * 100;
-
-      if (usagePercent > 80) {
-        logger.warn(
-          `High memory usage in ${context}: ${usagePercent.toFixed(1)}%`,
-        );
-      }
-    }
-  },
-
-  /**
-   * Create a resource cleanup manager
-   */
-  createCleanupManager: (): {
-    add: (cleanup: () => void) => void;
-    cleanup: () => void;
-  } => {
-    const resources: (() => void)[] = [];
-
-    return {
-      add: (cleanup: () => void): void => {
-        resources.push(cleanup);
-      },
-      cleanup: (): void => {
-        resources.forEach((fn) => {
-          try {
-            fn();
-          } catch (error) {
-            logger.error('Resource cleanup failed:', error);
-          }
-        });
-
-        resources.length = 0;
-      },
-    };
-  },
-};
 
 /**
  * Get all PSPs, orchestrators, and TSPs as a single array.
@@ -258,87 +186,24 @@ export function getAllProviders(pspConfig: PSPConfig): PSP[] {
 }
 
 /**
- * Performance monitoring utilities
+ * Measure async execution time of a function
  */
-export const performanceUtils = {
-  /**
-   * Measure execution time of a function
-   * @param fn - Function to measure
-   * @param label - Label for the measurement
-   */
-  measureAsync: async <T>(
-    fn: () => Promise<T>,
-    label: string,
-  ): Promise<T> => {
-    logger.time(label);
-    try {
-      const result = await fn();
-      return result;
-    } finally {
-      logger.timeEnd(label);
-    }
-  },
-
-  /**
-   * Measure execution time of a synchronous function
-   * @param fn - Function to measure
-   * @param label - Label for the measurement
-   */
-  measure: <T>(fn: () => T, label: string): T => {
-    logger.time(label);
-    try {
-      return fn();
-    } finally {
-      logger.timeEnd(label);
-    }
-  },
-
-  /**
-   * Throttle function execution
-   * @param fn - Function to throttle
-   * @param limit - Time limit in milliseconds
-   */
-  throttle: <T extends (...args: unknown[]) => unknown>(
-    fn: T,
-    limit: number,
-  ): ((...args: Parameters<T>) => void) => {
-    let inThrottle = false;
-
-    return (...args: Parameters<T>): void => {
-      if (!inThrottle) {
-        fn(...args);
-        inThrottle = true;
-        setTimeout(() => {
-          inThrottle = false;
-        }, limit);
-      }
-    };
-  },
-};
+export async function measureAsync<T>(
+  fn: () => Promise<T>,
+  label: string,
+): Promise<T> {
+  logger.time(label);
+  try {
+    return await fn();
+  } finally {
+    logger.timeEnd(label);
+  }
+}
 
 /**
  * Error handling utilities
  */
 export const errorUtils = {
-  /**
-   * Safely execute a function with error handling
-   * @param fn - Function to execute
-   * @param context - Context for error logging
-   * @param fallback - Fallback value on error
-   */
-  safeExecute: <T>(
-    fn: () => T,
-    context: string,
-    fallback: T,
-  ): T => {
-    try {
-      return fn();
-    } catch (error) {
-      logger.error(`Error in ${context}:`, error);
-      return fallback;
-    }
-  },
-
   /**
    * Safely execute an async function with error handling
    * @param fn - Async function to execute

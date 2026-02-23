@@ -1,6 +1,6 @@
 import { PSPDetectorService } from './psp-detector';
 import type { PSPConfig } from '../types';
-import { TypeConverters, PSPDetectionResult } from '../types';
+import { TypeConverters } from '../types';
 import {
   TEST_PSP_CONFIGS,
   TEST_URLS,
@@ -38,8 +38,8 @@ describe('PSPDetectorService', () => {
     const url = 'https://checkout.stripe.com';
     const content = STRIPE_SCRIPT_TAG;
     const result = service.detectPSP(url, content);
-    expect(PSPDetectionResult.isDetected(result)).toBe(true);
-    if (PSPDetectionResult.isDetected(result)) {
+    expect(result.type).toBe('detected');
+    if (result.type === 'detected') {
       expect(result.psps[0]?.psp).toBe(STRIPE_NAME);
     }
   });
@@ -48,8 +48,8 @@ describe('PSPDetectorService', () => {
     const url = 'https://www.paypal.com/checkout';
     const content = '<script src="https://www.paypal.com/sdk/js"></script>';
     const result = service.detectPSP(url, content);
-    expect(PSPDetectionResult.isDetected(result)).toBe(true);
-    if (PSPDetectionResult.isDetected(result)) {
+    expect(result.type).toBe('detected');
+    if (result.type === 'detected') {
       expect(result.psps[0]?.psp).toBe('PayPal');
     }
   });
@@ -58,13 +58,13 @@ describe('PSPDetectorService', () => {
     const url = 'https://unknown.com';
     const content = '<div>No PSP here</div>';
     const result = service.detectPSP(url, content);
-    expect(PSPDetectionResult.isNone(result)).toBe(true);
+    expect(result.type).toBe('none');
   });
 
   it('should return error result if not initialized', () => {
     const uninit = new PSPDetectorService();
     const result = uninit.detectPSP(STRIPE_URL, 'stripe');
-    expect(PSPDetectionResult.isError(result)).toBe(true);
+    expect(result.type).toBe('error');
   });
 
   it('should get PSP by PSPName', () => {
@@ -84,14 +84,14 @@ describe('PSPDetectorService', () => {
     const url = 'https://example.com/checkout';
     const content = STRIPE_SCRIPT_TAG;
     const result = service.detectPSP(url, content);
-    expect(PSPDetectionResult.isExempt(result)).toBe(true);
+    expect(result.type).toBe('exempt');
   });
 
   it('should treat subdomains of an exempt domain as exempt', () => {
     const url = 'https://shop.example.com/checkout';
     const content = STRIPE_SCRIPT_TAG;
     const result = service.detectPSP(url, content);
-    expect(PSPDetectionResult.isExempt(result)).toBe(true);
+    expect(result.type).toBe('exempt');
   });
 
   it('should normalize exempt domains (case & whitespace) and still exempt', () => {
@@ -101,7 +101,7 @@ describe('PSPDetectorService', () => {
     const url = 'https://payments.example.com/checkout';
     const content = STRIPE_SCRIPT_TAG;
     const result = normalizedService.detectPSP(url, content);
-    expect(PSPDetectionResult.isExempt(result)).toBe(true);
+    expect(result.type).toBe('exempt');
   });
 
   it('should detect PSP using string arrays', () => {
@@ -134,8 +134,8 @@ describe('PSPDetectorService', () => {
     const stripeUrl = 'https://checkout.stripe.com/session/pay_123';
     const stripeContent = `<div>${STRIPE_NAME} checkout</div>`;
     const stripeResult = pspDetectorService.detectPSP(stripeUrl, stripeContent);
-    expect(PSPDetectionResult.isDetected(stripeResult)).toBe(true);
-    if (PSPDetectionResult.isDetected(stripeResult)) {
+    expect(stripeResult.type).toBe('detected');
+    if (stripeResult.type === 'detected') {
       expect(stripeResult.psps[0]?.psp).toBe(STRIPE_NAME);
     }
 
@@ -143,8 +143,8 @@ describe('PSPDetectorService', () => {
     const adyenUrl = 'https://checkoutshopper-live.adyen.com/checkout';
     const adyenContent = '<div>Adyen checkout</div>';
     const adyenResult = pspDetectorService.detectPSP(adyenUrl, adyenContent);
-    expect(PSPDetectionResult.isDetected(adyenResult)).toBe(true);
-    if (PSPDetectionResult.isDetected(adyenResult)) {
+    expect(adyenResult.type).toBe('detected');
+    if (adyenResult.type === 'detected') {
       expect(adyenResult.psps[0]?.psp).toBe('Adyen');
     }
 
@@ -156,7 +156,7 @@ describe('PSPDetectorService', () => {
       nonMatchUrl,
       nonMatchContent,
     );
-    expect(PSPDetectionResult.isExempt(nonMatchResult)).toBe(true);
+    expect(nonMatchResult.type).toBe('exempt');
   });
 
   it('should test precompileRegexPatterns functionality', () => {
@@ -188,14 +188,14 @@ describe('PSPDetectorService', () => {
       'https://valid.pattern.com',
       'content',
     );
-    expect(PSPDetectionResult.isDetected(validResult)).toBe(true);
+    expect(validResult.type).toBe('detected');
 
     // Invalid regex should not crash and return none
     const invalidResult = pspDetectorService.detectPSP(
       'https://invalid.com',
       'content',
     );
-    expect(PSPDetectionResult.isNone(invalidResult)).toBe(true);
+    expect(invalidResult.type).toBe('none');
   });
 
   it('should test isURLExempt method', () => {
@@ -228,7 +228,7 @@ describe('PSPDetectorService', () => {
     );
 
     // Should still work with fallback to provided URL
-    expect(PSPDetectionResult.isDetected(result)).toBe(true);
+    expect(result.type).toBe('detected');
 
     // Restore original window
     restoreWindow(originalWindow);
@@ -254,8 +254,8 @@ describe('PSPDetectorService', () => {
       'https://unknown.com',
       'no matches',
     );
-    expect(PSPDetectionResult.isNone(result)).toBe(true);
-    if (PSPDetectionResult.isNone(result)) {
+    expect(result.type).toBe('none');
+    if (result.type === 'none') {
       expect(result.scannedPatterns).toBe(100);
     }
   });
@@ -285,8 +285,8 @@ describe('PSPDetectorService', () => {
       shopUrl,
       stripeScriptContent,
     );
-    expect(PSPDetectionResult.isDetected(scriptResult)).toBe(true);
-    if (PSPDetectionResult.isDetected(scriptResult)) {
+    expect(scriptResult.type).toBe('detected');
+    if (scriptResult.type === 'detected') {
       expect(scriptResult.psps[0]?.psp).toBe(STRIPE_NAME);
     }
 
@@ -298,8 +298,8 @@ describe('PSPDetectorService', () => {
       merchantUrl,
       iframeContent,
     );
-    expect(PSPDetectionResult.isDetected(iframeResult)).toBe(true);
-    if (PSPDetectionResult.isDetected(iframeResult)) {
+    expect(iframeResult.type).toBe('detected');
+    if (iframeResult.type === 'detected') {
       expect(iframeResult.psps[0]?.psp).toBe(STRIPE_NAME);
     }
 
@@ -308,8 +308,8 @@ describe('PSPDetectorService', () => {
     const formContent =
       '<form action="https://checkout.stripe.com/submit" method="post"></form>';
     const formResult = pspDetectorService.detectPSP(checkoutUrl, formContent);
-    expect(PSPDetectionResult.isDetected(formResult)).toBe(true);
-    if (PSPDetectionResult.isDetected(formResult)) {
+    expect(formResult.type).toBe('detected');
+    if (formResult.type === 'detected') {
       expect(formResult.psps[0]?.psp).toBe(STRIPE_NAME);
     }
   });
@@ -333,8 +333,8 @@ describe('PSPDetectorService', () => {
       'https://demo.globalpay.com/merchants/dropin-ui',
       '<iframe src="https://js-cert.globalpay.com/4.1.13/field.html#token"></iframe>',
     );
-    expect(PSPDetectionResult.isDetected(result)).toBe(true);
-    if (PSPDetectionResult.isDetected(result)) {
+    expect(result.type).toBe('detected');
+    if (result.type === 'detected') {
       expect(result.psps[0]?.psp).toBe('Global Payments');
     }
   });
@@ -402,19 +402,11 @@ describe('PSPDetectorService', () => {
     }
   });
 
-  it('returns error for invalid url input', () => {
+  it('returns error for empty url input', () => {
     const result = service.detectPSP('', 'content');
     expect(result.type).toBe('error');
     if (result.type === 'error') {
       expect(result.context).toBe('url_validation');
-    }
-  });
-
-  it('returns error for invalid content input type', () => {
-    const result = service.detectPSP('https://example.com', null as unknown as string);
-    expect(result.type).toBe('error');
-    if (result.type === 'error') {
-      expect(result.context).toBe('content_validation');
     }
   });
 

@@ -45,7 +45,7 @@ export class PSPDetectorService {
     const initializedError = this.ensureInitialized();
     if (initializedError) return initializedError;
 
-    const inputError = this.validateInputs(url, content);
+    const inputError = this.validateInputs(url);
     if (inputError) return inputError;
 
     const brandedURL = TypeConverters.toURL(url);
@@ -112,19 +112,11 @@ export class PSPDetectorService {
 
   private validateInputs(
     url: string,
-    content: string,
   ): PSPDetectionResult | null {
-    if (typeof url !== 'string' || url.trim().length === 0) {
+    if (url.trim().length === 0) {
       return PSPDetectionResult.error(
         new Error('Invalid URL provided'),
         'url_validation',
-      );
-    }
-
-    if (typeof content !== 'string') {
-      return PSPDetectionResult.error(
-        new Error('Invalid content provided'),
-        'content_validation',
       );
     }
 

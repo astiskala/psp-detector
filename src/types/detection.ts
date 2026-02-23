@@ -69,23 +69,4 @@ export const PSPDetectionResult = {
     ...(context !== undefined && { context }),
   }),
 
-  isDetected: (
-    result: PSPDetectionResult,
-  ): result is Extract<PSPDetectionResult, { type: 'detected' }> =>
-    result.type === 'detected',
-
-  isExempt: (
-    result: PSPDetectionResult,
-  ): result is Extract<PSPDetectionResult, { type: 'exempt' }> =>
-    result.type === 'exempt',
-
-  isNone: (
-    result: PSPDetectionResult,
-  ): result is Extract<PSPDetectionResult, { type: 'none' }> =>
-    result.type === 'none',
-
-  isError: (
-    result: PSPDetectionResult,
-  ): result is Extract<PSPDetectionResult, { type: 'error' }> =>
-    result.type === 'error',
 };
