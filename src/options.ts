@@ -343,23 +343,6 @@ function createTableIcon(
   return icon;
 }
 
-function createLetterAvatar(domain: string): HTMLElement {
-  const letter = domain.trim().charAt(0).toUpperCase() || '?';
-  const avatar = document.createElement('div');
-  avatar.className = 'table-icon domain-icon domain-letter-avatar';
-  avatar.textContent = letter;
-  avatar.style.width = `${HISTORY_TABLE_ICON_SIZE}px`;
-  avatar.style.height = `${HISTORY_TABLE_ICON_SIZE}px`;
-  avatar.style.lineHeight = `${HISTORY_TABLE_ICON_SIZE}px`;
-  avatar.style.fontSize = '10px';
-  avatar.style.textAlign = 'center';
-  avatar.style.backgroundColor = 'var(--accent, #2563eb)';
-  avatar.style.color = '#fff';
-  avatar.style.borderRadius = '2px';
-  avatar.style.flexShrink = '0';
-  return avatar;
-}
-
 function appendDomainCellContent(
   cell: HTMLTableCellElement,
   entry: HistoryEntry,
@@ -370,10 +353,7 @@ function appendDomainCellContent(
   const hostname = getHistoryEntryHostname(entry);
   const faviconUrl = buildDomainFaviconUrl(entry);
 
-  let iconElement: HTMLElement;
-  if (faviconUrl === null) {
-    iconElement = createLetterAvatar(hostname || entry.domain);
-  } else {
+  if (faviconUrl !== null) {
     const img = document.createElement('img');
     img.className = 'table-icon domain-icon';
     img.alt = `${hostname || entry.domain} favicon`;
@@ -382,23 +362,14 @@ function appendDomainCellContent(
     img.height = HISTORY_TABLE_ICON_SIZE;
     img.decoding = 'async';
     img.loading = 'lazy';
-    img.addEventListener(
-      'error',
-      () => {
-        const avatar = createLetterAvatar(hostname || entry.domain);
-        img.replaceWith(avatar);
-      },
-      { once: true },
-    );
-
-    iconElement = img;
+    img.addEventListener('error', () => img.remove(), { once: true });
+    wrap.appendChild(img);
   }
 
   const text = document.createElement('span');
   text.className = 'cell-label';
   text.textContent = entry.domain;
 
-  wrap.appendChild(iconElement);
   wrap.appendChild(text);
   cell.appendChild(wrap);
 }

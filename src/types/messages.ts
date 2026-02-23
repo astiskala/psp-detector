@@ -34,7 +34,6 @@ export interface PSPDetectionData {
     value: string;
     sourceType?: SourceType;
   };
-  url?: string;
 }
 
 /**

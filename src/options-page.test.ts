@@ -280,7 +280,7 @@ describe('options page wiring', () => {
 
     const firstDomainIcon = getRequiredElement<HTMLImageElement>('.domain-icon');
     firstDomainIcon.dispatchEvent(new Event('error'));
-    expect(document.querySelector('.domain-letter-avatar')).not.toBeNull();
+    expect(firstDomainIcon.isConnected).toBe(false);
 
     const firstPspIcon = getRequiredElement<HTMLImageElement>('.psp-icon');
     firstPspIcon.dispatchEvent(new Event('error'));

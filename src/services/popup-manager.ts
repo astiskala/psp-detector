@@ -8,7 +8,7 @@ import type { PSPConfig, PSPResponse } from '../types';
 import { UIService } from './ui';
 import {
   logger,
-  performanceUtils,
+  measureAsync,
   errorUtils,
   fetchWithTimeout,
 } from '../lib/utils';
@@ -131,7 +131,7 @@ export class PopupManager {
       permissionState.hasWebRequestPermission;
 
     try {
-      await performanceUtils.measureAsync(async() => {
+      await measureAsync(async() => {
         const detectedPsps = await this.getDetectedPSPsWithRetry();
         if (detectedPsps.some((entry) => entry.psp === PSP_DETECTION_EXEMPT)) {
           this.hidePermissionPanel();
@@ -344,14 +344,6 @@ export class PopupManager {
         reject(error instanceof Error ? error : new Error(String(error)));
       }
     });
-  }
-
-  /**
-   * Clean up resources when popup is closed
-   */
-  public cleanup(): void {
-    // Placeholder for teardown hooks if popup resources are added later.
-    logger.debug('Popup manager cleaned up');
   }
 
   public bindHistoryAction(): void {

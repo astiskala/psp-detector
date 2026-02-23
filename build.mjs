@@ -1,8 +1,19 @@
 import esbuild from 'esbuild';
-import fs from 'fs-extra';
+import { readFileSync, writeFileSync } from 'node:fs';
+import fs from 'node:fs/promises';
 import path from 'node:path';
 import sharp from 'sharp';
 import { fileURLToPath } from 'node:url';
+
+/** Read and parse a JSON file synchronously. */
+function readJsonSync(filePath) {
+  return JSON.parse(readFileSync(filePath, 'utf8'));
+}
+
+/** Write an object as pretty-printed JSON synchronously. */
+function writeJsonSync(filePath, obj) {
+  writeFileSync(filePath, `${JSON.stringify(obj, null, 2)}\n`);
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -46,7 +57,7 @@ const sharedConfig = {
 async function generatePspImages() {
   const srcDir = path.join(__dirname, 'assets', 'images');
   const distDir = path.join(__dirname, 'dist', 'images');
-  await fs.ensureDir(distDir);
+  await fs.mkdir(distDir, { recursive: true });
 
   const files = await fs.readdir(srcDir);
   const pspPngs = files.filter(
@@ -58,7 +69,7 @@ async function generatePspImages() {
   // cleanup old
   for (const f of await fs.readdir(distDir)) {
     if (/_48\.png$|_128\.png$/.test(f)) {
-      await fs.remove(path.join(distDir, f));
+      await fs.rm(path.join(distDir, f), { force: true });
     }
   }
 
@@ -99,26 +110,29 @@ async function buildFiles() {
 
     // 2) bump package.json in-place
     const pkgPath = path.join(__dirname, 'package.json');
-    const pkg = fs.readJsonSync(pkgPath);
+    const pkg = readJsonSync(pkgPath);
     pkg.version = version;
-    fs.writeJsonSync(pkgPath, pkg, { spaces: 2 });
+    writeJsonSync(pkgPath, pkg);
 
     // 3) prepare dist/
     const distDir = path.join(__dirname, 'dist');
-    await fs.remove(distDir);
-    await fs.ensureDir(distDir);
+    await fs.rm(distDir, { recursive: true, force: true });
+    await fs.mkdir(distDir, { recursive: true });
 
     // 4) copy all public/ → dist/
     const publicDir = path.join(__dirname, 'public');
-    if (await fs.pathExists(publicDir)) {
-      await fs.copy(publicDir, distDir);
+    try {
+      await fs.access(publicDir);
+      await fs.cp(publicDir, distDir, { recursive: true });
       console.log('Copied public/ → dist/');
+    } catch {
+      // public/ does not exist — skip copy
     }
 
     // 5) inject and write manifest.json
     const manifestSrc = path.join(__dirname, 'assets', 'manifest.json');
     const manifestDst = path.join(distDir, 'manifest.json');
-    const manifest = fs.readJsonSync(manifestSrc);
+    const manifest = readJsonSync(manifestSrc);
     manifest.version = version;
 
     // adjust service_worker and content_scripts paths if needed:
@@ -135,7 +149,7 @@ async function buildFiles() {
       });
     }
 
-    fs.writeJsonSync(manifestDst, manifest, { spaces: 2 });
+    writeJsonSync(manifestDst, manifest);
     console.log(`Wrote dist/manifest.json @ version ${version}`);
 
     // 6) bundle JS

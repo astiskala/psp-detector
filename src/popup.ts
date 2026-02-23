@@ -9,11 +9,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // more than once, even when initialize() is re-called after permission grant.
   popup.bindHistoryAction();
 
-  // Add cleanup on window unload
-  window.addEventListener('beforeunload', () => {
-    popup.cleanup();
-  });
-
   popup.initialize().catch((error) => {
     logger.error('Popup initialization failed:', error);
   });

@@ -475,12 +475,6 @@ describe('background service onboarding and re-detect flow', () => {
       success: true,
       reason: 'Tab is exempt or restricted',
     });
-
-    expect(mocks.localSet).toHaveBeenCalledWith({
-      [STORAGE_KEYS.DETECTED_PSP]: expect.objectContaining({
-        type: 'exempt',
-      }) as unknown,
-    });
   });
 
   it('keeps tab PSP state in memory instead of re-reading session storage', async() => {

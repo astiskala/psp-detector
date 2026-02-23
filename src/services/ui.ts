@@ -233,11 +233,9 @@ export class UIService {
 
     if (typeof notice === 'string' && notice.length > 0) {
       noticeElement.style.display = 'block';
-      noticeElement.classList.add('show');
       this.updateTextContent('notice', notice);
     } else {
       noticeElement.style.display = 'none';
-      noticeElement.classList.remove('show');
       this.updateTextContent('notice', '');
     }
   }

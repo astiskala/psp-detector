@@ -3,10 +3,9 @@ import {
   safeCompileRegex,
   logger,
   debouncedMutation,
-  memoryUtils,
   normalizeStringArray,
   fetchWithTimeout,
-  performanceUtils,
+  measureAsync,
   errorUtils,
   getAllProviders,
 } from './utils';
@@ -140,36 +139,6 @@ describe('utils', () => {
     }, 100);
   });
 
-  it('memoryUtils.cleanup executes cleanup functions', () => {
-    const cleanupFn1 = jest.fn();
-    const cleanupFn2 = jest.fn();
-    const cleanupFns = [cleanupFn1, cleanupFn2];
-
-    memoryUtils.cleanup(cleanupFns);
-
-    expect(cleanupFn1).toHaveBeenCalledTimes(1);
-    expect(cleanupFn2).toHaveBeenCalledTimes(1);
-  });
-
-  it('memoryUtils.cleanup handles errors in cleanup functions gracefully', () => {
-    const throwingFn = jest.fn(() => {
-      throw new Error('Cleanup error');
-    });
-    const normalFn = jest.fn();
-    const consoleSpy = jest
-      .spyOn(console, 'error')
-      .mockImplementation(() => {
-        // No-op for testing
-      });
-
-    expect(() => memoryUtils.cleanup([throwingFn, normalFn])).not.toThrow();
-    expect(throwingFn).toHaveBeenCalledTimes(1);
-    expect(normalFn).toHaveBeenCalledTimes(1);
-    expect(consoleSpy).toHaveBeenCalled();
-
-    consoleSpy.mockRestore();
-  });
-
   it('logger.time and logger.timeEnd work in development mode', () => {
     const originalEnv = process.env['NODE_ENV'];
     process.env['NODE_ENV'] = 'development';
@@ -287,84 +256,8 @@ describe('utils', () => {
     });
   });
 
-  describe('memory utilities', () => {
-    it('checkMemoryUsage warns when heap usage is high', () => {
-      const performanceLike = globalThis.performance as unknown as {
-        memory?: {
-          usedJSHeapSize: number;
-          totalJSHeapSize: number;
-          jsHeapSizeLimit: number;
-        };
-      };
-      const originalMemory = performanceLike.memory;
-      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {
-        // No-op for testing
-      });
-
-      Object.defineProperty(performanceLike, 'memory', {
-        configurable: true,
-        value: {
-          usedJSHeapSize: 900,
-          totalJSHeapSize: 1000,
-          jsHeapSizeLimit: 1000,
-        },
-      });
-
-      memoryUtils.checkMemoryUsage('utils-test');
-      expect(warnSpy).toHaveBeenCalled();
-
-      if (originalMemory === undefined) {
-        delete performanceLike.memory;
-      } else {
-        Object.defineProperty(performanceLike, 'memory', {
-          configurable: true,
-          value: originalMemory,
-        });
-      }
-
-      warnSpy.mockRestore();
-    });
-
-    it('cleanup manager executes all resources once and clears state', () => {
-      const manager = memoryUtils.createCleanupManager();
-      const first = jest.fn();
-      const second = jest.fn();
-
-      manager.add(first);
-      manager.add(second);
-
-      manager.cleanup();
-      manager.cleanup();
-
-      expect(first).toHaveBeenCalledTimes(1);
-      expect(second).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  describe('performance utilities', () => {
-    it('measure returns function result and wraps timer calls', () => {
-      const originalEnv = process.env['NODE_ENV'];
-      process.env['NODE_ENV'] = 'development';
-      const timeSpy = jest.spyOn(console, 'time').mockImplementation(() => {
-        // No-op for testing
-      });
-      const timeEndSpy = jest
-        .spyOn(console, 'timeEnd')
-        .mockImplementation(() => {
-          // No-op for testing
-        });
-
-      const value = performanceUtils.measure(() => 'ok', 'sync-measure');
-      expect(value).toBe('ok');
-      expect(timeSpy).toHaveBeenCalledWith('[PSP Detector] sync-measure');
-      expect(timeEndSpy).toHaveBeenCalledWith('[PSP Detector] sync-measure');
-
-      timeSpy.mockRestore();
-      timeEndSpy.mockRestore();
-      process.env['NODE_ENV'] = originalEnv;
-    });
-
-    it('measureAsync calls timeEnd even when function rejects', async() => {
+  describe('measureAsync', () => {
+    it('calls timeEnd even when function rejects', async() => {
       const originalEnv = process.env['NODE_ENV'];
       process.env['NODE_ENV'] = 'development';
       const timeSpy = jest.spyOn(console, 'time').mockImplementation(() => {
@@ -377,7 +270,7 @@ describe('utils', () => {
         });
 
       await expect(
-        performanceUtils.measureAsync(async() => {
+        measureAsync(async() => {
           throw new Error('boom');
         }, 'async-measure'),
       ).rejects.toThrow('boom');
@@ -389,31 +282,9 @@ describe('utils', () => {
       timeEndSpy.mockRestore();
       process.env['NODE_ENV'] = originalEnv;
     });
-
-    it('throttle executes once per interval', () => {
-      jest.useFakeTimers();
-      const fn = jest.fn();
-      const throttled = performanceUtils.throttle(fn, 50);
-
-      throttled('first');
-      throttled('second');
-      expect(fn).toHaveBeenCalledTimes(1);
-
-      jest.advanceTimersByTime(60);
-      throttled('third');
-      expect(fn).toHaveBeenCalledTimes(2);
-
-      jest.useRealTimers();
-    });
   });
 
   describe('error utilities', () => {
-    it('safeExecute returns fallback when function throws', () => {
-      expect(errorUtils.safeExecute(() => {
-        throw new Error('oops');
-      }, 'safe execute', 'fallback')).toBe('fallback');
-    });
-
     it('safeExecuteAsync returns fallback when async function throws', async() => {
       await expect(errorUtils.safeExecuteAsync(async() => {
         throw new Error('oops');

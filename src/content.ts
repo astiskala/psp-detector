@@ -16,10 +16,7 @@ import {
   type PSPMatch,
   type SourceType,
 } from './types';
-import {
-  logger,
-  memoryUtils,
-} from './lib/utils';
+import { logger } from './lib/utils';
 
 const EXTENSION_CONTEXT_INVALIDATED_MESSAGE = 'Extension context invalidated';
 const SERVICE_WORKER_RESTART_ERRORS = [
@@ -427,11 +424,8 @@ class ContentScript {
         });
       }
 
-      // Mark as detected for all PSPs, including exempt domains
       this.pspDetected = true;
-      if (result.type === 'detected' || result.type === 'exempt') {
-        this.domObserver.stopObserving();
-      }
+      this.domObserver.stopObserving();
     } catch (error) {
       // Handle extension context invalidation gracefully
       if (isExtensionContextInvalidated(error)) {
@@ -560,14 +554,8 @@ class ContentScript {
    * Clean up resources when the content script is unloaded
    */
   public cleanup(): void {
-    const cleanupFunctions = [
-      (): void => this.domObserver.cleanup(),
-      (): void => {
-        this.pspDetected = false;
-      },
-    ];
-
-    memoryUtils.cleanup(cleanupFunctions);
+    this.domObserver.cleanup();
+    this.pspDetected = false;
   }
 
   /**
