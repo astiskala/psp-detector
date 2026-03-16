@@ -132,6 +132,9 @@
     {
       "name": "PayJunction",
       "matchStrings": [
+        "api.payjunction.com",
+        "api.payjunctionlabs.com",
+        "www.payjunction.com/trinity",
         "www.payjunctionlabs.com/trinity"
       ],
       "image": "payjunction",
@@ -173,8 +176,8 @@
       "name": "WePay",
       "matchStrings": [
         "cdn.wepay.com",
-        "staging.wepayapi.com",
-        "wepayapi.com"
+        "wepayapi.com",
+        "static.wepay.com/min/js"
       ],
       "image": "wepay",
       "summary": "WePay, a Chase company, provides integrated payment solutions for platforms and marketplaces. It offers payments, fraud protection, and risk management with the ability to integrate payments into partner platforms.",
@@ -1243,6 +1246,16 @@
       "image": "computop",
       "summary": "Computop is a German enterprise payment gateway providing card acquiring and processing services for large retailers. It supports omnichannel payments across online, mobile, and in-store channels with advanced fraud prevention and global reach.",
       "url": "https://www.computop.com"
+    },
+    {
+      "name": "PPRO",
+      "matchStrings": [
+        "api.eu.ppro.com",
+        "api.ppro.com"
+      ],
+      "image": "ppro",
+      "summary": "PPRO is a payments infrastructure provider that helps merchants, PSPs, and enterprises access local payment methods across global markets through a single platform.",
+      "url": "https://www.ppro.com"
     }
   ],
   "orchestrators": {
@@ -1486,6 +1499,16 @@
         "image": "paytiko",
         "summary": "Paytiko is a payment management platform optimizing acceptance rates and streamlining payment operations.",
         "url": "https://paytiko.com"
+      },
+      {
+        "name": "Pay2B",
+        "matchStrings": [
+          "portal.pay2b.net",
+          "gateway.pay2b.net"
+        ],
+        "image": "pay2b",
+        "summary": "Pay2B is a Brazilian multi-provider payment orchestration platform that offers white-label checkout flows, recurring payments, and a unified API for enterprise merchants.",
+        "url": "https://www.pay2b.com.br"
       },
       {
         "name": "Corefy",

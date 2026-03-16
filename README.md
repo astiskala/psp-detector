@@ -97,6 +97,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Paddle
 - PagBrasil
 - PagSeguro
+- PPRO
 - PayGent
 - PayJunction
 - PayKings
@@ -163,6 +164,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Paytiko
 - PCI Proxy
 - PCI Vault
+- Pay2B
 - Praxis Tech
 - Primer
 - ProcessOut
