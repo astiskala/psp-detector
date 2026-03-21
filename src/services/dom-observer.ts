@@ -1,6 +1,5 @@
 import {
   logger,
-  debouncedMutation,
 } from '../lib/utils';
 
 /**
@@ -9,12 +8,18 @@ import {
  */
 export class DOMObserverService {
   private observer: MutationObserver | null = null;
-  private onMutationCallback: ((...args: unknown[]) => void) | null = null;
   private isObserving = false;
+  private pendingMutations: MutationRecord[] = [];
+  private debounceTimer: ReturnType<typeof setTimeout> | null = null;
+  private debounceCallback:
+    | ((mutations: MutationRecord[]) => void)
+    | null = null;
 
   /**
    * Creates the underlying `MutationObserver` and debounces callback delivery
    * so dynamic checkout pages do not trigger detection on every small change.
+   * All relevant mutations accumulated during the debounce window are passed
+   * together so no individual mutation is silently dropped.
    */
   public initialize(
     callback: (mutations?: MutationRecord[]) => void,
@@ -25,13 +30,12 @@ export class DOMObserverService {
     }
 
     try {
-      this.onMutationCallback = debouncedMutation((...args: unknown[]) => {
-        const mutations = args[0] as MutationRecord[] | undefined;
-        callback(mutations);
-      }, debounceMs);
+      this.debounceCallback = (
+        mutations: MutationRecord[],
+      ): void => callback(mutations);
 
-      this.observer = new MutationObserver((mutations) => {
-        if (!this.isObserving || !this.onMutationCallback) return;
+      this.observer = new MutationObserver((mutations): void => {
+        if (!this.isObserving || !this.debounceCallback) return;
 
         try {
           const relevantMutations = mutations.filter((mutation) =>
@@ -42,9 +46,20 @@ export class DOMObserverService {
              this.isRelevantAttributeMutation(mutation)),
           );
 
-          if (relevantMutations.length > 0) {
-            this.onMutationCallback(relevantMutations);
+          if (relevantMutations.length === 0) return;
+
+          this.pendingMutations.push(...relevantMutations);
+
+          if (this.debounceTimer !== null) {
+            clearTimeout(this.debounceTimer);
           }
+
+          this.debounceTimer = setTimeout(() => {
+            this.debounceTimer = null;
+            const accumulated = this.pendingMutations;
+            this.pendingMutations = [];
+            this.debounceCallback?.(accumulated);
+          }, debounceMs);
         } catch (mutationError) {
           logger.error('DOM mutation processing failed', mutationError);
         }
@@ -175,6 +190,12 @@ export class DOMObserverService {
     try {
       this.observer.disconnect();
       this.isObserving = false;
+      if (this.debounceTimer !== null) {
+        clearTimeout(this.debounceTimer);
+        this.debounceTimer = null;
+      }
+
+      this.pendingMutations = [];
       logger.debug('DOM observer stopped');
     } catch (stopError) {
       logger.error('Failed to stop DOM observer', stopError);
@@ -185,7 +206,7 @@ export class DOMObserverService {
   public cleanup(): void {
     this.stopObserving();
     this.observer = null;
-    this.onMutationCallback = null;
+    this.debounceCallback = null;
   }
 
 }

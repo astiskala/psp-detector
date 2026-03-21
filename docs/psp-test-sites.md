@@ -25,3 +25,5 @@ options-page extension flows.
 * Square: https://square.github.io/web-payments-showcase/
 * Stripe: https://checkout.stripe.dev/checkout
 * Toss Payments: https://developers.tosspayments.com/sandbox
+* Unzer: https://demo.unzer.com/demo/resources/paypage_manual.html
+* Worldline (Saferpay): https://test.saferpay.com/DemoShop

@@ -33,8 +33,10 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - AsiaBill
 - AsiaPay
 - Authorize.net
+- Barclaycard ePDQ
 - BillDesk
 - BlueSnap
+- Buckaroo
 - Cardknox
 - Cashfree Payments
 - CCBill
@@ -48,6 +50,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - CSG Forte
 - CX Pay
 - Cybersource
+- Datatrans
 - Debia
 - DG Financial Technology
 - dLocal
@@ -69,13 +72,17 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Global Payments
 - GMO Payment Gateway
 - Helcim
+- HiPay
+- HitPay
 - Iyzico
 - Judopay
 - KG Inicis
+- KOMOJU
 - KSNET
 - Kushki
 - LianLian
 - Linkly
+- Lyra
 - Mastercard Gateway (MPGS)
 - Maya
 - MercadoPago
@@ -97,7 +104,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Paddle
 - PagBrasil
 - PagSeguro
-- PPRO
+- Pay.
 - PayGent
 - PayJunction
 - PayKings
@@ -107,21 +114,26 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Payoneer
 - PayPal
 - PayPal Enterprise Payments
+- PayPlug
 - Paysafe
 - Paysbuy
 - Paysera
 - Paystack
 - PayTabs
 - Paytm
+- Paytrail
 - PayU
 - Peach Payments
 - Pine Labs
 - Plastiq
 - Plug'n Pay
+- PPRO
+- Przelewy24
 - Quickpay
 - Rapyd
 - Razorpay
 - Red Dot Payment
+- Redsys
 - SB Payment Service
 - senangPay
 - Shift4
@@ -131,12 +143,15 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Square
 - Stripe
 - SumUp
+- Swedbank Pay
 - Tap Payments
 - Telr
 - Tilled
 - Toss Payments
+- Tpay
 - Trust Payments
 - Tyro
+- Unzer
 - WePay
 - Windcave
 - Worldline
@@ -160,11 +175,11 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Gr4vy
 - IXOPAY
 - Juspay
+- Pay2B
 - Paydock
 - Paytiko
 - PCI Proxy
 - PCI Vault
-- Pay2B
 - Praxis Tech
 - Primer
 - ProcessOut

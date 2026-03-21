@@ -23,6 +23,8 @@ const SITES: SiteCase[] = [
   { url: 'https://checkout.stripe.dev/checkout', expected: 'Stripe' },
   { url: 'https://square.github.io/web-payments-showcase/', expected: 'Square' },
   { url: 'https://widget.payu.in/demo', expected: 'PayU' },
+  { url: 'https://demo.unzer.com/demo/resources/paypage_manual.html', expected: 'Unzer' },
+  { url: 'https://test.saferpay.com/DemoShop', expected: 'Worldline' },
 ];
 
 function loadConfig(): PSPConfig {

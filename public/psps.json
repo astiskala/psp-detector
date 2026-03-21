@@ -514,6 +514,8 @@
     {
       "name": "Elavon",
       "matchStrings": [
+        "sandbox.opayo.eu.elavon.com",
+        "live.opayo.eu.elavon.com",
         "pay.elavonpaymentgateway.com",
         "pay.realexpayments.com",
         "pay.sandbox.elavonpaymentgateway.com",
@@ -964,13 +966,15 @@
     {
       "name": "Worldline",
       "matchStrings": [
-        "payment.direct.worldline-solutions.com",
-        "payment.preprod.direct.worldline-solutions.com",
         "checkout.bambora.com",
-        "libs.na.bambora.com"
+        "direct.worldline-solutions.com",
+        "libs.na.bambora.com",
+        "saferpay.com/api/Payment",
+        "saferpay.com/Fields/lib/1/saferpay-fields.js",
+        "test.saferpay.com"
       ],
       "image": "worldline",
-      "summary": "Worldline is a leader in payment services, providing businesses with payment solutions. It offers various services, from payment terminals to e-commerce processing, intended to optimize transactions and improve customer experience.",
+      "summary": "Worldline is a European leader in payment services, providing payment solutions including the Saferpay gateway (Switzerland/Germany/Austria), Bambora, and direct API integrations. It offers services from payment terminals to e-commerce processing across multiple brands.",
       "url": "https://www.worldline.com"
     },
     {
@@ -1161,7 +1165,13 @@
       "name": "PayMob",
       "matchStrings": [
         "paymob-pixel",
-        "accept.paymob.com"
+        "accept.paymob.com",
+        "accept.paymobsolutions.com",
+        "pakistan.paymob.com",
+        "uae.paymob.com",
+        "omn.paymob.com",
+        "paymob.com/api/acceptance/iframes",
+        "paymob.com/unifiedcheckout"
       ],
       "image": "paymob",
       "summary": "PayMob is a MENA-focused infrastructure powering digital financial services in Egypt, Pakistan, and UAE.",
@@ -1256,6 +1266,164 @@
       "image": "ppro",
       "summary": "PPRO is a payments infrastructure provider that helps merchants, PSPs, and enterprises access local payment methods across global markets through a single platform.",
       "url": "https://www.ppro.com"
+    },
+    {
+      "name": "Unzer",
+      "matchStrings": [
+        "api.unzer.com",
+        "payment.unzer.com",
+        "static-cc.test.unzer.com",
+        "static-cc.unzer.com",
+        "static-v2.unzer.com",
+        "test.unzer.com"
+      ],
+      "image": "unzer",
+      "summary": "Unzer is a German-Austrian payment service provider offering card acquiring, gateway services, and hosted UI components for online payments across Europe.",
+      "url": "https://unzer.com"
+    },
+    {
+      "name": "Buckaroo",
+      "matchStrings": [
+        "api.buckaroo.nl",
+        "checkout.buckaroo.nl"
+      ],
+      "image": "buckaroo",
+      "summary": "Buckaroo is a Dutch payment service provider serving over 47,000 organisations across the Netherlands and Belgium, offering card processing, iDEAL, and local payment method aggregation.",
+      "url": "https://www.buckaroo.eu"
+    },
+    {
+      "name": "Pay.",
+      "matchStrings": [
+        "connect.pay.nl",
+        "rest-api.pay.nl",
+        "rest.pay.nl"
+      ],
+      "image": "paynl",
+      "summary": "Pay. is a Dutch payment service provider and gateway serving over 15,000 merchants, offering card processing, iDEAL, and aggregated local payment methods across the Netherlands and Europe.",
+      "url": "https://www.pay.nl"
+    },
+    {
+      "name": "Redsys",
+      "regex": "sis(?:-t)?\\.redsys\\.es(?::25443)?/sis/realizarPago",
+      "image": "redsys",
+      "summary": "Redsys is the Spanish interbank payment gateway (TPV Virtual) handling the majority of online card payments in Spain for both test and production environments.",
+      "url": "https://www.redsys.es"
+    },
+    {
+      "name": "PayPlug",
+      "matchStrings": [
+        "api.payplug.com",
+        "cdn.payplug.com/js/integrated-payment"
+      ],
+      "image": "payplug",
+      "summary": "PayPlug is a French payment service provider offering hosted fields and a payment gateway for over 17,000 merchants across France and Europe.",
+      "url": "https://www.payplug.com"
+    },
+    {
+      "name": "HiPay",
+      "matchStrings": [
+        "libs.hipay.com/js/sdkjs.js",
+        "secure-gateway.hipay-tpp.com"
+      ],
+      "image": "hipay",
+      "summary": "HiPay is a French payment gateway offering hosted fields, alternative payment methods, and global acquiring services for European merchants.",
+      "url": "https://hipay.com"
+    },
+    {
+      "name": "Swedbank Pay",
+      "matchStrings": [
+        "ecom.externalintegration.payex.com",
+        "ecom.payex.com",
+        "payex.com/payment/core/js/px.payment.client.js",
+        "swedbankpay.com/payment"
+      ],
+      "image": "swedbankpay",
+      "summary": "Swedbank Pay (formerly PayEx) is a Nordic payment service provider offering card acquiring and hosted checkout UI for over 3 billion card transactions annually across Sweden, Norway, Denmark, and Finland.",
+      "url": "https://www.swedbankpay.com"
+    },
+    {
+      "name": "Paytrail",
+      "matchStrings": [
+        "payment.paytrail.com",
+        "services.paytrail.com"
+      ],
+      "image": "paytrail",
+      "summary": "Paytrail is a Finnish payment service provider trusted by over 20,000 businesses, offering online card payments, Finnish bank transfers, and mobile payment methods.",
+      "url": "https://www.paytrail.com"
+    },
+    {
+      "name": "Przelewy24",
+      "matchStrings": [
+        "przelewy24.pl/api",
+        "sandbox.przelewy24.pl",
+        "secure.przelewy24.pl"
+      ],
+      "image": "przelewy24",
+      "summary": "Przelewy24 (PayPro S.A.) is Poland's leading online payment platform supporting bank transfers, cards, and BLIK, processing over 4 billion transactions.",
+      "url": "https://www.przelewy24.pl"
+    },
+    {
+      "name": "Tpay",
+      "matchStrings": [
+        "api.tpay.com",
+        "gw.tpay.com",
+        "secure.tpay.com"
+      ],
+      "image": "tpay",
+      "summary": "Tpay (Krajowy Integrator Płatności) is a Polish payment gateway and aggregator offering card payments, bank transfers, and BLIK for Polish e-commerce merchants.",
+      "url": "https://tpay.com"
+    },
+    {
+      "name": "Datatrans",
+      "matchStrings": [
+        "api.datatrans.com",
+        "api.sandbox.datatrans.com",
+        "payment.datatrans.biz"
+      ],
+      "image": "datatrans",
+      "summary": "Datatrans is a Swiss payment gateway offering redirect checkout, lightbox, and secure fields integration for online payments across Switzerland and Europe.",
+      "url": "https://www.datatrans.ch"
+    },
+    {
+      "name": "Lyra",
+      "matchStrings": [
+        "paiement.systempay.fr",
+        "secure.payzen.eu"
+      ],
+      "image": "lyra",
+      "summary": "Lyra (formerly Lyra Network) is a French payment company operating the PayZen and Systempay gateway brands, powering over 250,000 merchant sites across Europe and Latin America.",
+      "url": "https://www.lyra.com"
+    },
+    {
+      "name": "Barclaycard ePDQ",
+      "matchStrings": [
+        "payments.epdq.co.uk/ncol"
+      ],
+      "image": "epdq",
+      "summary": "Barclaycard ePDQ is a UK-based hosted payment page gateway offered by Barclaycard for card-not-present transactions, with test and production environments.",
+      "url": "https://www.barclaycard.co.uk"
+    },
+    {
+      "name": "HitPay",
+      "matchStrings": [
+        "api.sandbox.hit-pay.com",
+        "hit-pay.com/payment-request",
+        "securecheckout.hit-pay.com"
+      ],
+      "image": "hitpay",
+      "summary": "HitPay is a Singapore-based payment gateway offering hosted checkout, card processing, and multi-payment method aggregation for merchants in Southeast Asia.",
+      "url": "https://www.hitpayapp.com"
+    },
+    {
+      "name": "KOMOJU",
+      "matchStrings": [
+        "komoju.com/api/v1/sessions",
+        "komoju.com/sessions",
+        "komoju.com/widget"
+      ],
+      "image": "komoju",
+      "summary": "KOMOJU is a Japanese payment gateway offering a hosted payment page and API for accepting credit cards and local payment methods in Japan.",
+      "url": "https://komoju.com"
     }
   ],
   "orchestrators": {
