@@ -101,11 +101,3 @@ export const TEST_CONTENT = {
 
 // Test exempt domains
 export const TEST_EXEMPT_DOMAINS = ['example.com', 'localhost', 'test.com'] as const;
-
-// Error messages for testing
-export const TEST_ERROR_MESSAGES = {
-  INVALID_URL: 'Invalid URL provided',
-  REGEX_COMPILATION: 'Invalid regex pattern',
-  INITIALIZATION: 'Service not properly initialized',
-  DOM_ACCESS: 'Cross-origin access denied',
-} as const;

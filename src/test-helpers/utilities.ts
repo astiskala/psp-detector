@@ -3,7 +3,7 @@
  */
 
 // MutationObserver mock for Jest/JSDOM - centralized implementation
-export class MockMutationObserver {
+class MockMutationObserver {
   private readonly callback: MutationCallback;
   public observe: jest.Mock;
   public disconnect: jest.Mock;
@@ -63,25 +63,6 @@ export function setupChromeRuntimeMock(): void {
  */
 export function waitFor(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-/**
- * Creates a mock console implementation that captures calls
- */
-export function createMockConsole(): {
-  log: jest.Mock;
-  warn: jest.Mock;
-  error: jest.Mock;
-  info: jest.Mock;
-  debug: jest.Mock;
-  } {
-  return {
-    log: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    info: jest.fn(),
-    debug: jest.fn(),
-  };
 }
 
 /**

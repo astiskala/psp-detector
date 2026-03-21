@@ -218,7 +218,7 @@ npm run test:integration # Run Playwright integration/E2E tests
 ```bash
 npm run lint          # TypeScript/JavaScript linting with ESLint
 npm run lint:deps     # dependency-cruiser architectural boundary checks
-npm run lint:html     # HTML linting with webhint
+npm run lint:html     # HTML linting
 npm run lint:manifest # Chrome extension manifest linting
 npm run lint:web      # Combined HTML and manifest linting
 npm run fix           # Auto-fix TypeScript/JavaScript issues
@@ -252,7 +252,7 @@ Generated assets are saved to `docs/store-assets/`.
 - `lint` - Run ESLint on TypeScript files
 - `lint:fix` - Auto-fix ESLint issues
 - `lint:deps` - Run dependency-cruiser rules on `src/`
-- `lint:html` - Lint HTML files with webhint
+- `lint:html` - Lint HTML files
 - `lint:manifest` - Lint Chrome extension manifest
 - `lint:web` - Run both HTML and manifest linting
 - `knip` - Find unused files, dependencies, and exports
