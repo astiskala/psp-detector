@@ -1,15 +1,9 @@
-/**
- * Core constants and enums for PSP Detector
- * Contains fundamental values that don't require branded types
- */
-
-/**
- * Special return values for PSP detection
- */
+/** Sentinel value stored when a tab is exempt from detection entirely. */
 export const PSP_DETECTION_EXEMPT = '__PSP_DETECTION_EXEMPT__';
 
 /**
- * Message actions for communication between extension components
+ * Message names exchanged between the popup, background service, and content
+ * scripts.
  */
 export enum MessageAction {
   GET_PSP_CONFIG = 'getPspConfig',

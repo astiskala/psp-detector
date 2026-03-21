@@ -2,9 +2,7 @@ import type { SourceType } from './detection';
 
 export type ProviderType = 'PSP' | 'Orchestrator' | 'TSP';
 
-/**
- * A single PSP match recorded in a history entry
- */
+/** A provider match persisted as part of the options-page history log. */
 export interface HistoryPSPMatch {
   readonly name: string;
   readonly type?: ProviderType;
@@ -14,9 +12,7 @@ export interface HistoryPSPMatch {
   readonly firstDetectedAt?: number;
 }
 
-/**
- * One history entry per page detection
- */
+/** One stored page-level detection record in newest-first history order. */
 export interface HistoryEntry {
   readonly id: string;
   readonly domain: string;
@@ -25,5 +21,5 @@ export interface HistoryEntry {
   readonly psps: readonly HistoryPSPMatch[];
 }
 
-/** Maximum number of history entries to retain */
+/** Hard cap used to stay within extension storage limits. */
 export const HISTORY_MAX_ENTRIES = 1000;

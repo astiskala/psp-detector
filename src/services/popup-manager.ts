@@ -1,7 +1,6 @@
 /**
- * Popup manager for PSP Detector Chrome Extension.
- * Handles UI updates and communication with background script.
- * @module popup-manager
+ * Coordinates popup startup: permission checks, cached config loading, and UI
+ * rendering from background-service state.
  */
 import { MessageAction, PSP_DETECTION_EXEMPT } from '../types';
 import type { PSPConfig, PSPResponse } from '../types';
@@ -15,8 +14,7 @@ import {
 import { STORAGE_KEYS } from '../lib/storage-keys';
 
 /**
- * Popup orchestration service for permission checks, detection state, and
- * rendering.
+ *
  */
 export class PopupManager {
   private readonly ui: UIService;
@@ -28,9 +26,8 @@ export class PopupManager {
   }
 
   /**
-   * Check whether optional permissions needed for best-effort detection are
-   * granted.
-   * @private
+   * Checks the optional host and `webRequest` permissions that unlock fuller
+   * detection coverage.
    */
   private async checkDetectionPermissions(): Promise<{
     hasHostPermission: boolean;
@@ -61,10 +58,7 @@ export class PopupManager {
     }
   }
 
-  /**
-   * Show the permission-request panel and wire up the grant button.
-   * @private
-   */
+  /** Shows the permission CTA and binds the grant flow once. */
   private showPermissionRequest(): void {
     this.setElementDisplay('loading-state', 'none');
     this.setElementDisplay('permission-state', 'block');
@@ -91,34 +85,22 @@ export class PopupManager {
     });
   }
 
-  /**
-   * Hide the permission-request panel and restore the loading state.
-   * @private
-   */
   private hidePermissionRequest(): void {
     this.setElementDisplay('permission-state', 'none');
     this.setElementDisplay('loading-state', 'block');
   }
 
-  /**
-   * Hide permission-request panel without changing loading/content state.
-   * @private
-   */
   private hidePermissionPanel(): void {
     this.setElementDisplay('permission-state', 'none');
   }
 
-  /**
-   * Set display style for a DOM element by id.
-   * @private
-   */
   private setElementDisplay(id: string, display: string): void {
     document.getElementById(id)?.style.setProperty('display', display);
   }
 
   /**
-   * Initialize the popup with performance monitoring and enhanced error
-   * handling
+   * Boots the popup, rendering exempt, empty, or detected states from the
+   * background service.
    */
   public async initialize(): Promise<void> {
     if (this.isInitialized) {
@@ -161,8 +143,7 @@ export class PopupManager {
   }
 
   /**
-   * Get the detected PSP from the background script with retry logic
-   * @private
+   * Retries transient background failures before falling back to an empty list.
    */
   private async getDetectedPSPsWithRetry(): Promise<PSPResponse['psps']> {
     const retryFn = errorUtils.withRetry(
@@ -178,10 +159,6 @@ export class PopupManager {
     );
   }
 
-  /**
-   * Request a re-detection attempt for the current active tab.
-   * @private
-   */
   private async requestCurrentTabRedetect(): Promise<void> {
     try {
       await this.sendMessage<{ success: boolean }>({
@@ -193,8 +170,7 @@ export class PopupManager {
   }
 
   /**
-   * Get the detected PSP from the background script
-   * @private
+   * Reads the current tab's detected-provider list from the background page.
    */
   private async getDetectedPSPs(): Promise<PSPResponse['psps']> {
     const response = await this.sendMessage<unknown>({
@@ -213,10 +189,7 @@ export class PopupManager {
     return typedResponse.psps;
   }
 
-  /**
-   * Get PSP configuration with caching and enhanced error handling
-   * @private
-   */
+  /** Uses local storage as a popup-local cache before fetching `psps.json`. */
   private async getPSPConfigWithCache(): Promise<PSPConfig> {
     // Try to get from extension storage cache first
     const cacheKey = STORAGE_KEYS.POPUP_PSP_CONFIG_CACHE;
@@ -237,8 +210,7 @@ export class PopupManager {
   }
 
   /**
-   * Get PSP configuration from extension resource
-   * @private
+   * Fetches and validates the bundled provider dataset from extension assets.
    */
   private async getPSPConfig(): Promise<PSPConfig> {
     try {
@@ -271,10 +243,6 @@ export class PopupManager {
     }
   }
 
-  /**
-   * Get data from chrome storage cache
-   * @private
-   */
   private async getFromCache(key: string): Promise<PSPConfig | null> {
     try {
       const result = await chrome.storage.local.get(key);
@@ -297,10 +265,7 @@ export class PopupManager {
     }
   }
 
-  /**
-   * Validate PSP config shape.
-   * @private
-   */
+  /** Performs a lightweight shape check before trusting cached popup config. */
   private isPspConfig(value: unknown): value is PSPConfig {
     if (typeof value !== 'object' || value === null) {
       return false;
@@ -309,10 +274,6 @@ export class PopupManager {
     return Array.isArray((value as Partial<PSPConfig>).psps);
   }
 
-  /**
-   * Set data in chrome storage cache
-   * @private
-   */
   private async setCache(key: string, data: PSPConfig): Promise<void> {
     try {
       await chrome.storage.local.set({ [key]: data });
@@ -322,9 +283,7 @@ export class PopupManager {
   }
 
   /**
-   * Send a message to the background script
-   * @private
-   * @template T
+   * Wraps `chrome.runtime.sendMessage` in a typed promise for popup callers.
    */
   private sendMessage<T>(message: { action: MessageAction }): Promise<T> {
     return new Promise((resolve, reject) => {

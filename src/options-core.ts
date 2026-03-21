@@ -12,9 +12,7 @@ export interface DistributionSlice {
   readonly percent: number;
 }
 
-/**
- * Format a unix timestamp into a local date/time string for history rows.
- */
+/** Formats stored timestamps for the options-page history table. */
 export function formatDate(timestamp: number): string {
   return new Date(timestamp).toLocaleString(undefined, {
     year: 'numeric',
@@ -25,9 +23,7 @@ export function formatDate(timestamp: number): string {
   });
 }
 
-/**
- * Build an RFC 4180-compatible CSV export for history entries.
- */
+/** Serializes history entries into an RFC 4180-compatible CSV download. */
 export function buildCSV(entries: HistoryEntry[]): string {
   const escape = (value: string): string => {
     if (value.includes(',') || value.includes('"') || value.includes('\n')) {
@@ -61,7 +57,8 @@ export function buildCSV(entries: HistoryEntry[]): string {
 }
 
 /**
- * Filter history entries by free-text query and optional PSP exact filter.
+ * Applies the options-page search query and exact PSP filter against domains,
+ * provider names, source types, and detection signals.
  */
 export function filterEntries(
   entries: HistoryEntry[],
@@ -86,9 +83,7 @@ export function filterEntries(
   });
 }
 
-/**
- * Compute top-line history summary stats shown in the header.
- */
+/** Aggregates the summary metrics shown above the history table. */
 export function getHistoryStats(history: HistoryEntry[]): HistoryStats {
   const uniqueDomains = new Set(history.map((entry) => entry.domain)).size;
   const pspCounts = new Map<string, number>();
@@ -114,9 +109,7 @@ export function getHistoryStats(history: HistoryEntry[]): HistoryStats {
   };
 }
 
-/**
- * Format a user-facing stats summary line for the history header.
- */
+/** Converts computed history stats into the compact header sentence. */
 export function formatHistorySummary(stats: HistoryStats): string {
   const topPspSummary =
     stats.topPsp === null ? '' : ` · Top: ${stats.topPsp}`;
@@ -127,9 +120,7 @@ export function formatHistorySummary(stats: HistoryStats): string {
   );
 }
 
-/**
- * Return sorted unique PSP names for the filter dropdown.
- */
+/** Returns stable, alphabetized PSP names for the history filter UI. */
 export function getUniquePspNames(history: HistoryEntry[]): string[] {
   return [
     ...new Set(history.flatMap((entry) => entry.psps.map((psp) => psp.name))),
@@ -163,27 +154,21 @@ function buildDistribution(
     }));
 }
 
-/**
- * Build percentage slices for PSP detection share.
- */
+/** Computes provider-share slices for the PSP distribution chart. */
 export function getPspDistribution(
   history: HistoryEntry[],
 ): DistributionSlice[] {
   return buildDistribution(history, (psp) => psp.name);
 }
 
-/**
- * Build percentage slices for detection source share.
- */
+/** Computes source-share slices for the detection-surface chart. */
 export function getSourceTypeDistribution(
   history: HistoryEntry[],
 ): DistributionSlice[] {
   return buildDistribution(history, (psp) => psp.sourceType);
 }
 
-/**
- * Build percentage slices for provider type share.
- */
+/** Computes provider-type slices for the options-page summary chart. */
 export function getProviderTypeDistribution(
   history: HistoryEntry[],
 ): DistributionSlice[] {

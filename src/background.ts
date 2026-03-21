@@ -1,8 +1,6 @@
 /**
- * Background service for PSP Detector Chrome Extension.
- * Handles messaging, tab events, icon updates, and content script injection.
- * Manifest V3 service worker implementation with proper lifecycle management.
- * @module background
+ * MV3 background service that owns shared extension state, tab-level detection
+ * caches, and messaging between the popup and content scripts.
  */
 import {
   MessageAction,
@@ -82,10 +80,7 @@ class BackgroundService {
     await this.initializeServiceWorker();
   }
 
-  /**
-   * Initialize service worker with proper MV3 lifecycle management
-   * @private
-   */
+  /** Performs one-time startup work each time the MV3 worker wakes up. */
   private async initializeServiceWorker(): Promise<void> {
     if (this.isInitialized) {
       return;
@@ -104,10 +99,7 @@ class BackgroundService {
     }
   }
 
-  /**
-   * Set up all service worker event listeners
-   * @private
-   */
+  /** Registers runtime, tab, and lifecycle listeners for the worker. */
   private async setupEventListeners(): Promise<void> {
     // Handle extension startup
     chrome.runtime.onStartup.addListener(() => {
@@ -160,10 +152,7 @@ class BackgroundService {
     });
   }
 
-  /**
-   * Handle first-time installation
-   * @private
-   */
+  /** Seeds default storage and onboarding state on first install. */
   private async handleFirstInstall(): Promise<void> {
     logger.info('Performing first-time setup');
 
@@ -186,10 +175,7 @@ class BackgroundService {
     await this.openOnboardingPage();
   }
 
-  /**
-   * Handle extension update
-   * @private
-   */
+  /** Clears stale caches after an extension update. */
   private async handleUpdate(previousVersion?: string): Promise<void> {
     logger.info(`Updated from version ${previousVersion}`);
 
@@ -211,10 +197,7 @@ class BackgroundService {
     }
   }
 
-  /**
-   * Restore service worker state from chrome.storage
-   * @private
-   */
+  /** Rehydrates cached config, exempt domains, and per-tab detection state. */
   private async restoreState(): Promise<void> {
     try {
       const localResult = await chrome.storage.local.get({
@@ -309,10 +292,7 @@ class BackgroundService {
     }
   }
 
-  /**
-   * Read a value from chrome.storage.local with a fallback.
-   * @private
-   */
+  /** Reads a local-storage value without letting storage failures escape. */
   private async getLocalStorage<T>(key: string, fallback: T): Promise<T> {
     try {
       const result = await chrome.storage.local.get({
@@ -325,10 +305,6 @@ class BackgroundService {
     }
   }
 
-  /**
-   * Persist current state to chrome.storage
-   * @private
-   */
   private async persistState(): Promise<void> {
     try {
       await this.flushTabPspCache();
@@ -338,10 +314,6 @@ class BackgroundService {
     }
   }
 
-  /**
-   * Get current tab ID from storage
-   * @private
-   */
   private async getCurrentTabId(): Promise<number | null> {
     return this.getLocalStorage<number | null>(
       STORAGE_KEYS.CURRENT_TAB_ID,
@@ -349,10 +321,6 @@ class BackgroundService {
     );
   }
 
-  /**
-   * Set current tab ID in storage
-   * @private
-   */
   private async setCurrentTabId(tabId: number | null): Promise<void> {
     try {
       await chrome.storage.local.set({
@@ -363,10 +331,6 @@ class BackgroundService {
     }
   }
 
-  /**
-   * Clean up data for a removed tab
-   * @private
-   */
   private cleanupTabData(tabId: number): void {
     this.tabPspCache.delete(tabId);
     this.networkMatchedProvidersByTab.delete(tabId);
@@ -374,10 +338,6 @@ class BackgroundService {
     logger.debug(`Cleaned up data for tab ${tabId}`);
   }
 
-  /**
-   * Get exempt domains from storage
-   * @private
-   */
   private async getExemptDomains(): Promise<string[]> {
     if (this.inMemoryExemptDomains !== null) {
       return this.inMemoryExemptDomains;
@@ -393,8 +353,8 @@ class BackgroundService {
   }
 
   /**
-   * Load exempt domains configuration from extension resource with validation
-   * @private
+   * Loads the shipped exempt-domain list, normalizes it, and mirrors it into
+   * storage for later reads.
    */
   async loadExemptDomains(): Promise<void> {
     try {
@@ -445,10 +405,6 @@ class BackgroundService {
     }
   }
 
-  /**
-   * Preload PSP configuration into memory for faster access
-   * @private
-   */
   private async preloadPspConfig(): Promise<void> {
     try {
       // Load cached config into memory for sync access
@@ -459,10 +415,7 @@ class BackgroundService {
     }
   }
 
-  /**
-   * Check if a URL is exempt from PSP detection
-   * @private
-   */
+  /** Tests whether a URL falls under the normalized exempt-domain list. */
   private async isUrlExempt(url: string): Promise<boolean> {
     if (!url) {
       return false;
@@ -484,8 +437,7 @@ class BackgroundService {
   }
 
   /**
-   * Check if a URL is a special URL that doesn't support content scripts
-   * @private
+   * Filters browser-internal URLs that cannot host injected content scripts.
    */
   private isSpecialUrl(url: string): boolean {
     if (!url) {
@@ -505,18 +457,10 @@ class BackgroundService {
     return specialProtocols.some((protocol) => url.startsWith(protocol));
   }
 
-  /**
-   * Create a standardized exempt PSP detection result
-   * @private
-   */
   private createExemptResult(reason: string): PSPDetectionResult {
     return PSPDetectionResult.exempt(reason, 'unknown' as BrandedURL);
   }
 
-  /**
-   * Persist exempt PSP detection state for a tab
-   * @private
-   */
   private setExemptTabState(tabId: number): void {
     this.tabPspCache.set(tabId, [{ psp: PSP_DETECTION_EXEMPT }]);
     this.networkMatchedProvidersByTab.set(
@@ -528,10 +472,7 @@ class BackgroundService {
     this.showExemptDomainIcon();
   }
 
-  /**
-   * Handle incoming extension messages with enhanced type safety
-   * @private
-   */
+  /** Routes messages from popup/content scripts to the relevant handler. */
   async handleMessage(
     message: ChromeMessage,
     sender: chrome.runtime.MessageSender,
@@ -604,10 +545,7 @@ class BackgroundService {
     }
   }
 
-  /**
-   * Validate PSP detection data structure
-   * @private
-   */
+  /** Guards the subset of message payloads used for detection reporting. */
   private isValidPspDetectionData(data: unknown): data is PSPDetectionData {
     if (typeof data !== 'object' || data === null) {
       return false;
@@ -623,8 +561,8 @@ class BackgroundService {
   }
 
   /**
-   * Handle PSP configuration request with enhanced error handling and timeout
-   * @private
+   * Serves the provider dataset to content scripts, preferring cached config
+   * and falling back to the bundled JSON file.
    */
   async handleGetPspConfig(
     sendResponse: (response?: PSPConfigResponse | null) => void,
@@ -685,10 +623,7 @@ class BackgroundService {
     }
   }
 
-  /**
-   * Validate PSP configuration structure and content
-   * @private
-   */
+  /** Validates the shape of `psps.json` before it is cached or returned. */
   private isValidPspConfig(data: unknown): data is PSPConfig {
     if (typeof data !== 'object' || data === null) {
       return false;
@@ -774,8 +709,7 @@ class BackgroundService {
   }
 
   /**
-   * Get cached PSP config from storage
-   * @private
+   * Returns the cached provider dataset and refreshes the in-memory indexes.
    */
   private async getCachedPspConfig(): Promise<PSPConfig | null> {
     try {
@@ -802,10 +736,7 @@ class BackgroundService {
     }
   }
 
-  /**
-   * Set cached PSP config in storage
-   * @private
-   */
+  /** Persists provider config and rebuilds the derived matcher indexes. */
   private async setCachedPspConfig(config: PSPConfig): Promise<void> {
     try {
       // Store in chrome.storage for persistence
@@ -821,17 +752,13 @@ class BackgroundService {
     }
   }
 
-  /**
-   * Get cached PSP config synchronously for icon updates
-   * @private
-   */
   private getCachedPspConfigSync(): PSPConfig | null {
     return this.inMemoryPspConfig;
   }
 
   /**
-   * Handle PSP detection with improved error handling and validation
-   * @private
+   * Records a content-script detection, updates per-tab state, and writes
+   * history if the signal is new or stronger than the existing one.
    */
   async handleDetectPsp(
     data: PSPDetectionData,

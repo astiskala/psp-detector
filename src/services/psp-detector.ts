@@ -8,20 +8,24 @@ import {
 } from '../lib/utils';
 
 /**
- * Service for detecting Payment Service Providers (PSPs) on a page.
- * @class
+ * Runs the two-phase provider scan against the current page URL and collected
+ * payment-related signals. Provider ordering is preserved so `psps.json`
+ * precedence stays deterministic.
  */
 export class PSPDetectorService {
   private pspConfig: PSPConfig | null = null;
   private exemptDomains: string[] = [];
 
-  /** Cache of flattened providers for faster lookups (populated at init) */
+  /**
+   * Flattened provider list cached once so every detection uses the same order.
+   */
   private providerCache: ReturnType<typeof getAllProviders> | null = null;
 
   private readonly maxContentSize = 1024 * 1024; // 1MB limit
 
   /**
-   * Initialize the PSP detector with configuration
+   * Loads provider configuration and precompiles regex matchers ahead of the
+   * first detection pass.
    */
   public initialize(config: PSPConfig): void {
     this.pspConfig = config;
@@ -32,14 +36,17 @@ export class PSPDetectorService {
   }
 
   /**
-   * Set the exempt domains list
+   * Replaces the exempt-domain list after normalizing case, whitespace, and
+   * duplicates so host comparisons stay consistent.
    */
   public setExemptDomains(domains: string[]): void {
     this.exemptDomains = normalizeStringArray(domains);
   }
 
   /**
-   * Detect PSP on the current page with enhanced error handling and validation
+   * Returns a structured detection result for the current page. Normal
+   * detection failures are reported via `PSPDetectionResult` rather than
+   * throwing.
    */
   public detectPSP(url: string, content: string): PSPDetectionResult {
     const initializedError = this.ensureInitialized();
@@ -254,8 +261,8 @@ export class PSPDetectorService {
   }
 
   /**
-   * Precompile regex patterns for better performance
-   * @private
+   * Compiles provider regexes once during initialization so runtime detection
+   * only executes prevalidated patterns.
    */
   private precompileRegexPatterns(): void {
     if (!this.pspConfig) return;
@@ -271,7 +278,8 @@ export class PSPDetectorService {
   }
 
   /**
-   * Check if the detector is initialized
+   * Indicates whether provider configuration has been loaded and is ready for
+   * detection.
    */
   public isInitialized(): boolean {
     return !!this.pspConfig;

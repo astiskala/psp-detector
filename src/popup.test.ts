@@ -36,10 +36,6 @@ function setupPopupDOM(): void {
         </div>
         <div id="loading-state" style="display: block;"></div>
         <div id="content-state" style="display: none;">
-          <div id="psp-detected-domain" style="display: none;">
-            <h3>Detected domain</h3>
-            <div id="psp-detection-details"></div>
-          </div>
           <div id="psp-description"></div>
           <div id="psp-notice"></div>
           <div id="psp-url"></div>

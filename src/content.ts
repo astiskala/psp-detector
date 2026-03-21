@@ -1,8 +1,6 @@
 /**
- * Content script for PSP Detector Chrome Extension.
- * Handles DOM observation, PSP detection, and communication with
- * background script.
- * @module content
+ * Content-script runtime that gathers page signals, runs provider detection,
+ * and reports results back to the background service.
  */
 import { PSPDetectorService } from './services/psp-detector';
 import { DOMObserverService } from './services/dom-observer';
@@ -78,9 +76,7 @@ class ContentScript {
     this.domObserver = new DOMObserverService();
   }
 
-  /**
-   * Reset detection state for new page navigation
-   */
+  /** Clears per-page detection state when SPA navigation moves to a new URL. */
   public resetForNewPage(): void {
     this.pspDetected = false;
     this.reportedPSPs.clear();
@@ -90,7 +86,8 @@ class ContentScript {
   }
 
   /**
-   * Initialize the content script
+   * Loads detector inputs, starts DOM observation, and schedules the initial
+   * scan without blocking page startup.
    */
   public async initialize(): Promise<void> {
     logger.info('Initializing content script');
@@ -138,10 +135,6 @@ class ContentScript {
     });
   }
 
-  /**
-   * Initialize exempt domains configuration
-   * @private
-   */
   private async initializeExemptDomains(): Promise<void> {
     try {
       const response = await this.sendMessage<{ exemptDomains: string[] }>({
@@ -156,10 +149,6 @@ class ContentScript {
     }
   }
 
-  /**
-   * Initialize PSP configuration
-   * @private
-   */
   private async initializePSPConfig(): Promise<void> {
     try {
       const response = await this.sendMessage<PSPConfigResponse>({
@@ -178,18 +167,14 @@ class ContentScript {
     }
   }
 
-  /**
-   * Set up DOM observer
-   * @private
-   */
   private setupDOMObserver(): void {
     this.domObserver.initialize((mutations) => this.detectPSP(mutations), 3000);
     this.domObserver.startObserving();
   }
 
   /**
-   * Detect PSP on the current page
-   * @private
+   * Collects the current page evidence set and runs a detection pass unless
+   * cooldown or prior matches make it unnecessary.
    */
   private async detectPSP(mutations?: MutationRecord[]): Promise<void> {
     const now = Date.now();
@@ -259,8 +244,8 @@ class ContentScript {
   }
 
   /**
-   * Collect scan sources optimized for performance
-   * @private
+   * Extracts only the DOM signals that can realistically identify a PSP
+   * instead of rescanning the full page HTML on every mutation.
    */
   private collectScanSources(mutations?: MutationRecord[]): ScanSources {
     const scriptSrcs: string[] = [];
@@ -406,10 +391,7 @@ class ContentScript {
     return 'pageUrl';
   }
 
-  /**
-   * Handle PSP detection result (shared logic)
-   * @private
-   */
+  /** Finalizes exempt detection flows and stops further observation. */
   private async handlePSPDetection(result: PSPDetectionResult): Promise<void> {
     try {
       const tabId = await this.getActiveTabId();
@@ -491,9 +473,8 @@ class ContentScript {
   }
 
   /**
-   * Send a message to the background script with MV3 service worker handling
-   * @private
-   * @template T
+   * Sends a runtime message with retries for MV3 service-worker restarts, which
+   * are common during idle teardown.
    */
   private async sendMessage<T>(
     message: ChromeMessage,
@@ -551,7 +532,7 @@ class ContentScript {
   }
 
   /**
-   * Clean up resources when the content script is unloaded
+   * Releases observer state when the page unloads or the script is replaced.
    */
   public cleanup(): void {
     this.domObserver.cleanup();
@@ -559,8 +540,8 @@ class ContentScript {
   }
 
   /**
-   * Get iframe content for PSP detection (optimized with caching and security)
-   * @private
+   * Reads same-origin iframe sources in a bounded, deduplicated way so nested
+   * checkout widgets can contribute signals without exploding scan cost.
    */
   private async getIframeContent(
     iframeCandidates: HTMLIFrameElement[],
@@ -662,10 +643,7 @@ class ContentScript {
     return iframe.contentDocument ?? iframe.contentWindow?.document ?? null;
   }
 
-  /**
-   * Extract sources from nested iframe documents
-   * @private
-   */
+  /** Pulls nested script, iframe, and form URLs out of an accessible iframe. */
   private extractNestedSources(doc: Document, content: string[]): void {
     // Get nested iframe sources
     doc.querySelectorAll('iframe[src]').forEach(nestedIframe => {
@@ -694,8 +672,7 @@ class ContentScript {
   }
 
   /**
-   * Check if we can access iframe content based on same-origin policy
-   * @private
+   * Restricts iframe scraping to same-origin documents to avoid access errors.
    */
   private canAccessIframe(src: string): boolean {
     try {

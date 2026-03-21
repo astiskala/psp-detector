@@ -1,7 +1,3 @@
-/**
- * Shared test utilities and helpers
- */
-
 // MutationObserver mock for Jest/JSDOM - centralized implementation
 class MockMutationObserver {
   private readonly callback: MutationCallback;
@@ -31,24 +27,18 @@ class MockMutationObserver {
   }
 }
 
-/**
- * Sets up the global MutationObserver mock
- */
+/** Installs a deterministic MutationObserver mock for jsdom-based tests. */
 export function setupMutationObserverMock(): void {
   globalThis.MutationObserver =
     MockMutationObserver as unknown as typeof MutationObserver;
 }
 
-/**
- * Creates a clean DOM environment for testing
- */
+/** Resets the document body to the minimal DOM used in unit tests. */
 export function setupCleanDOM(): void {
   document.body.innerHTML = '<div id="root"></div>';
 }
 
-/**
- * Sets up Chrome runtime mock for extension testing
- */
+/** Installs the minimal `chrome.runtime` surface needed by UI tests. */
 export function setupChromeRuntimeMock(): void {
   globalThis.chrome = {
     runtime: {
@@ -57,26 +47,19 @@ export function setupChromeRuntimeMock(): void {
   } as unknown as typeof chrome;
 }
 
-/**
- * Creates a promise that resolves after a specified delay
- * Useful for testing async operations with deterministic timing
- */
+/** Small async delay helper for tests that need queued work to settle. */
 export function waitFor(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-/**
- * Restores the original window object after modification
- */
+/** Restores the original window after tests replace it with a mock. */
 export function restoreWindow(
   originalWindow: Window & typeof globalThis,
 ): void {
   globalThis.window = originalWindow;
 }
 
-/**
- * Creates a mock window.top object that throws cross-origin errors
- */
+/** Simulates cross-origin `window.top` access failures for detector tests. */
 export function createCrossOriginWindowMock(): Window & typeof globalThis {
   return {
     top: {
@@ -87,25 +70,17 @@ export function createCrossOriginWindowMock(): Window & typeof globalThis {
   } as unknown as Window & typeof globalThis;
 }
 
-/**
- * Test helper functions for PSP detector service
- * These methods were moved from the main service as they're only used in tests
- */
 import type { PSP, PSPConfig, PSPName, URL } from '../types';
 import { type PSPDetectorService } from '../services/psp-detector';
 import { getAllProviders } from '../lib/utils';
 
-/**
- * Interface for accessing private members of PSPDetectorService in tests
- */
+/** Narrow test-only view into `PSPDetectorService` internals. */
 interface PSPDetectorServiceInternal {
   pspConfig: PSPConfig | null;
   exemptDomains: string[];
 }
 
-/**
- * Get PSP by PSP name using type-safe access to internal methods
- */
+/** Looks up a provider from the detector's loaded config during tests. */
 export function getPSPByPSPName(
   service: PSPDetectorService,
   pspName: PSPName,
@@ -125,9 +100,7 @@ export function getPSPByPSPName(
   }
 }
 
-/**
- * Check if a URL matches exempt domains - test helper version
- */
+/** Test-only exempt-domain helper that mirrors the detector's host logic. */
 export function isURLExempt(
   service: PSPDetectorService,
   url: URL,

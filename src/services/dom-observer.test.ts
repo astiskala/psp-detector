@@ -9,6 +9,10 @@ import { TEST_TIMEOUTS } from '../test-helpers/constants';
 // Setup global mocks
 setupMutationObserverMock();
 
+function isObserverActive(service: DOMObserverService): boolean {
+  return (service as unknown as { isObserving: boolean }).isObserving;
+}
+
 describe('DOMObserverService', () => {
   let service: DOMObserverService;
   let callback: jest.Mock;
@@ -27,7 +31,7 @@ describe('DOMObserverService', () => {
     await waitFor(TEST_TIMEOUTS.DOM_MUTATION_DELAY);
 
     expect(callback).toHaveBeenCalled();
-    expect(service.isActive()).toBe(true);
+    expect(isObserverActive(service)).toBe(true);
   });
 
   it('passes relevant mutation records to callback', async() => {
@@ -118,14 +122,14 @@ describe('DOMObserverService', () => {
     await waitFor(TEST_TIMEOUTS.DEBOUNCE_SHORT);
 
     expect(callback).not.toHaveBeenCalled();
-    expect(service.isActive()).toBe(false);
+    expect(isObserverActive(service)).toBe(false);
   });
 
   it('should cleanup observer', () => {
     service.initialize(callback, 0);
     service.startObserving();
     service.cleanup();
-    expect(service.isActive()).toBe(false);
+    expect(isObserverActive(service)).toBe(false);
   });
 
   it('should handle document.body not available scenario', () => {
@@ -140,7 +144,7 @@ describe('DOMObserverService', () => {
     service.startObserving();
 
     // Should not crash and should set up a DOMContentLoaded listener
-    expect(service.isActive()).toBe(false);
+    expect(isObserverActive(service)).toBe(false);
 
     // Restore document.body
     Object.defineProperty(document, 'body', {
@@ -179,7 +183,7 @@ describe('DOMObserverService', () => {
     service.initialize(callback, 0);
     service.startObserving();
 
-    expect(service.isActive()).toBe(false);
+    expect(isObserverActive(service)).toBe(false);
     expect(consoleSpy).toHaveBeenCalled();
 
     // Restore

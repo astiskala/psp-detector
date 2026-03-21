@@ -4,8 +4,8 @@ import {
 } from '../lib/utils';
 
 /**
- * Service for observing DOM mutations and triggering callbacks.
- * @class
+ * Watches for payment-relevant DOM changes and batches them before triggering
+ * a new detection pass.
  */
 export class DOMObserverService {
   private observer: MutationObserver | null = null;
@@ -13,7 +13,8 @@ export class DOMObserverService {
   private isObserving = false;
 
   /**
-   * Initialize the observer with a callback
+   * Creates the underlying `MutationObserver` and debounces callback delivery
+   * so dynamic checkout pages do not trigger detection on every small change.
    */
   public initialize(
     callback: (mutations?: MutationRecord[]) => void,
@@ -54,8 +55,8 @@ export class DOMObserverService {
   }
 
   /**
-   * Check if added nodes are relevant for PSP detection
-   * @private
+   * Filters new nodes down to elements that can carry provider-identifying
+   * URLs such as scripts, iframes, forms, and relevant resource hints.
    */
   private isRelevantNode(nodeList: NodeList): boolean {
     for (const node of nodeList) {
@@ -136,9 +137,7 @@ export class DOMObserverService {
     }
   }
 
-  /**
-   * Start observing DOM mutations
-   */
+  /** Starts observing once `document.body` exists. */
   public startObserving(): void {
     if (!this.observer || this.isObserving) return;
     const start = (): void => {
@@ -170,9 +169,7 @@ export class DOMObserverService {
     start();
   }
 
-  /**
-   * Stop observing DOM mutations
-   */
+  /** Stops mutation delivery without destroying the observer instance. */
   public stopObserving(): void {
     if (!this.observer || !this.isObserving) return;
     try {
@@ -184,19 +181,11 @@ export class DOMObserverService {
     }
   }
 
-  /**
-   * Clean up the observer
-   */
+  /** Fully releases the observer and its callback references. */
   public cleanup(): void {
     this.stopObserving();
     this.observer = null;
     this.onMutationCallback = null;
   }
 
-  /**
-   * Check if the observer is currently active
-   */
-  public isActive(): boolean {
-    return this.isObserving;
-  }
 }

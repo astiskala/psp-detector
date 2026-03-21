@@ -1,10 +1,8 @@
-/**
- * Core PSP types using branded types
- */
 import type { PSPName, RegexPattern, URL } from './branded';
 
 /**
- * Payment Service Provider interface
+ * Canonical provider record loaded from `psps.json`. The same shape is used
+ * for PSPs, orchestrators, and TSPs.
  */
 export interface PSP {
   name: PSPName;
@@ -23,7 +21,7 @@ export interface PSPGroup {
 }
 
 /**
- * PSP configuration containing all PSPs
+ * Full provider dataset consumed by the detector and popup UI.
  */
 export interface PSPConfig {
   psps: PSP[];

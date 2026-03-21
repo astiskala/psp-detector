@@ -1,10 +1,8 @@
-/**
- * Union types
- */
 import type { PSPName, URL } from './branded';
 
 /**
- * Source type that triggered a PSP match
+ * Records which page surface produced the detection signal so downstream UI
+ * and history views can explain why a provider matched.
  */
 export type SourceType =
   | 'scriptSrc'
@@ -14,9 +12,7 @@ export type SourceType =
   | 'networkRequest'
   | 'pageUrl';
 
-/**
- * A single PSP match within a multi-match detected result
- */
+/** One provider hit plus the signal that caused it. */
 export interface PSPMatch {
   readonly psp: PSPName;
   readonly detectionInfo?: {
@@ -27,8 +23,8 @@ export interface PSPMatch {
 }
 
 /**
- * PSP detection result union type
- * Provides structured results for different detection scenarios
+ * Structured result returned by the detector so callers can distinguish a real
+ * match from exempt, empty, and operational-error states.
  */
 export type PSPDetectionResult =
   | {
@@ -43,9 +39,7 @@ export type PSPDetectionResult =
       readonly context?: string;
     };
 
-/**
- * Detection result factory and utility functions
- */
+/** Constructors and guards for building `PSPDetectionResult` values. */
 export const PSPDetectionResult = {
   detected: (psps: PSPMatch[]): PSPDetectionResult => ({
     type: 'detected',

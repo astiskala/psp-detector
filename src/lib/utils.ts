@@ -1,14 +1,11 @@
 
 import type { PSP, PSPConfig } from '../types/psp';
 
-/**
- * Create a safe URL by sanitizing the input
- */
 const ALLOWED_URL_PROTOCOLS = new Set(['http:', 'https:', 'mailto:']);
 
 /**
- * Create a safe URL by sanitizing the input.
- * @param url - The URL to sanitize.
+ * Normalizes a user-facing URL for DOM usage and blocks protocols that would
+ * be unsafe in popup links.
  */
 export function createSafeUrl(url: string): string {
   try {
@@ -27,8 +24,8 @@ export function createSafeUrl(url: string): string {
 }
 
 /**
- * Safely compile a regex pattern
- * @param pattern - The regex pattern to compile
+ * Compiles a case-insensitive regex and converts invalid patterns into a
+ * logged `null` result so bad data never breaks detection startup.
  */
 export function safeCompileRegex(pattern: string): RegExp | null {
   try {
@@ -59,10 +56,8 @@ export function normalizeStringArray(values: string[]): string[] {
 }
 
 /**
- * Fetch a resource with an abort timeout.
- * @param url - Resource URL.
- * @param timeoutMs - Timeout in milliseconds.
- * @param init - Optional fetch init options.
+ * Wraps `fetch` with a local timeout while still honoring an optional caller
+ * abort signal.
  */
 export async function fetchWithTimeout(
   url: string,
@@ -93,9 +88,6 @@ export async function fetchWithTimeout(
   }
 }
 
-/**
- * Logger utility with different log levels
- */
 const DEVELOPMENT_ENV = 'development';
 const LOG_PREFIX = '[PSP Detector] ';
 const RUNTIME_DEBUG_FLAG = '__PSP_DETECTOR_DEBUG__' as const;
@@ -143,13 +135,8 @@ export const logger = {
 };
 
 /**
- * Create a debounced function that delays invoking func until after wait
- * milliseconds have elapsed since the last time the debounced function was
- * invoked
- * @param func - Function to debounce
- * @param wait - Wait time in milliseconds
- * @param immediate - If true, trigger function on leading edge instead of
- * trailing
+ * Debounces noisy mutation-driven callbacks while optionally allowing a
+ * leading-edge invocation.
  */
 export function debouncedMutation<T extends(...args: unknown[]) => unknown>(
   func: T,
@@ -173,9 +160,8 @@ export function debouncedMutation<T extends(...args: unknown[]) => unknown>(
 }
 
 /**
- * Get all PSPs, orchestrators, and TSPs as a single array.
- * @param pspConfig - The PSP configuration object.
- * @returns Array of all providers.
+ * Flattens the configured PSP, orchestrator, and TSP groups into a single
+ * precedence-ordered provider list.
  */
 export function getAllProviders(pspConfig: PSPConfig): PSP[] {
   const psps = pspConfig.psps ?? [];
@@ -185,7 +171,8 @@ export function getAllProviders(pspConfig: PSPConfig): PSP[] {
 }
 
 /**
- * Measure async execution time of a function
+ * Times an async operation using the shared logger so slow extension flows can
+ * be profiled in debug mode without affecting production logs.
  */
 export async function measureAsync<T>(
   fn: () => Promise<T>,
@@ -199,15 +186,10 @@ export async function measureAsync<T>(
   }
 }
 
-/**
- * Error handling utilities
- */
 export const errorUtils = {
   /**
-   * Safely execute an async function with error handling
-   * @param fn - Async function to execute
-   * @param context - Context for error logging
-   * @param fallback - Fallback value on error
+   * Executes an async operation and returns a caller-provided fallback after
+   * logging the failure context.
    */
   safeExecuteAsync: async <T>(
     fn: () => Promise<T>,
@@ -223,10 +205,8 @@ export const errorUtils = {
   },
 
   /**
-   * Create a retry wrapper for functions
-   * @param fn - Function to retry
-   * @param maxAttempts - Maximum retry attempts
-   * @param delay - Delay between retries in milliseconds
+   * Wraps an async operation with bounded retries for transient extension or
+   * network failures.
    */
   withRetry: <T>(
     fn: () => Promise<T>,

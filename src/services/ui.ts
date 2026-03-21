@@ -4,8 +4,7 @@ import { createSafeUrl, logger } from '../lib/utils';
 type UIState = 'error' | 'no-psp' | 'disabled' | 'success';
 
 /**
- * UI service for updating the popup with PSP information.
- * @class
+ * Owns popup DOM updates so detection and rendering concerns stay separated.
  */
 export class UIService {
   private elements: Record<string, HTMLElement>;
@@ -16,8 +15,8 @@ export class UIService {
   }
 
   /**
-   * Initialize DOM element references
-   * @private
+   * Resolves the popup elements once and fails fast when required markup is
+   * missing.
    */
   private initializeDOMElements(): void {
     const elementIds = ['name', 'description', 'notice', 'url', 'image'];
@@ -30,15 +29,7 @@ export class UIService {
       this.elements[id] = element;
     });
 
-    // Detection details elements (optional)
-    const detectionElement = document.getElementById('psp-detected-domain');
-    const detectionDetailsElement = document.getElementById('psp-detection-details');
     const subtitleElement = document.getElementById('psp-subtitle');
-    if (detectionElement && detectionDetailsElement) {
-      this.elements['detectedDomain'] = detectionElement;
-      this.elements['detectionDetails'] = detectionDetailsElement;
-    }
-
     if (subtitleElement) {
       this.elements['subtitle'] = subtitleElement;
     }
@@ -58,37 +49,6 @@ export class UIService {
       } else {
         logger.warn(`Optional UI element not found: ${selector}`);
       }
-    }
-  }
-
-  /**
-   * Update UI with PSP information
-   */
-  public updatePSPDisplay(
-    psp: PSP,
-    detectionInfo?: { method: string; value: string },
-  ): void {
-    try {
-      this.transitionToContent();
-      this.setUIState('success');
-
-      this.updateTextContent('name', psp.name);
-      this.updateTextContent('subtitle', 'Detected on current tab');
-      this.updateTextContent('description', psp.summary);
-      this.updateNoticeSection(psp.notice);
-      this.updateLearnMoreLink(psp.url, `Learn more about ${psp.name}`);
-      this.updateImage(psp.image, psp.name);
-      this.showPSPImage();
-
-      // Update detection details if provided
-      if (detectionInfo) {
-        this.updateDetectionDetails(detectionInfo);
-      } else {
-        this.hideDetectionDetails();
-      }
-    } catch (error) {
-      logger.error('Failed to update PSP display:', error);
-      this.showError();
     }
   }
 
@@ -131,17 +91,13 @@ export class UIService {
 
     this.updateImage('default', 'PSP detection');
     this.showPSPImage();
-    this.hideDetectionDetails();
   }
 
-  /**
-   * Show no PSP detected state
-   */
+  /** Renders the empty-state copy shown when no provider evidence is found. */
   public showNoPSPDetected(): void {
     this.transitionToContent();
     this.setUIState('no-psp');
     this.showStatusIcon('🔍');
-    this.hideDetectionDetails();
 
     this.updateTextContent('name', 'No PSP detected');
     this.updateTextContent('subtitle', 'No known payment signals found');
@@ -161,14 +117,12 @@ export class UIService {
   }
 
   /**
-   * Show PSP detection disabled state for exempt domains
-   *
+   * Renders the exempt-domain state when detection is intentionally disabled.
    */
   public showPSPDetectionDisabled(): void {
     this.transitionToContent();
     this.setUIState('disabled');
     this.showStatusIcon('🚫');
-    this.hideDetectionDetails();
 
     this.updateTextContent('name', 'PSP detection disabled');
     this.updateTextContent('subtitle', 'Domain is marked as exempt');
@@ -186,15 +140,11 @@ export class UIService {
     this.updateImage('default', 'PSP detection disabled');
   }
 
-  /**
-   * Show error state
-   *
-   */
+  /** Renders the fallback error state for popup initialization failures. */
   public showError(): void {
     this.transitionToContent();
     this.setUIState('error');
     this.showStatusIcon('⚠️');
-    this.hideDetectionDetails();
 
     this.updateTextContent('name', 'Error');
     this.updateTextContent('subtitle', 'Unable to read detection state');
@@ -207,10 +157,6 @@ export class UIService {
     this.updateImage('default', 'Error');
   }
 
-  /**
-   * Update text content of an element safely
-   * @private
-   */
   private updateTextContent(elementId: string, content: string): void {
     const element = this.elements[elementId];
     if (element) {
@@ -220,10 +166,6 @@ export class UIService {
     }
   }
 
-  /**
-   * Update notice section visibility and content safely
-   * @private
-   */
   private updateNoticeSection(notice?: string): void {
     const noticeElement = this.elements['notice'];
     if (!noticeElement) {
@@ -240,10 +182,6 @@ export class UIService {
     }
   }
 
-  /**
-   * Update learn more link safely
-   * @private
-   */
   private updateLearnMoreLink(url: string, text = 'Learn More'): void {
     const linkElement = this.elements['url'];
     if (!linkElement) {
@@ -260,8 +198,8 @@ export class UIService {
   }
 
   /**
-   * Update PSP image safely
-   * @private
+   * Swaps the provider image while falling back to the bundled default art if
+   * a logo asset is missing.
    */
   private updateImage(image: string, alt: string): void {
     const imgElement = this.elements['image'];
@@ -283,42 +221,25 @@ export class UIService {
     }
   }
 
-  /**
-   * Hide loading state and show content
-   * @private
-   *
-   */
   private hideLoadingState(): void {
     if (this.elements['loadingState']) {
       this.elements['loadingState'].style.display = 'none';
     }
   }
 
-  /**
-   * Show content state
-   * @private
-   *
-   */
   private showContentState(): void {
     if (this.elements['contentState']) {
       this.elements['contentState'].style.display = 'block';
     }
   }
 
-  /**
-   * Transition UI from loading state to rendered content state.
-   * @private
-   */
+  /** Switches the popup shell from its loading skeleton to rendered content. */
   private transitionToContent(): void {
     this.hideLoadingState();
     this.showContentState();
   }
 
-  /**
-   * Set UI state by adding appropriate CSS class
-   * @private
-   *
-   */
+  /** Applies state classes that drive popup styling for non-success flows. */
   private setUIState(state: UIState): void {
     if (!this.elements['container']) return;
 
@@ -331,11 +252,6 @@ export class UIService {
     }
   }
 
-  /**
-   * Show status icon instead of PSP image
-   * @private
-   *
-   */
   private showStatusIcon(icon: string): void {
     if (this.elements['image']) {
       this.elements['image'].style.display = 'none';
@@ -347,11 +263,6 @@ export class UIService {
     }
   }
 
-  /**
-   * Show PSP image and hide status icon
-   * @private
-   *
-   */
   private showPSPImage(): void {
     if (this.elements['statusIcon']) {
       this.elements['statusIcon'].style.display = 'none';
@@ -359,46 +270,6 @@ export class UIService {
 
     if (this.elements['image']) {
       this.elements['image'].style.display = 'block';
-    }
-  }
-
-  /**
-   * Update detection details section
-   * @private
-   *
-   */
-  private updateDetectionDetails(detectionInfo: {
-    method: string;
-    value: string;
-  }): void {
-    if (!this.elements['detectedDomain'] || !this.elements['detectionDetails']) {
-      return;
-    }
-
-    const methodLabel = detectionInfo.method === 'matchString'
-      ? 'Match String'
-      : 'Regex Pattern';
-
-    this.elements['detectionDetails'].textContent =
-      `Detection Signal: ${detectionInfo.value}`;
-
-    this.elements['detectedDomain'].style.display = 'block';
-
-    // Update the header if needed
-    const header = this.elements['detectedDomain'].querySelector('h3');
-    if (header) {
-      header.textContent = `Detection Source: ${methodLabel}`;
-    }
-  }
-
-  /**
-   * Hide detection details section
-   * @private
-   *
-   */
-  private hideDetectionDetails(): void {
-    if (this.elements['detectedDomain']) {
-      this.elements['detectedDomain'].style.display = 'none';
     }
   }
 

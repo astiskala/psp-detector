@@ -1,22 +1,16 @@
 /**
- * Branded types
- * These provide compile-time type safety while being runtime primitives
- */
-
-/**
- * Branded type definitions
+ * Compile-time brands used to distinguish semantically different primitives.
  */
 export type PSPName = string & { readonly __brand: 'PSPName' };
 export type TabId = number & { readonly __brand: 'TabId' };
 export type URL = string & { readonly __brand: 'URL' };
 export type RegexPattern = string & { readonly __brand: 'RegexPattern' };
 
-/**
- * Type conversion utilities for safe branded type creation
- */
+/** Runtime validators for constructing branded values from untrusted inputs. */
 export const TypeConverters = {
   /**
-   * Safely convert string to PSPName
+   * Accepts only non-empty provider names so empty detection results never get
+   * branded as valid PSP identifiers.
    */
   toPSPName: (name: string): PSPName | null => {
     if (!name || name.trim().length === 0) {
@@ -27,7 +21,7 @@ export const TypeConverters = {
   },
 
   /**
-   * Safely convert number to TabId
+   * Accepts only non-negative integer tab ids returned by the browser APIs.
    */
   toTabId: (id: number): TabId | null => {
     if (!Number.isInteger(id) || id < 0) {
@@ -38,7 +32,7 @@ export const TypeConverters = {
   },
 
   /**
-   * Safely convert string to URL
+   * Brands only syntactically valid absolute URLs.
    */
   toURL: (url: string): URL | null => {
     try {
@@ -50,7 +44,7 @@ export const TypeConverters = {
   },
 
   /**
-   * Safely convert string to RegexPattern
+   * Brands only regex strings that the JS runtime can compile successfully.
    */
   toRegexPattern: (pattern: string): RegexPattern | null => {
     try {

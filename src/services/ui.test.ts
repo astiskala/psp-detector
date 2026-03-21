@@ -1,5 +1,4 @@
 import { UIService } from './ui';
-import type { PSP } from '../types';
 import { TypeConverters } from '../types';
 import { setupChromeRuntimeMock, setupCleanDOM } from '../test-helpers/utilities';
 
@@ -30,10 +29,6 @@ describe('UIService', () => {
             <p>Analyzing payment providers...</p>
           </div>
           <div id="content-state" style="display: none;">
-            <div id="psp-detected-domain" style="display: none;">
-              <h3>Detected domain</h3>
-              <div id="psp-detection-details"></div>
-            </div>
             <div id="psp-description">
               Please wait while we identify the Payment Service Provider.
             </div>
@@ -86,24 +81,6 @@ describe('UIService', () => {
     service = new UIService();
   });
 
-  it('should update PSP display', () => {
-    const psp: PSP = {
-      name: TypeConverters.toPSPName('TestPSP')!,
-      regex: TypeConverters.toRegexPattern('test')!,
-      url: TypeConverters.toURL('https://test.com')!,
-      image: 'test',
-      summary: 'summary',
-      notice: 'notice',
-    };
-    service.updatePSPDisplay(psp);
-    expect(elements['name']?.textContent).toBe('TestPSP');
-    expect(elements['description']?.textContent).toBe('summary');
-    expect(elements['notice']?.textContent).toBe('notice');
-    expect(elements['notice']?.style.display).toBe('block');
-    expect(elements['url']?.querySelector('a')?.href).toBe('https://test.com/');
-    expect((elements['image'] as HTMLImageElement)?.alt).toBe('TestPSP logo');
-  });
-
   it('should show no PSP detected', () => {
     service.showNoPSPDetected();
     expect(elements['name']?.textContent).toBe('No PSP detected');
@@ -142,81 +119,6 @@ describe('UIService', () => {
     document.body.innerHTML = '';
 
     expect(() => new UIService()).toThrow('Element psp-name not found');
-  });
-
-  it('should update PSP display with detection details', () => {
-    const psp: PSP = {
-      name: TypeConverters.toPSPName('TestPSP')!,
-      regex: TypeConverters.toRegexPattern('test')!,
-      url: TypeConverters.toURL('https://test.com')!,
-      image: 'test',
-      summary: 'Test payment processor',
-      notice: 'Test notice',
-    };
-    const detectionInfo = {
-      method: 'matchString',
-      value: 'stripe.com',
-    };
-
-    service.updatePSPDisplay(psp, detectionInfo);
-
-    expect(elements['name']?.textContent).toBe('TestPSP');
-    expect(elements['description']?.textContent).toBe('Test payment processor');
-
-    // Check detection details
-    const detectedDomain = document.getElementById('psp-detected-domain');
-    const detectionDetails = document.getElementById('psp-detection-details');
-
-    expect(detectedDomain?.style.display).toBe('block');
-    expect(detectionDetails?.textContent).toBe('Detection Signal: stripe.com');
-
-    const header = detectedDomain?.querySelector('h3');
-    expect(header?.textContent).toBe('Detection Source: Match String');
-  });
-
-  it('should update PSP display with regex detection details', () => {
-    const psp: PSP = {
-      name: TypeConverters.toPSPName('TestPSP')!,
-      regex: TypeConverters.toRegexPattern('test')!,
-      url: TypeConverters.toURL('https://test.com')!,
-      image: 'test',
-      summary: 'Test payment processor',
-      notice: 'Test notice',
-    };
-    const detectionInfo = {
-      method: 'regex',
-      value: '/stripe[.-]?(js|checkout)/i',
-    };
-
-    service.updatePSPDisplay(psp, detectionInfo);
-
-    // Check detection details
-    const detectedDomain = document.getElementById('psp-detected-domain');
-    const detectionDetails = document.getElementById('psp-detection-details');
-
-    expect(detectedDomain?.style.display).toBe('block');
-    expect(detectionDetails?.textContent).toBe(
-      'Detection Signal: /stripe[.-]?(js|checkout)/i',
-    );
-
-    const header = detectedDomain?.querySelector('h3');
-    expect(header?.textContent).toBe('Detection Source: Regex Pattern');
-  });
-
-  it('should hide detection details when no detection info provided', () => {
-    const psp: PSP = {
-      name: TypeConverters.toPSPName('TestPSP')!,
-      regex: TypeConverters.toRegexPattern('test')!,
-      url: TypeConverters.toURL('https://test.com')!,
-      image: 'test',
-      summary: 'Test payment processor',
-      notice: 'Test notice',
-    };
-
-    service.updatePSPDisplay(psp);
-
-    const detectedDomain = document.getElementById('psp-detected-domain');
-    expect(detectedDomain?.style.display).toBe('none');
   });
 
   it('renders multiple PSP cards with labeled source and signal evidence', () => {

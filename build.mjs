@@ -5,12 +5,12 @@ import path from 'node:path';
 import sharp from 'sharp';
 import { fileURLToPath } from 'node:url';
 
-/** Read and parse a JSON file synchronously. */
+/** Tiny sync helper used while preparing build metadata files. */
 function readJsonSync(filePath) {
   return JSON.parse(readFileSync(filePath, 'utf8'));
 }
 
-/** Write an object as pretty-printed JSON synchronously. */
+/** Writes JSON with stable formatting so generated metadata stays diffable. */
 function writeJsonSync(filePath, obj) {
   writeFileSync(filePath, `${JSON.stringify(obj, null, 2)}\n`);
 }
@@ -51,8 +51,7 @@ const sharedConfig = {
 };
 
 /**
- * Generate PSP images in different sizes
- * @returns {Promise<void>}
+ * Rebuilds the distributable PSP logo set from the source 128px PNG assets.
  */
 async function generatePspImages() {
   const srcDir = path.join(__dirname, 'assets', 'images');
@@ -96,8 +95,8 @@ async function generatePspImages() {
 }
 
 /**
- * Build extension files
- * @returns {Promise<void>}
+ * Produces a fresh `dist/` bundle, updates the generated version number, and
+ * regenerates extension assets.
  */
 async function buildFiles() {
   try {

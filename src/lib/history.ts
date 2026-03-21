@@ -199,9 +199,7 @@ function findEntryStatus(
   return { kind: 'none' };
 }
 
-/**
- * Read persisted detection history from local extension storage.
- */
+/** Reads and normalizes persisted detection history from local storage. */
 export async function readHistory(): Promise<HistoryEntry[]> {
   const data = await chrome.storage.local.get(STORAGE_KEYS.PSP_HISTORY);
   const raw = data[STORAGE_KEYS.PSP_HISTORY];
@@ -211,10 +209,8 @@ export async function readHistory(): Promise<HistoryEntry[]> {
 }
 
 /**
- * Insert a new history entry with quota-safe writes, PSP-merge coalescing,
- * and duplicate debouncing.
- *
- * History is kept newest-first (sort invariant required by findEntryStatus).
+ * Writes a detection to history while preserving newest-first ordering,
+ * merging near-duplicate page events, and debouncing repeated scans.
  */
 export async function writeHistoryEntry(entry: HistoryEntry): Promise<void> {
   const normalizedEntry = normalizeHistoryEntry(entry);

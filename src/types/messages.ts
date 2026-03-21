@@ -1,19 +1,15 @@
-/**
- * Message types for Chrome extension communication
- */
 import type { PSPName, TabId } from './branded';
 import type { PSPConfig } from './psp';
 import type { MessageAction } from './core';
 import type { SourceType } from './detection';
 
-/**
- * Chrome runtime message structure
- */
+/** Base runtime message envelope shared across extension components. */
 export interface ChromeMessage {
   action: MessageAction;
   data?: unknown;
 }
 
+/** Popup/background representation of detected providers for a single tab. */
 export interface StoredTabPsp {
   psp: string;
   detectionInfo?: {
@@ -23,9 +19,7 @@ export interface StoredTabPsp {
   };
 }
 
-/**
- * PSP detection message data
- */
+/** Payload sent from the content script when it reports a detected provider. */
 export interface PSPDetectionData {
   psp?: PSPName;
   tabId?: TabId;
@@ -36,16 +30,12 @@ export interface PSPDetectionData {
   };
 }
 
-/**
- * PSP config response
- */
+/** Response shape for the bundled provider dataset. */
 export interface PSPConfigResponse {
   config: PSPConfig;
 }
 
-/**
- * PSP response
- */
+/** Response shape for the current tab's stored detections. */
 export interface PSPResponse {
   psps: StoredTabPsp[];
 }
