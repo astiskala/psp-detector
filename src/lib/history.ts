@@ -3,7 +3,7 @@ import { HISTORY_MAX_ENTRIES } from '../types/history';
 import { STORAGE_KEYS } from './storage-keys';
 import { logger } from './utils';
 
-export const HISTORY_ENTRY_DEBOUNCE_MS = 5 * 60_000;
+export const HISTORY_ENTRY_DEBOUNCE_MS = 15 * 60_000;
 export const HISTORY_ENTRY_MERGE_WINDOW_MS = 30_000;
 
 type EntryStatus =
@@ -15,31 +15,60 @@ function normalizeDomain(domain: string): string {
   return domain.trim().toLowerCase();
 }
 
-function getSortedUniquePspNames(entry: HistoryEntry): string[] {
-  return [...new Set(entry.psps.map((psp) => psp.name))]
-    .sort((a, b) => a.localeCompare(b));
+function normalizeHistoryMatch(
+  match: HistoryPSPMatch,
+  fallbackTimestamp: number,
+): HistoryPSPMatch {
+  return {
+    ...match,
+    firstDetectedAt: match.firstDetectedAt ?? fallbackTimestamp,
+  };
 }
 
-function hasSameDomainAndPspCombination(
-  left: HistoryEntry,
-  right: HistoryEntry,
+function normalizeHistoryEntry(entry: HistoryEntry): HistoryEntry {
+  return {
+    ...entry,
+    psps: entry.psps.map((match) =>
+      normalizeHistoryMatch(match, entry.timestamp)),
+  };
+}
+
+function matchesDetectionSignature(
+  left: HistoryPSPMatch,
+  right: HistoryPSPMatch,
 ): boolean {
-  if (normalizeDomain(left.domain) !== normalizeDomain(right.domain)) {
-    return false;
+  return left.name === right.name &&
+    left.sourceType === right.sourceType &&
+    left.value === right.value;
+}
+
+function getMatchingFirstDetectedAt(
+  existing: HistoryEntry,
+  incoming: HistoryEntry,
+): number | null {
+  if (normalizeDomain(existing.domain) !== normalizeDomain(incoming.domain)) {
+    return null;
   }
 
-  const leftNames = getSortedUniquePspNames(left);
-  const rightNames = getSortedUniquePspNames(right);
-
-  if (
-    leftNames.length === 0 ||
-    rightNames.length === 0 ||
-    leftNames.length !== rightNames.length
-  ) {
-    return false;
+  if (incoming.psps.length === 0) {
+    return null;
   }
 
-  return leftNames.every((name, index) => name === rightNames[index]);
+  let firstDetectedAt = Number.POSITIVE_INFINITY;
+  for (const incomingMatch of incoming.psps) {
+    const matching = existing.psps.find((existingMatch) =>
+      matchesDetectionSignature(existingMatch, incomingMatch));
+    if (matching === undefined) {
+      return null;
+    }
+
+    firstDetectedAt = Math.min(
+      firstDetectedAt,
+      matching.firstDetectedAt ?? existing.timestamp,
+    );
+  }
+
+  return Number.isFinite(firstDetectedAt) ? firstDetectedAt : null;
 }
 
 function sourcePriority(sourceType: string | undefined): number {
@@ -104,48 +133,66 @@ function mergeHistoryPsps(
 /**
  * Determine how a new entry relates to existing history.
  *
- * Invariant: `history` MUST be sorted newest-first. This function relies on
- * that ordering to break the scan early once entries fall outside the debounce
- * window. The invariant is maintained by the caller (`writeHistoryEntry`),
- * which always prepends new entries rather than appending them.
+ * Invariant: `history` MUST be sorted newest-first. The invariant is
+ * maintained by the caller (`writeHistoryEntry`), which always prepends new
+ * entries rather than appending them.
  *
  * Returns:
  *   { kind: 'merge', index }  — same URL within HISTORY_ENTRY_MERGE_WINDOW_MS
- *   { kind: 'debounce' }      — same URL within HISTORY_ENTRY_DEBOUNCE_MS
- *                               (but outside merge window), or most-recent
- *                               entry has same domain + PSP combination
+ *   { kind: 'debounce' }      — same domain + PSP + source/signal and either
+ *                               within HISTORY_ENTRY_DEBOUNCE_MS of the first
+ *                               detection, or no other detection happened
+ *                               since that prior detection
  *   { kind: 'none' }          — outside all windows, write a new entry
  */
 function findEntryStatus(
   entry: HistoryEntry,
   history: HistoryEntry[],
 ): EntryStatus {
-  const lowerBound = entry.timestamp - HISTORY_ENTRY_DEBOUNCE_MS;
-  const mergeThreshold = entry.timestamp - HISTORY_ENTRY_MERGE_WINDOW_MS;
+  const normalizedEntry = normalizeHistoryEntry(entry);
+  const mergeThreshold =
+    normalizedEntry.timestamp - HISTORY_ENTRY_MERGE_WINDOW_MS;
+  let matchingIndex: number | null = null;
+  let firstDetectedAt: number | null = null;
 
   for (let i = 0; i < history.length; i++) {
     const existing = history[i];
-
-    // history is newest-first; stop once entries are older than debounce window
-    if (existing === undefined || existing.timestamp < lowerBound) {
-      break;
+    if (existing === undefined) {
+      continue;
     }
 
-    if (existing.url === entry.url) {
-      if (existing.timestamp >= mergeThreshold) {
-        return { kind: 'merge', index: i };
-      }
-
-      return { kind: 'debounce' };
+    if (
+      existing.url === normalizedEntry.url &&
+      existing.timestamp >= mergeThreshold
+    ) {
+      return { kind: 'merge', index: i };
     }
+
+    if (matchingIndex !== null) {
+      continue;
+    }
+
+    const matchedFirstDetectedAt = getMatchingFirstDetectedAt(
+      existing,
+      normalizedEntry,
+    );
+    if (matchedFirstDetectedAt === null) {
+      continue;
+    }
+
+    matchingIndex = i;
+    firstDetectedAt = matchedFirstDetectedAt;
   }
 
-  const newest = history[0];
-  if (
-    newest !== undefined &&
-    newest.timestamp >= lowerBound &&
-    hasSameDomainAndPspCombination(newest, entry)
-  ) {
+  if (matchingIndex === null || firstDetectedAt === null) {
+    return { kind: 'none' };
+  }
+
+  if (matchingIndex === 0) {
+    return { kind: 'debounce' };
+  }
+
+  if (normalizedEntry.timestamp - firstDetectedAt < HISTORY_ENTRY_DEBOUNCE_MS) {
     return { kind: 'debounce' };
   }
 
@@ -158,7 +205,9 @@ function findEntryStatus(
 export async function readHistory(): Promise<HistoryEntry[]> {
   const data = await chrome.storage.local.get(STORAGE_KEYS.PSP_HISTORY);
   const raw = data[STORAGE_KEYS.PSP_HISTORY];
-  return Array.isArray(raw) ? (raw as HistoryEntry[]) : [];
+  return Array.isArray(raw)
+    ? (raw as HistoryEntry[]).map((entry) => normalizeHistoryEntry(entry))
+    : [];
 }
 
 /**
@@ -168,9 +217,11 @@ export async function readHistory(): Promise<HistoryEntry[]> {
  * History is kept newest-first (sort invariant required by findEntryStatus).
  */
 export async function writeHistoryEntry(entry: HistoryEntry): Promise<void> {
+  const normalizedEntry = normalizeHistoryEntry(entry);
+
   try {
     const history = await readHistory();
-    const status = findEntryStatus(entry, history);
+    const status = findEntryStatus(normalizedEntry, history);
 
     if (status.kind === 'merge') {
       const existing = history[status.index];
@@ -179,7 +230,7 @@ export async function writeHistoryEntry(entry: HistoryEntry): Promise<void> {
         return;
       }
 
-      const mergedPsps = mergeHistoryPsps(existing.psps, entry.psps);
+      const mergedPsps = mergeHistoryPsps(existing.psps, normalizedEntry.psps);
       if (mergedPsps === null) {
         logger.debug('Skipping merge: no new or higher-priority PSP matches');
         return;
@@ -187,7 +238,9 @@ export async function writeHistoryEntry(entry: HistoryEntry): Promise<void> {
 
       const merged: HistoryEntry = {
         ...existing,
-        timestamp: entry.timestamp, // update to most recent detection time
+
+        // Update to the most recent detection time for the merged page entry.
+        timestamp: normalizedEntry.timestamp,
         psps: mergedPsps,
       };
 
@@ -203,12 +256,12 @@ export async function writeHistoryEntry(entry: HistoryEntry): Promise<void> {
     }
 
     if (status.kind === 'debounce') {
-      logger.debug('Skipping repeated detection within debounce window');
+      logger.debug('Skipping repeated detection due to history debounce');
       return;
     }
 
     // status.kind === 'none': prepend new entry and cap at max
-    const updated = [entry, ...history].slice(0, HISTORY_MAX_ENTRIES);
+    const updated = [normalizedEntry, ...history].slice(0, HISTORY_MAX_ENTRIES);
     await chrome.storage.local.set({ [STORAGE_KEYS.PSP_HISTORY]: updated });
   } catch (err) {
     logger.warn('History write failed, attempting eviction:', err);
@@ -221,7 +274,7 @@ export async function writeHistoryEntry(entry: HistoryEntry): Promise<void> {
       const history = await readHistory();
       const trimmed = history.slice(0, HISTORY_MAX_ENTRIES - 101);
       await chrome.storage.local.set({
-        [STORAGE_KEYS.PSP_HISTORY]: [entry, ...trimmed],
+        [STORAGE_KEYS.PSP_HISTORY]: [normalizedEntry, ...trimmed],
       });
     } catch (error_) {
       logger.error('History write failed after eviction:', error_);

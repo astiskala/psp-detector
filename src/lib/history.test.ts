@@ -13,6 +13,9 @@ const storedData: Record<string, unknown> = {};
 const DEFAULT_CHECKOUT_URL = 'https://example.com/checkout';
 const STRIPE_NETWORK_SIGNAL = 'js.stripe.com';
 const STRIPE_SCRIPT_SIGNAL = 'js.stripe.com/v3';
+const PAYPAL_SCRIPT_SIGNAL = 'paypal.com/sdk/js';
+const SHOP_DOMAIN = 'shop.example.com';
+const SHOP_CHECKOUT_URL = 'https://shop.example.com/checkout';
 const SHOP_PAY_URL = 'https://shop.example.com/pay';
 const CHECKOUT_DOMAIN = 'checkout.example.com';
 const CHECKOUT_START_URL = 'https://checkout.example.com/start';
@@ -53,7 +56,12 @@ describe('writeHistoryEntry', () => {
   it('appends to history, newest first', async() => {
     await writeHistoryEntry(makeEntry({ id: 'a', timestamp: 1 }));
     await writeHistoryEntry(
-      makeEntry({ id: 'b', timestamp: 2, domain: 'shop.example.com', url: 'https://shop.example.com/checkout' }),
+      makeEntry({
+        id: 'b',
+        timestamp: 2,
+        domain: SHOP_DOMAIN,
+        url: SHOP_CHECKOUT_URL,
+      }),
     );
 
     const history = await readHistory();
@@ -121,42 +129,9 @@ describe('writeHistoryEntry', () => {
     ).resolves.toBeUndefined();
   });
 
-  // --- Debounce window (Tier 2: 30s–5min same URL → skip) ---
+  // --- Debounce window (Tier 2: exact signal duplicates) ---
 
-  it('debounces repeated visits to the same URL within the debounce window', async() => {
-    const baseline = makeEntry({ id: 'a', timestamp: 1_000 });
-    await writeHistoryEntry(baseline);
-
-    // More than 30s after baseline but within 5 min — should debounce
-    await writeHistoryEntry(
-      makeEntry({
-        id: 'b',
-        timestamp: baseline.timestamp + HISTORY_ENTRY_MERGE_WINDOW_MS + 1_000,
-      }),
-    );
-
-    const history = await readHistory();
-    expect(history).toHaveLength(1);
-    expect(history[0]?.id).toBe('a');
-  });
-
-  it('writes a new entry for the same URL after the debounce window expires', async() => {
-    const baseline = makeEntry({ id: 'a', timestamp: 1_000 });
-    await writeHistoryEntry(baseline);
-    await writeHistoryEntry(
-      makeEntry({
-        id: 'b',
-        timestamp: baseline.timestamp + HISTORY_ENTRY_DEBOUNCE_MS + 1_000,
-      }),
-    );
-
-    const history = await readHistory();
-    expect(history).toHaveLength(2);
-    expect(history[0]?.id).toBe('b');
-    expect(history[1]?.id).toBe('a');
-  });
-
-  it('debounces consecutive entries with same domain and PSP combination', async() => {
+  it('debounces repeated detections with the same domain, PSP, and signal within 15 minutes', async() => {
     const baseline = makeEntry({
       id: 'a',
       domain: CHECKOUT_DOMAIN,
@@ -191,7 +166,7 @@ describe('writeHistoryEntry', () => {
     expect(history[0]?.id).toBe('a');
   });
 
-  it('writes a new entry for same domain and PSP combo after debounce window', async() => {
+  it('continues to debounce consecutive identical detections after 15 minutes', async() => {
     const baseline = makeEntry({
       id: 'a',
       domain: CHECKOUT_DOMAIN,
@@ -217,6 +192,138 @@ describe('writeHistoryEntry', () => {
           method: 'matchString',
           value: STRIPE_NETWORK_SIGNAL,
           sourceType: 'networkRequest',
+        }],
+      }),
+    );
+
+    const history = await readHistory();
+    expect(history).toHaveLength(1);
+    expect(history[0]?.id).toBe('a');
+  });
+
+  it('debounces identical detections even when another detection intervenes within 15 minutes', async() => {
+    const baseline = makeEntry({
+      id: 'a',
+      domain: CHECKOUT_DOMAIN,
+      url: CHECKOUT_START_URL,
+      timestamp: 1_000,
+      psps: [{
+        name: 'Stripe',
+        method: 'matchString',
+        value: STRIPE_NETWORK_SIGNAL,
+        sourceType: 'networkRequest',
+      }],
+    });
+    await writeHistoryEntry(baseline);
+    await writeHistoryEntry(makeEntry({
+      id: 'middle',
+      domain: SHOP_DOMAIN,
+      url: SHOP_PAY_URL,
+      timestamp: baseline.timestamp + 60_000,
+      psps: [{
+        name: 'PayPal',
+        method: 'matchString',
+        value: PAYPAL_SCRIPT_SIGNAL,
+        sourceType: 'scriptSrc',
+      }],
+    }));
+
+    await writeHistoryEntry(
+      makeEntry({
+        id: 'b',
+        domain: CHECKOUT_DOMAIN,
+        url: CHECKOUT_REVIEW_URL,
+        timestamp: baseline.timestamp + (10 * 60_000),
+        psps: [{
+          name: 'Stripe',
+          method: 'matchString',
+          value: STRIPE_NETWORK_SIGNAL,
+          sourceType: 'networkRequest',
+        }],
+      }),
+    );
+
+    const history = await readHistory();
+    expect(history).toHaveLength(2);
+    expect(history[0]?.id).toBe('middle');
+    expect(history[1]?.id).toBe('a');
+  });
+
+  it('writes a new entry for the same signal after 15 minutes when another detection intervened', async() => {
+    const baseline = makeEntry({
+      id: 'a',
+      domain: CHECKOUT_DOMAIN,
+      url: CHECKOUT_START_URL,
+      timestamp: 1_000,
+      psps: [{
+        name: 'Stripe',
+        method: 'matchString',
+        value: STRIPE_NETWORK_SIGNAL,
+        sourceType: 'networkRequest',
+      }],
+    });
+    await writeHistoryEntry(baseline);
+    await writeHistoryEntry(makeEntry({
+      id: 'middle',
+      domain: SHOP_DOMAIN,
+      url: SHOP_PAY_URL,
+      timestamp: baseline.timestamp + 60_000,
+      psps: [{
+        name: 'PayPal',
+        method: 'matchString',
+        value: PAYPAL_SCRIPT_SIGNAL,
+        sourceType: 'scriptSrc',
+      }],
+    }));
+
+    await writeHistoryEntry(
+      makeEntry({
+        id: 'b',
+        domain: CHECKOUT_DOMAIN,
+        url: CHECKOUT_REVIEW_URL,
+        timestamp: baseline.timestamp + HISTORY_ENTRY_DEBOUNCE_MS + 1_000,
+        psps: [{
+          name: 'Stripe',
+          method: 'matchString',
+          value: STRIPE_NETWORK_SIGNAL,
+          sourceType: 'networkRequest',
+        }],
+      }),
+    );
+
+    const history = await readHistory();
+    expect(history).toHaveLength(3);
+    expect(history[0]?.id).toBe('b');
+    expect(history[1]?.id).toBe('middle');
+    expect(history[2]?.id).toBe('a');
+  });
+
+  it('writes a new entry when the PSP matches but the detection signal changes', async() => {
+    const baseline = makeEntry({
+      id: 'a',
+      domain: CHECKOUT_DOMAIN,
+      url: CHECKOUT_START_URL,
+      timestamp: 1_000,
+      psps: [{
+        name: 'Stripe',
+        method: 'matchString',
+        value: STRIPE_NETWORK_SIGNAL,
+        sourceType: 'networkRequest',
+      }],
+    });
+    await writeHistoryEntry(baseline);
+
+    await writeHistoryEntry(
+      makeEntry({
+        id: 'b',
+        domain: CHECKOUT_DOMAIN,
+        url: CHECKOUT_REVIEW_URL,
+        timestamp: baseline.timestamp + HISTORY_ENTRY_MERGE_WINDOW_MS + 1_000,
+        psps: [{
+          name: 'Stripe',
+          method: 'matchString',
+          value: STRIPE_SCRIPT_SIGNAL,
+          sourceType: 'scriptSrc',
         }],
       }),
     );
@@ -396,7 +503,7 @@ describe('writeHistoryEntry', () => {
       id: 'tab2_other',
       timestamp: BASE_TS + 2_000,
       url: SHOP_PAY_URL,
-      domain: 'shop.example.com',
+      domain: SHOP_DOMAIN,
       psps: [{ name: 'PayPal', method: 'regex', value: 'paypal.com', sourceType: 'networkRequest' }],
     }));
 
@@ -426,6 +533,70 @@ describe('writeHistoryEntry', () => {
     expect(history[1]?.url).toBe(SHOP_PAY_URL);
   });
 
+  it('keeps the first-seen timestamp when merge updates refresh the entry timestamp', async() => {
+    const BASE_TS = 100_000;
+
+    await writeHistoryEntry(makeEntry({
+      id: 'tab1_stripe',
+      timestamp: BASE_TS,
+      domain: CHECKOUT_DOMAIN,
+      url: DEFAULT_CHECKOUT_URL,
+      psps: [{
+        name: 'Stripe',
+        method: 'regex',
+        value: STRIPE_NETWORK_SIGNAL,
+        sourceType: 'networkRequest',
+      }],
+    }));
+
+    await writeHistoryEntry(makeEntry({
+      id: 'tab1_adyen',
+      timestamp: BASE_TS + 5_000,
+      domain: CHECKOUT_DOMAIN,
+      url: DEFAULT_CHECKOUT_URL,
+      psps: [{
+        name: 'Adyen',
+        method: 'regex',
+        value: 'checkoutshopper-live.adyen.com',
+        sourceType: 'networkRequest',
+      }],
+    }));
+
+    await writeHistoryEntry(makeEntry({
+      id: 'other',
+      timestamp: BASE_TS + 10_000,
+      domain: SHOP_DOMAIN,
+      url: SHOP_PAY_URL,
+      psps: [{
+        name: 'PayPal',
+        method: 'regex',
+        value: 'paypal.com',
+        sourceType: 'networkRequest',
+      }],
+    }));
+
+    await writeHistoryEntry(makeEntry({
+      id: 'tab1_stripe_again',
+      timestamp: BASE_TS + HISTORY_ENTRY_DEBOUNCE_MS + 1_000,
+      domain: CHECKOUT_DOMAIN,
+      url: CHECKOUT_REVIEW_URL,
+      psps: [{
+        name: 'Stripe',
+        method: 'regex',
+        value: STRIPE_NETWORK_SIGNAL,
+        sourceType: 'networkRequest',
+      }],
+    }));
+
+    const history = await readHistory();
+    expect(history).toHaveLength(3);
+    expect(history[0]?.id).toBe('tab1_stripe_again');
+    expect(history[1]?.id).toBe('other');
+    expect(
+      history[2]?.psps.find((psp) => psp.name === 'Stripe')?.firstDetectedAt,
+    ).toBe(BASE_TS);
+  });
+
   it('creates separate entries for different URLs within the merge window', async() => {
     const BASE_TS = 100_000;
     const entryA = makeEntry({
@@ -445,7 +616,7 @@ describe('writeHistoryEntry', () => {
       id: 'tab2_b',
       timestamp: BASE_TS + 5_000, // within 30s but different URL
       url: SHOP_PAY_URL,
-      domain: 'shop.example.com',
+      domain: SHOP_DOMAIN,
       psps: [
         {
           name: 'Adyen',

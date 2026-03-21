@@ -11,6 +11,7 @@ export interface HistoryPSPMatch {
   readonly method: 'matchString' | 'regex';
   readonly value: string;
   readonly sourceType: SourceType;
+  readonly firstDetectedAt?: number;
 }
 
 /**
