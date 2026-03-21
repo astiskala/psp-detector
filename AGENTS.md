@@ -27,14 +27,17 @@ Focused guidance for AI coding agents working in this repository. Keep answers c
 
 ### 4. Commands / Workflows
 
-- Full local check: `npm run validate` (fix → typecheck → build → unit tests → web lint).
+- Full local check: `npm run validate` (format:check → lint → typecheck → build → unit tests → web lint).
 - Unit tests: `npm test` (Jest, jsdom).
-- Integration: `npm run test:integration` (installs Chromium; keep each test fast < ~5s).
+- Integration: `npm run test:integration` (Playwright real-site checks; installs Chromium).
+- E2E: `npm run test:e2e` (Playwright popup, options, history, and export flows in loaded extension).
+- Format: `npm run format` (write) / `npm run format:check` (verify).
 - CI: `.github/workflows/release.yml` runs validate + Playwright on pushes affecting relevant paths.
+- Pre-commit hooks: Husky runs lint-staged on commit, typecheck + build + test on push, commitlint on commit-msg.
 
 ### 5. Conventions
 
-- Use `logger.*` (avoid raw console.* outside utils/tests).
+- Use `logger.*` (avoid raw console.\* outside utils/tests).
 - Provider order = precedence; place more specific host strings earlier.
 - Regex: always compile with `safeCompileRegex`; never throw on invalid.
 - Images: commit only original base PNG (128px). Build generates `_48` + `_128`.

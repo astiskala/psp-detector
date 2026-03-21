@@ -4,7 +4,13 @@ import vm from 'node:vm';
 
 describe('build artifacts', () => {
   it('options.js is emitted as classic script (no ESM export tokens)', () => {
-    const optionsBundle = path.join(__dirname, '..', '..', 'dist', 'options.js');
+    const optionsBundle = path.join(
+      __dirname,
+      '..',
+      '..',
+      'dist',
+      'options.js',
+    );
     expect(fs.existsSync(optionsBundle)).toBe(true);
 
     const code = fs.readFileSync(optionsBundle, 'utf8');

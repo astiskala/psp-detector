@@ -89,13 +89,15 @@ function createProviderConfig(): PSPConfig {
   }
 
   return {
-    psps: [{
-      name: stripeName,
-      matchStrings: ['js.stripe.com'],
-      image: 'stripe',
-      summary: 'Stripe summary',
-      url: stripeUrl,
-    }],
+    psps: [
+      {
+        name: stripeName,
+        matchStrings: ['js.stripe.com'],
+        image: 'stripe',
+        summary: 'Stripe summary',
+        url: stripeUrl,
+      },
+    ],
   };
 }
 
@@ -107,13 +109,15 @@ function createHistoryEntries(): HistoryEntry[] {
       domain: 'checkout.example.com',
       url: 'https://checkout.example.com/pay',
       timestamp,
-      psps: [{
-        name: 'Stripe',
-        type: 'PSP',
-        method: 'matchString',
-        value: 'js.stripe.com',
-        sourceType: 'scriptSrc',
-      }],
+      psps: [
+        {
+          name: 'Stripe',
+          type: 'PSP',
+          method: 'matchString',
+          value: 'js.stripe.com',
+          sourceType: 'scriptSrc',
+        },
+      ],
     },
     {
       id: 'entry-2',
@@ -197,7 +201,7 @@ function setupSuccessMocks(): OptionsPageSuccessMocks {
   const fetchMock = jest.fn().mockResolvedValue({
     ok: true,
     status: 200,
-    json: async() => createProviderConfig(),
+    json: async () => createProviderConfig(),
   } as unknown as Response);
   globalThis.fetch = fetchMock as unknown as typeof fetch;
 
@@ -263,7 +267,7 @@ describe('options page wiring', () => {
     loggerMock.error.mockReset();
   });
 
-  it('renders history, handles icons, and supports filtering', async() => {
+  it('renders history, handles icons, and supports filtering', async () => {
     setupSuccessMocks();
     await initializeOptionsPage();
 
@@ -273,12 +277,12 @@ describe('options page wiring', () => {
     const pspFilter = getRequiredElementById<HTMLSelectElement>('pspFilter');
     expect(pspFilter.options.length).toBeGreaterThan(1);
 
-    const historyBody = getRequiredElementById<HTMLTableSectionElement>(
-      'historyBody',
-    );
+    const historyBody =
+      getRequiredElementById<HTMLTableSectionElement>('historyBody');
     expect(historyBody.querySelectorAll('tr').length).toBe(3);
 
-    const firstDomainIcon = getRequiredElement<HTMLImageElement>('.domain-icon');
+    const firstDomainIcon =
+      getRequiredElement<HTMLImageElement>('.domain-icon');
     firstDomainIcon.dispatchEvent(new Event('error'));
     expect(firstDomainIcon.isConnected).toBe(false);
 
@@ -306,7 +310,7 @@ describe('options page wiring', () => {
     expect(historyBody.querySelectorAll('tr').length).toBe(1);
   });
 
-  it('exports history and applies clear confirmation behavior', async() => {
+  it('exports history and applies clear confirmation behavior', async () => {
     const {
       clearHistoryMock,
       confirmSpy,
@@ -317,9 +321,8 @@ describe('options page wiring', () => {
     } = setupSuccessMocks();
     await initializeOptionsPage();
 
-    const historyBody = getRequiredElementById<HTMLTableSectionElement>(
-      'historyBody',
-    );
+    const historyBody =
+      getRequiredElementById<HTMLTableSectionElement>('historyBody');
 
     getRequiredElementById<HTMLButtonElement>('exportBtn').click();
     expect(createObjectURL).toHaveBeenCalledTimes(1);
@@ -348,13 +351,13 @@ describe('options page wiring', () => {
     );
   });
 
-  it('logs initialization errors when metadata or history loading fails', async() => {
+  it('logs initialization errors when metadata or history loading fails', async () => {
     const { fetchMock, readHistoryMock, loggerMock } = setupSuccessMocks();
 
     fetchMock.mockResolvedValueOnce({
       ok: false,
       status: 500,
-      json: async() => ({ error: true }),
+      json: async () => ({ error: true }),
     } as unknown as Response);
 
     readHistoryMock.mockRejectedValueOnce(new Error('Read failed'));

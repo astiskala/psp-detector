@@ -58,7 +58,7 @@ describe('PSP image assets', () => {
     }
 
     if (missing.length) {
-      console.error(`\n${  missing.join('\n')}`);
+      console.error(`\n${missing.join('\n')}`);
     }
 
     expect(missing.length).toBe(0);
@@ -76,7 +76,7 @@ describe('PSP image assets', () => {
     }
 
     if (missing.length) {
-      console.error(`\n${  missing.join('\n')}`);
+      console.error(`\n${missing.join('\n')}`);
     }
 
     expect(missing.length).toBe(0);
@@ -89,7 +89,7 @@ describe('PSP image assets', () => {
         continue;
       }
 
-      const regex = (() : RegExp => {
+      const regex = ((): RegExp => {
         try {
           return new RegExp(psp.regex, 'i');
         } catch {

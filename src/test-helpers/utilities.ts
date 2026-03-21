@@ -94,26 +94,21 @@ export function getPSPByPSPName(
     }
 
     const providers = getAllProviders(config);
-    return providers.find(psp => psp.name === pspName) ?? null;
+    return providers.find((psp) => psp.name === pspName) ?? null;
   } catch {
     return null;
   }
 }
 
 /** Test-only exempt-domain helper that mirrors the detector's host logic. */
-export function isURLExempt(
-  service: PSPDetectorService,
-  url: URL,
-): boolean {
+export function isURLExempt(service: PSPDetectorService, url: URL): boolean {
   try {
     const parsedUrl = new globalThis.URL(url);
 
     // Access private exemptDomains through type assertion for testing
     const exemptDomains = (service as unknown as PSPDetectorServiceInternal)
       .exemptDomains;
-    return exemptDomains.some((domain) =>
-      parsedUrl.hostname.includes(domain),
-    );
+    return exemptDomains.some((domain) => parsedUrl.hostname.includes(domain));
   } catch {
     return false;
   }

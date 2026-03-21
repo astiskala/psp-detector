@@ -65,7 +65,8 @@ export const PSPDetectionResult = {
 
   isDetected: (
     result: PSPDetectionResult,
-  ): result is { readonly type: 'detected'; readonly psps: readonly PSPMatch[] } =>
-    result.type === 'detected',
-
+  ): result is {
+    readonly type: 'detected';
+    readonly psps: readonly PSPMatch[];
+  } => result.type === 'detected',
 };

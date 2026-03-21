@@ -1,6 +1,4 @@
-import {
-  logger,
-} from '../lib/utils';
+import { logger } from '../lib/utils';
 
 /**
  * Watches for payment-relevant DOM changes and batches them before triggering
@@ -11,9 +9,8 @@ export class DOMObserverService {
   private isObserving = false;
   private pendingMutations: MutationRecord[] = [];
   private debounceTimer: ReturnType<typeof setTimeout> | null = null;
-  private debounceCallback:
-    | ((mutations: MutationRecord[]) => void)
-    | null = null;
+  private debounceCallback: ((mutations: MutationRecord[]) => void) | null =
+    null;
 
   /**
    * Creates the underlying `MutationObserver` and debounces callback delivery
@@ -30,20 +27,20 @@ export class DOMObserverService {
     }
 
     try {
-      this.debounceCallback = (
-        mutations: MutationRecord[],
-      ): void => callback(mutations);
+      this.debounceCallback = (mutations: MutationRecord[]): void =>
+        callback(mutations);
 
       this.observer = new MutationObserver((mutations): void => {
         if (!this.isObserving || !this.debounceCallback) return;
 
         try {
-          const relevantMutations = mutations.filter((mutation) =>
-            (mutation.type === 'childList' &&
-             mutation.addedNodes.length > 0 &&
-             this.isRelevantNode(mutation.addedNodes)) ||
-            (mutation.type === 'attributes' &&
-             this.isRelevantAttributeMutation(mutation)),
+          const relevantMutations = mutations.filter(
+            (mutation) =>
+              (mutation.type === 'childList' &&
+                mutation.addedNodes.length > 0 &&
+                this.isRelevantNode(mutation.addedNodes)) ||
+              (mutation.type === 'attributes' &&
+                this.isRelevantAttributeMutation(mutation)),
           );
 
           if (relevantMutations.length === 0) return;
@@ -82,15 +79,17 @@ export class DOMObserverService {
           this.isRelevantLinkElement(element as HTMLLinkElement);
 
         // Check for payment-related elements
-        if (element.tagName === 'SCRIPT' ||
-            element.tagName === 'IFRAME' ||
-            element.tagName === 'FORM' ||
-            isRelevantLink ||
-            element.querySelector?.(
-              'script, iframe, form, link[rel="preconnect"], ' +
+        if (
+          element.tagName === 'SCRIPT' ||
+          element.tagName === 'IFRAME' ||
+          element.tagName === 'FORM' ||
+          isRelevantLink ||
+          element.querySelector?.(
+            'script, iframe, form, link[rel="preconnect"], ' +
               'link[rel="dns-prefetch"], link[rel="preload"], ' +
               'link[rel="modulepreload"]',
-            )) {
+          )
+        ) {
           return true;
         }
       }
@@ -113,7 +112,10 @@ export class DOMObserverService {
       return true;
     }
 
-    if ((rel.has('preload') || rel.has('modulepreload')) && link.as === 'script') {
+    if (
+      (rel.has('preload') || rel.has('modulepreload')) &&
+      link.as === 'script'
+    ) {
       return true;
     }
 
@@ -132,23 +134,23 @@ export class DOMObserverService {
     }
 
     switch (target.tagName) {
-    case 'SCRIPT':
-    case 'IFRAME':
-      return attributeName === 'src';
-    case 'FORM':
-      return attributeName === 'action';
-    case 'LINK':
-      if (
-        attributeName !== 'href' &&
-        attributeName !== 'rel' &&
-        attributeName !== 'as'
-      ) {
-        return false;
-      }
+      case 'SCRIPT':
+      case 'IFRAME':
+        return attributeName === 'src';
+      case 'FORM':
+        return attributeName === 'action';
+      case 'LINK':
+        if (
+          attributeName !== 'href' &&
+          attributeName !== 'rel' &&
+          attributeName !== 'as'
+        ) {
+          return false;
+        }
 
-      return this.isRelevantLinkElement(target as HTMLLinkElement);
-    default:
-      return false;
+        return this.isRelevantLinkElement(target as HTMLLinkElement);
+      default:
+        return false;
     }
   }
 
@@ -208,5 +210,4 @@ export class DOMObserverService {
     this.observer = null;
     this.debounceCallback = null;
   }
-
 }

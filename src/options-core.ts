@@ -75,10 +75,11 @@ export function filterEntries(
       return true;
     }
 
-    return entry.psps.some((psp) =>
-      psp.value.toLowerCase().includes(lowerQuery) ||
-      psp.sourceType.toLowerCase().includes(lowerQuery) ||
-      (psp.type ?? 'PSP').toLowerCase().includes(lowerQuery),
+    return entry.psps.some(
+      (psp) =>
+        psp.value.toLowerCase().includes(lowerQuery) ||
+        psp.sourceType.toLowerCase().includes(lowerQuery) ||
+        (psp.type ?? 'PSP').toLowerCase().includes(lowerQuery),
     );
   });
 }
@@ -111,12 +112,10 @@ export function getHistoryStats(history: HistoryEntry[]): HistoryStats {
 
 /** Converts computed history stats into the compact header sentence. */
 export function formatHistorySummary(stats: HistoryStats): string {
-  const topPspSummary =
-    stats.topPsp === null ? '' : ` · Top: ${stats.topPsp}`;
+  const topPspSummary = stats.topPsp === null ? '' : ` · Top: ${stats.topPsp}`;
   return (
     `${stats.uniqueDomains} sites scanned · ` +
-    `${stats.uniquePsps} unique PSPs${
-      topPspSummary}`
+    `${stats.uniquePsps} unique PSPs${topPspSummary}`
   );
 }
 

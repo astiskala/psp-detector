@@ -31,19 +31,11 @@
   "eslint.enable": true,
   "eslint.format.enable": true,
   "eslint.run": "onType",
-  "eslint.validate": [
-    "javascript",
-    "typescript",
-    "json"
-  ],
+  "eslint.validate": ["javascript", "typescript", "json"],
 
   // Prettier configuration (disable)
   "prettier.enable": false,
-  "prettier.disableLanguages": [
-    "typescript",
-    "javascript",
-    "json"
-  ],
+  "prettier.disableLanguages": ["typescript", "javascript", "json"],
 
   // Editor settings that align with gts
   "editor.insertSpaces": true,

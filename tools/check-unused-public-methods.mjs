@@ -22,11 +22,12 @@ const parsedConfig = ts.parseJsonConfigFileContent(
 
 const files = parsedConfig.fileNames
   .map((filePath) => path.resolve(filePath))
-  .filter((filePath) =>
-    filePath.includes(`${path.sep}src${path.sep}`) &&
-    !filePath.endsWith('.test.ts') &&
-    !filePath.endsWith('.spec.ts') &&
-    !filePath.includes(`${path.sep}src${path.sep}test-helpers${path.sep}`),
+  .filter(
+    (filePath) =>
+      filePath.includes(`${path.sep}src${path.sep}`) &&
+      !filePath.endsWith('.test.ts') &&
+      !filePath.endsWith('.spec.ts') &&
+      !filePath.includes(`${path.sep}src${path.sep}test-helpers${path.sep}`),
   );
 
 const scriptVersions = new Map(
@@ -38,7 +39,8 @@ const languageServiceHost = {
   getCurrentDirectory: () => cwd,
   getDefaultLibFileName: (options) => ts.getDefaultLibFilePath(options),
   getScriptFileNames: () => files,
-  getScriptVersion: (fileName) => scriptVersions.get(path.resolve(fileName)) ?? '0',
+  getScriptVersion: (fileName) =>
+    scriptVersions.get(path.resolve(fileName)) ?? '0',
   readFile: ts.sys.readFile,
   fileExists: ts.sys.fileExists,
   readDirectory: ts.sys.readDirectory,
@@ -62,8 +64,10 @@ function hasModifier(node, kind) {
 }
 
 function isMethodPublic(node) {
-  return !hasModifier(node, ts.SyntaxKind.PrivateKeyword) &&
-    !hasModifier(node, ts.SyntaxKind.ProtectedKeyword);
+  return (
+    !hasModifier(node, ts.SyntaxKind.PrivateKeyword) &&
+    !hasModifier(node, ts.SyntaxKind.ProtectedKeyword)
+  );
 }
 
 function getMethodName(node) {
@@ -79,8 +83,10 @@ function getMethodName(node) {
 }
 
 function isDefinitionReference(reference, declarationPath) {
-  return reference.isDefinition === true &&
-    path.resolve(reference.fileName) === declarationPath;
+  return (
+    reference.isDefinition === true &&
+    path.resolve(reference.fileName) === declarationPath
+  );
 }
 
 function findUnusedPublicMethods(sourceFile) {
@@ -95,10 +101,8 @@ function findUnusedPublicMethods(sourceFile) {
       }
 
       const position = node.name.getStart(sourceFile);
-      const references = languageService.findReferences(
-        sourceFile.fileName,
-        position,
-      ) ?? [];
+      const references =
+        languageService.findReferences(sourceFile.fileName, position) ?? [];
 
       const declarationPath = path.resolve(sourceFile.fileName);
       let hasNonDefinitionReference = false;
@@ -161,5 +165,7 @@ if (issues.length > 0) {
 
   process.exitCode = 1;
 } else {
-  process.stdout.write('No unused public methods found in production TypeScript.\n');
+  process.stdout.write(
+    'No unused public methods found in production TypeScript.\n',
+  );
 }

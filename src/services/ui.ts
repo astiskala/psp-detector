@@ -52,10 +52,7 @@ export class UIService {
     }
   }
 
-  public renderMultiplePSPs(
-    psps: StoredTabPsp[],
-    config: PSPConfig,
-  ): void {
+  public renderMultiplePSPs(psps: StoredTabPsp[], config: PSPConfig): void {
     this.transitionToContent();
 
     const description = this.elements['description'];
@@ -103,10 +100,12 @@ export class UIService {
     this.updateTextContent('subtitle', 'No known payment signals found');
     this.updateTextContent(
       'description',
-      'The Payment Service Provider could not be determined. Please ensure you have navigated to the website\'s checkout page.',
+      "The Payment Service Provider could not be determined. Please ensure you have navigated to the website's checkout page.",
     );
 
-    this.updateNoticeSection('Detection relies on identifying PSP frontend components (such as JavaScript or iframes). Integrations that do not use such techniques cannot be detected by this extension.');
+    this.updateNoticeSection(
+      'Detection relies on identifying PSP frontend components (such as JavaScript or iframes). Integrations that do not use such techniques cannot be detected by this extension.',
+    );
 
     this.updateLearnMoreLink(
       'mailto:psp-detector@adamstiskala.com',
@@ -244,7 +243,11 @@ export class UIService {
     if (!this.elements['container']) return;
 
     // Remove existing state classes
-    this.elements['container'].classList.remove('error-state', 'no-psp-state', 'disabled-state');
+    this.elements['container'].classList.remove(
+      'error-state',
+      'no-psp-state',
+      'disabled-state',
+    );
 
     // Add new state class
     if (state !== 'success') {

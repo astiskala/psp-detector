@@ -15,8 +15,7 @@ function getElementByIdOrThrow<T extends HTMLElement>(id: string): T {
   return element as T;
 }
 
-async function getDetectionPermissionState(
-): Promise<DetectionPermissionState> {
+async function getDetectionPermissionState(): Promise<DetectionPermissionState> {
   const [hasHostPermission, hasWebRequestPermission] = await Promise.all([
     chrome.permissions.contains({
       origins: ['https://*/*'],
@@ -35,7 +34,8 @@ async function updatePermissionStatus(
 ): Promise<void> {
   try {
     const permissionState = await getDetectionPermissionState();
-    const hasDetectionPermissions = permissionState.hasHostPermission &&
+    const hasDetectionPermissions =
+      permissionState.hasHostPermission &&
       permissionState.hasWebRequestPermission;
     if (hasDetectionPermissions) {
       statusElement.textContent =
@@ -51,10 +51,7 @@ async function updatePermissionStatus(
       grantButton.textContent = 'Grant required permissions';
     }
   } catch (error) {
-    logger.warn(
-      'Failed to check onboarding optional permission state:',
-      error,
-    );
+    logger.warn('Failed to check onboarding optional permission state:', error);
 
     statusElement.textContent = 'Unable to verify permission status.';
     statusElement.classList.remove('ready');
@@ -101,9 +98,8 @@ async function requestPermissionFromOnboarding(
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  const grantButton = getElementByIdOrThrow<HTMLButtonElement>(
-    'grant-host-access',
-  );
+  const grantButton =
+    getElementByIdOrThrow<HTMLButtonElement>('grant-host-access');
   const statusElement = getElementByIdOrThrow<HTMLElement>('permission-status');
 
   updatePermissionStatus(statusElement, grantButton).catch((error) => {
@@ -111,9 +107,10 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   grantButton.addEventListener('click', () => {
-    requestPermissionFromOnboarding(statusElement, grantButton)
-      .catch((error) => {
+    requestPermissionFromOnboarding(statusElement, grantButton).catch(
+      (error) => {
         logger.error('Onboarding permission request failed:', error);
-      });
+      },
+    );
   });
 });

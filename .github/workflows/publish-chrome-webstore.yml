@@ -4,16 +4,16 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "GitHub Release tag to publish (must match the extension version, e.g. 3.2026.321.1153)"
+        description: 'GitHub Release tag to publish (must match the extension version, e.g. 3.2026.321.1153)'
         required: true
         type: string
       tester:
-        description: "Publish to Trusted Testers only"
+        description: 'Publish to Trusted Testers only'
         required: false
         type: boolean
         default: true
       publish:
-        description: "Publish after upload"
+        description: 'Publish after upload'
         required: false
         type: boolean
         default: true

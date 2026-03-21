@@ -1,374 +1,393 @@
 <!doctype html>
 <html lang="en">
-
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PSP Detector</title>
-  <link rel="stylesheet" href="common.css" />
-  <style>
-    body.popup-page {
-      width: 460px;
-      padding: 0;
-      background: var(--bg);
-      color: var(--on-surface);
-      line-height: 1.4;
-      font-size: 13px;
-      overflow: hidden;
-    }
-
-    .popup-container {
-      background: var(--surface);
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      border: 1px solid var(--outline);
-      box-shadow: var(--elevation);
-      transition: var(--transition);
-      display: flex;
-      flex-direction: column;
-    }
-
-    .popup-header {
-      display: flex;
-      align-items: center;
-      padding: 16px;
-      gap: 12px;
-      background: linear-gradient(180deg, var(--surface), var(--surface-variant));
-      color: var(--on-surface);
-      border-bottom: 1px solid var(--outline);
-      position: relative;
-    }
-
-    #psp-image {
-      width: 40px;
-      height: 40px;
-      border-radius: var(--radius);
-      background: var(--surface-variant);
-      padding: 6px;
-      object-fit: contain;
-      transition: var(--transition);
-      box-shadow: var(--elevation);
-    }
-
-    .header-content {
-      flex: 1;
-      min-width: 0;
-    }
-
-    #psp-name {
-      margin: 0;
-      font-size: 16px;
-      font-weight: 500;
-      letter-spacing: -0.01em;
-      line-height: 1.2;
-      color: var(--on-surface);
-      word-wrap: break-word;
-    }
-
-    .psp-subtitle {
-      margin: 4px 0 0;
-      font-size: 12px;
-      color: var(--on-surface-variant);
-    }
-
-    .popup-body {
-      padding: 16px;
-      /* Ensure body grows only to needed height and no extra flex expansion */
-      flex: 0 0 auto;
-    }
-
-    #psp-description {
-      margin: 0 0 12px;
-      color: var(--on-surface-variant);
-      line-height: 1.4;
-      font-size: 13px;
-    }
-
-    .psp-list {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .psp-card {
-      display: grid;
-      grid-template-columns: 32px 1fr;
-      column-gap: 10px;
-      row-gap: 6px;
-      align-items: center;
-      padding: 10px;
-      border: 1px solid var(--outline);
-      border-radius: var(--radius);
-      background: var(--surface-variant);
-    }
-
-    .psp-card-logo {
-      width: 28px;
-      height: 28px;
-      object-fit: contain;
-      grid-row: 1 / 3;
-    }
-
-    .psp-card-name {
-      margin: 0;
-      font-weight: 600;
-      color: var(--on-surface);
-    }
-
-    .detection-evidence {
-      margin: 0;
-      font-size: 11px;
-      color: var(--on-surface-variant);
-      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-      word-break: normal;
-      display: grid;
-      gap: 6px;
-    }
-
-    .evidence-row {
-      align-items: center;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
-
-    .evidence-label {
-      color: var(--on-surface-variant);
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.1px;
-    }
-
-    .source-pill,
-    .match-value {
-      align-items: center;
-      background: var(--surface);
-      border: 1px solid var(--outline);
-      border-radius: 8px;
-      color: var(--on-surface-variant);
-      display: inline-flex;
-      font-size: 11px;
-      font-family: inherit;
-      max-width: 100%;
-      overflow: hidden;
-      padding: 2px 8px;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    #psp-notice {
-      margin: 12px 0;
-      padding: 10px 12px;
-      border-radius: var(--radius);
-      font-size: 12px;
-      line-height: 1.3;
-      border-left: 3px solid var(--warning);
-      background: var(--surface-variant);
-      color: var(--on-surface-variant);
-      display: none;
-      box-shadow: var(--elevation);
-    }
-
-    .action-row {
-      margin-top: 16px;
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-
-    #psp-url {
-      margin: 0;
-      display: flex;
-    }
-
-    #psp-url a {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 36px;
-      padding: 0 12px;
-      background: var(--primary);
-      color: white;
-      border-radius: var(--radius);
-      text-decoration: none;
-      font-weight: 500;
-      font-size: 13px;
-      transition: var(--transition);
-      box-shadow: var(--elevation);
-      gap: 6px;
-    }
-
-    #psp-url a:hover {
-      background: var(--primary-dark);
-      box-shadow: var(--shadow);
-    }
-
-    #psp-url a:focus {
-      outline: 2px solid var(--secondary);
-      outline-offset: 2px;
-    }
-
-    #psp-url a::after {
-      content: '↗';
-      font-size: 12px;
-      opacity: 0.8;
-    }
-
-    .secondary-action {
-      border: 1px solid var(--outline);
-      border-radius: var(--radius);
-      background: var(--surface);
-      color: var(--on-surface);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      text-decoration: none;
-      font-weight: 500;
-      font-size: 13px;
-      line-height: 1.1;
-      min-height: 36px;
-      padding: 0 12px;
-      cursor: pointer;
-      transition: var(--transition);
-    }
-
-    .secondary-action:hover {
-      border-color: var(--primary);
-      color: var(--primary);
-      background: var(--surface-variant);
-    }
-
-    /* Loading State */
-    .loading-state {
-      text-align: center;
-      padding: 24px 16px;
-    }
-
-    .loading-spinner {
-      width: 20px;
-      height: 20px;
-      border: 2px solid var(--outline);
-      border-top: 2px solid var(--primary);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin: 0 auto 12px;
-    }
-
-    @keyframes spin {
-      0% {
-        transform: rotate(0deg);
-      }
-
-      100% {
-        transform: rotate(360deg);
-      }
-    }
-
-    /* Error State */
-    .error-state .popup-header {
-      background: var(--surface);
-      border-bottom-color: var(--error);
-    }
-
-    /* No PSP State */
-    .no-psp-state .popup-header {
-      background: var(--surface);
-      border-bottom-color: var(--on-surface-variant);
-    }
-
-    /* Disabled State */
-    .disabled-state .popup-header {
-      background: var(--surface);
-      border-bottom-color: var(--outline);
-    }
-
-    /* Status Icons */
-    .status-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: var(--radius);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      background: var(--surface-variant);
-      color: var(--on-surface-variant);
-    }
-
-    /* Accessibility */
-    @media (prefers-reduced-motion: reduce) {
-
-      *,
-      *::before,
-      *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-      }
-    }
-
-    /* High contrast mode */
-    @media (prefers-contrast: high) {
-      :root {
-        --shadow: rgba(0, 0, 0, 0.6);
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PSP Detector</title>
+    <link rel="stylesheet" href="common.css" />
+    <style>
+      body.popup-page {
+        width: 460px;
+        padding: 0;
+        background: var(--bg);
+        color: var(--on-surface);
+        line-height: 1.4;
+        font-size: 13px;
+        overflow: hidden;
       }
 
       .popup-container {
+        background: var(--surface);
+        margin: 0;
+        padding: 0;
+        width: 100%;
         border: 1px solid var(--outline);
+        box-shadow: var(--elevation);
+        transition: var(--transition);
+        display: flex;
+        flex-direction: column;
       }
-    }
-  </style>
-</head>
 
-<body class="popup-page">
-  <div class="popup-container">
-    <div class="popup-header">
-      <img id="psp-image" alt="PSP logo" style="display: none;" />
-      <div class="status-icon" id="status-icon" style="display: none;">
-        📊
-      </div>
-      <div class="header-content">
-        <h1 id="psp-name">Detecting PSP...</h1>
-        <p id="psp-subtitle" class="psp-subtitle">Analyzing current page</p>
-      </div>
-    </div>
+      .popup-header {
+        display: flex;
+        align-items: center;
+        padding: 16px;
+        gap: 12px;
+        background: linear-gradient(
+          180deg,
+          var(--surface),
+          var(--surface-variant)
+        );
+        color: var(--on-surface);
+        border-bottom: 1px solid var(--outline);
+        position: relative;
+      }
 
-    <div class="popup-body">
-      <div class="loading-state" id="loading-state">
-        <div class="loading-spinner"></div>
-        <p>Analyzing payment providers...</p>
-      </div>
+      #psp-image {
+        width: 40px;
+        height: 40px;
+        border-radius: var(--radius);
+        background: var(--surface-variant);
+        padding: 6px;
+        object-fit: contain;
+        transition: var(--transition);
+        box-shadow: var(--elevation);
+      }
 
-      <div id="content-state" style="display: none;">
-        <div id="psp-description">
-          Please wait while we identify the Payment Service Provider.
+      .header-content {
+        flex: 1;
+        min-width: 0;
+      }
+
+      #psp-name {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 500;
+        letter-spacing: -0.01em;
+        line-height: 1.2;
+        color: var(--on-surface);
+        word-wrap: break-word;
+      }
+
+      .psp-subtitle {
+        margin: 4px 0 0;
+        font-size: 12px;
+        color: var(--on-surface-variant);
+      }
+
+      .popup-body {
+        padding: 16px;
+        /* Ensure body grows only to needed height and no extra flex expansion */
+        flex: 0 0 auto;
+      }
+
+      #psp-description {
+        margin: 0 0 12px;
+        color: var(--on-surface-variant);
+        line-height: 1.4;
+        font-size: 13px;
+      }
+
+      .psp-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .psp-card {
+        display: grid;
+        grid-template-columns: 32px 1fr;
+        column-gap: 10px;
+        row-gap: 6px;
+        align-items: center;
+        padding: 10px;
+        border: 1px solid var(--outline);
+        border-radius: var(--radius);
+        background: var(--surface-variant);
+      }
+
+      .psp-card-logo {
+        width: 28px;
+        height: 28px;
+        object-fit: contain;
+        grid-row: 1 / 3;
+      }
+
+      .psp-card-name {
+        margin: 0;
+        font-weight: 600;
+        color: var(--on-surface);
+      }
+
+      .detection-evidence {
+        margin: 0;
+        font-size: 11px;
+        color: var(--on-surface-variant);
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        word-break: normal;
+        display: grid;
+        gap: 6px;
+      }
+
+      .evidence-row {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .evidence-label {
+        color: var(--on-surface-variant);
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.1px;
+      }
+
+      .source-pill,
+      .match-value {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--outline);
+        border-radius: 8px;
+        color: var(--on-surface-variant);
+        display: inline-flex;
+        font-size: 11px;
+        font-family: inherit;
+        max-width: 100%;
+        overflow: hidden;
+        padding: 2px 8px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      #psp-notice {
+        margin: 12px 0;
+        padding: 10px 12px;
+        border-radius: var(--radius);
+        font-size: 12px;
+        line-height: 1.3;
+        border-left: 3px solid var(--warning);
+        background: var(--surface-variant);
+        color: var(--on-surface-variant);
+        display: none;
+        box-shadow: var(--elevation);
+      }
+
+      .action-row {
+        margin-top: 16px;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      #psp-url {
+        margin: 0;
+        display: flex;
+      }
+
+      #psp-url a {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 36px;
+        padding: 0 12px;
+        background: var(--primary);
+        color: white;
+        border-radius: var(--radius);
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 13px;
+        transition: var(--transition);
+        box-shadow: var(--elevation);
+        gap: 6px;
+      }
+
+      #psp-url a:hover {
+        background: var(--primary-dark);
+        box-shadow: var(--shadow);
+      }
+
+      #psp-url a:focus {
+        outline: 2px solid var(--secondary);
+        outline-offset: 2px;
+      }
+
+      #psp-url a::after {
+        content: '↗';
+        font-size: 12px;
+        opacity: 0.8;
+      }
+
+      .secondary-action {
+        border: 1px solid var(--outline);
+        border-radius: var(--radius);
+        background: var(--surface);
+        color: var(--on-surface);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 13px;
+        line-height: 1.1;
+        min-height: 36px;
+        padding: 0 12px;
+        cursor: pointer;
+        transition: var(--transition);
+      }
+
+      .secondary-action:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+        background: var(--surface-variant);
+      }
+
+      /* Loading State */
+      .loading-state {
+        text-align: center;
+        padding: 24px 16px;
+      }
+
+      .loading-spinner {
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--outline);
+        border-top: 2px solid var(--primary);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 12px;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Error State */
+      .error-state .popup-header {
+        background: var(--surface);
+        border-bottom-color: var(--error);
+      }
+
+      /* No PSP State */
+      .no-psp-state .popup-header {
+        background: var(--surface);
+        border-bottom-color: var(--on-surface-variant);
+      }
+
+      /* Disabled State */
+      .disabled-state .popup-header {
+        background: var(--surface);
+        border-bottom-color: var(--outline);
+      }
+
+      /* Status Icons */
+      .status-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: var(--radius);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        background: var(--surface-variant);
+        color: var(--on-surface-variant);
+      }
+
+      /* Accessibility */
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+
+      /* High contrast mode */
+      @media (prefers-contrast: high) {
+        :root {
+          --shadow: rgba(0, 0, 0, 0.6);
+        }
+
+        .popup-container {
+          border: 1px solid var(--outline);
+        }
+      }
+    </style>
+  </head>
+
+  <body class="popup-page">
+    <div class="popup-container">
+      <div class="popup-header">
+        <img id="psp-image" alt="PSP logo" style="display: none" />
+        <div class="status-icon" id="status-icon" style="display: none">📊</div>
+        <div class="header-content">
+          <h1 id="psp-name">Detecting PSP...</h1>
+          <p id="psp-subtitle" class="psp-subtitle">Analyzing current page</p>
         </div>
-        <div id="psp-notice"></div>
-        <div class="action-row">
-          <button id="history-link" class="secondary-action" type="button">
-            View History
-          </button>
-          <div id="psp-url">
-            <a href="#" target="_blank">Learn more</a>
+      </div>
+
+      <div class="popup-body">
+        <div class="loading-state" id="loading-state">
+          <div class="loading-spinner"></div>
+          <p>Analyzing payment providers...</p>
+        </div>
+
+        <div id="content-state" style="display: none">
+          <div id="psp-description">
+            Please wait while we identify the Payment Service Provider.
+          </div>
+          <div id="psp-notice"></div>
+          <div class="action-row">
+            <button id="history-link" class="secondary-action" type="button">
+              View History
+            </button>
+            <div id="psp-url">
+              <a href="#" target="_blank">Learn more</a>
+            </div>
           </div>
         </div>
-      </div>
-      <div id="permission-state" style="display: none;">
-        <p style="margin: 12px 0 12px; color: var(--on-surface-variant); font-size: 13px; font-weight: bold;">
-          PSP Detector needs additional permissions to comprehensively scan websites for payment providers.
-        </p>
-        <button id="grant-permission-btn" class="secondary-action" type="button"
-          style="width: 100%; justify-content: center; font-weight: bold; background: #2e7d32; color: white; border-color: #2e7d32;">
-          Grant Permissions
-        </button>
+        <div id="permission-state" style="display: none">
+          <p
+            style="
+              margin: 12px 0 12px;
+              color: var(--on-surface-variant);
+              font-size: 13px;
+              font-weight: bold;
+            "
+          >
+            PSP Detector needs additional permissions to comprehensively scan
+            websites for payment providers.
+          </p>
+          <button
+            id="grant-permission-btn"
+            class="secondary-action"
+            type="button"
+            style="
+              width: 100%;
+              justify-content: center;
+              font-weight: bold;
+              background: #2e7d32;
+              color: white;
+              border-color: #2e7d32;
+            "
+          >
+            Grant Permissions
+          </button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <script src="popup.js"></script>
-</body>
-
+    <script src="popup.js"></script>
+  </body>
 </html>

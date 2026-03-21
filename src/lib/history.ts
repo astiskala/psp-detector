@@ -29,7 +29,8 @@ function normalizeHistoryEntry(entry: HistoryEntry): HistoryEntry {
   return {
     ...entry,
     psps: entry.psps.map((match) =>
-      normalizeHistoryMatch(match, entry.timestamp)),
+      normalizeHistoryMatch(match, entry.timestamp),
+    ),
   };
 }
 
@@ -37,9 +38,11 @@ function matchesDetectionSignature(
   left: HistoryPSPMatch,
   right: HistoryPSPMatch,
 ): boolean {
-  return left.name === right.name &&
+  return (
+    left.name === right.name &&
     left.sourceType === right.sourceType &&
-    left.value === right.value;
+    left.value === right.value
+  );
 }
 
 function getMatchingFirstDetectedAt(
@@ -57,7 +60,8 @@ function getMatchingFirstDetectedAt(
   let firstDetectedAt = Number.POSITIVE_INFINITY;
   for (const incomingMatch of incoming.psps) {
     const matching = existing.psps.find((existingMatch) =>
-      matchesDetectionSignature(existingMatch, incomingMatch));
+      matchesDetectionSignature(existingMatch, incomingMatch),
+    );
     if (matching === undefined) {
       return null;
     }
@@ -73,22 +77,22 @@ function getMatchingFirstDetectedAt(
 
 function sourcePriority(sourceType: string | undefined): number {
   switch (sourceType) {
-  case undefined:
-    return -1;
-  case 'networkRequest':
-    return 0;
-  case 'pageUrl':
-    return 1;
-  case 'linkHref':
-    return 2;
-  case 'formAction':
-    return 3;
-  case 'iframeSrc':
-    return 4;
-  case 'scriptSrc':
-    return 5;
-  default:
-    return -1;
+    case undefined:
+      return -1;
+    case 'networkRequest':
+      return 0;
+    case 'pageUrl':
+      return 1;
+    case 'linkHref':
+      return 2;
+    case 'formAction':
+      return 3;
+    case 'iframeSrc':
+      return 4;
+    case 'scriptSrc':
+      return 5;
+    default:
+      return -1;
   }
 }
 
@@ -96,8 +100,9 @@ function shouldReplaceMatch(
   existing: HistoryPSPMatch,
   incoming: HistoryPSPMatch,
 ): boolean {
-  return sourcePriority(incoming.sourceType) >
-    sourcePriority(existing.sourceType);
+  return (
+    sourcePriority(incoming.sourceType) > sourcePriority(existing.sourceType)
+  );
 }
 
 function mergeHistoryPsps(
@@ -222,7 +227,9 @@ export async function writeHistoryEntry(entry: HistoryEntry): Promise<void> {
     if (status.kind === 'merge') {
       const existing = history[status.index];
       if (existing === undefined) {
-        logger.error('Unexpected undefined entry at merge index; skipping merge');
+        logger.error(
+          'Unexpected undefined entry at merge index; skipping merge',
+        );
         return;
       }
 

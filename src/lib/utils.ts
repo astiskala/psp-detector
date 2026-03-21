@@ -1,4 +1,3 @@
-
 import type { PSP, PSPConfig } from '../types/psp';
 
 const ALLOWED_URL_PROTOCOLS = new Set(['http:', 'https:', 'mailto:']);
@@ -138,7 +137,7 @@ export const logger = {
  * Debounces noisy mutation-driven callbacks while optionally allowing a
  * leading-edge invocation.
  */
-export function debouncedMutation<T extends(...args: unknown[]) => unknown>(
+export function debouncedMutation<T extends (...args: unknown[]) => unknown>(
   func: T,
   wait = 100,
   immediate = false,
@@ -213,7 +212,7 @@ export const errorUtils = {
     maxAttempts = 3,
     delay = 1000,
   ): (() => Promise<T>) => {
-    return async(): Promise<T> => {
+    return async (): Promise<T> => {
       const attempts = Math.max(1, maxAttempts);
       let lastError = new Error('Retry attempts exhausted');
 
@@ -232,7 +231,7 @@ export const errorUtils = {
             error,
           );
 
-          await new Promise(resolve => setTimeout(resolve, delay));
+          await new Promise((resolve) => setTimeout(resolve, delay));
         }
       }
 

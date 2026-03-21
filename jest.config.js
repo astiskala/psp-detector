@@ -28,10 +28,7 @@ module.exports = {
 
   // Coverage configuration
   collectCoverage: false,
-  collectCoverageFrom: [
-    'src/**/*.ts',
-    '!src/**/*.test.ts',
-  ],
+  collectCoverageFrom: ['src/**/*.ts', '!src/**/*.test.ts'],
 
   // Note: src/options.ts is excluded from unit test coverage thresholds because
   // it contains only DOM wiring code (no pure logic). It is covered by the

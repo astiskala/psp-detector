@@ -93,11 +93,18 @@ export const TEST_CONTENT = {
   PLAIN_TEXT: 'This is plain text content',
   HTML: {
     STRIPE_SCRIPT: '<script src="https://js.stripe.com/v3/"></script>',
-    STRIPE_IFRAME: '<iframe src="https://checkout.stripe.com/sessions/pay_123"></iframe>',
-    STRIPE_FORM: '<form action="https://checkout.stripe.com/submit" method="post"></form>',
-    PAYPAL_SCRIPT: '<script src="https://www.paypalobjects.com/api/checkout.js"></script>',
+    STRIPE_IFRAME:
+      '<iframe src="https://checkout.stripe.com/sessions/pay_123"></iframe>',
+    STRIPE_FORM:
+      '<form action="https://checkout.stripe.com/submit" method="post"></form>',
+    PAYPAL_SCRIPT:
+      '<script src="https://www.paypalobjects.com/api/checkout.js"></script>',
   },
 } as const;
 
 // Test exempt domains
-export const TEST_EXEMPT_DOMAINS = ['example.com', 'localhost', 'test.com'] as const;
+export const TEST_EXEMPT_DOMAINS = [
+  'example.com',
+  'localhost',
+  'test.com',
+] as const;

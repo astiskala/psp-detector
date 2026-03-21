@@ -23,7 +23,7 @@ describe('DOMObserverService', () => {
     setupCleanDOM();
   });
 
-  it('should initialize and start observing mutations', async() => {
+  it('should initialize and start observing mutations', async () => {
     service.initialize(callback, 0); // no debounce for test
     service.startObserving();
 
@@ -34,7 +34,7 @@ describe('DOMObserverService', () => {
     expect(isObserverActive(service)).toBe(true);
   });
 
-  it('passes relevant mutation records to callback', async() => {
+  it('passes relevant mutation records to callback', async () => {
     service.initialize(callback, 0);
     service.startObserving();
 
@@ -64,7 +64,7 @@ describe('DOMObserverService', () => {
     );
   });
 
-  it('forwards relevant attribute mutation records', async() => {
+  it('forwards relevant attribute mutation records', async () => {
     const originalMutationObserver = globalThis.MutationObserver;
 
     try {
@@ -112,7 +112,7 @@ describe('DOMObserverService', () => {
     }
   });
 
-  it('should stop observing mutations', async() => {
+  it('should stop observing mutations', async () => {
     service.initialize(callback, 0);
     service.startObserving();
     service.stopObserving();
@@ -173,11 +173,9 @@ describe('DOMObserverService', () => {
       }
     };
 
-    const consoleSpy = jest
-      .spyOn(console, 'error')
-      .mockImplementation(() => {
-        // No-op for testing
-      });
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {
+      // No-op for testing
+    });
 
     service = new DOMObserverService();
     service.initialize(callback, 0);

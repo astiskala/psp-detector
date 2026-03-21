@@ -33,9 +33,11 @@ const isServiceWorkerRestartError = (message: string): boolean =>
 type IdleCallback = (callback: () => void) => void;
 
 const scheduleIdle = (callback: () => void): void => {
-  const requestIdleCallback = (globalThis as unknown as {
-    requestIdleCallback?: IdleCallback;
-  }).requestIdleCallback;
+  const requestIdleCallback = (
+    globalThis as unknown as {
+      requestIdleCallback?: IdleCallback;
+    }
+  ).requestIdleCallback;
 
   if (typeof requestIdleCallback === 'function') {
     requestIdleCallback(callback);
@@ -104,7 +106,7 @@ class ContentScript {
     }
 
     // Defer configuration and observer setup to idle time
-    const setup = async(): Promise<void> => {
+    const setup = async (): Promise<void> => {
       try {
         await this.initializeExemptDomains();
         await this.initializePSPConfig();
@@ -215,31 +217,31 @@ class ContentScript {
     const result = this.pspDetector.detectPSP(url, scanContent);
 
     switch (result.type) {
-    case 'detected':
-      for (const match of result.psps) {
-        const sourceType = match.detectionInfo
-          ? this.determineSourceType(match.detectionInfo.value, scanSources)
-          : 'pageUrl';
+      case 'detected':
+        for (const match of result.psps) {
+          const sourceType = match.detectionInfo
+            ? this.determineSourceType(match.detectionInfo.value, scanSources)
+            : 'pageUrl';
 
-        const taggedMatch: PSPMatch = match.detectionInfo
-          ? {
-            ...match,
-            detectionInfo: { ...match.detectionInfo, sourceType },
-          }
-          : { ...match };
-        await this.handlePSPMatch(taggedMatch);
-      }
+          const taggedMatch: PSPMatch = match.detectionInfo
+            ? {
+                ...match,
+                detectionInfo: { ...match.detectionInfo, sourceType },
+              }
+            : { ...match };
+          await this.handlePSPMatch(taggedMatch);
+        }
 
-      break;
-    case 'exempt':
-      await this.handlePSPDetection(result);
-      break;
-    case 'none':
-      // No PSP detected, continue monitoring
-      break;
-    case 'error':
-      logger.error('PSP detection error:', result.error);
-      break;
+        break;
+      case 'exempt':
+        await this.handlePSPDetection(result);
+        break;
+      case 'none':
+        // No PSP detected, continue monitoring
+        break;
+      case 'error':
+        logger.error('PSP detection error:', result.error);
+        break;
     }
   }
 
@@ -257,54 +259,54 @@ class ContentScript {
 
     const addElementSources = (element: Element): void => {
       switch (element.tagName) {
-      case 'SCRIPT': {
-        const src = (element as HTMLScriptElement).src;
-        if (src) {
-          scriptSrcs.push(src);
-        }
-
-        break;
-      }
-
-      case 'IFRAME': {
-        const iframe = element as HTMLIFrameElement;
-        const src = iframe.src;
-        if (src) {
-          iframeSrcs.push(src);
-          if (!seenIframes.has(src)) {
-            seenIframes.add(src);
-            iframeElements.push(iframe);
+        case 'SCRIPT': {
+          const src = (element as HTMLScriptElement).src;
+          if (src) {
+            scriptSrcs.push(src);
           }
-        }
 
-        break;
-      }
-
-      case 'FORM': {
-        const action = (element as HTMLFormElement).action;
-        if (action) {
-          formActions.push(action);
-        }
-
-        break;
-      }
-
-      case 'LINK': {
-        const link = element as HTMLLinkElement;
-        if (!this.shouldScanLinkElement(link)) {
           break;
         }
 
-        const href = link.href;
-        if (href) {
-          linkHrefs.push(href);
+        case 'IFRAME': {
+          const iframe = element as HTMLIFrameElement;
+          const src = iframe.src;
+          if (src) {
+            iframeSrcs.push(src);
+            if (!seenIframes.has(src)) {
+              seenIframes.add(src);
+              iframeElements.push(iframe);
+            }
+          }
+
+          break;
         }
 
-        break;
-      }
+        case 'FORM': {
+          const action = (element as HTMLFormElement).action;
+          if (action) {
+            formActions.push(action);
+          }
 
-      default:
-        break;
+          break;
+        }
+
+        case 'LINK': {
+          const link = element as HTMLLinkElement;
+          if (!this.shouldScanLinkElement(link)) {
+            break;
+          }
+
+          const href = link.href;
+          if (href) {
+            linkHrefs.push(href);
+          }
+
+          break;
+        }
+
+        default:
+          break;
       }
     };
 
@@ -330,17 +332,19 @@ class ContentScript {
           continue;
         }
 
-        if (mutation.type === 'attributes' &&
-            mutation.target.nodeType === Node.ELEMENT_NODE) {
+        if (
+          mutation.type === 'attributes' &&
+          mutation.target.nodeType === Node.ELEMENT_NODE
+        ) {
           addElementSources(mutation.target as Element);
         }
       }
     } else {
-      document.querySelectorAll(
-        'script[src], iframe[src], form[action], link[href]',
-      ).forEach((element) => {
-        addElementSources(element);
-      });
+      document
+        .querySelectorAll('script[src], iframe[src], form[action], link[href]')
+        .forEach((element) => {
+          addElementSources(element);
+        });
     }
 
     return {
@@ -380,10 +384,7 @@ class ContentScript {
     return false;
   }
 
-  private determineSourceType(
-    value: string,
-    sources: ScanSources,
-  ): SourceType {
+  private determineSourceType(value: string, sources: ScanSources): SourceType {
     if (sources.scriptSrcs.some((s) => s.includes(value))) return 'scriptSrc';
     if (sources.iframeSrcs.some((s) => s.includes(value))) return 'iframeSrc';
     if (sources.formActions.some((s) => s.includes(value))) return 'formAction';
@@ -437,9 +438,9 @@ class ContentScript {
     this.domObserver.stopObserving();
   }
 
-  private async getActiveTabId(): Promise<
-    ReturnType<typeof TypeConverters.toTabId> | null
-    > {
+  private async getActiveTabId(): Promise<ReturnType<
+    typeof TypeConverters.toTabId
+  > | null> {
     const tabResponse = await this.sendMessage<{ tabId: number }>({
       action: MessageAction.GET_TAB_ID,
     });
@@ -455,7 +456,7 @@ class ContentScript {
   ): Promise<void> {
     logger.debug(
       'Content: Sending PSP detection to background - ' +
-      `PSP: ${pspName}, TabID: ${tabId}`,
+        `PSP: ${pspName}, TabID: ${tabId}`,
     );
 
     const messageData = {
@@ -469,7 +470,9 @@ class ContentScript {
 
     logger.debug('Content: Message data:', messageData);
     await this.sendMessage(messageData);
-    logger.debug('Content: Successfully sent PSP detection message to background');
+    logger.debug(
+      'Content: Successfully sent PSP detection message to background',
+    );
   }
 
   /**
@@ -491,14 +494,16 @@ class ContentScript {
         // Handle service worker restart scenarios
         if (isServiceWorkerRestartError(errorMessage)) {
           if (isLastAttempt) {
-            logger.warn('Failed to communicate with service worker after retries');
+            logger.warn(
+              'Failed to communicate with service worker after retries',
+            );
             throw new Error('Service worker communication failed', {
               cause: error,
             });
           }
 
           // Wait briefly before retry to allow service worker to restart
-          await new Promise(waitResolve =>
+          await new Promise((waitResolve) =>
             setTimeout(waitResolve, 100 * attempt),
           );
 
@@ -522,7 +527,9 @@ class ContentScript {
     return await new Promise<T>((resolve, reject) => {
       chrome.runtime.sendMessage(message, (response) => {
         if (chrome.runtime.lastError) {
-          reject(new Error(chrome.runtime.lastError.message ?? 'Unknown error'));
+          reject(
+            new Error(chrome.runtime.lastError.message ?? 'Unknown error'),
+          );
           return;
         }
 
@@ -567,7 +574,7 @@ class ContentScript {
       }
     }
 
-    const tasks = uniqueIframes.map((iframe) => async(): Promise<void> => {
+    const tasks = uniqueIframes.map((iframe) => async (): Promise<void> => {
       const src = iframe.src;
       if (
         !src ||
@@ -603,7 +610,7 @@ class ContentScript {
 
     const poolSize = Math.max(1, Math.min(concurrency, tasks.length));
     let nextIndex = 0;
-    const workers = Array.from({ length: poolSize }, async() => {
+    const workers = Array.from({ length: poolSize }, async () => {
       while (nextIndex < tasks.length) {
         const currentIndex = nextIndex;
         nextIndex += 1;
@@ -646,7 +653,7 @@ class ContentScript {
   /** Pulls nested script, iframe, and form URLs out of an accessible iframe. */
   private extractNestedSources(doc: Document, content: string[]): void {
     // Get nested iframe sources
-    doc.querySelectorAll('iframe[src]').forEach(nestedIframe => {
+    doc.querySelectorAll('iframe[src]').forEach((nestedIframe) => {
       const nestedSrc = (nestedIframe as HTMLIFrameElement).src;
       if (nestedSrc && !this.processedIframes.has(nestedSrc)) {
         content.push(nestedSrc);
@@ -655,7 +662,7 @@ class ContentScript {
     });
 
     // Get script sources from iframe
-    doc.querySelectorAll('script[src]').forEach(script => {
+    doc.querySelectorAll('script[src]').forEach((script) => {
       const scriptSrc = (script as HTMLScriptElement).src;
       if (scriptSrc) {
         content.push(scriptSrc);
@@ -663,7 +670,7 @@ class ContentScript {
     });
 
     // Get form actions from iframe
-    doc.querySelectorAll('form[action]').forEach(form => {
+    doc.querySelectorAll('form[action]').forEach((form) => {
       const action = (form as HTMLFormElement).action;
       if (action) {
         content.push(action);
@@ -686,10 +693,12 @@ class ContentScript {
 
 // Prevent multiple content script instances on the same page
 interface WindowWithPSPDetector {
-  pspDetectorContentScript?: {
-    initialized: boolean;
-    url: string;
-  } | undefined;
+  pspDetectorContentScript?:
+    | {
+        initialized: boolean;
+        url: string;
+      }
+    | undefined;
 }
 const windowExt = globalThis as unknown as WindowWithPSPDetector;
 
@@ -697,7 +706,7 @@ const currentUrl = document.URL;
 const existingScript = windowExt.pspDetectorContentScript;
 
 // Function to check if background script has state for this tab
-const checkBackgroundState = async(): Promise<boolean> => {
+const checkBackgroundState = async (): Promise<boolean> => {
   try {
     if (!chrome.runtime?.id) {
       return false;
@@ -728,7 +737,7 @@ const registerContentScriptCleanup = (
   });
 };
 
-const startContentScript = async(options: {
+const startContentScript = async (options: {
   resetState: boolean;
   resetForNewPage: boolean;
   logMessage?: string;
@@ -767,7 +776,7 @@ const startContentScript = async(options: {
 
 // Allow re-initialization if URL has changed (new page navigation)
 // OR if background script has lost state (extension context restored)
-const bootstrap = async(): Promise<void> => {
+const bootstrap = async (): Promise<void> => {
   if (
     existingScript?.initialized === true &&
     existingScript.url === currentUrl
@@ -775,7 +784,9 @@ const bootstrap = async(): Promise<void> => {
     try {
       const hasBackgroundState = await checkBackgroundState();
       if (hasBackgroundState) {
-        logger.debug('Content script already initialized for this page, skipping');
+        logger.debug(
+          'Content script already initialized for this page, skipping',
+        );
         return;
       }
 
@@ -790,17 +801,19 @@ const bootstrap = async(): Promise<void> => {
       await startContentScript({
         resetState: true,
         resetForNewPage: true,
-        logMessage: 'Failed to check background state, assuming re-initialization needed',
+        logMessage:
+          'Failed to check background state, assuming re-initialization needed',
       });
 
       return;
     }
   }
 
-  const logMessage = existingScript?.initialized === true
-    ? `Content script URL changed from ${existingScript.url} to ` +
-      `${currentUrl}, re-initializing`
-    : `Content script initializing for new page: ${currentUrl}`;
+  const logMessage =
+    existingScript?.initialized === true
+      ? `Content script URL changed from ${existingScript.url} to ` +
+        `${currentUrl}, re-initializing`
+      : `Content script initializing for new page: ${currentUrl}`;
 
   await startContentScript({
     resetState: false,
@@ -809,7 +822,8 @@ const bootstrap = async(): Promise<void> => {
   });
 };
 
-bootstrap().catch((error) => { // NOSONAR
+bootstrap().catch((error) => {
+  // NOSONAR
   if (isExtensionContextInvalidated(error)) {
     logger.warn('Extension context invalidated during bootstrap');
   } else {

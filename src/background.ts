@@ -38,22 +38,22 @@ const NETWORK_REQUEST_TYPES: `${chrome.webRequest.ResourceType}`[] = [
 
 const sourcePriority = (sourceType?: string): number => {
   switch (sourceType) {
-  case undefined:
-    return -1;
-  case 'networkRequest':
-    return 0;
-  case 'pageUrl':
-    return 1;
-  case 'linkHref':
-    return 2;
-  case 'formAction':
-    return 3;
-  case 'iframeSrc':
-    return 4;
-  case 'scriptSrc':
-    return 5;
-  default:
-    return -1;
+    case undefined:
+      return -1;
+    case 'networkRequest':
+      return 0;
+    case 'pageUrl':
+      return 1;
+    case 'linkHref':
+      return 2;
+    case 'formAction':
+      return 3;
+    case 'iframeSrc':
+      return 4;
+    case 'scriptSrc':
+      return 5;
+    default:
+      return -1;
   }
 };
 
@@ -73,8 +73,10 @@ class BackgroundService {
   private readonly providerPriorityByName = new Map<string, number>();
   private readonly networkMatchersByToken = new Map<string, NetworkMatcher[]>();
   private fallbackNetworkMatchers: NetworkMatcher[] = [];
-  private readonly networkMatchedProvidersByTab =
-    new Map<number, Set<string>>();
+  private readonly networkMatchedProvidersByTab = new Map<
+    number,
+    Set<string>
+  >();
 
   public async initialize(): Promise<void> {
     await this.initializeServiceWorker();
@@ -138,7 +140,7 @@ class BackgroundService {
     });
 
     // Tab event listeners
-    chrome.tabs.onActivated.addListener(async(activeInfo) => {
+    chrome.tabs.onActivated.addListener(async (activeInfo) => {
       await this.handleTabActivation(activeInfo);
     });
 
@@ -228,7 +230,7 @@ class BackgroundService {
       const tabStateCount = this.tabPspCache.size;
       logger.info(
         `State restored from storage (tabs: ${tabStateCount}, ` +
-        `exemptDomains: ${this.inMemoryExemptDomains.length})`,
+          `exemptDomains: ${this.inMemoryExemptDomains.length})`,
       );
     } catch (error) {
       logger.error('Failed to restore state:', error);
@@ -487,57 +489,57 @@ class BackgroundService {
 
     try {
       switch (message.action) {
-      case MessageAction.GET_PSP_CONFIG:
-        await this.handleGetPspConfig(sendResponse);
-        break;
-
-      case MessageAction.DETECT_PSP:
-        if (!this.isValidPspDetectionData(message.data)) {
-          logger.error('Invalid PSP detection data:', message.data);
-          sendResponse({ error: 'Invalid PSP detection data' });
+        case MessageAction.GET_PSP_CONFIG:
+          await this.handleGetPspConfig(sendResponse);
           break;
-        }
 
-        {
-          const detectionData = message.data;
-          await this.handleDetectPsp(detectionData, sender);
-          sendResponse(null);
-        }
+        case MessageAction.DETECT_PSP:
+          if (!this.isValidPspDetectionData(message.data)) {
+            logger.error('Invalid PSP detection data:', message.data);
+            sendResponse({ error: 'Invalid PSP detection data' });
+            break;
+          }
 
-        break;
+          {
+            const detectionData = message.data;
+            await this.handleDetectPsp(detectionData, sender);
+            sendResponse(null);
+          }
 
-      case MessageAction.GET_PSP:
-        await this.handleGetPsp(sender, sendResponse);
-        break;
+          break;
 
-      case MessageAction.GET_TAB_ID:
-        if (typeof sender.tab?.id === 'number') {
-          sendResponse({ tabId: sender.tab.id });
-        } else {
-          sendResponse({ error: 'No tab ID available' });
-        }
+        case MessageAction.GET_PSP:
+          await this.handleGetPsp(sender, sendResponse);
+          break;
 
-        break;
+        case MessageAction.GET_TAB_ID:
+          if (typeof sender.tab?.id === 'number') {
+            sendResponse({ tabId: sender.tab.id });
+          } else {
+            sendResponse({ error: 'No tab ID available' });
+          }
 
-      case MessageAction.GET_EXEMPT_DOMAINS:
-        {
-          const exemptDomains = await this.getExemptDomains();
-          sendResponse({ exemptDomains });
-        }
+          break;
 
-        break;
+        case MessageAction.GET_EXEMPT_DOMAINS:
+          {
+            const exemptDomains = await this.getExemptDomains();
+            sendResponse({ exemptDomains });
+          }
 
-      case MessageAction.CHECK_TAB_STATE:
-        await this.handleCheckTabState(sender, sendResponse);
-        break;
+          break;
 
-      case MessageAction.REDETECT_CURRENT_TAB:
-        await this.handleRedetectCurrentTab(sendResponse);
-        break;
+        case MessageAction.CHECK_TAB_STATE:
+          await this.handleCheckTabState(sender, sendResponse);
+          break;
 
-      default:
-        logger.warn('Unknown message action:', message.action);
-        sendResponse({ error: 'Unknown message action' });
+        case MessageAction.REDETECT_CURRENT_TAB:
+          await this.handleRedetectCurrentTab(sendResponse);
+          break;
+
+        default:
+          logger.warn('Unknown message action:', message.action);
+          sendResponse({ error: 'Unknown message action' });
       }
     } catch (error) {
       logger.error('Error handling message:', error);
@@ -556,7 +558,7 @@ class BackgroundService {
       typeof pspData.psp === 'string' &&
       (pspData.tabId === undefined || typeof pspData.tabId === 'number') &&
       (pspData.detectionInfo === undefined ||
-       typeof pspData.detectionInfo === 'object')
+        typeof pspData.detectionInfo === 'object')
     );
   }
 
@@ -589,7 +591,7 @@ class BackgroundService {
       if (!response.ok) {
         throw new Error(
           `Failed to fetch PSP config: ${response.status} ` +
-          `${response.statusText}`,
+            `${response.statusText}`,
         );
       }
 
@@ -689,7 +691,8 @@ class BackgroundService {
     const hasValidUrl =
       typeof pspEntry.url === 'string' && pspEntry.url.trim().length > 0;
     const hasValidSummary =
-      typeof pspEntry.summary === 'string' && pspEntry.summary.trim().length > 0;
+      typeof pspEntry.summary === 'string' &&
+      pspEntry.summary.trim().length > 0;
     const hasValidMatchStrings =
       Array.isArray(pspEntry.matchStrings) &&
       pspEntry.matchStrings.length > 0 &&
@@ -777,7 +780,7 @@ class BackgroundService {
       const { tabId, pspName } = resolvedData;
       logger.debug(
         `Background: Processing PSP detection - PSP: ${pspName}, ` +
-        `TabID: ${tabId}, CurrentTabID: ${currentTabId}`,
+          `TabID: ${tabId}, CurrentTabID: ${currentTabId}`,
       );
 
       if (pspName === PSP_DETECTION_EXEMPT) {
@@ -901,8 +904,10 @@ class BackgroundService {
       return true;
     }
 
-    return sourcePriority(incomingInfo.sourceType) >
-      sourcePriority(existingInfo.sourceType);
+    return (
+      sourcePriority(incomingInfo.sourceType) >
+      sourcePriority(existingInfo.sourceType)
+    );
   }
 
   private syncCurrentTabDetection(
@@ -916,7 +921,7 @@ class BackgroundService {
 
     logger.debug(
       `Background: Detection recorded for tab ${tabId}; ` +
-      `active tab is ${currentTabId}`,
+        `active tab is ${currentTabId}`,
     );
   }
 
@@ -936,13 +941,15 @@ class BackgroundService {
       domain: this.getDomainFromSender(sender),
       url: sender.tab?.url ?? '',
       timestamp: now,
-      psps: [{
-        name: pspName,
-        type: this.getProviderType(pspName),
-        method: detectionInfo.method,
-        value: detectionInfo.value,
-        sourceType: detectionInfo.sourceType ?? 'pageUrl',
-      }],
+      psps: [
+        {
+          name: pspName,
+          type: this.getProviderType(pspName),
+          method: detectionInfo.method,
+          value: detectionInfo.value,
+          sourceType: detectionInfo.sourceType ?? 'pageUrl',
+        },
+      ],
     };
     await writeHistoryEntry(historyEntry);
   }
@@ -955,17 +962,16 @@ class BackgroundService {
     sender: chrome.runtime.MessageSender,
     sendResponse: (response?: PSPResponse) => void,
   ): Promise<void> {
-    const senderTabId = typeof sender.tab?.id === 'number'
-      ? TypeConverters.toTabId(sender.tab.id)
-      : null;
+    const senderTabId =
+      typeof sender.tab?.id === 'number'
+        ? TypeConverters.toTabId(sender.tab.id)
+        : null;
     const activeTabId = await this.getActiveTabIdForPopup();
     const currentTabId = await this.getCurrentTabId();
 
-    const preferredTabIds = [
-      senderTabId,
-      activeTabId,
-      currentTabId,
-    ].filter((id): id is number => id !== null);
+    const preferredTabIds = [senderTabId, activeTabId, currentTabId].filter(
+      (id): id is number => id !== null,
+    );
 
     let resolvedTabId: number | null = null;
     let psps: StoredTabPsp[] = [];
@@ -1002,9 +1008,10 @@ class BackgroundService {
     sender: chrome.runtime.MessageSender,
     sendResponse: (response?: { hasState: boolean }) => void,
   ): Promise<void> {
-    const tabId = typeof sender.tab?.id === 'number'
-      ? TypeConverters.toTabId(sender.tab.id)
-      : null;
+    const tabId =
+      typeof sender.tab?.id === 'number'
+        ? TypeConverters.toTabId(sender.tab.id)
+        : null;
     if (tabId === null) {
       sendResponse({ hasState: false });
       return;
@@ -1031,10 +1038,7 @@ class BackgroundService {
       this.tabPspCache.get(tabId) ?? [],
     );
 
-    logger.debug(
-      `Background: Retrieved PSP for tab ${tabId}:`,
-      detectedPsp,
-    );
+    logger.debug(`Background: Retrieved PSP for tab ${tabId}:`, detectedPsp);
 
     try {
       const tab = await chrome.tabs.get(activeInfo.tabId);
@@ -1082,7 +1086,9 @@ class BackgroundService {
   private toDetectionResult(psps: StoredTabPsp[]): PSPDetectionResult | null {
     if (psps.length === 0) return null;
     if (psps.some((p) => p.psp === PSP_DETECTION_EXEMPT)) {
-      return this.createExemptResult('PSP detection is disabled for this domain');
+      return this.createExemptResult(
+        'PSP detection is disabled for this domain',
+      );
     }
 
     const matches: PSPMatch[] = [];
@@ -1169,7 +1175,10 @@ class BackgroundService {
         const isExempt = await this.isUrlExempt(tabUrl);
         if (isExempt || this.isSpecialUrl(tabUrl)) {
           this.setExemptTabState(tabId);
-          sendResponse({ success: true, reason: 'Tab is exempt or restricted' });
+          sendResponse({
+            success: true,
+            reason: 'Tab is exempt or restricted',
+          });
           return;
         }
       }
@@ -1262,7 +1271,8 @@ class BackgroundService {
       .replace(/^https?:\/\//u, '')
       .split('/')[0]
       ?.replace(/^\*\./u, '')
-      .replaceAll(':', '').replaceAll('*', '')
+      .replaceAll(':', '')
+      .replaceAll('*', '')
       .toLowerCase();
 
     if (hostCandidate === undefined || hostCandidate.length === 0) {
@@ -1398,8 +1408,7 @@ class BackgroundService {
     if (tabIdValue === null) return;
 
     const matchedProvidersForTab =
-      this.networkMatchedProvidersByTab.get(tabId) ??
-      new Set<string>();
+      this.networkMatchedProvidersByTab.get(tabId) ?? new Set<string>();
     this.networkMatchedProvidersByTab.set(tabId, matchedProvidersForTab);
 
     const candidates = this.getCandidateNetworkMatchers(url);
@@ -1666,21 +1675,23 @@ class BackgroundService {
   async injectContentScript(tabId: number): Promise<void> {
     // Check optional host permission before attempting injection.
     // Without it, executeScript will throw in service-worker context.
-    const hasHostPermission = await chrome.permissions.contains({
-      origins: ['https://*/*'],
-    }).catch(() => {
-      logger.debug(
-        `Skipping content script injection for tab ${tabId}: ` +
-        'could not check host permission',
-      );
+    const hasHostPermission = await chrome.permissions
+      .contains({
+        origins: ['https://*/*'],
+      })
+      .catch(() => {
+        logger.debug(
+          `Skipping content script injection for tab ${tabId}: ` +
+            'could not check host permission',
+        );
 
-      return null;
-    });
+        return null;
+      });
 
     if (hasHostPermission !== true) {
       logger.debug(
         `Skipping content script injection for tab ${tabId}: ` +
-        'optional host permission not granted',
+          'optional host permission not granted',
       );
 
       return;
@@ -1694,11 +1705,13 @@ class BackgroundService {
     } catch (error) {
       // Handle specific common error cases more gracefully
       if (error instanceof Error) {
-        if (error.message.includes('error page') ||
-            error.message.includes('Frame with ID 0 is showing error page')) {
+        if (
+          error.message.includes('error page') ||
+          error.message.includes('Frame with ID 0 is showing error page')
+        ) {
           logger.debug(
             `Skipping content script injection for tab ${tabId}: ` +
-            'Tab is showing an error page',
+              'Tab is showing an error page',
           );
 
           return;
@@ -1707,16 +1720,18 @@ class BackgroundService {
         if (error.message.includes('Cannot access contents of the page')) {
           logger.debug(
             `Skipping content script injection for tab ${tabId}: ` +
-            'Cannot access page contents (likely a restricted page)',
+              'Cannot access page contents (likely a restricted page)',
           );
 
           return;
         }
 
-        if (error.message.includes('The extensions gallery cannot be scripted')) {
+        if (
+          error.message.includes('The extensions gallery cannot be scripted')
+        ) {
           logger.debug(
             `Skipping content script injection for tab ${tabId}: ` +
-            'Chrome Web Store page',
+              'Chrome Web Store page',
           );
 
           return;
@@ -1732,6 +1747,7 @@ class BackgroundService {
 // Initialize background service
 const backgroundService = new BackgroundService();
 
-backgroundService.initialize().catch((error) => { // NOSONAR
+backgroundService.initialize().catch((error) => {
+  // NOSONAR
   logger.error('Failed to initialize background service:', error);
 });

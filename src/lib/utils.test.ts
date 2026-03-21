@@ -15,7 +15,6 @@ import type { PSPConfig } from '../types';
 const EXAMPLE_URL = 'https://example.com';
 
 describe('utils', () => {
-
   describe('URL utilities', () => {
     it('should create safe URL for valid URLs', () => {
       // Arrange
@@ -143,16 +142,12 @@ describe('utils', () => {
     const originalEnv = process.env['NODE_ENV'];
     process.env['NODE_ENV'] = 'development';
 
-    const timeSpy = jest
-      .spyOn(console, 'time')
-      .mockImplementation(() => {
-        // No-op for testing
-      });
-    const timeEndSpy = jest
-      .spyOn(console, 'timeEnd')
-      .mockImplementation(() => {
-        // No-op for testing
-      });
+    const timeSpy = jest.spyOn(console, 'time').mockImplementation(() => {
+      // No-op for testing
+    });
+    const timeEndSpy = jest.spyOn(console, 'timeEnd').mockImplementation(() => {
+      // No-op for testing
+    });
 
     logger.time('test-timer');
     logger.timeEnd('test-timer');
@@ -173,13 +168,13 @@ describe('utils', () => {
   });
 
   describe('fetchWithTimeout', () => {
-    it('forwards request init and returns fetch response', async() => {
+    it('forwards request init and returns fetch response', async () => {
       const originalFetch = globalThis.fetch;
       const response = {
         ok: true,
         status: 200,
         statusText: 'OK',
-        json: async() => ({}),
+        json: async () => ({}),
       } as unknown as Response;
       const fetchMock = jest.fn().mockResolvedValue(response);
       globalThis.fetch = fetchMock as unknown as typeof fetch;
@@ -204,7 +199,7 @@ describe('utils', () => {
       }
     });
 
-    it('aborts when timeout elapses', async() => {
+    it('aborts when timeout elapses', async () => {
       jest.useFakeTimers();
       const originalFetch = globalThis.fetch;
       const fetchMock = jest.fn((_url: string, init?: RequestInit) => {
@@ -231,13 +226,13 @@ describe('utils', () => {
       }
     });
 
-    it('propagates parent abort signal to the request signal', async() => {
+    it('propagates parent abort signal to the request signal', async () => {
       const originalFetch = globalThis.fetch;
       const fetchMock = jest.fn().mockResolvedValue({
         ok: true,
         status: 204,
         statusText: 'No Content',
-        json: async() => ({}),
+        json: async () => ({}),
       } as unknown as Response);
       globalThis.fetch = fetchMock as unknown as typeof fetch;
       const controller = new AbortController();
@@ -257,7 +252,7 @@ describe('utils', () => {
   });
 
   describe('measureAsync', () => {
-    it('calls timeEnd even when function rejects', async() => {
+    it('calls timeEnd even when function rejects', async () => {
       const originalEnv = process.env['NODE_ENV'];
       process.env['NODE_ENV'] = 'development';
       const timeSpy = jest.spyOn(console, 'time').mockImplementation(() => {
@@ -270,7 +265,7 @@ describe('utils', () => {
         });
 
       await expect(
-        measureAsync(async() => {
+        measureAsync(async () => {
           throw new Error('boom');
         }, 'async-measure'),
       ).rejects.toThrow('boom');
@@ -285,13 +280,19 @@ describe('utils', () => {
   });
 
   describe('error utilities', () => {
-    it('safeExecuteAsync returns fallback when async function throws', async() => {
-      await expect(errorUtils.safeExecuteAsync(async() => {
-        throw new Error('oops');
-      }, 'safe execute async', 'fallback')).resolves.toBe('fallback');
+    it('safeExecuteAsync returns fallback when async function throws', async () => {
+      await expect(
+        errorUtils.safeExecuteAsync(
+          async () => {
+            throw new Error('oops');
+          },
+          'safe execute async',
+          'fallback',
+        ),
+      ).resolves.toBe('fallback');
     });
 
-    it('withRetry retries and resolves on a later success', async() => {
+    it('withRetry retries and resolves on a later success', async () => {
       const fn = jest
         .fn<Promise<string>, []>()
         .mockRejectedValueOnce('temporary failure')
@@ -302,7 +303,7 @@ describe('utils', () => {
       expect(fn).toHaveBeenCalledTimes(2);
     });
 
-    it('withRetry enforces at least one attempt and rethrows final error', async() => {
+    it('withRetry enforces at least one attempt and rethrows final error', async () => {
       const fn = jest.fn<Promise<string>, []>().mockRejectedValue('fatal');
       const retry = errorUtils.withRetry(fn, 0, 0);
 
@@ -314,29 +315,35 @@ describe('utils', () => {
   describe('provider utilities', () => {
     it('getAllProviders returns PSPs, orchestrators, and TSPs in order', () => {
       const config: PSPConfig = {
-        psps: [{
-          name: TypeConverters.toPSPName('Stripe')!,
-          url: TypeConverters.toURL('https://stripe.com')!,
-          image: 'stripe',
-          summary: 'Stripe',
-        }],
+        psps: [
+          {
+            name: TypeConverters.toPSPName('Stripe')!,
+            url: TypeConverters.toURL('https://stripe.com')!,
+            image: 'stripe',
+            summary: 'Stripe',
+          },
+        ],
         orchestrators: {
           notice: 'orchestrators',
-          list: [{
-            name: TypeConverters.toPSPName('Primer')!,
-            url: TypeConverters.toURL('https://primer.io')!,
-            image: 'primer',
-            summary: 'Primer',
-          }],
+          list: [
+            {
+              name: TypeConverters.toPSPName('Primer')!,
+              url: TypeConverters.toURL('https://primer.io')!,
+              image: 'primer',
+              summary: 'Primer',
+            },
+          ],
         },
         tsps: {
           notice: 'tsps',
-          list: [{
-            name: TypeConverters.toPSPName('VGS')!,
-            url: TypeConverters.toURL('https://vgs.io')!,
-            image: 'vgs',
-            summary: 'VGS',
-          }],
+          list: [
+            {
+              name: TypeConverters.toPSPName('VGS')!,
+              url: TypeConverters.toURL('https://vgs.io')!,
+              image: 'vgs',
+              summary: 'VGS',
+            },
+          ],
         },
       };
 
@@ -347,5 +354,4 @@ describe('utils', () => {
       ]);
     });
   });
-
 });

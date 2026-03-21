@@ -23,7 +23,8 @@ module.exports = {
     },
     {
       name: 'lib-does-not-import-app-layers',
-      comment: 'Core library utilities should stay independent of app entrypoints/services.',
+      comment:
+        'Core library utilities should stay independent of app entrypoints/services.',
       severity: 'error',
       from: {
         path: '^src/lib',

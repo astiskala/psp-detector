@@ -75,3 +75,6 @@ jobs:
 
       - name: Run integration tests (Playwright)
         run: npx playwright test tests/integration --project=chromium --reporter=line
+
+      - name: Run E2E tests (Playwright)
+        run: npx playwright test --config=playwright.e2e.config.ts --project=chromium --reporter=line

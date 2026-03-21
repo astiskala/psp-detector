@@ -16,9 +16,9 @@ describe('PSP Data Validation', () => {
     const orchestrators = config.orchestrators?.list ?? [];
     const tsps = config.tsps?.list ?? [];
     return [
-      ...psps.map(p => ({ ...p, type: 'psp' })),
-      ...orchestrators.map(p => ({ ...p, type: 'orchestrator' })),
-      ...tsps.map(p => ({ ...p, type: 'tsp' })),
+      ...psps.map((p) => ({ ...p, type: 'psp' })),
+      ...orchestrators.map((p) => ({ ...p, type: 'orchestrator' })),
+      ...tsps.map((p) => ({ ...p, type: 'tsp' })),
     ];
   };
 
@@ -57,14 +57,14 @@ describe('PSP Data Validation', () => {
 
     it('should have unique provider names across all groups', () => {
       const allProviders = getAllProviders(pspConfig);
-      const names = allProviders.map(p => p.name);
+      const names = allProviders.map((p) => p.name);
       const uniqueNames = new Set(names);
 
       if (uniqueNames.size !== names.length) {
         const duplicates: string[] = [];
         const seen = new Set<string>();
 
-        names.forEach(name => {
+        names.forEach((name) => {
           if (seen.has(name) && !duplicates.includes(name)) {
             duplicates.push(name);
           } else {
@@ -108,7 +108,7 @@ describe('PSP Data Validation', () => {
     it('should have valid image references', () => {
       const allProviders = getAllProviders(pspConfig);
 
-      allProviders.forEach(provider => {
+      allProviders.forEach((provider) => {
         expect(provider.image).toBeDefined();
         expect(typeof provider.image).toBe('string');
         expect(provider.image.trim()).not.toBe('');

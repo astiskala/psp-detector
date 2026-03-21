@@ -3,6 +3,7 @@ import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import jsdoc from 'eslint-plugin-jsdoc';
 import sonarjs from 'eslint-plugin-sonarjs';
+import prettierConfig from 'eslint-config-prettier';
 
 const strictTypeScriptRules = {
   '@typescript-eslint/consistent-type-imports': [
@@ -39,14 +40,17 @@ const strictTypeScriptRules = {
   'jsdoc/check-alignment': 'error',
   'jsdoc/check-tag-names': 'error',
   'jsdoc/require-description': 'error',
-  'jsdoc/require-jsdoc': ['error', {
-    publicOnly: true,
-    require: {
-      FunctionDeclaration: true,
-      ClassDeclaration: true,
-      MethodDefinition: false,
+  'jsdoc/require-jsdoc': [
+    'error',
+    {
+      publicOnly: true,
+      require: {
+        FunctionDeclaration: true,
+        ClassDeclaration: true,
+        MethodDefinition: false,
+      },
     },
-  }],
+  ],
   'jsdoc/require-param-type': 'off',
   'jsdoc/require-returns-type': 'off',
   'jsdoc/require-param-description': 'off',
@@ -86,44 +90,18 @@ export default [
     rules: {
       // Google TypeScript Style Guide rules
       '@typescript-eslint/no-explicit-any': 'error',
-      '@typescript-eslint/no-unused-vars': ['error', {
-        argsIgnorePattern: '^_',
-        varsIgnorePattern: '^_',
-        destructuredArrayIgnorePattern: '^_',
-      }],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          destructuredArrayIgnorePattern: '^_',
+        },
+      ],
       '@typescript-eslint/explicit-function-return-type': 'error',
       'prefer-const': 'error',
       '@typescript-eslint/no-var-requires': 'error',
-
-      // Code formatting and style
-      indent: ['error', 2],
-      quotes: ['error', 'single'],
-      semi: ['error', 'always'],
-      'comma-dangle': ['error', 'always-multiline'],
-      'object-curly-spacing': ['error', 'always'],
-      'array-bracket-spacing': ['error', 'never'],
-      'space-before-function-paren': ['error', 'never'],
-      'keyword-spacing': ['error', { before: true, after: true }],
-      'space-infix-ops': 'error',
-      'eol-last': 'error',
-      'no-trailing-spaces': 'error',
-      'no-multiple-empty-lines': ['error', { max: 1, maxEOF: 0 }],
-      'brace-style': ['error', '1tbs', { allowSingleLine: true }],
       curly: ['error', 'multi-line'],
-      'max-len': ['error', { code: 80, ignoreUrls: true, ignoreStrings: true }],
-      'lines-around-comment': ['error', {
-        beforeBlockComment: true,
-        beforeLineComment: true,
-        allowBlockStart: true,
-        allowObjectStart: true,
-        allowArrayStart: true,
-        allowClassStart: true,
-        applyDefaultIgnorePatterns: false,
-      }],
-      'padding-line-between-statements': ['error',
-        { blankLine: 'always', prev: 'block-like', next: '*' },
-        { blankLine: 'always', prev: 'multiline-expression', next: '*' },
-      ],
     },
   },
 
@@ -208,4 +186,7 @@ export default [
       'prefer-top-level-await': 'off',
     },
   },
+
+  // Disable ESLint formatting rules that conflict with Prettier.
+  prettierConfig,
 ];

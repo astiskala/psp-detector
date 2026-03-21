@@ -68,11 +68,12 @@ export class PopupManager {
     this.permissionButtonBound = true;
 
     btn.addEventListener('click', () => {
-      chrome.permissions.request({
-        origins: ['https://*/*'],
-        permissions: ['webRequest'],
-      })
-        .then(async(granted) => {
+      chrome.permissions
+        .request({
+          origins: ['https://*/*'],
+          permissions: ['webRequest'],
+        })
+        .then(async (granted) => {
           if (granted) {
             this.hidePermissionRequest();
             await this.requestCurrentTabRedetect();
@@ -109,11 +110,12 @@ export class PopupManager {
     }
 
     const permissionState = await this.checkDetectionPermissions();
-    const hasPermission = permissionState.hasHostPermission &&
+    const hasPermission =
+      permissionState.hasHostPermission &&
       permissionState.hasWebRequestPermission;
 
     try {
-      await measureAsync(async() => {
+      await measureAsync(async () => {
         const detectedPsps = await this.getDetectedPSPsWithRetry();
         if (detectedPsps.some((entry) => entry.psp === PSP_DETECTION_EXEMPT)) {
           this.hidePermissionPanel();
@@ -222,7 +224,7 @@ export class PopupManager {
       if (!response.ok) {
         throw new Error(
           `Failed to fetch PSP config: ${response.status} ` +
-          `${response.statusText}`,
+            `${response.statusText}`,
         );
       }
 

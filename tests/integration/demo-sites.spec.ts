@@ -3,7 +3,12 @@ import type { Page } from '@playwright/test';
 import fs from 'node:fs';
 import path from 'node:path';
 import { PSPDetectorService } from '../../src/services/psp-detector';
-import { TypeConverters, type PSPConfig, PSPDetectionResult, type PSP } from '../../src/types';
+import {
+  TypeConverters,
+  type PSPConfig,
+  PSPDetectionResult,
+  type PSP,
+} from '../../src/types';
 import { type PSPGroup } from '../../src/types/psp';
 
 interface SiteCase {
@@ -16,20 +21,35 @@ const SITES: SiteCase[] = [
   { url: 'https://flow-demo.sandbox.checkout.com', expected: 'Checkout.com' },
   { url: 'https://cbcheckoutapp.herokuapp.com', expected: 'Chargebee' },
   { url: 'https://fs-react-devrels.vercel.app', expected: 'FastSpring' },
-  { url: 'https://demo.globalpay.com/merchants/dropin-ui', expected: 'Global Payments' },
+  {
+    url: 'https://demo.globalpay.com/merchants/dropin-ui',
+    expected: 'Global Payments',
+  },
   { url: 'https://demos.nuvei.com/intdemo-ecom/checkout/', expected: 'Nuvei' },
-  { url: 'https://pay.skrill.com/assets/skrill-demo/ecommerce.html', expected: 'Skrill' },
+  {
+    url: 'https://pay.skrill.com/assets/skrill-demo/ecommerce.html',
+    expected: 'Skrill',
+  },
   { url: 'https://dev.shift4.com/examples/checkout', expected: 'Shift4' },
   { url: 'https://checkout.stripe.dev/checkout', expected: 'Stripe' },
-  { url: 'https://square.github.io/web-payments-showcase/', expected: 'Square' },
+  {
+    url: 'https://square.github.io/web-payments-showcase/',
+    expected: 'Square',
+  },
   { url: 'https://widget.payu.in/demo', expected: 'PayU' },
-  { url: 'https://demo.unzer.com/demo/resources/paypage_manual.html', expected: 'Unzer' },
+  {
+    url: 'https://demo.unzer.com/demo/resources/paypage_manual.html',
+    expected: 'Unzer',
+  },
   { url: 'https://test.saferpay.com/DemoShop', expected: 'Worldline' },
 ];
 
 function loadConfig(): PSPConfig {
   type RawEntry = Record<string, unknown>;
-  interface RawGroup { notice?: string; list?: RawEntry[] }
+  interface RawGroup {
+    notice?: string;
+    list?: RawEntry[];
+  }
   interface RawFile {
     psps?: RawEntry[];
     orchestrators?: RawGroup;
@@ -42,7 +62,8 @@ function loadConfig(): PSPConfig {
   const raw: RawFile = JSON.parse(fs.readFileSync(file, 'utf8')) as RawFile;
   const convert = (p?: RawEntry): PSP | null => {
     if (!p) return null;
-    const name = typeof p.name === 'string' ? TypeConverters.toPSPName(p.name) : null;
+    const name =
+      typeof p.name === 'string' ? TypeConverters.toPSPName(p.name) : null;
     const url = typeof p.url === 'string' ? TypeConverters.toURL(p.url) : null;
     if (!name || !url) return null;
     return {
@@ -82,8 +103,12 @@ const config = loadConfig();
 // Helper: detect a single site; throws with diagnostics on mismatch.
 async function detectAndAssert(page: Page, site: SiteCase): Promise<void> {
   const requests: string[] = [];
-  const listener = (r: {url: () => string}): void => {
-    try { requests.push(r.url()); } catch { /* ignore */ }
+  const listener = (r: { url: () => string }): void => {
+    try {
+      requests.push(r.url());
+    } catch {
+      /* ignore */
+    }
   };
 
   page.on('request', listener);
@@ -103,9 +128,19 @@ async function detectAndAssert(page: Page, site: SiteCase): Promise<void> {
     : [];
   if (!matchedNames.includes(site.expected)) {
     // Provide concise diagnostics
-    const hostSet = Array.from(new Set(requests
-      .map(u => { try { return new URL(u).host; } catch { return ''; } })
-      .filter(Boolean))).slice(0, 15);
+    const hostSet = Array.from(
+      new Set(
+        requests
+          .map((u) => {
+            try {
+              return new URL(u).host;
+            } catch {
+              return '';
+            }
+          })
+          .filter(Boolean),
+      ),
+    ).slice(0, 15);
     const snippet = html.slice(0, 5000); // cap output size
     const diag = {
       expected: site.expected,
@@ -118,15 +153,18 @@ async function detectAndAssert(page: Page, site: SiteCase): Promise<void> {
       htmlPrefixSample: snippet,
     };
     throw new Error(
-      `PSP detection mismatch for ${site.url}\n${
-        JSON.stringify(diag, null, 2)}`,
+      `PSP detection mismatch for ${site.url}\n${JSON.stringify(
+        diag,
+        null,
+        2,
+      )}`,
     );
   }
 }
 
 // One test per site so failures clearly identify the PSP.
 for (const site of SITES) {
-  test(`${site.expected} demo detects ${site.expected}`, async({ page }) => {
+  test(`${site.expected} demo detects ${site.expected}`, async ({ page }) => {
     await detectAndAssert(page, site);
   });
 }

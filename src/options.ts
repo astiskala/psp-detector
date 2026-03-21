@@ -28,9 +28,11 @@ type IdleScheduler = (
 ) => number;
 
 function scheduleIdle(callback: () => void): void {
-  const requestIdle = (globalThis as unknown as {
-    requestIdleCallback?: IdleScheduler;
-  }).requestIdleCallback;
+  const requestIdle = (
+    globalThis as unknown as {
+      requestIdleCallback?: IdleScheduler;
+    }
+  ).requestIdleCallback;
   if (typeof requestIdle === 'function') {
     requestIdle(callback, { timeout: 200 });
     return;
@@ -104,8 +106,7 @@ function buildLegend(
     swatch.style.backgroundColor = colors[index] ?? '#2563eb';
 
     const label = document.createElement('span');
-    label.textContent =
-      `${slice.label}: ${slice.percent.toFixed(1)}% (${slice.count})`;
+    label.textContent = `${slice.label}: ${slice.percent.toFixed(1)}% (${slice.count})`;
 
     item.appendChild(swatch);
     item.appendChild(label);
@@ -483,7 +484,9 @@ async function loadProviderIcons(): Promise<void> {
 }
 
 function populatePspFilter(history: HistoryEntry[]): void {
-  const select = document.getElementById('pspFilter') as HTMLSelectElement | null;
+  const select = document.getElementById(
+    'pspFilter',
+  ) as HTMLSelectElement | null;
   if (!select) return;
 
   for (const name of getUniquePspNames(history)) {
@@ -523,10 +526,16 @@ function renderTable(entries: HistoryEntry[]): void {
     appendPspCellContent(pspsCell, entry);
 
     const typeCell = document.createElement('td');
-    appendCodeList(typeCell, entry.psps.map((psp) => psp.type ?? 'PSP'));
+    appendCodeList(
+      typeCell,
+      entry.psps.map((psp) => psp.type ?? 'PSP'),
+    );
 
     const sourceCell = document.createElement('td');
-    appendCodeList(sourceCell, entry.psps.map((psp) => psp.sourceType));
+    appendCodeList(
+      sourceCell,
+      entry.psps.map((psp) => psp.sourceType),
+    );
 
     const signalCell = document.createElement('td');
     appendCodeList(
@@ -551,7 +560,9 @@ interface HistoryRef {
 
 function bindControls(historyRef: HistoryRef): void {
   const search = document.getElementById('search') as HTMLInputElement | null;
-  const pspFilter = document.getElementById('pspFilter') as HTMLSelectElement | null;
+  const pspFilter = document.getElementById(
+    'pspFilter',
+  ) as HTMLSelectElement | null;
   let searchRefreshTimer: ReturnType<typeof setTimeout> | null = null;
 
   const getFilteredEntries = (): HistoryEntry[] =>

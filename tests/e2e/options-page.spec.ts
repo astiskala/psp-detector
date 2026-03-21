@@ -54,17 +54,26 @@ async function expectChartSections(page: Page): Promise<void> {
   await expect(page.locator('#sourceChart')).toBeVisible();
   await expect(page.locator('#typeChart')).toBeVisible();
 
-  await expect(page.locator('#pspChartLegend')).toContainText('Stripe: 50.0% (1)');
-  await expect(page.locator('#pspChartLegend')).toContainText('Adyen: 50.0% (1)');
-  await expect(page.locator('#sourceChartLegend'))
-    .toContainText('scriptSrc: 50.0% (1)');
+  await expect(page.locator('#pspChartLegend')).toContainText(
+    'Stripe: 50.0% (1)',
+  );
+  await expect(page.locator('#pspChartLegend')).toContainText(
+    'Adyen: 50.0% (1)',
+  );
+  await expect(page.locator('#sourceChartLegend')).toContainText(
+    'scriptSrc: 50.0% (1)',
+  );
 
-  await expect(page.locator('#sourceChartLegend'))
-    .toContainText('networkRequest: 50.0% (1)');
+  await expect(page.locator('#sourceChartLegend')).toContainText(
+    'networkRequest: 50.0% (1)',
+  );
 
-  await expect(page.locator('#typeChartLegend')).toContainText('PSP: 50.0% (1)');
-  await expect(page.locator('#typeChartLegend'))
-    .toContainText('Orchestrator: 50.0% (1)');
+  await expect(page.locator('#typeChartLegend')).toContainText(
+    'PSP: 50.0% (1)',
+  );
+  await expect(page.locator('#typeChartLegend')).toContainText(
+    'Orchestrator: 50.0% (1)',
+  );
 }
 
 async function expectHistoryRowContent(row: Locator): Promise<void> {
@@ -76,7 +85,9 @@ async function expectHistoryRowContent(row: Locator): Promise<void> {
   await expect(row).toContainText('scriptSrc');
   await expect(row).toContainText('networkRequest');
   await expect(row).toContainText('matchString: js.stripe.com');
-  await expect(row).toContainText('matchString: checkoutshopper-live.adyen.com');
+  await expect(row).toContainText(
+    'matchString: checkoutshopper-live.adyen.com',
+  );
 }
 
 async function expectDomainIcon(row: Locator): Promise<void> {
@@ -97,8 +108,14 @@ async function expectDomainIcon(row: Locator): Promise<void> {
 async function expectPspIcons(row: Locator): Promise<void> {
   const pspIcons = row.locator('img.psp-icon');
   await expect(pspIcons).toHaveCount(2);
-  await expect(pspIcons.nth(0)).toHaveAttribute('src', /images\/stripe_48\.png/i);
-  await expect(pspIcons.nth(1)).toHaveAttribute('src', /images\/adyen_48\.png/i);
+  await expect(pspIcons.nth(0)).toHaveAttribute(
+    'src',
+    /images\/stripe_48\.png/i,
+  );
+  await expect(pspIcons.nth(1)).toHaveAttribute(
+    'src',
+    /images\/adyen_48\.png/i,
+  );
 }
 
 async function expectSearchFiltering(page: Page): Promise<void> {
@@ -124,10 +141,10 @@ async function seedChromeStorage(
       (globalThis as unknown as { chrome: unknown }).chrome = {
         storage: {
           local: {
-            get: async(key: string): Promise<Record<string, unknown>> => ({
+            get: async (key: string): Promise<Record<string, unknown>> => ({
               [key]: store[key],
             }),
-            set: async(payload: Record<string, unknown>): Promise<void> => {
+            set: async (payload: Record<string, unknown>): Promise<void> => {
               Object.assign(store, payload);
             },
           },
@@ -142,7 +159,9 @@ async function seedChromeStorage(
   );
 }
 
-test('options page loads and renders history without script syntax errors', async({ page }) => {
+test('options page loads and renders history without script syntax errors', async ({
+  page,
+}) => {
   const pageErrors: string[] = [];
   page.on('pageerror', (error) => {
     pageErrors.push(error.message);
@@ -162,7 +181,7 @@ test('options page loads and renders history without script syntax errors', asyn
   expect(pageErrors).toEqual([]);
 });
 
-test('options page exports CSV', async({ page }) => {
+test('options page exports CSV', async ({ page }) => {
   await seedChromeStorage(page, historyEntries);
   await page.goto(optionsUrl, { waitUntil: 'load' });
 
@@ -185,7 +204,7 @@ test('options page exports CSV', async({ page }) => {
   expect(content).toContain('Stripe; Adyen');
 });
 
-test('options page clear history empties table', async({ page }) => {
+test('options page clear history empties table', async ({ page }) => {
   await seedChromeStorage(page, historyEntries, true);
   await page.goto(optionsUrl, { waitUntil: 'load' });
 

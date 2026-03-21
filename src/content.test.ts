@@ -17,10 +17,12 @@ interface RuntimeMessage {
 type MutationCallbackArg = (mutations?: MutationRecord[]) => Promise<void>;
 
 interface WindowContentState {
-  pspDetectorContentScript?: {
-    initialized: boolean;
-    url: string;
-  } | undefined;
+  pspDetectorContentScript?:
+    | {
+        initialized: boolean;
+        url: string;
+      }
+    | undefined;
 }
 
 jest.mock('./services/psp-detector', () => ({
@@ -74,18 +76,18 @@ function setupChromeRuntimeMock(checkTabState: boolean): jest.Mock {
     ): Promise<unknown> | void => {
       if (typeof callback === 'function') {
         switch (message.action) {
-        case MessageAction.GET_EXEMPT_DOMAINS:
-          callback({ exemptDomains: ['example.com'] });
-          return;
-        case MessageAction.GET_PSP_CONFIG:
-          callback({ config: { psps: [] } });
-          return;
-        case MessageAction.GET_TAB_ID:
-          callback({ tabId: 123 });
-          return;
-        default:
-          callback({});
-          return;
+          case MessageAction.GET_EXEMPT_DOMAINS:
+            callback({ exemptDomains: ['example.com'] });
+            return;
+          case MessageAction.GET_PSP_CONFIG:
+            callback({ config: { psps: [] } });
+            return;
+          case MessageAction.GET_TAB_ID:
+            callback({ tabId: 123 });
+            return;
+          default:
+            callback({});
+            return;
         }
       }
 
@@ -132,7 +134,7 @@ describe('content bootstrap', () => {
     } as PSPDetectionResult);
   });
 
-  it('initializes and runs detection flow on first bootstrap', async() => {
+  it('initializes and runs detection flow on first bootstrap', async () => {
     setupChromeRuntimeMock(false);
 
     await import('./content');
@@ -157,7 +159,7 @@ describe('content bootstrap', () => {
     expect(domObserverCleanupMock).toHaveBeenCalledTimes(1);
   });
 
-  it('skips re-initialization when state already exists in background', async() => {
+  it('skips re-initialization when state already exists in background', async () => {
     const windowState = globalThis as typeof globalThis & WindowContentState;
     windowState.pspDetectorContentScript = {
       initialized: true,
@@ -177,7 +179,7 @@ describe('content bootstrap', () => {
     expect(domObserverStartObservingMock).not.toHaveBeenCalled();
   });
 
-  it('detects iframe src added via attributes mutation', async() => {
+  it('detects iframe src added via attributes mutation', async () => {
     setupChromeRuntimeMock(false);
 
     await import('./content');

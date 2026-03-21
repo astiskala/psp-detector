@@ -102,16 +102,12 @@ function bindPermissionState(
   chromeMocks: ChromeMocks,
   state: OptionalPermissionState,
 ): void {
-  chromeMocks.contains.mockImplementation(async(permissionRequest) => {
-    if (
-      permissionRequest.permissions?.includes('webRequest') === true
-    ) {
+  chromeMocks.contains.mockImplementation(async (permissionRequest) => {
+    if (permissionRequest.permissions?.includes('webRequest') === true) {
       return state.webRequest;
     }
 
-    if (
-      permissionRequest.origins?.includes('https://*/*') === true
-    ) {
+    if (permissionRequest.origins?.includes('https://*/*') === true) {
       return state.host;
     }
 
@@ -141,13 +137,15 @@ function mockSendMessageResponses(
 
 function createStripeConfig(): PSPConfig {
   return {
-    psps: [{
-      name: TypeConverters.toPSPName('Stripe')!,
-      matchStrings: ['js.stripe.com'],
-      url: TypeConverters.toURL('https://stripe.com')!,
-      image: 'stripe',
-      summary: 'Stripe summary',
-    }],
+    psps: [
+      {
+        name: TypeConverters.toPSPName('Stripe')!,
+        matchStrings: ['js.stripe.com'],
+        url: TypeConverters.toURL('https://stripe.com')!,
+        image: 'stripe',
+        summary: 'Stripe summary',
+      },
+    ],
   };
 }
 
@@ -160,7 +158,7 @@ describe('PopupManager', () => {
     jest.restoreAllMocks();
   });
 
-  it('shows permission request state when host permission is missing', async() => {
+  it('shows permission request state when host permission is missing', async () => {
     chromeMocks.contains.mockResolvedValue(false);
     mockSendMessageResponses(chromeMocks.sendMessage, [{ psps: [] }]);
     const popup = new PopupManager();
@@ -181,40 +179,39 @@ describe('PopupManager', () => {
     });
   });
 
-  it('shows permission request state when webRequest permission is missing',
-    async() => {
-      bindPermissionState(chromeMocks, {
-        host: true,
-        webRequest: false,
-      });
-
-      mockSendMessageResponses(chromeMocks.sendMessage, [{ psps: [] }]);
-      const popup = new PopupManager();
-
-      await popup.initialize();
-
-      expect(document.getElementById('permission-state')?.style.display).toBe(
-        'block',
-      );
-
-      expect(document.getElementById('loading-state')?.style.display).toBe(
-        'none',
-      );
-
-      expect(chromeMocks.sendMessage).toHaveBeenCalledTimes(1);
-      expect(chromeMocks.sendMessage.mock.calls[0]?.[0]).toEqual({
-        action: MessageAction.GET_PSP,
-      });
+  it('shows permission request state when webRequest permission is missing', async () => {
+    bindPermissionState(chromeMocks, {
+      host: true,
+      webRequest: false,
     });
 
-  it('requests permission from button and re-initializes on grant', async() => {
+    mockSendMessageResponses(chromeMocks.sendMessage, [{ psps: [] }]);
+    const popup = new PopupManager();
+
+    await popup.initialize();
+
+    expect(document.getElementById('permission-state')?.style.display).toBe(
+      'block',
+    );
+
+    expect(document.getElementById('loading-state')?.style.display).toBe(
+      'none',
+    );
+
+    expect(chromeMocks.sendMessage).toHaveBeenCalledTimes(1);
+    expect(chromeMocks.sendMessage.mock.calls[0]?.[0]).toEqual({
+      action: MessageAction.GET_PSP,
+    });
+  });
+
+  it('requests permission from button and re-initializes on grant', async () => {
     const permissionState: OptionalPermissionState = {
       host: false,
       webRequest: false,
     };
     bindPermissionState(chromeMocks, permissionState);
 
-    chromeMocks.request.mockImplementation(async() => {
+    chromeMocks.request.mockImplementation(async () => {
       permissionState.host = true;
       permissionState.webRequest = true;
       return true;
@@ -229,7 +226,9 @@ describe('PopupManager', () => {
     const popup = new PopupManager();
 
     await popup.initialize();
-    (document.getElementById('grant-permission-btn') as HTMLButtonElement).click();
+    (
+      document.getElementById('grant-permission-btn') as HTMLButtonElement
+    ).click();
     await flushAsyncTasks();
     await flushAsyncTasks();
 
@@ -257,10 +256,12 @@ describe('PopupManager', () => {
     });
   });
 
-  it('renders disabled state when exempt tab marker is detected', async() => {
-    mockSendMessageResponses(chromeMocks.sendMessage, [{
-      psps: [{ psp: PSP_DETECTION_EXEMPT }],
-    }]);
+  it('renders disabled state when exempt tab marker is detected', async () => {
+    mockSendMessageResponses(chromeMocks.sendMessage, [
+      {
+        psps: [{ psp: PSP_DETECTION_EXEMPT }],
+      },
+    ]);
 
     const popup = new PopupManager();
 
@@ -271,7 +272,7 @@ describe('PopupManager', () => {
     );
   });
 
-  it('renders no-PSP state when no detections are returned', async() => {
+  it('renders no-PSP state when no detections are returned', async () => {
     mockSendMessageResponses(chromeMocks.sendMessage, [{ psps: [] }]);
     const popup = new PopupManager();
 
@@ -282,52 +283,55 @@ describe('PopupManager', () => {
     );
   });
 
-  it('renders detected PSP cards from cached configuration and becomes idempotent',
-    async() => {
-      const cachedConfig = createStripeConfig();
-      chromeMocks.localGet.mockResolvedValue({
-        [STORAGE_KEYS.POPUP_PSP_CONFIG_CACHE]: cachedConfig,
-      });
-
-      mockSendMessageResponses(chromeMocks.sendMessage, [{
-        psps: [{
-          psp: 'Stripe',
-          detectionInfo: {
-            method: 'matchString',
-            value: 'js.stripe.com',
-            sourceType: 'scriptSrc',
-          },
-        }],
-      }]);
-
-      const popup = new PopupManager();
-
-      await popup.initialize();
-      await popup.initialize();
-
-      expect(document.querySelectorAll('.psp-card')).toHaveLength(1);
-      expect(chromeMocks.localSet).not.toHaveBeenCalled();
-      expect(chromeMocks.sendMessage).toHaveBeenCalledTimes(1);
+  it('renders detected PSP cards from cached configuration and becomes idempotent', async () => {
+    const cachedConfig = createStripeConfig();
+    chromeMocks.localGet.mockResolvedValue({
+      [STORAGE_KEYS.POPUP_PSP_CONFIG_CACHE]: cachedConfig,
     });
 
-  it('fetches and caches PSP config when cache is empty', async() => {
+    mockSendMessageResponses(chromeMocks.sendMessage, [
+      {
+        psps: [
+          {
+            psp: 'Stripe',
+            detectionInfo: {
+              method: 'matchString',
+              value: 'js.stripe.com',
+              sourceType: 'scriptSrc',
+            },
+          },
+        ],
+      },
+    ]);
+
+    const popup = new PopupManager();
+
+    await popup.initialize();
+    await popup.initialize();
+
+    expect(document.querySelectorAll('.psp-card')).toHaveLength(1);
+    expect(chromeMocks.localSet).not.toHaveBeenCalled();
+    expect(chromeMocks.sendMessage).toHaveBeenCalledTimes(1);
+  });
+
+  it('fetches and caches PSP config when cache is empty', async () => {
     const config = createStripeConfig();
     chromeMocks.localGet.mockResolvedValue({
       [STORAGE_KEYS.POPUP_PSP_CONFIG_CACHE]: null,
     });
 
-    mockSendMessageResponses(chromeMocks.sendMessage, [{
-      psps: [{ psp: 'Stripe' }],
-    }]);
+    mockSendMessageResponses(chromeMocks.sendMessage, [
+      {
+        psps: [{ psp: 'Stripe' }],
+      },
+    ]);
 
-    const fetchSpy = jest
-      .spyOn(utils, 'fetchWithTimeout')
-      .mockResolvedValue({
-        ok: true,
-        status: 200,
-        statusText: 'OK',
-        json: async() => config,
-      } as unknown as Response);
+    const fetchSpy = jest.spyOn(utils, 'fetchWithTimeout').mockResolvedValue({
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      json: async () => config,
+    } as unknown as Response);
     const popup = new PopupManager();
 
     await popup.initialize();
@@ -342,20 +346,22 @@ describe('PopupManager', () => {
     });
   });
 
-  it('shows error state when fetched config is invalid', async() => {
+  it('shows error state when fetched config is invalid', async () => {
     chromeMocks.localGet.mockResolvedValue({
       [STORAGE_KEYS.POPUP_PSP_CONFIG_CACHE]: null,
     });
 
-    mockSendMessageResponses(chromeMocks.sendMessage, [{
-      psps: [{ psp: 'Stripe' }],
-    }]);
+    mockSendMessageResponses(chromeMocks.sendMessage, [
+      {
+        psps: [{ psp: 'Stripe' }],
+      },
+    ]);
 
     jest.spyOn(utils, 'fetchWithTimeout').mockResolvedValue({
       ok: true,
       status: 200,
       statusText: 'OK',
-      json: async() => ({ invalid: true }),
+      json: async () => ({ invalid: true }),
     } as unknown as Response);
 
     const popup = new PopupManager();
@@ -365,42 +371,39 @@ describe('PopupManager', () => {
     expect(document.getElementById('psp-name')?.textContent).toBe('Error');
   });
 
-  it('falls back to no-PSP state when background response is malformed',
-    async() => {
-      jest
-        .spyOn(utils.errorUtils, 'withRetry')
-        .mockImplementation(
-          <T>(fn: () => Promise<T>): (() => Promise<T>) => fn,
-        );
+  it('falls back to no-PSP state when background response is malformed', async () => {
+    jest
+      .spyOn(utils.errorUtils, 'withRetry')
+      .mockImplementation(<T>(fn: () => Promise<T>): (() => Promise<T>) => fn);
 
-      mockSendMessageResponses(chromeMocks.sendMessage, [{ malformed: true }]);
-      const popup = new PopupManager();
+    mockSendMessageResponses(chromeMocks.sendMessage, [{ malformed: true }]);
+    const popup = new PopupManager();
 
-      await popup.initialize();
+    await popup.initialize();
 
-      expect(document.getElementById('psp-name')?.textContent).toBe(
-        'No PSP detected',
-      );
-    });
+    expect(document.getElementById('psp-name')?.textContent).toBe(
+      'No PSP detected',
+    );
+  });
 
-  it('clears invalid cached config and refetches psps.json', async() => {
+  it('clears invalid cached config and refetches psps.json', async () => {
     chromeMocks.localGet.mockResolvedValue({
       [STORAGE_KEYS.POPUP_PSP_CONFIG_CACHE]: { invalid: true },
     });
 
-    mockSendMessageResponses(chromeMocks.sendMessage, [{
-      psps: [{ psp: 'Stripe' }],
-    }]);
+    mockSendMessageResponses(chromeMocks.sendMessage, [
+      {
+        psps: [{ psp: 'Stripe' }],
+      },
+    ]);
 
     const config = createStripeConfig();
-    const fetchSpy = jest
-      .spyOn(utils, 'fetchWithTimeout')
-      .mockResolvedValue({
-        ok: true,
-        status: 200,
-        statusText: 'OK',
-        json: async() => config,
-      } as unknown as Response);
+    const fetchSpy = jest.spyOn(utils, 'fetchWithTimeout').mockResolvedValue({
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      json: async () => config,
+    } as unknown as Response);
 
     const popup = new PopupManager();
     await popup.initialize();
@@ -415,7 +418,7 @@ describe('PopupManager', () => {
     );
   });
 
-  it('bindHistoryAction opens the extension options page', async() => {
+  it('bindHistoryAction opens the extension options page', async () => {
     const popup = new PopupManager();
     popup.bindHistoryAction();
 
@@ -425,18 +428,17 @@ describe('PopupManager', () => {
     expect(chromeMocks.openOptionsPage).toHaveBeenCalledTimes(1);
   });
 
-  it('DOMContentLoaded bootstrap initializes popup and beforeunload cleanup runs',
-    async() => {
-      chromeMocks.contains.mockResolvedValue(false);
-      mockSendMessageResponses(chromeMocks.sendMessage, [{ psps: [] }]);
+  it('DOMContentLoaded bootstrap initializes popup and beforeunload cleanup runs', async () => {
+    chromeMocks.contains.mockResolvedValue(false);
+    mockSendMessageResponses(chromeMocks.sendMessage, [{ psps: [] }]);
 
-      await import('./popup');
-      document.dispatchEvent(new Event('DOMContentLoaded'));
-      await flushAsyncTasks();
-      globalThis.dispatchEvent(new Event('beforeunload'));
+    await import('./popup');
+    document.dispatchEvent(new Event('DOMContentLoaded'));
+    await flushAsyncTasks();
+    globalThis.dispatchEvent(new Event('beforeunload'));
 
-      expect(document.getElementById('permission-state')?.style.display).toBe(
-        'block',
-      );
-    });
+    expect(document.getElementById('permission-state')?.style.display).toBe(
+      'block',
+    );
+  });
 });

@@ -279,8 +279,7 @@ describe('PSPDetectorService', () => {
 
     // Test hostname detection in script tag
     const shopUrl = 'https://shop.merchant.com/checkout';
-    const stripeScriptContent =
-      `${STRIPE_SCRIPT_TAG}<div>Payment form</div>`;
+    const stripeScriptContent = `${STRIPE_SCRIPT_TAG}<div>Payment form</div>`;
     const scriptResult = pspDetectorService.detectPSP(
       shopUrl,
       stripeScriptContent,
@@ -316,13 +315,15 @@ describe('PSPDetectorService', () => {
 
   it('detects Global Payments from js-cert hosted-field iframe source', () => {
     const globalPaymentsConfig: PSPConfig = {
-      psps: [{
-        name: TypeConverters.toPSPName('Global Payments')!,
-        matchStrings: ['js-cert.globalpay.com'],
-        url: TypeConverters.toURL('https://www.globalpayments.com')!,
-        image: 'globalpayments',
-        summary: 'Global Payments summary',
-      }],
+      psps: [
+        {
+          name: TypeConverters.toPSPName('Global Payments')!,
+          matchStrings: ['js-cert.globalpay.com'],
+          url: TypeConverters.toURL('https://www.globalpayments.com')!,
+          image: 'globalpayments',
+          summary: 'Global Payments summary',
+        },
+      ],
     };
 
     const pspDetectorService = new PSPDetectorService();
@@ -380,14 +381,16 @@ describe('PSPDetectorService', () => {
 
   it('deduplicates same PSP across matchString and regex', () => {
     const dedupConfig = {
-      psps: [{
-        name: STRIPE_NAME,
-        matchStrings: [STRIPE_MATCH],
-        regex: String.raw`stripe\.com`,
-        image: 'stripe',
-        summary: STRIPE_NAME,
-        url: STRIPE_URL,
-      }],
+      psps: [
+        {
+          name: STRIPE_NAME,
+          matchStrings: [STRIPE_MATCH],
+          regex: String.raw`stripe\.com`,
+          image: 'stripe',
+          summary: STRIPE_NAME,
+          url: STRIPE_URL,
+        },
+      ],
       orchestrators: { notice: '', list: [] },
       tsps: { notice: '', list: [] },
     };

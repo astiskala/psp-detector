@@ -47,12 +47,28 @@ async function lintHtml(filePath) {
     issues,
   );
 
-  ensure($('html').length === 1, `${filePath}: expected a single <html> element`, issues);
-  ensure($('head').length === 1, `${filePath}: expected a single <head> element`, issues);
-  ensure($('body').length === 1, `${filePath}: expected a single <body> element`, issues);
+  ensure(
+    $('html').length === 1,
+    `${filePath}: expected a single <html> element`,
+    issues,
+  );
+  ensure(
+    $('head').length === 1,
+    `${filePath}: expected a single <head> element`,
+    issues,
+  );
+  ensure(
+    $('body').length === 1,
+    `${filePath}: expected a single <body> element`,
+    issues,
+  );
 
   const charset = $('meta[charset]').first().attr('charset')?.toLowerCase();
-  ensure(charset === 'utf-8', `${filePath}: expected <meta charset="utf-8">`, issues);
+  ensure(
+    charset === 'utf-8',
+    `${filePath}: expected <meta charset="utf-8">`,
+    issues,
+  );
   ensure(
     $('meta[name="viewport"]').length > 0,
     `${filePath}: expected a viewport meta tag`,
@@ -83,7 +99,9 @@ async function lintManifest(filePath) {
   }
 
   ensure(
-    typeof manifest === 'object' && manifest !== null && !Array.isArray(manifest),
+    typeof manifest === 'object' &&
+      manifest !== null &&
+      !Array.isArray(manifest),
     `${filePath}: manifest root must be an object`,
     issues,
   );
@@ -101,7 +119,8 @@ async function lintManifest(filePath) {
   );
 
   ensure(
-    typeof manifest?.description === 'string' && manifest.description.trim().length > 0,
+    typeof manifest?.description === 'string' &&
+      manifest.description.trim().length > 0,
     `${filePath}: expected description to be a non-empty string`,
     issues,
   );
@@ -121,7 +140,8 @@ async function lintManifest(filePath) {
   );
 
   ensure(
-    typeof manifest?.icons?.['48'] === 'string' && typeof manifest?.icons?.['128'] === 'string',
+    typeof manifest?.icons?.['48'] === 'string' &&
+      typeof manifest?.icons?.['128'] === 'string',
     `${filePath}: expected icons.48 and icons.128 to be set`,
     issues,
   );
@@ -153,7 +173,9 @@ async function main() {
     return;
   }
 
-  ok(`Validated ${files.length} ${mode === 'html' ? 'HTML' : 'manifest'} file(s)`);
+  ok(
+    `Validated ${files.length} ${mode === 'html' ? 'HTML' : 'manifest'} file(s)`,
+  );
 }
 
 await main();

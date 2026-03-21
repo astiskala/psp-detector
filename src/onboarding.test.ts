@@ -28,16 +28,12 @@ function setupChromeMocks(
   const contains = jest
     .fn()
     .mockImplementation(
-      async(permissionRequest: chrome.permissions.Permissions) => {
-        if (
-          permissionRequest.permissions?.includes('webRequest') === true
-        ) {
+      async (permissionRequest: chrome.permissions.Permissions) => {
+        if (permissionRequest.permissions?.includes('webRequest') === true) {
           return permissionState.webRequest;
         }
 
-        if (
-          permissionRequest.origins?.includes('https://*/*') === true
-        ) {
+        if (permissionRequest.origins?.includes('https://*/*') === true) {
           return permissionState.host;
         }
 
@@ -47,17 +43,13 @@ function setupChromeMocks(
   const request = jest
     .fn()
     .mockImplementation(
-      async(permissionRequest: chrome.permissions.Permissions) => {
+      async (permissionRequest: chrome.permissions.Permissions) => {
         if (requestGrantResult) {
-          if (
-            permissionRequest.origins?.includes('https://*/*') === true
-          ) {
+          if (permissionRequest.origins?.includes('https://*/*') === true) {
             permissionState.host = true;
           }
 
-          if (
-            permissionRequest.permissions?.includes('webRequest') === true
-          ) {
+          if (permissionRequest.permissions?.includes('webRequest') === true) {
             permissionState.webRequest = true;
           }
         }
@@ -107,7 +99,7 @@ describe('onboarding page', () => {
     setupOnboardingDOM();
   });
 
-  it('shows not-enabled status when permission is missing', async() => {
+  it('shows not-enabled status when permission is missing', async () => {
     setupChromeMocks({ host: false, webRequest: false }, false);
     await import('./onboarding');
     document.dispatchEvent(new Event('DOMContentLoaded'));
@@ -122,7 +114,7 @@ describe('onboarding page', () => {
     expect(button?.disabled).toBe(false);
   });
 
-  it('shows not-enabled status when webRequest permission is missing', async() => {
+  it('shows not-enabled status when webRequest permission is missing', async () => {
     setupChromeMocks({ host: true, webRequest: false }, false);
     await import('./onboarding');
     document.dispatchEvent(new Event('DOMContentLoaded'));
@@ -137,7 +129,7 @@ describe('onboarding page', () => {
     expect(button?.disabled).toBe(false);
   });
 
-  it('requests permission and triggers re-detection from onboarding', async() => {
+  it('requests permission and triggers re-detection from onboarding', async () => {
     const chromeMocks = setupChromeMocks(
       { host: false, webRequest: false },
       true,

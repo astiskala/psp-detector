@@ -1,6 +1,9 @@
 import { UIService } from './ui';
 import { TypeConverters } from '../types';
-import { setupChromeRuntimeMock, setupCleanDOM } from '../test-helpers/utilities';
+import {
+  setupChromeRuntimeMock,
+  setupCleanDOM,
+} from '../test-helpers/utilities';
 
 // Mock chrome.runtime.getURL
 setupChromeRuntimeMock();
@@ -156,7 +159,9 @@ describe('UIService', () => {
       'Detection Signal:',
     );
 
-    expect(document.querySelector('.source-pill')?.textContent).toBe('scriptSrc');
+    expect(document.querySelector('.source-pill')?.textContent).toBe(
+      'scriptSrc',
+    );
     expect(document.querySelector('.match-value')?.textContent).toBe(
       'js.stripe.com',
     );

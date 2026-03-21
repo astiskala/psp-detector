@@ -117,9 +117,7 @@ export class PSPDetectorService {
     );
   }
 
-  private validateInputs(
-    url: string,
-  ): PSPDetectionResult | null {
+  private validateInputs(url: string): PSPDetectionResult | null {
     if (url.trim().length === 0) {
       return PSPDetectionResult.error(
         new Error('Invalid URL provided'),
@@ -178,8 +176,11 @@ export class PSPDetectorService {
         error,
       );
 
-      if (this.exemptDomains.some(domain => urlToCheck.includes(domain))) {
-        logger.debug('URL is exempt from PSP detection (fallback):', urlToCheck);
+      if (this.exemptDomains.some((domain) => urlToCheck.includes(domain))) {
+        logger.debug(
+          'URL is exempt from PSP detection (fallback):',
+          urlToCheck,
+        );
         return PSPDetectionResult.exempt(
           'URL contains exempt domain',
           brandedURL,
@@ -196,7 +197,7 @@ export class PSPDetectorService {
 
     logger.debug(
       `Content truncated from ${pageContent.length} to ` +
-      `${this.maxContentSize} characters`,
+        `${this.maxContentSize} characters`,
     );
 
     return pageContent.substring(0, this.maxContentSize);
@@ -290,8 +291,8 @@ export class PSPDetectorService {
    *  - host === domain OR host endsWith(`.${domain}`)
    */
   private isHostExempt(host: string): boolean {
-    return this.exemptDomains.some((domain) =>
-      host === domain || host.endsWith(`.${domain}`),
+    return this.exemptDomains.some(
+      (domain) => host === domain || host.endsWith(`.${domain}`),
     );
   }
 }
