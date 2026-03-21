@@ -1,9 +1,33 @@
 import { UIService } from './ui';
-import { TypeConverters } from '../types';
+import { type PSPName, type URL, TypeConverters } from '../types';
 import {
   setupChromeRuntimeMock,
   setupCleanDOM,
 } from '../test-helpers/utilities';
+
+function requireElement(id: string): HTMLElement {
+  const el = document.getElementById(id);
+  if (!el) throw new Error(`${id} not found`);
+  return el;
+}
+
+function requireQuery(selector: string): HTMLElement {
+  const el = document.querySelector<HTMLElement>(selector);
+  if (!el) throw new Error(`${selector} not found`);
+  return el;
+}
+
+function requirePSPName(name: string): PSPName {
+  const result = TypeConverters.toPSPName(name);
+  if (!result) throw new Error(`Invalid PSP name: ${name}`);
+  return result;
+}
+
+function requireURL(url: string): URL {
+  const result = TypeConverters.toURL(url);
+  if (!result) throw new Error(`Invalid URL: ${url}`);
+  return result;
+}
 
 // Mock chrome.runtime.getURL
 setupChromeRuntimeMock();
@@ -70,15 +94,15 @@ describe('UIService', () => {
     }
 
     elements = {
-      name: document.getElementById('psp-name')!,
-      description: document.getElementById('psp-description')!,
-      notice: document.getElementById('psp-notice')!,
-      url: document.getElementById('psp-url')!,
-      image: document.getElementById('psp-image')!,
-      container: document.querySelector('.popup-container')!,
-      loadingState: document.getElementById('loading-state')!,
-      contentState: document.getElementById('content-state')!,
-      statusIcon: document.getElementById('status-icon')!,
+      name: requireElement('psp-name'),
+      description: requireElement('psp-description'),
+      notice: requireElement('psp-notice'),
+      url: requireElement('psp-url'),
+      image: requireElement('psp-image'),
+      container: requireQuery('.popup-container'),
+      loadingState: requireElement('loading-state'),
+      contentState: requireElement('content-state'),
+      statusIcon: requireElement('status-icon'),
     };
 
     service = new UIService();
@@ -139,9 +163,9 @@ describe('UIService', () => {
       {
         psps: [
           {
-            name: TypeConverters.toPSPName('Stripe')!,
+            name: requirePSPName('Stripe'),
             matchStrings: ['js.stripe.com'],
-            url: TypeConverters.toURL('https://stripe.com')!,
+            url: requireURL('https://stripe.com'),
             image: 'stripe',
             summary: 'Stripe summary',
           },
