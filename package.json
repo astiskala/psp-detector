@@ -1,16 +1,18 @@
 {
   "name": "psp-detector",
-  "version": "3.2026.321.1153",
+  "version": "3.2026.321.1245",
   "description": "Chrome extension to detect Payment Service Providers on web pages",
   "private": true,
   "scripts": {
     "build:debug": "DEBUG=true node build.mjs",
     "build": "node build.mjs",
     "check": "gts check",
-    "ci": "npm run lint && npm run lint:scripts && npm run lint:web && npm run lint:deps && npm run typecheck && npm run test",
+    "ci": "npm run lint && npm run lint:scripts && npm run lint:web && npm run lint:deps && npm run typecheck && npm run deadcode && npm run test",
     "clean": "gts clean",
+    "deadcode": "npm run knip:prod && node tools/check-unused-public-methods.mjs",
     "fix": "gts fix",
     "knip": "knip --config knip.json",
+    "knip:prod": "knip --production --include files,exports,types",
     "lint:deps": "depcruise --config .dependency-cruiser.cjs src",
     "lint:html": "node tools/lint-web.mjs html public/popup.html public/options.html docs/privacy-policy.html",
     "lint:manifest": "node tools/lint-web.mjs manifest assets/manifest.json",
@@ -23,7 +25,7 @@
     "test:watch": "jest --watch",
     "test": "npm run build && jest",
     "typecheck": "tsc --noEmit",
-    "validate": "npm run fix && npm run lint && npm run lint:scripts && npm run typecheck && npm run knip && npm run lint:deps && npm run build && npm run test && npm run lint:web"
+    "validate": "npm run fix && npm run lint && npm run lint:scripts && npm run typecheck && npm run knip && npm run deadcode && npm run lint:deps && npm run build && npm run test && npm run lint:web"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
