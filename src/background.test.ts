@@ -29,6 +29,7 @@ interface EventMock<T extends (...args: never[]) => unknown> {
 
 interface ChromeMockContext {
   onInstalled: EventMock<InstalledListener>;
+  onActivated: EventMock<TabActivatedListener>;
   onSuspend: EventMock<SuspendListener>;
   onMessage: EventMock<MessageListener>;
   onRemoved: EventMock<TabRemovedListener>;
@@ -36,6 +37,9 @@ interface ChromeMockContext {
   tabsQuery: jest.Mock<Promise<chrome.tabs.Tab[]>, [chrome.tabs.QueryInfo]>;
   tabsGet: jest.Mock<Promise<chrome.tabs.Tab>, [number]>;
   executeScript: jest.Mock;
+  actionSetIcon: jest.Mock;
+  actionSetBadgeText: jest.Mock;
+  actionSetBadgeBackgroundColor: jest.Mock;
   permissionContains: jest.Mock<
     Promise<boolean>,
     [chrome.permissions.Permissions]
@@ -57,6 +61,8 @@ interface ChromeMockOptions {
 }
 
 const DEFAULT_ACTIVE_TAB_URL = 'https://shop.example.com/cart';
+const CHECKOUT_EXAMPLE_URL = 'https://checkout.example.com';
+const STRIPE_MATCH_STRING = 'js.stripe.com';
 const ON_MESSAGE_LISTENER_ERROR = 'Expected onMessage listener to be registered';
 const WEBREQUEST_LISTENER_ERROR = 'Expected webRequest listener to be registered';
 
@@ -83,7 +89,7 @@ function createDefaultPSPConfig(): Record<string, unknown> {
   return {
     psps: [{
       name: 'Stripe',
-      matchStrings: ['js.stripe.com'],
+      matchStrings: [STRIPE_MATCH_STRING],
       image: 'stripe',
       summary: 'Stripe',
       url: 'https://stripe.com',
@@ -238,6 +244,10 @@ function setupChromeMocks(options: ChromeMockOptions = {}): ChromeMockContext {
     .mockImplementation(async(items: Record<string, unknown>) => {
       Object.assign(sessionStore, items);
     });
+  const actionSetIcon = jest.fn();
+  const actionSetTitle = jest.fn();
+  const actionSetBadgeText = jest.fn();
+  const actionSetBadgeBackgroundColor = jest.fn();
 
   const fetchMock = jest.fn().mockImplementation(async(resource: unknown) => {
     const url = typeof resource === 'string' ? resource : String(resource);
@@ -290,10 +300,10 @@ function setupChromeMocks(options: ChromeMockOptions = {}): ChromeMockContext {
       executeScript,
     },
     action: {
-      setIcon: jest.fn(),
-      setTitle: jest.fn(),
-      setBadgeText: jest.fn(),
-      setBadgeBackgroundColor: jest.fn(),
+      setIcon: actionSetIcon,
+      setTitle: actionSetTitle,
+      setBadgeText: actionSetBadgeText,
+      setBadgeBackgroundColor: actionSetBadgeBackgroundColor,
     },
     webRequest: {
       onBeforeRequest: {
@@ -304,6 +314,7 @@ function setupChromeMocks(options: ChromeMockOptions = {}): ChromeMockContext {
 
   return {
     onInstalled,
+    onActivated,
     onSuspend,
     onMessage,
     onRemoved,
@@ -311,6 +322,9 @@ function setupChromeMocks(options: ChromeMockOptions = {}): ChromeMockContext {
     tabsQuery,
     tabsGet,
     executeScript,
+    actionSetIcon,
+    actionSetBadgeText,
+    actionSetBadgeBackgroundColor,
     permissionContains,
     localSet,
     localRemove,
@@ -450,7 +464,7 @@ describe('background service onboarding and re-detect flow', () => {
 
   it('skips re-detection and returns exempt reason for exempt domain tabs', async() => {
     const mocks = setupChromeMocks({
-      activeTabUrl: 'https://checkout.example.com',
+      activeTabUrl: CHECKOUT_EXAMPLE_URL,
       exemptDomains: ['example.com'],
     });
     await import('./background');
@@ -575,7 +589,7 @@ describe('background service onboarding and re-detect flow', () => {
       pspConfig: {
         psps: [{
           name: 'Stripe',
-          matchStrings: ['js.stripe.com'],
+          matchStrings: [STRIPE_MATCH_STRING],
           image: 'stripe',
           summary: 'Stripe',
           url: 'https://stripe.com',
@@ -643,11 +657,11 @@ describe('background service onboarding and re-detect flow', () => {
   it('upgrades network match to higher-priority DOM source for the same PSP', async() => {
     const mocks = setupChromeMocks({
       hasWebRequestPermission: true,
-      activeTabUrl: 'https://checkout.example.com',
+      activeTabUrl: CHECKOUT_EXAMPLE_URL,
       pspConfig: {
         psps: [{
           name: 'Stripe',
-          matchStrings: ['js.stripe.com'],
+          matchStrings: [STRIPE_MATCH_STRING],
           image: 'stripe',
           summary: 'Stripe',
           url: 'https://stripe.com',
@@ -695,7 +709,7 @@ describe('background service onboarding and re-detect flow', () => {
           tabId: 91,
           detectionInfo: {
             method: 'matchString',
-            value: 'js.stripe.com',
+            value: STRIPE_MATCH_STRING,
             sourceType: 'scriptSrc',
           },
         },
@@ -703,7 +717,7 @@ describe('background service onboarding and re-detect flow', () => {
       {
         tab: {
           id: 91,
-          url: 'https://checkout.example.com',
+          url: CHECKOUT_EXAMPLE_URL,
         } as chrome.tabs.Tab,
       } as chrome.runtime.MessageSender,
       detectResponse,
@@ -732,4 +746,121 @@ describe('background service onboarding and re-detect flow', () => {
       ],
     });
   });
+
+  it('shows the highest-priority PSP icon and +N badge for extra detections',
+    async() => {
+      const mocks = setupChromeMocks({
+        activeTabUrl: CHECKOUT_EXAMPLE_URL,
+        pspConfig: {
+          psps: [
+            {
+              name: 'Adyen',
+              matchStrings: ['checkoutshopper-live.adyen.com'],
+              image: 'adyen',
+              summary: 'Adyen',
+              url: 'https://adyen.com',
+            },
+            {
+              name: 'Stripe',
+              matchStrings: [STRIPE_MATCH_STRING],
+              image: 'stripe',
+              summary: 'Stripe',
+              url: 'https://stripe.com',
+            },
+          ],
+        },
+      });
+      await import('./background');
+      await flushAsyncTasks();
+
+      const activatedListener = mocks.onActivated.getListener();
+      if (activatedListener === null) {
+        throw new Error('Expected onActivated listener to be registered');
+      }
+
+      activatedListener({ tabId: 91 });
+      await flushAsyncTasks();
+
+      const messageListener = getRegisteredMessageListener(mocks);
+      const configResponse = jest.fn();
+      messageListener(
+        { action: MessageAction.GET_PSP_CONFIG },
+        {} as chrome.runtime.MessageSender,
+        configResponse,
+      );
+
+      await flushAsyncTasks();
+
+      const stripeResponse = jest.fn();
+      messageListener(
+        {
+          action: MessageAction.DETECT_PSP,
+          data: {
+            psp: 'Stripe',
+            tabId: 91,
+            detectionInfo: {
+              method: 'matchString',
+              value: STRIPE_MATCH_STRING,
+              sourceType: 'scriptSrc',
+            },
+          },
+        },
+        {
+          tab: {
+            id: 91,
+            url: CHECKOUT_EXAMPLE_URL,
+          } as chrome.tabs.Tab,
+        } as chrome.runtime.MessageSender,
+        stripeResponse,
+      );
+
+      await flushAsyncTasks();
+
+      const adyenResponse = jest.fn();
+      messageListener(
+        {
+          action: MessageAction.DETECT_PSP,
+          data: {
+            psp: 'Adyen',
+            tabId: 91,
+            detectionInfo: {
+              method: 'matchString',
+              value: 'checkoutshopper-live.adyen.com',
+              sourceType: 'iframeSrc',
+            },
+          },
+        },
+        {
+          tab: {
+            id: 91,
+            url: CHECKOUT_EXAMPLE_URL,
+          } as chrome.tabs.Tab,
+        } as chrome.runtime.MessageSender,
+        adyenResponse,
+      );
+
+      await flushAsyncTasks();
+
+      expect(stripeResponse).toHaveBeenCalledWith(null);
+      expect(adyenResponse).toHaveBeenCalledWith(null);
+      expect(await getDetectedPspsForTab(messageListener, 91)).toEqual([
+        expect.objectContaining({ psp: 'Adyen' }),
+        expect.objectContaining({ psp: 'Stripe' }),
+      ]);
+
+      expect(mocks.actionSetIcon.mock.calls.at(-1)?.[0]).toEqual({
+        path: {
+          48: 'images/adyen_48.png',
+          128: 'images/adyen_128.png',
+        },
+      });
+
+      expect(mocks.actionSetBadgeText).toHaveBeenLastCalledWith({
+        text: '+1',
+      });
+
+      expect(mocks.actionSetBadgeBackgroundColor).toHaveBeenLastCalledWith({
+        color: '#6B7280',
+      });
+    });
 });

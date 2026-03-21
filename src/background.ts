@@ -72,6 +72,7 @@ class BackgroundService {
   private readonly tabPspCache = new Map<number, StoredTabPsp[]>();
   private tabPspPersistTimer: ReturnType<typeof setTimeout> | null = null;
   private tabPspPersistDirty = false;
+  private readonly providerPriorityByName = new Map<string, number>();
   private readonly networkMatchersByToken = new Map<string, NetworkMatcher[]>();
   private fallbackNetworkMatchers: NetworkMatcher[] = [];
   private readonly networkMatchedProvidersByTab =
@@ -260,7 +261,7 @@ class BackgroundService {
         continue;
       }
 
-      this.tabPspCache.set(tabId, [...entries]);
+      this.tabPspCache.set(tabId, this.sortStoredTabPsps(entries));
     }
   }
 
@@ -866,7 +867,7 @@ class BackgroundService {
         return;
       }
 
-      this.syncCurrentTabDetection(tabId, currentTabId, pspName);
+      this.syncCurrentTabDetection(tabId, currentTabId);
 
       await this.recordDetectionHistory(
         tabId,
@@ -934,7 +935,7 @@ class BackgroundService {
           : { psp: pspName, detectionInfo };
       const updatedEntries = [...existing];
       updatedEntries[existingIndex] = nextEntry;
-      this.tabPspCache.set(tabId, updatedEntries);
+      this.tabPspCache.set(tabId, this.sortStoredTabPsps(updatedEntries));
 
       const matchedProviders =
         this.networkMatchedProvidersByTab.get(tabId) ?? new Set<string>();
@@ -948,7 +949,11 @@ class BackgroundService {
       detectionInfo === undefined
         ? { psp: pspName }
         : { psp: pspName, detectionInfo };
-    this.tabPspCache.set(tabId, [...existing, nextEntry]);
+    this.tabPspCache.set(
+      tabId,
+      this.sortStoredTabPsps([...existing, nextEntry]),
+    );
+
     const matchedProviders =
       this.networkMatchedProvidersByTab.get(tabId) ?? new Set<string>();
     matchedProviders.add(pspName);
@@ -976,10 +981,9 @@ class BackgroundService {
   private syncCurrentTabDetection(
     tabId: number,
     currentTabId: number | null,
-    pspName: NonNullable<PSPDetectionData['psp']>,
   ): void {
     if (currentTabId !== null && tabId === currentTabId) {
-      this.updateIcon(pspName);
+      this.updateIconForStoredPsps(this.tabPspCache.get(tabId) ?? []);
       return;
     }
 
@@ -1059,7 +1063,7 @@ class BackgroundService {
       psps = this.tabPspCache.get(resolvedTabId) ?? [];
     }
 
-    sendResponse({ psps });
+    sendResponse({ psps: this.sortStoredTabPsps(psps) });
   }
 
   /**
@@ -1127,7 +1131,7 @@ class BackgroundService {
       }
 
       if (detectedPsp.type === 'detected') {
-        this.updateIcon(detectedPsp.psps[0]?.psp ?? '');
+        this.updateIconForStoredPsps(this.tabPspCache.get(tabId) ?? []);
         return;
       }
 
@@ -1155,7 +1159,7 @@ class BackgroundService {
     }
 
     const matches: PSPMatch[] = [];
-    for (const p of psps) {
+    for (const p of this.sortStoredTabPsps(psps)) {
       const psp = TypeConverters.toPSPName(p.psp);
       if (!psp) {
         logger.warn('Skipping stored entry with empty PSP name');
@@ -1283,13 +1287,17 @@ class BackgroundService {
 
   private rebuildNetworkMatcherIndex(config: PSPConfig | null): void {
     this.networkMatchersByToken.clear();
+    this.providerPriorityByName.clear();
     this.fallbackNetworkMatchers = [];
 
     if (!config) {
       return;
     }
 
-    for (const provider of getAllProviders(config)) {
+    const providers = getAllProviders(config);
+    for (const [index, provider] of providers.entries()) {
+      this.providerPriorityByName.set(provider.name.toLowerCase(), index);
+
       const matchStrings = provider.matchStrings;
       if (!Array.isArray(matchStrings) || matchStrings.length === 0) {
         continue;
@@ -1572,7 +1580,24 @@ class BackgroundService {
    * Update extension icon
    * @private
    */
-  updateIcon(psp: string): void {
+  private updateIconForStoredPsps(psps: StoredTabPsp[]): void {
+    const detectedPsps = this.sortStoredTabPsps(
+      psps.filter((entry) => entry.psp !== PSP_DETECTION_EXEMPT),
+    );
+    const primaryPsp = detectedPsps[0]?.psp;
+    if (primaryPsp === undefined) {
+      this.resetIcon();
+      return;
+    }
+
+    this.updateIcon(primaryPsp, Math.max(0, detectedPsps.length - 1));
+  }
+
+  /**
+   * Update extension icon
+   * @private
+   */
+  private updateIcon(psp: string, extraCount = 0): void {
     logger.debug(`Background: Attempting to update icon for PSP: ${psp}`);
     const pspInfo = this.getPspInfo(psp);
     logger.debug('Background: PSP info lookup result:', pspInfo);
@@ -1599,11 +1624,37 @@ class BackgroundService {
       logger.debug('Background: PSP not found in cached config');
     }
 
-    // Clear any badge when showing PSP icon
-    chrome.action.setBadgeText({ text: '' });
+    const badgeText = extraCount > 0 ? `+${extraCount}` : '';
+    chrome.action.setBadgeText({ text: badgeText });
 
     // Neutral grey
     chrome.action.setBadgeBackgroundColor({ color: BADGE_COLOR });
+  }
+
+  private sortStoredTabPsps(entries: StoredTabPsp[]): StoredTabPsp[] {
+    return entries
+      .map((entry, index) => ({ entry, index }))
+      .sort((left, right) => {
+        const leftPriority = this.providerPriorityByName.get(
+          left.entry.psp.toLowerCase(),
+        );
+        const rightPriority = this.providerPriorityByName.get(
+          right.entry.psp.toLowerCase(),
+        );
+
+        if (leftPriority !== undefined && rightPriority !== undefined) {
+          if (leftPriority !== rightPriority) {
+            return leftPriority - rightPriority;
+          }
+        } else if (leftPriority !== undefined) {
+          return -1;
+        } else if (rightPriority !== undefined) {
+          return 1;
+        }
+
+        return left.index - right.index;
+      })
+      .map(({ entry }) => entry);
   }
 
   /**
