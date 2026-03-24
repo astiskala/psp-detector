@@ -41,7 +41,7 @@ Focused guidance for AI coding agents working in this repository. Keep answers c
 - Provider order = precedence; place more specific host strings earlier.
 - Regex: always compile with `safeCompileRegex`; never throw on invalid.
 - Images: commit only original base PNG (128px). Build generates `_48` + `_128`.
-- Version: never hand‑edit `package.json` version (auto `2.YYYY.MMDD.HHMM`).
+- Version: never hand‑edit `package.json` version (auto `3.YYYY.MMDD.HHMM`).
 
 ### 6. Adding a Provider (Example)
 

@@ -685,7 +685,8 @@
       "regex": "[^\\.]+\\.onfastspring\\.com",
       "image": "fastspring",
       "summary": "FastSpring is an e-commerce and subscription management platform specializing in software, SaaS, and digital content sales. It provides end-to-end payment processing with features like global tax compliance, fraud prevention, and subscription management. The platform supports multiple payment methods, currencies, and languages, offering localized checkout experiences across worldwide markets.",
-      "url": "https://www.fastspring.com"
+      "url": "https://www.fastspring.com",
+      "notice": "FastSpring operates as a merchant of record (MoR): it acts as the legal seller for each transaction, handling tax collection and compliance on behalf of the business."
     },
     {
       "name": "Payoneer",
@@ -878,7 +879,8 @@
       "matchStrings": ["buy.paddle.com", "cdn.paddle.com"],
       "image": "paddle",
       "summary": "Paddle is a merchant-of-record platform for SaaS that includes checkout, tax, compliance, and payments across cards and wallets.",
-      "url": "https://www.paddle.com"
+      "url": "https://www.paddle.com",
+      "notice": "Paddle operates as a merchant of record (MoR): it acts as the legal seller for each transaction, handling tax collection and compliance on behalf of the business."
     },
     {
       "name": "Codapay",
@@ -1221,6 +1223,65 @@
       "image": "komoju",
       "summary": "KOMOJU is a Japanese payment gateway offering a hosted payment page and API for accepting credit cards and local payment methods in Japan.",
       "url": "https://komoju.com"
+    },
+    {
+      "name": "Polar",
+      "matchStrings": ["checkout.polar.sh"],
+      "regex": "cdn\\.jsdelivr\\.net/npm/@polar-sh/checkout",
+      "image": "polar",
+      "summary": "Polar is an open-source monetization platform for developers, offering subscriptions, one-time purchases, and digital product checkout with built-in billing, tax handling, and customer management.",
+      "url": "https://polar.sh",
+      "notice": "Polar operates as a merchant of record (MoR): it acts as the legal seller for each transaction, handling tax collection and compliance on behalf of the business."
+    },
+    {
+      "name": "Suby",
+      "matchStrings": ["app.suby.fi"],
+      "image": "suby",
+      "summary": "Suby is a Finnish payment and subscription billing platform for SaaS and digital products, supporting card and USDC payments with hosted checkout and recurring billing.",
+      "url": "https://www.suby.fi"
+    },
+    {
+      "name": "Lemon Squeezy",
+      "matchStrings": ["app.lemonsqueezy.com"],
+      "image": "lemonsqueezy",
+      "summary": "Lemon Squeezy is a merchant-of-record platform for software and SaaS businesses, handling checkout, subscriptions, license keys, global tax compliance, and payments via an embeddable JS overlay.",
+      "url": "https://www.lemonsqueezy.com",
+      "notice": "Lemon Squeezy operates as a merchant of record (MoR): it acts as the legal seller for each transaction, handling tax collection and compliance on behalf of the business."
+    },
+    {
+      "name": "Midtrans",
+      "matchStrings": ["app.midtrans.com", "app.sandbox.midtrans.com"],
+      "image": "midtrans",
+      "summary": "Midtrans is an Indonesian payment gateway offering the Snap hosted payment UI, supporting cards, bank transfers, e-wallets, and over-the-counter payments for Indonesian merchants.",
+      "url": "https://midtrans.com"
+    },
+    {
+      "name": "Openpay",
+      "matchStrings": ["js.openpay.mx", "resources.openpay.mx"],
+      "image": "openpay",
+      "summary": "Openpay (by BBVA) is a Mexican payment gateway offering card processing, bank transfers, and installment plans for businesses in Mexico, Colombia, Peru, and Argentina.",
+      "url": "https://www.openpay.mx"
+    },
+    {
+      "name": "Culqi",
+      "matchStrings": ["checkout.culqi.com"],
+      "image": "culqi",
+      "summary": "Culqi is a Peruvian payment gateway enabling businesses in Latin America to accept card payments online, with a developer-friendly API and hosted checkout.",
+      "url": "https://culqi.com"
+    },
+    {
+      "name": "CCAvenue",
+      "matchStrings": ["secure.ccavenue.com", "test.ccavenue.com"],
+      "image": "ccavenue",
+      "summary": "CCAvenue is one of India's largest payment gateways, supporting credit/debit cards, net banking, UPI, wallets, and EMI options for Indian e-commerce merchants.",
+      "url": "https://www.ccavenue.com"
+    },
+    {
+      "name": "Fawry",
+      "matchStrings": ["www.atfawry.com", "atfawry.fawrystaging.com"],
+      "image": "fawry",
+      "summary": "Fawry is Egypt's leading digital payments network, enabling businesses to accept online and cash-based payments through a wide network of retail points and a hosted payment plugin.",
+      "url": "https://www.fawry.com"
     }
   ],
   "orchestrators": {
@@ -1436,6 +1497,13 @@
         "image": "corefy",
         "summary": "Corefy is a universal payment orchestration platform for online businesses and fintechs.",
         "url": "https://corefy.com"
+      },
+      {
+        "name": "DEUNA",
+        "matchStrings": ["cdn.deuna.io", "checkout.deuna.com"],
+        "image": "deuna",
+        "summary": "DEUNA is a Latin American payment orchestration and checkout platform that unifies local and global payment methods, enabling merchants to offer a single optimised checkout experience across the region.",
+        "url": "https://www.deuna.com"
       }
     ]
   },

@@ -39,6 +39,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Buckaroo
 - Cardknox
 - Cashfree Payments
+- CCAvenue
 - CCBill
 - Cellulant
 - Chase Payment Solutions
@@ -48,6 +49,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Computop
 - Conekta
 - CSG Forte
+- Culqi
 - CX Pay
 - Cybersource
 - Datatrans
@@ -63,6 +65,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Eway
 - Eximbay
 - FastSpring
+- Fawry
 - Fat Zebra
 - Fiserv
 - Fiuu
@@ -80,12 +83,14 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - KOMOJU
 - KSNET
 - Kushki
+- Lemon Squeezy
 - LianLian
 - Linkly
 - Lyra
 - Mastercard Gateway (MPGS)
 - Maya
 - MercadoPago
+- Midtrans
 - Mollie
 - MONEI
 - Moneris
@@ -100,6 +105,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - NTT DATA
 - Nuvei
 - Oceanpayment
+- Openpay
 - Opn Payments
 - Paddle
 - PagBrasil
@@ -126,6 +132,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Peach Payments
 - Pine Labs
 - Plastiq
+- Polar
 - Plug'n Pay
 - PPRO
 - Przelewy24
@@ -142,6 +149,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Sony Payment Services
 - Square
 - Stripe
+- Suby
 - SumUp
 - Swedbank Pay
 - Tap Payments
@@ -172,6 +180,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - CellPoint Digital
 - Chargebee
 - Corefy
+- DEUNA
 - Gr4vy
 - IXOPAY
 - Juspay
