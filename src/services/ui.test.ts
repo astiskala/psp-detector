@@ -190,4 +190,127 @@ describe('UIService', () => {
       'js.stripe.com',
     );
   });
+
+  it('renders a notice within the PSP card when present in config', () => {
+    const noticeText = 'Shopify notice text';
+    service.renderMultiplePSPs(
+      [
+        {
+          psp: 'Shopify Payments',
+          detectionInfo: {
+            method: 'matchString',
+            value: 'checkout.shopifycs.com',
+            sourceType: 'scriptSrc',
+          },
+        },
+      ],
+      {
+        psps: [
+          {
+            name: requirePSPName('Shopify Payments'),
+            matchStrings: ['checkout.shopifycs.com'],
+            url: requireURL('https://shopify.com'),
+            image: 'shopify',
+            summary: 'Shopify summary',
+            notice: noticeText,
+          },
+        ],
+      },
+    );
+
+    const cardNotice = document.querySelector('.psp-card-notice');
+    expect(cardNotice).not.toBeNull();
+    expect(cardNotice?.textContent).toBe(noticeText);
+  });
+
+  it('renders group notices for orchestrators', () => {
+    const groupNoticeText = 'Orchestrator group notice';
+    service.renderMultiplePSPs(
+      [
+        {
+          psp: 'Primer',
+          detectionInfo: {
+            method: 'matchString',
+            value: 'sdk.primer.io',
+            sourceType: 'scriptSrc',
+          },
+        },
+      ],
+      {
+        psps: [],
+        orchestrators: {
+          notice: groupNoticeText,
+          list: [
+            {
+              name: requirePSPName('Primer'),
+              matchStrings: ['sdk.primer.io'],
+              url: requireURL('https://primer.io'),
+              image: 'primer',
+              summary: 'Primer summary',
+            },
+          ],
+        },
+      },
+    );
+
+    const cardNotice = document.querySelector('.psp-card-notice');
+    expect(cardNotice).not.toBeNull();
+    expect(cardNotice?.textContent).toBe(groupNoticeText);
+  });
+
+  it('does not crash when orchestrators or tsps are missing from config', () => {
+    expect(() => {
+      service.renderMultiplePSPs(
+        [
+          {
+            psp: 'Unknown PSP',
+            detectionInfo: {
+              method: 'matchString',
+              value: 'unknown',
+              sourceType: 'scriptSrc',
+            },
+          },
+        ],
+        {
+          psps: [],
+          // orchestrators and tsps are missing
+        },
+      );
+    }).not.toThrow();
+  });
+
+  it('renders group notices for TSPs', () => {
+    const groupNoticeText = 'TSP group notice';
+    service.renderMultiplePSPs(
+      [
+        {
+          psp: 'Cloudbeds',
+          detectionInfo: {
+            method: 'matchString',
+            value: 'hotels.cloudbeds.com',
+            sourceType: 'scriptSrc',
+          },
+        },
+      ],
+      {
+        psps: [],
+        tsps: {
+          notice: groupNoticeText,
+          list: [
+            {
+              name: requirePSPName('Cloudbeds'),
+              matchStrings: ['hotels.cloudbeds.com'],
+              url: requireURL('https://cloudbeds.com'),
+              image: 'cloudbeds',
+              summary: 'Cloudbeds summary',
+            },
+          ],
+        },
+      },
+    );
+
+    const cardNotice = document.querySelector('.psp-card-notice');
+    expect(cardNotice).not.toBeNull();
+    expect(cardNotice?.textContent).toBe(groupNoticeText);
+  });
 });

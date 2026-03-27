@@ -40,7 +40,7 @@ module.exports = {
   },
 
   // Coverage reporter configuration
-  coverageReporters: ['text', 'text-summary'],
+  coverageReporters: ['text', 'text-summary', 'lcov'],
   coverageProvider: 'v8',
 
   // Setup files
