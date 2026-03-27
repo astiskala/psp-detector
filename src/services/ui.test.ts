@@ -278,4 +278,39 @@ describe('UIService', () => {
       );
     }).not.toThrow();
   });
+
+  it('renders group notices for TSPs', () => {
+    const groupNoticeText = 'TSP group notice';
+    service.renderMultiplePSPs(
+      [
+        {
+          psp: 'Cloudbeds',
+          detectionInfo: {
+            method: 'matchString',
+            value: 'hotels.cloudbeds.com',
+            sourceType: 'scriptSrc',
+          },
+        },
+      ],
+      {
+        psps: [],
+        tsps: {
+          notice: groupNoticeText,
+          list: [
+            {
+              name: requirePSPName('Cloudbeds'),
+              matchStrings: ['hotels.cloudbeds.com'],
+              url: requireURL('https://cloudbeds.com'),
+              image: 'cloudbeds',
+              summary: 'Cloudbeds summary',
+            },
+          ],
+        },
+      },
+    );
+
+    const cardNotice = document.querySelector('.psp-card-notice');
+    expect(cardNotice).not.toBeNull();
+    expect(cardNotice?.textContent).toBe(groupNoticeText);
+  });
 });
