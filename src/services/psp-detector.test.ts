@@ -442,7 +442,10 @@ describe('PSPDetectorService', () => {
     expect(subdomainResult.type).toBe('exempt');
 
     // adyen.com should NOT be exempt
-    const rootResult = service.detectPSP('https://adyen.com/checkout', 'content');
+    const rootResult = service.detectPSP(
+      'https://adyen.com/checkout',
+      'content',
+    );
     expect(rootResult.type).not.toBe('exempt');
 
     // other.adyen.com should NOT be exempt
