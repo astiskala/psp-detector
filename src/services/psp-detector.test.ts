@@ -423,4 +423,33 @@ describe('PSPDetectorService', () => {
       expect(result.context).toBe('config_validation');
     }
   });
+
+  it('should treat is.adyen.com and its subdomains as exempt', () => {
+    service.setExemptDomains(['is.adyen.com']);
+
+    // is.adyen.com should be exempt
+    const directResult = service.detectPSP(
+      'https://is.adyen.com/checkout',
+      'content',
+    );
+    expect(directResult.type).toBe('exempt');
+
+    // sub.is.adyen.com should be exempt
+    const subdomainResult = service.detectPSP(
+      'https://test.is.adyen.com/checkout',
+      'content',
+    );
+    expect(subdomainResult.type).toBe('exempt');
+
+    // adyen.com should NOT be exempt
+    const rootResult = service.detectPSP('https://adyen.com/checkout', 'content');
+    expect(rootResult.type).not.toBe('exempt');
+
+    // other.adyen.com should NOT be exempt
+    const otherSubdomainResult = service.detectPSP(
+      'https://ca-live.adyen.com/checkout',
+      'content',
+    );
+    expect(otherSubdomainResult.type).not.toBe('exempt');
+  });
 });
