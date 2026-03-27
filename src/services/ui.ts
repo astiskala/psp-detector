@@ -71,8 +71,8 @@ export class UIService {
     list.className = 'psp-list';
 
     for (const storedPsp of psps) {
-      const pspConfig = this.findPspConfig(storedPsp.psp, config);
-      const card = this.buildPspCard(storedPsp, pspConfig);
+      const { psp, notice } = this.findPspWithContext(storedPsp.psp, config);
+      const card = this.buildPspCard(storedPsp, psp, notice);
       list.appendChild(card);
     }
 
@@ -276,18 +276,42 @@ export class UIService {
     }
   }
 
-  private findPspConfig(pspName: string, config: PSPConfig): PSP | undefined {
-    const providers: PSP[] = [
-      ...config.psps,
-      ...(config.orchestrators?.list ?? []),
-      ...(config.tsps?.list ?? []),
-    ];
-    return providers.find((provider) => provider.name === pspName);
+  private findPspWithContext(
+    pspName: string,
+    config: PSPConfig,
+  ): { psp: PSP | undefined; notice?: string | undefined } {
+    // 1. Check direct PSPs
+    const psp = config.psps.find((p) => p.name === pspName);
+    if (psp) return { psp, notice: psp.notice };
+
+    // 2. Check Orchestrators
+    const orchestrators = config.orchestrators?.list ?? [];
+    const orchestrator = orchestrators.find((p) => p.name === pspName);
+
+    if (orchestrator) {
+      return {
+        psp: orchestrator,
+        notice: orchestrator.notice ?? config.orchestrators?.notice,
+      };
+    }
+
+    // 3. Check TSPs
+    const tsps = config.tsps?.list ?? [];
+    const tsp = tsps.find((p) => p.name === pspName);
+    if (tsp) {
+      return {
+        psp: tsp,
+        notice: tsp.notice ?? config.tsps?.notice,
+      };
+    }
+
+    return { psp: undefined };
   }
 
   private buildPspCard(
     stored: StoredTabPsp,
     config: PSP | undefined,
+    contextNotice?: string,
   ): HTMLElement {
     const card = document.createElement('div');
     card.className = 'psp-card';
@@ -332,6 +356,13 @@ export class UIService {
       evidence.appendChild(sourceRow);
       evidence.appendChild(signalRow);
       card.appendChild(evidence);
+    }
+
+    if (typeof contextNotice === 'string' && contextNotice.length > 0) {
+      const notice = document.createElement('div');
+      notice.className = 'psp-card-notice';
+      notice.textContent = contextNotice;
+      card.appendChild(notice);
     }
 
     return card;
