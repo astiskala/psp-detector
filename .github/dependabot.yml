@@ -88,7 +88,7 @@ updates:
       timezone: Etc/UTC
     labels:
       - dependencies
-      - github-actions
+      - github_actions
     commit-message:
       prefix: ci
     groups:
