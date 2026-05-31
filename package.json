@@ -51,7 +51,7 @@
     "jest": "^30.4.2",
     "jest-environment-jsdom": "^30.4.1",
     "knip": "^6.15.0",
-    "lint-staged": "^16.4.0",
+    "lint-staged": "^17.0.7",
     "prettier": "^3.8.3",
     "sharp": "^0.34.5",
     "ts-jest": "^29.4.11",
