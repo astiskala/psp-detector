@@ -1,0 +1,100 @@
+# Dependabot configuration.
+#
+# Version updates run weekly and are grouped by concern so a single failing
+# update only blocks its own area. Minor/patch updates are grouped (and
+# auto-merged by .github/workflows/dependabot-auto-merge.yml once CI is green);
+# major updates are intentionally left ungrouped so each opens an individual
+# PR for manual review. Security updates are unaffected by this file and
+# continue to open immediately.
+version: 2
+updates:
+  # npm — the extension's build/test/lint toolchain (all devDependencies).
+  - package-ecosystem: npm
+    directory: '/'
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Etc/UTC
+    open-pull-requests-limit: 10
+    versioning-strategy: increase
+    labels:
+      - dependencies
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      # Linting & formatting (ESLint stack, Prettier, gts).
+      linting:
+        patterns:
+          - 'eslint'
+          - '@eslint/*'
+          - 'eslint-*'
+          - 'typescript-eslint'
+          - 'prettier'
+          - 'gts'
+          - 'globals'
+        update-types:
+          - minor
+          - patch
+      # Unit / integration / e2e testing toolchain.
+      testing:
+        patterns:
+          - 'jest'
+          - 'jest-*'
+          - 'ts-jest'
+          - '@playwright/test'
+          - '@types/jest'
+          - 'cheerio'
+        update-types:
+          - minor
+          - patch
+      # Build & bundling (bundler, image pipeline, TS compiler).
+      build:
+        patterns:
+          - 'esbuild'
+          - 'sharp'
+          - 'tslib'
+          - 'typescript'
+        update-types:
+          - minor
+          - patch
+      # Repo tooling (git hooks, commit lint, dead-code & dependency analysis).
+      tooling:
+        patterns:
+          - 'husky'
+          - 'lint-staged'
+          - '@commitlint/*'
+          - 'knip'
+          - 'dependency-cruiser'
+        update-types:
+          - minor
+          - patch
+      # Remaining type definitions (@types/chrome, @types/node, ...).
+      types:
+        patterns:
+          - '@types/*'
+        update-types:
+          - minor
+          - patch
+
+  # GitHub Actions used by the CI / release / publish workflows.
+  - package-ecosystem: github-actions
+    directory: '/'
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Etc/UTC
+    labels:
+      - dependencies
+      - github-actions
+    commit-message:
+      prefix: ci
+    groups:
+      github-actions:
+        patterns:
+          - '*'
+        update-types:
+          - minor
+          - patch
