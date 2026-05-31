@@ -55,7 +55,7 @@ jobs:
         run: zip -r psp-detector-${{ steps.manifest.outputs.version }}.zip dist
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2 (v2.5.0)
+        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v2 (v2.5.0)
         with:
           tag_name: ${{ steps.manifest.outputs.version }}
           name: psp-detector-${{ steps.manifest.outputs.version }}.zip
