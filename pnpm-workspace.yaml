@@ -1,6 +1,18 @@
 packages:
   - .
 
+# Dependency overrides (pnpm 10+ reads these from here, not package.json).
+# js-yaml and tmp force fixed versions of transitive dev-only deps flagged
+# by OSV-Scanner (GHSA-h67p-54hq-rp68, GHSA-ph9p-34f9-6g65, GHSA-52f5-9888-hmc6).
+overrides:
+  flatted: ^3.4.2
+  glob: ^11.0.3
+  js-yaml: ^4.2.0
+  minimatch: ^10.2.4
+  tmp: ^0.2.6
+  typescript: ^6.0.3
+  ws: ^8.19.0
+
 allowBuilds:
   esbuild: true
   unrs-resolver: true
