@@ -1,8 +1,4 @@
 {
-  // TypeScript/JavaScript formatting
-  "typescript.format.enable": false,
-  "javascript.format.enable": false,
-
   // Default formatter settings - use ESLint for all formatting
   "editor.defaultFormatter": null,
   "[typescript]": {
