@@ -136,6 +136,7 @@ describe('DOMObserverService', () => {
     // Temporarily remove document.body
     const originalBody = document.body;
     Object.defineProperty(document, 'body', {
+      // eslint-disable-next-line unicorn/no-null -- mocking the DOM null body that startObserving must handle
       get: () => null,
       configurable: true,
     });

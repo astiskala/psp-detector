@@ -89,15 +89,15 @@ function loadConfig(): PSPConfig {
   if (!fs.existsSync(file)) throw new Error('psps.json not found');
 
   const raw: RawFile = JSON.parse(fs.readFileSync(file, 'utf8')) as RawFile;
-  const convert = (p?: RawEntry): PSP | null => {
-    if (!p) return null;
+  const convert = (p?: RawEntry): PSP | undefined => {
+    if (!p) return undefined;
     const name =
       typeof p['name'] === 'string'
         ? TypeConverters.toPSPName(p['name'])
-        : null;
+        : undefined;
     const url =
-      typeof p['url'] === 'string' ? TypeConverters.toURL(p['url']) : null;
-    if (!name || !url) return null;
+      typeof p['url'] === 'string' ? TypeConverters.toURL(p['url']) : undefined;
+    if (!name || !url) return undefined;
     return {
       name,
       matchStrings: Array.isArray(p['matchStrings'])
@@ -120,13 +120,13 @@ function loadConfig(): PSPConfig {
       notice: group?.notice ?? '',
       list: providers
         .map((provider) => convert(provider))
-        .filter((p): p is PSP => p !== null),
+        .filter((p): p is PSP => p !== undefined),
     };
   };
 
   const psps = (raw.psps ?? [])
     .map((provider) => convert(provider))
-    .filter((p): p is PSP => p !== null);
+    .filter((p): p is PSP => p !== undefined);
   const orchestrators = buildGroup(raw.orchestrators);
   const tsps = buildGroup(raw.tsps);
   return {
@@ -190,8 +190,8 @@ async function detectAndAssert(page: Page, site: SiteCase): Promise<void> {
       expected: site.expected,
       received: matchedNames.length > 0 ? matchedNames : 'NONE',
       detectionInfo: PSPDetectionResult.isDetected(result)
-        ? result.psps.map((match) => match.detectionInfo ?? null)
-        : null,
+        ? result.psps.map((match) => match.detectionInfo)
+        : undefined,
       firstHosts: hostSet,
       requestCount: requests.length,
       htmlPrefixSample: snippet,
@@ -199,7 +199,7 @@ async function detectAndAssert(page: Page, site: SiteCase): Promise<void> {
     throw new Error(
       `PSP detection mismatch for ${site.url}\n${JSON.stringify(
         diag,
-        null,
+        undefined,
         2,
       )}`,
     );

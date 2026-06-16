@@ -202,7 +202,7 @@ export class PopupManager {
     const cacheKey = STORAGE_KEYS.POPUP_PSP_CONFIG_CACHE;
     const cachedConfig = await this.getFromCache(cacheKey);
 
-    if (cachedConfig !== null) {
+    if (cachedConfig !== undefined) {
       logger.debug('Using cached PSP config');
       return cachedConfig;
     }
@@ -249,25 +249,25 @@ export class PopupManager {
     }
   }
 
-  private async getFromCache(key: string): Promise<PSPConfig | null> {
+  private async getFromCache(key: string): Promise<PSPConfig | undefined> {
     try {
       const result = await chrome.storage.local.get(key);
       const cachedValue = (result as Record<string, unknown>)[key];
 
       if (cachedValue === undefined || cachedValue === null) {
-        return null;
+        return undefined;
       }
 
       if (!this.isPspConfig(cachedValue)) {
         logger.warn('Invalid cached PSP config. Clearing popup cache entry.');
         await chrome.storage.local.remove(key);
-        return null;
+        return undefined;
       }
 
       return cachedValue;
     } catch (error) {
       logger.warn('Failed to get from cache:', error);
-      return null;
+      return undefined;
     }
   }
 

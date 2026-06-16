@@ -71,12 +71,12 @@ interface NetworkMatcher {
 
 class BackgroundService {
   private isInitialized = false;
-  private inMemoryPspConfig: PSPConfig | null = null;
-  private inMemoryExemptDomains: string[] | null = null;
+  private inMemoryPspConfig: PSPConfig | undefined = undefined;
+  private inMemoryExemptDomains: string[] | undefined = undefined;
   private webRequestListenerRegistered = false;
   private readonly tabPspCache = new Map<number, StoredTabPsp[]>();
   private tabPspPersistDirty = false;
-  private tabPspFlushInFlight: Promise<void> | null = null;
+  private tabPspFlushInFlight: Promise<void> | undefined = undefined;
   private readonly providerPriorityByName = new Map<string, number>();
   private readonly networkMatchersByToken = new Map<string, NetworkMatcher[]>();
   private fallbackNetworkMatchers: NetworkMatcher[] = [];
@@ -204,8 +204,8 @@ class BackgroundService {
         STORAGE_KEYS.POPUP_PSP_CONFIG_CACHE,
       ]);
 
-      this.inMemoryPspConfig = null;
-      this.rebuildNetworkMatcherIndex(null);
+      this.inMemoryPspConfig = undefined;
+      this.rebuildNetworkMatcherIndex(undefined);
     } catch (error) {
       logger.warn('Failed to clear cached PSP config:', error);
     }
@@ -214,7 +214,7 @@ class BackgroundService {
   /** Rehydrates cached config, exempt domains, and per-tab detection state. */
   private async restoreState(): Promise<void> {
     try {
-      const defaultCachedPspConfig: PSPConfig | null = null;
+      const defaultCachedPspConfig: PSPConfig | undefined = undefined;
       const defaultExemptDomains: string[] = [];
       const defaultTabPsps: Record<number, StoredTabPsp[]> = {};
 
@@ -227,9 +227,9 @@ class BackgroundService {
       });
       const cachedConfig = localResult[STORAGE_KEYS.CACHED_PSP_CONFIG];
       this.inMemoryPspConfig =
-        cachedConfig !== null && this.isValidPspConfig(cachedConfig)
+        cachedConfig !== undefined && this.isValidPspConfig(cachedConfig)
           ? cachedConfig
-          : null;
+          : undefined;
 
       this.rebuildNetworkMatcherIndex(this.inMemoryPspConfig);
 
@@ -305,7 +305,7 @@ class BackgroundService {
   }
 
   private async flushTabPspCache(): Promise<void> {
-    if (this.tabPspFlushInFlight !== null) {
+    if (this.tabPspFlushInFlight !== undefined) {
       // Another flush is running; the dirty flag will cause it to loop.
       return this.tabPspFlushInFlight;
     }
@@ -332,7 +332,7 @@ class BackgroundService {
 
     // eslint-disable-next-line unicorn/prefer-await -- structural state-management chain; .finally resets tabPspFlushInFlight
     this.tabPspFlushInFlight = run().finally(() => {
-      this.tabPspFlushInFlight = null;
+      this.tabPspFlushInFlight = undefined;
     });
     return this.tabPspFlushInFlight;
   }
@@ -359,14 +359,14 @@ class BackgroundService {
     }
   }
 
-  private async getCurrentTabId(): Promise<number | null> {
-    return this.getLocalStorage<number | null>(
+  private async getCurrentTabId(): Promise<number | undefined> {
+    return this.getLocalStorage<number | undefined>(
       STORAGE_KEYS.CURRENT_TAB_ID,
-      null,
+      undefined,
     );
   }
 
-  private async setCurrentTabId(tabId: number | null): Promise<void> {
+  private async setCurrentTabId(tabId: number | undefined): Promise<void> {
     try {
       await chrome.storage.local.set({
         [STORAGE_KEYS.CURRENT_TAB_ID]: tabId,
@@ -384,7 +384,7 @@ class BackgroundService {
   }
 
   private async getExemptDomains(): Promise<string[]> {
-    if (this.inMemoryExemptDomains !== null) {
+    if (this.inMemoryExemptDomains !== undefined) {
       return this.inMemoryExemptDomains;
     }
 
@@ -558,7 +558,7 @@ class BackgroundService {
         }
 
         await this.handleDetectPsp(message.data, sender);
-        sendResponse(null);
+        sendResponse();
         break;
       }
 
@@ -622,7 +622,7 @@ class BackgroundService {
   and falling back to the bundled JSON file.
    */
   async handleGetPspConfig(
-    sendResponse: (response?: PSPConfigResponse | null) => void,
+    sendResponse: (response?: PSPConfigResponse) => void,
   ): Promise<void> {
     // Check for cached config first
     const cachedConfig = await this.getCachedPspConfig();
@@ -675,7 +675,7 @@ class BackgroundService {
         logger.error('Failed to load PSP config:', error);
       }
 
-      sendResponse(null);
+      sendResponse();
     }
   }
 
@@ -768,10 +768,10 @@ class BackgroundService {
   /**
   Returns the cached provider dataset and refreshes the in-memory indexes.
    */
-  private async getCachedPspConfig(): Promise<PSPConfig | null> {
+  private async getCachedPspConfig(): Promise<PSPConfig | undefined> {
     try {
       const result = await chrome.storage.local.get({
-        [STORAGE_KEYS.CACHED_PSP_CONFIG]: null as PSPConfig | null,
+        [STORAGE_KEYS.CACHED_PSP_CONFIG]: undefined as PSPConfig | undefined,
       });
       const candidate = result[STORAGE_KEYS.CACHED_PSP_CONFIG];
 
@@ -780,7 +780,7 @@ class BackgroundService {
         candidate === undefined ||
         !this.isValidPspConfig(candidate)
       ) {
-        return null;
+        return undefined;
       }
 
       // Also update in-memory cache
@@ -789,7 +789,7 @@ class BackgroundService {
       return candidate;
     } catch (error) {
       logger.error('Failed to get cached PSP config:', error);
-      return null;
+      return undefined;
     }
   }
 
@@ -809,7 +809,7 @@ class BackgroundService {
     }
   }
 
-  private getCachedPspConfigSync(): PSPConfig | null {
+  private getCachedPspConfigSync(): PSPConfig | undefined {
     return this.inMemoryPspConfig;
   }
 
@@ -827,7 +827,7 @@ class BackgroundService {
       const currentTabId = await this.getCurrentTabId();
       logger.debug('Background: Current tab ID:', currentTabId);
       const resolvedData = this.resolveDetectionPayload(data, sender);
-      if (resolvedData === null) {
+      if (resolvedData === undefined) {
         return;
       }
 
@@ -869,10 +869,12 @@ class BackgroundService {
   private resolveDetectionPayload(
     data: PSPDetectionData,
     sender: chrome.runtime.MessageSender,
-  ): null | {
-    tabId: number;
-    pspName: NonNullable<PSPDetectionData['psp']>;
-  } {
+  ):
+    | undefined
+    | {
+        tabId: number;
+        pspName: NonNullable<PSPDetectionData['psp']>;
+      } {
     // Content scripts must always be bound to sender.tab.id. Extension pages
     // are privileged and may target a specific tab explicitly.
     const senderUrl = sender.url ?? sender.tab?.url ?? '';
@@ -882,30 +884,30 @@ class BackgroundService {
     const requestedTabId =
       typeof data.tabId === 'number'
         ? TypeConverters.toTabId(data.tabId)
-        : null;
+        : undefined;
     const senderTabId =
       typeof sender.tab?.id === 'number'
         ? TypeConverters.toTabId(sender.tab.id)
-        : null;
+        : undefined;
     const tabId =
-      senderIsExtensionPage && requestedTabId !== null
+      senderIsExtensionPage && requestedTabId !== undefined
         ? requestedTabId
         : senderTabId;
 
-    if (tabId === null || tabId === undefined) {
+    if (tabId === undefined) {
       logger.warn('Background: Invalid tab ID in detection payload');
-      return null;
+      return undefined;
     }
 
     const pspName = TypeConverters.toPSPName(data.psp ?? '');
-    if (pspName === null) {
+    if (pspName === undefined) {
       logger.warn('Background: Invalid PSP detection data received');
-      return null;
+      return undefined;
     }
 
     if (!Number.isSafeInteger(tabId) || tabId < 0) {
       logger.warn(`Background: Invalid tab ID: ${tabId}`);
-      return null;
+      return undefined;
     }
 
     return { tabId, pspName };
@@ -987,9 +989,9 @@ class BackgroundService {
 
   private syncCurrentTabDetection(
     tabId: number,
-    currentTabId: number | null,
+    currentTabId: number | undefined,
   ): void {
-    if (currentTabId !== null && tabId === currentTabId) {
+    if (currentTabId !== undefined && tabId === currentTabId) {
       this.updateIconForStoredPsps(this.tabPspCache.get(tabId) ?? []);
       return;
     }
@@ -1031,7 +1033,7 @@ class BackgroundService {
           sourceType: detectionInfo.sourceType ?? 'pageUrl',
         },
       ],
-      ...(resolvedMerchantOrigin !== null && {
+      ...(resolvedMerchantOrigin !== undefined && {
         merchantOrigin: resolvedMerchantOrigin,
       }),
     };
@@ -1047,20 +1049,20 @@ class BackgroundService {
   private resolveMerchantOrigin(
     merchantOrigin: string | undefined,
     domain: string,
-  ): string | null {
+  ): string | undefined {
     if (merchantOrigin === undefined || merchantOrigin.length === 0) {
-      return null;
+      return undefined;
     }
 
     try {
       const parsed = new URL(merchantOrigin);
       if (parsed.hostname.toLowerCase() === domain.toLowerCase()) {
-        return null;
+        return undefined;
       }
 
       return parsed.origin;
     } catch {
-      return null;
+      return undefined;
     }
   }
 
@@ -1074,16 +1076,16 @@ class BackgroundService {
   ): Promise<void> {
     const senderTabId =
       typeof sender.tab?.id === 'number'
-        ? TypeConverters.toTabId(sender.tab.id)
-        : null;
+        ? (TypeConverters.toTabId(sender.tab.id) ?? undefined)
+        : undefined;
     const activeTabId = await this.getActiveTabIdForPopup();
     const currentTabId = await this.getCurrentTabId();
 
     const preferredTabIds = [senderTabId, activeTabId, currentTabId].filter(
-      (id): id is number => id !== null,
+      (id): id is number => id !== null && id !== undefined,
     );
 
-    let resolvedTabId: number | null = null;
+    let resolvedTabId: number | undefined = undefined;
     let psps: StoredTabPsp[] = [];
     for (const tabId of preferredTabIds) {
       const entries = this.tabPspCache.get(tabId) ?? [];
@@ -1094,15 +1096,15 @@ class BackgroundService {
       }
     }
 
-    if (resolvedTabId === null) {
-      if (senderTabId !== null) {
+    if (resolvedTabId === undefined) {
+      if (senderTabId !== undefined) {
         resolvedTabId = senderTabId;
-      } else if (activeTabId !== null) {
+      } else if (activeTabId !== undefined) {
         resolvedTabId = activeTabId;
       }
     }
 
-    if (resolvedTabId !== null && psps.length === 0) {
+    if (resolvedTabId !== undefined && psps.length === 0) {
       psps = this.tabPspCache.get(resolvedTabId) ?? [];
     }
 
@@ -1120,9 +1122,9 @@ class BackgroundService {
   ): Promise<void> {
     const tabId =
       typeof sender.tab?.id === 'number'
-        ? TypeConverters.toTabId(sender.tab.id)
-        : null;
-    if (tabId === null) {
+        ? (TypeConverters.toTabId(sender.tab.id) ?? undefined)
+        : undefined;
+    if (tabId === undefined) {
       sendResponse({ hasState: false });
       return;
     }
@@ -1139,7 +1141,7 @@ class BackgroundService {
    */
   async handleTabActivation(activeInfo: { tabId: number }): Promise<void> {
     const tabId = TypeConverters.toTabId(activeInfo.tabId);
-    if (tabId === null) return;
+    if (tabId === undefined) return;
 
     logger.debug(`Background: Tab activated - ID: ${tabId}`);
     await this.setCurrentTabId(tabId);
@@ -1163,7 +1165,7 @@ class BackgroundService {
     tabId: NonNullable<ReturnType<typeof TypeConverters.toTabId>>,
     rawTabId: number,
     tab: chrome.tabs.Tab,
-    detectedPsp: PSPDetectionResult | null,
+    detectedPsp: PSPDetectionResult | undefined,
   ): Promise<void> {
     if (detectedPsp) {
       if (detectedPsp.type === 'exempt') {
@@ -1193,8 +1195,10 @@ class BackgroundService {
     await this.injectContentScript(rawTabId);
   }
 
-  private toDetectionResult(psps: StoredTabPsp[]): PSPDetectionResult | null {
-    if (psps.length === 0) return null;
+  private toDetectionResult(
+    psps: StoredTabPsp[],
+  ): PSPDetectionResult | undefined {
+    if (psps.length === 0) return undefined;
     if (psps.some((p) => p.psp === PSP_DETECTION_EXEMPT)) {
       return this.createExemptResult(
         'PSP detection is disabled for this domain',
@@ -1228,14 +1232,14 @@ class BackgroundService {
     }
   }
 
-  private async getActiveTabIdForPopup(): Promise<number | null> {
+  private async getActiveTabIdForPopup(): Promise<number | undefined> {
     try {
       const tabs = await chrome.tabs.query({
         active: true,
         currentWindow: true,
       });
       const activeTabId = tabs[0]?.id;
-      return TypeConverters.toTabId(activeTabId ?? -1);
+      return TypeConverters.toTabId(activeTabId ?? -1) ?? undefined;
     } catch (error) {
       logger.warn('Failed to query active tab for popup response:', error);
       return this.getCurrentTabId();
@@ -1276,7 +1280,7 @@ class BackgroundService {
       }
 
       const tabId = TypeConverters.toTabId(activeTab.id);
-      if (tabId === null) {
+      if (tabId === undefined) {
         sendResponse({ success: false, reason: 'Invalid active tab id' });
         return;
       }
@@ -1332,7 +1336,7 @@ class BackgroundService {
     return 'PSP';
   }
 
-  private rebuildNetworkMatcherIndex(config: PSPConfig | null): void {
+  private rebuildNetworkMatcherIndex(config: PSPConfig | undefined): void {
     this.networkMatchersByToken.clear();
     this.providerPriorityByName.clear();
     this.fallbackNetworkMatchers = [];
@@ -1366,7 +1370,7 @@ class BackgroundService {
 
       const matcher: NetworkMatcher = { pspName, matchString };
       const token = this.extractMatcherToken(matchString);
-      if (token === null) {
+      if (token === undefined) {
         this.fallbackNetworkMatchers.push(matcher);
         continue;
       }
@@ -1381,7 +1385,7 @@ class BackgroundService {
     }
   }
 
-  private extractMatcherToken(matchString: string): string | null {
+  private extractMatcherToken(matchString: string): string | undefined {
     const hostCandidate = matchString
       .replace(/^https?:\/\//u, '')
       .split('/', 1)[0]
@@ -1391,7 +1395,7 @@ class BackgroundService {
       .toLowerCase();
 
     if (hostCandidate === undefined || hostCandidate.length === 0) {
-      return null;
+      return undefined;
     }
 
     if (
@@ -1399,7 +1403,7 @@ class BackgroundService {
       hostCandidate.includes('[') ||
       hostCandidate.includes('(')
     ) {
-      return null;
+      return undefined;
     }
 
     const hostParts = hostCandidate
@@ -1411,7 +1415,7 @@ class BackgroundService {
       return hostParts.slice(-2).join('.');
     }
 
-    return hostParts[0] ?? null;
+    return hostParts[0];
   }
 
   private extractRequestTokens(requestUrl: string): string[] {
@@ -1525,7 +1529,7 @@ class BackgroundService {
     if (tabId < 0) return;
 
     const tabIdValue = TypeConverters.toTabId(tabId);
-    if (tabIdValue === null) return;
+    if (tabIdValue === undefined) return;
 
     const matchedProvidersForTab =
       this.networkMatchedProvidersByTab.get(tabId) ?? new Set<string>();
@@ -1590,7 +1594,7 @@ class BackgroundService {
     tab: chrome.tabs.Tab,
   ): Promise<void> {
     const brandedTabId = TypeConverters.toTabId(tabId);
-    if (brandedTabId !== null && changeInfo.status === 'loading') {
+    if (brandedTabId !== undefined && changeInfo.status === 'loading') {
       this.resetIcon();
       this.cleanupTabData(brandedTabId);
     }
@@ -1603,7 +1607,7 @@ class BackgroundService {
       const isExempt = await this.isUrlExempt(tab.url);
       if (isExempt || this.isSpecialUrl(tab.url)) {
         const currentTabId = await this.getCurrentTabId();
-        if (brandedTabId !== null && brandedTabId === currentTabId) {
+        if (brandedTabId !== undefined && brandedTabId === currentTabId) {
           this.setExemptTabState(brandedTabId);
         }
       } else {
@@ -1753,7 +1757,7 @@ class BackgroundService {
   Get PSP information from config - simplified for sync usage
   @private
    */
-  getPspInfo(psp: string): PSP | null {
+  getPspInfo(psp: string): PSP | undefined {
     logger.debug('Getting PSP info for:', psp);
 
     // Try to get cached config synchronously
@@ -1765,7 +1769,7 @@ class BackgroundService {
 
       if (!cachedConfig) {
         logger.warn('Background: No PSP config available');
-        return null;
+        return undefined;
       }
 
       // Use getAllProviders to search across PSPs, orchestrators, and TSPs
@@ -1780,10 +1784,10 @@ class BackgroundService {
       }
       logger.warn('Background: No PSP info found for:', psp);
       logger.debug('Background: PSP not found in cached config');
-      return null;
+      return undefined;
     } catch (error) {
       logger.error('Background: Error getting PSP info:', error);
-      return null;
+      return undefined;
     }
   }
 
@@ -1794,7 +1798,7 @@ class BackgroundService {
   async injectContentScript(tabId: number): Promise<void> {
     // Check optional host permission before attempting injection.
     // Without it, executeScript will throw in service-worker context.
-    let hasHostPermission: boolean | null;
+    let hasHostPermission: boolean | undefined;
     try {
       hasHostPermission = await chrome.permissions.contains({
         origins: ['https://*/*'],
@@ -1805,7 +1809,7 @@ class BackgroundService {
           'could not check host permission',
       );
 
-      hasHostPermission = null;
+      hasHostPermission = undefined;
     }
 
     if (hasHostPermission !== true) {

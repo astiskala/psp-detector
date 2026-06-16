@@ -26,8 +26,8 @@ const STRIPE_CHECKOUT_MATCH = 'checkout.stripe.com';
 const STRIPE_SCRIPT_TAG = '<script src="https://js.stripe.com/v3/"></script>';
 const STRIPE_SUMMARY = 'Stripe summary';
 
-function requirePresent<T>(value: T | null, label: string): T {
-  if (value === null) {
+function requirePresent<T>(value: T | undefined, label: string): T {
+  if (value === undefined) {
     throw new Error(`Expected valid ${label}`);
   }
 
@@ -101,7 +101,7 @@ describe('PSPDetectorService', () => {
       regex: String.raw`stripe\.com`,
     });
 
-    expect(getPSPByPSPName(service, pspName('Unknown'))).toBeNull();
+    expect(getPSPByPSPName(service, pspName('Unknown'))).toBeUndefined();
   });
 
   it('should return exempt result for exempt domains', () => {
@@ -370,7 +370,7 @@ describe('PSPDetectorService', () => {
         {
           name: STRIPE_NAME,
           matchStrings: [STRIPE_MATCH],
-          regex: null,
+          regex: undefined,
           image: 'stripe',
           summary: STRIPE_NAME,
           url: STRIPE_URL,
@@ -378,7 +378,7 @@ describe('PSPDetectorService', () => {
         {
           name: 'Adyen',
           matchStrings: ['checkoutshopper-live.adyen.com'],
-          regex: null,
+          regex: undefined,
           image: 'adyen',
           summary: 'Adyen',
           url: 'https://adyen.com',
@@ -479,7 +479,7 @@ describe('PSPDetectorService', () => {
       'malformed-url-with-UNRELATED.org-only',
       branded,
     );
-    expect(result).toBeNull();
+    expect(result).toBeUndefined();
   });
 
   it('truncates oversized content at the last newline within the limit', () => {

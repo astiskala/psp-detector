@@ -56,7 +56,7 @@ function setupChromeMock(): ChromeMocks {
   );
   const localGet = jest
     .fn()
-    .mockResolvedValue({ [STORAGE_KEYS.POPUP_PSP_CONFIG_CACHE]: null });
+    .mockResolvedValue({ [STORAGE_KEYS.POPUP_PSP_CONFIG_CACHE]: undefined });
   const localSet = jest.fn().mockResolvedValue(undefined);
   const localRemove = jest.fn().mockResolvedValue(undefined);
   const runtime = {
@@ -317,7 +317,7 @@ describe('PopupManager', () => {
   it('fetches and caches PSP config when cache is empty', async () => {
     const config = createStripeConfig();
     chromeMocks.localGet.mockResolvedValue({
-      [STORAGE_KEYS.POPUP_PSP_CONFIG_CACHE]: null,
+      [STORAGE_KEYS.POPUP_PSP_CONFIG_CACHE]: undefined,
     });
 
     mockSendMessageResponses(chromeMocks.sendMessage, [
@@ -350,7 +350,7 @@ describe('PopupManager', () => {
 
   it('shows error state when fetched config is invalid', async () => {
     chromeMocks.localGet.mockResolvedValue({
-      [STORAGE_KEYS.POPUP_PSP_CONFIG_CACHE]: null,
+      [STORAGE_KEYS.POPUP_PSP_CONFIG_CACHE]: undefined,
     });
 
     mockSendMessageResponses(chromeMocks.sendMessage, [

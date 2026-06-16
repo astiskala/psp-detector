@@ -120,15 +120,14 @@ export default [
       // no-asterisk-prefix-in-documentation-comments conflicts with jsdoc/check-alignment:
       // one rule removes the ' * ' prefix, the other requires it
       'unicorn/no-asterisk-prefix-in-documentation-comments': 'off',
-      // no-negated-array-predicate requires Array.excludes() which is not yet standard
-      'unicorn/no-negated-array-predicate': 'off',
       // no-keyword-prefix: flags 'className' (standard DOM API name) and similar legitimate identifiers
       'unicorn/no-keyword-prefix': 'off',
-      'unicorn/import-style': 'off',
-      // max-nested-calls / try-complexity overlap with SonarQube cognitive-complexity
-      'unicorn/max-nested-calls': 'off',
-      'unicorn/try-complexity': 'off',
-      'unicorn/no-null': 'off',
+      // import-style default imports only in production; namespace (*) imports retained in .js/.CJS/.mjs Node tooling
+      'unicorn/import-style': 'error',
+      // Threshold of 4 (one above the unicorn default) avoids churn on the one deep call in tests
+      'unicorn/max-nested-calls': ['error', { max: 4 }],
+      // Threshold aligns with the existing cyclomatic-complexity ceiling (max 15); try blocks rarely need that depth
+      'unicorn/try-complexity': ['error', { max: 8 }],
       'unicorn/prefer-abbreviations': 'off',
       'unicorn/prefer-dispose': 'off',
       'unicorn/prefer-path2d': 'off',

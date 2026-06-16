@@ -115,15 +115,15 @@ interface PieChartContext {
   radius: number;
 }
 
-function getPieChartContext(canvasId: string): PieChartContext | null {
+function getPieChartContext(canvasId: string): PieChartContext | undefined {
   const canvas = document.querySelector<HTMLCanvasElement>(`#${canvasId}`);
   if (!canvas) {
-    return null;
+    return undefined;
   }
 
   const context = canvas.getContext('2d');
   if (!context) {
-    return null;
+    return undefined;
   }
 
   const width = canvas.width;
@@ -297,17 +297,17 @@ function getHistoryEntryHostname(entry: HistoryEntry): string {
   }
 }
 
-function buildDomainFaviconUrl(entry: HistoryEntry): string | null {
+function buildDomainFaviconUrl(entry: HistoryEntry): string | undefined {
   const url = entry.url.trim();
   if (!url) {
-    return null;
+    return undefined;
   }
 
   const extensionId = (
     globalThis as typeof globalThis & { chrome?: typeof chrome }
   ).chrome?.runtime?.id;
   if (!extensionId) {
-    return null;
+    return undefined;
   }
 
   return `chrome-extension://${extensionId}/_favicon/?pageUrl=${encodeURIComponent(url)}&size=16`;
@@ -337,17 +337,17 @@ function createTableIcon(
   return icon;
 }
 
-function getMerchantHostname(entry: HistoryEntry): string | null {
+function getMerchantHostname(entry: HistoryEntry): string | undefined {
   const origin = entry.merchantOrigin?.trim();
   if (origin === undefined || origin.length === 0) {
-    return null;
+    return undefined;
   }
 
   try {
     const parsedOrigin = new URL(origin);
-    return parsedOrigin.hostname || null;
+    return parsedOrigin.hostname || undefined;
   } catch {
-    return null;
+    return undefined;
   }
 }
 
@@ -361,7 +361,7 @@ function appendDomainCellContent(
   const hostname = getHistoryEntryHostname(entry);
   const faviconUrl = buildDomainFaviconUrl(entry);
 
-  if (faviconUrl !== null) {
+  if (faviconUrl !== undefined) {
     const img = document.createElement('img');
     img.className = 'table-icon domain-icon';
     img.alt = `${hostname || entry.domain} favicon`;
@@ -383,7 +383,7 @@ function appendDomainCellContent(
   labels.append(text);
 
   const merchantHostname = getMerchantHostname(entry);
-  if (merchantHostname !== null && merchantHostname !== entry.domain) {
+  if (merchantHostname !== undefined && merchantHostname !== entry.domain) {
     const merchant = document.createElement('span');
     merchant.className = 'cell-sublabel merchant-origin';
     merchant.textContent = `via ${merchantHostname}`;
@@ -586,7 +586,7 @@ interface HistoryReference {
 function bindControls(historyReference: HistoryReference): void {
   const search = document.querySelector<HTMLInputElement>('#search');
   const pspFilter = document.querySelector<HTMLSelectElement>('#pspFilter');
-  let searchRefreshTimer: ReturnType<typeof setTimeout> | null = null;
+  let searchRefreshTimer: ReturnType<typeof setTimeout> | undefined;
 
   const getFilteredEntries = (): HistoryEntry[] =>
     filterEntries(
@@ -608,13 +608,13 @@ function bindControls(historyReference: HistoryReference): void {
   };
 
   search?.addEventListener('input', () => {
-    if (searchRefreshTimer !== null) {
+    if (searchRefreshTimer !== undefined) {
       clearTimeout(searchRefreshTimer);
     }
 
     searchRefreshTimer = setTimeout(() => {
       refresh(true);
-      searchRefreshTimer = null;
+      searchRefreshTimer = undefined;
     }, SEARCH_DEBOUNCE_MS);
   });
 

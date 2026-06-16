@@ -409,7 +409,7 @@ class ContentScript {
       const tabId = await this.getActiveTabId();
       if (tabId !== null && result.type === 'exempt') {
         const exemptPsp = TypeConverters.toPSPName(PSP_DETECTION_EXEMPT);
-        if (exemptPsp === null) {
+        if (exemptPsp === undefined) {
           return;
         }
 
@@ -452,14 +452,14 @@ class ContentScript {
   /**
   Returns the origin of `document.referrer` when it points at a different
   host than the current page. Used to record the merchant that redirected
-  the user to a hosted-checkout PSP page; returns null when the referrer is
+  the user to a hosted-checkout PSP page; returns undefined when the referrer is
   empty, malformed, or same-origin (in which case the detection page already
   IS the merchant).
    */
-  private getMerchantOriginFromReferrer(): string | null {
+  private getMerchantOriginFromReferrer(): string | undefined {
     const referrer = document.referrer;
     if (referrer.length === 0) {
-      return null;
+      return undefined;
     }
 
     try {
@@ -468,27 +468,27 @@ class ContentScript {
         referrerUrl.protocol !== 'https:' &&
         referrerUrl.protocol !== 'http:'
       ) {
-        return null;
+        return undefined;
       }
 
       if (referrerUrl.hostname === location.hostname) {
-        return null;
+        return undefined;
       }
 
       return referrerUrl.origin;
     } catch {
-      return null;
+      return undefined;
     }
   }
 
-  private async getActiveTabId(): Promise<ReturnType<
-    typeof TypeConverters.toTabId
-  > | null> {
+  private async getActiveTabId(): Promise<
+    ReturnType<typeof TypeConverters.toTabId>
+  > {
     const tabResponse = await this.sendMessage<{ tabId: number }>({
       action: MessageAction.GET_TAB_ID,
     });
 
-    if (!tabResponse?.tabId) return null;
+    if (!tabResponse?.tabId) return undefined;
     return TypeConverters.toTabId(tabResponse.tabId);
   }
 
@@ -518,7 +518,7 @@ class ContentScript {
         psp: brandedPspName,
         tabId,
         detectionInfo: match.detectionInfo,
-        ...(merchantOrigin !== null && { merchantOrigin }),
+        ...(merchantOrigin !== undefined && { merchantOrigin }),
       },
     };
 
@@ -681,7 +681,7 @@ class ContentScript {
 
   private async getAccessibleIframeDocument(
     iframe: HTMLIFrameElement,
-  ): Promise<Document | null> {
+  ): Promise<Document | undefined> {
     const existingDocument =
       iframe.contentDocument ?? iframe.contentWindow?.document;
     if (existingDocument) {
@@ -689,7 +689,7 @@ class ContentScript {
     }
 
     if (iframe.contentWindow === null) {
-      return null;
+      return undefined;
     }
 
     await Promise.race([
@@ -701,7 +701,9 @@ class ContentScript {
       }),
     ]);
 
-    return iframe.contentDocument ?? iframe.contentWindow?.document ?? null;
+    return (
+      iframe.contentDocument ?? iframe.contentWindow?.document ?? undefined
+    );
   }
 
   /** Pulls nested script, iframe, and form URLs out of an accessible iframe. */

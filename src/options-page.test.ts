@@ -84,7 +84,7 @@ function createProviderConfig(): PSPConfig {
   const stripeName = TypeConverters.toPSPName('Stripe');
   const stripeUrl = TypeConverters.toURL('https://stripe.com');
 
-  if (stripeName === null || stripeUrl === null) {
+  if (stripeName === undefined || stripeUrl === undefined) {
     throw new Error('Failed to build test PSP config');
   }
 

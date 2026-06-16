@@ -12,9 +12,9 @@ export const TypeConverters = {
   Accepts only non-empty provider names so empty detection results never get
   branded as valid PSP identifiers.
    */
-  toPSPName: (name: string): PSPName | null => {
+  toPSPName: (name: string): PSPName | undefined => {
     if (!name || name.trim().length === 0) {
-      return null;
+      return undefined;
     }
 
     return name as PSPName;
@@ -23,9 +23,9 @@ export const TypeConverters = {
   /**
   Accepts only non-negative integer tab ids returned by the browser APIs.
    */
-  toTabId: (id: number): TabId | null => {
+  toTabId: (id: number): TabId | undefined => {
     if (!Number.isSafeInteger(id) || id < 0) {
-      return null;
+      return undefined;
     }
 
     return id as TabId;
@@ -34,24 +34,24 @@ export const TypeConverters = {
   /**
   Brands only syntactically valid absolute URLs.
    */
-  toURL: (url: string): URL | null => {
+  toURL: (url: string): URL | undefined => {
     try {
       new globalThis.URL(url);
       return url as URL;
     } catch {
-      return null;
+      return undefined;
     }
   },
 
   /**
   Brands only regex strings that the JS runtime can compile successfully.
    */
-  toRegexPattern: (pattern: string): RegexPattern | null => {
+  toRegexPattern: (pattern: string): RegexPattern | undefined => {
     try {
       new RegExp(pattern);
       return pattern as RegexPattern;
     } catch {
-      return null;
+      return undefined;
     }
   },
 };

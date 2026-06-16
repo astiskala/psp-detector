@@ -83,19 +83,19 @@ interface PSPDetectorServiceInternal {
 export function getPSPByPSPName(
   service: PSPDetectorService,
   pspName: PSPName,
-): PSP | null {
+): PSP | undefined {
   try {
     // Access private pspConfig through type assertion for testing
     const config = (service as unknown as PSPDetectorServiceInternal).pspConfig;
 
     if (!config) {
-      return null;
+      return undefined;
     }
 
     const providers = getAllProviders(config);
-    return providers.find((psp) => psp.name === pspName) ?? null;
+    return providers.find((psp) => psp.name === pspName);
   } catch {
-    return null;
+    return undefined;
   }
 }
 

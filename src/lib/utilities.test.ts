@@ -82,7 +82,7 @@ describe('utils', () => {
       const result = safeCompileRegex(invalidPattern);
 
       // Assert
-      expect(result).toBeNull();
+      expect(result).toBeUndefined();
     });
   });
 

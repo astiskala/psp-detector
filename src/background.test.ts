@@ -29,7 +29,7 @@ type PermissionAddedListener = (
 
 interface EventMock<T extends (...arguments_: never[]) => unknown> {
   addListener: jest.Mock<void, [T]>;
-  getListener: () => T | null;
+  getListener: () => T | undefined;
 }
 
 interface ChromeMockContext {
@@ -134,7 +134,7 @@ function createChromeEventMocks(): ChromeEventMocks {
 function createEventMock<
   T extends (...arguments_: never[]) => unknown,
 >(): EventMock<T> {
-  let listener: T | null = null;
+  let listener: T | undefined;
   const addListener = jest.fn<void, [T]>((nextListener: T) => {
     listener = nextListener;
   });
@@ -357,7 +357,7 @@ function getRegisteredMessageListener(
   mocks: ChromeMockContext,
 ): MessageListener {
   const messageListener = mocks.onMessage.getListener();
-  if (messageListener === null) {
+  if (messageListener === undefined) {
     throw new Error(ON_MESSAGE_LISTENER_ERROR);
   }
 
@@ -424,7 +424,7 @@ describe('background service onboarding and re-detect flow', () => {
     await flushAsyncTasks();
 
     const installedListener = mocks.onInstalled.getListener();
-    if (installedListener === null) {
+    if (installedListener === undefined) {
       throw new Error('Expected onInstalled listener to be registered');
     }
 
@@ -454,7 +454,7 @@ describe('background service onboarding and re-detect flow', () => {
     await flushAsyncTasks();
 
     const messageListener = mocks.onMessage.getListener();
-    if (messageListener === null) {
+    if (messageListener === undefined) {
       throw new Error(ON_MESSAGE_LISTENER_ERROR);
     }
 
@@ -493,7 +493,7 @@ describe('background service onboarding and re-detect flow', () => {
     await flushAsyncTasks();
 
     const messageListener = mocks.onMessage.getListener();
-    if (messageListener === null) {
+    if (messageListener === undefined) {
       throw new Error(ON_MESSAGE_LISTENER_ERROR);
     }
 
@@ -519,7 +519,7 @@ describe('background service onboarding and re-detect flow', () => {
     await flushAsyncTasks();
 
     const messageListener = mocks.onMessage.getListener();
-    if (messageListener === null) {
+    if (messageListener === undefined) {
       throw new Error(ON_MESSAGE_LISTENER_ERROR);
     }
 
@@ -551,7 +551,7 @@ describe('background service onboarding and re-detect flow', () => {
 
     const messageListener = mocks.onMessage.getListener();
     const onSuspendListener = mocks.onSuspend.getListener();
-    if (messageListener === null || onSuspendListener === null) {
+    if (messageListener === undefined || onSuspendListener === undefined) {
       throw new Error('Expected listeners to be registered');
     }
 
@@ -574,7 +574,7 @@ describe('background service onboarding and re-detect flow', () => {
 
     await flushAsyncTasks();
 
-    expect(sendResponse).toHaveBeenCalledWith(null);
+    expect(sendResponse).toHaveBeenCalledWith();
     // Persist runs immediately so MV3 worker termination cannot drop the
     // detection while a debounce timer was still pending.
     expect(mocks.sessionSet).toHaveBeenCalledWith({
@@ -664,7 +664,7 @@ describe('background service onboarding and re-detect flow', () => {
     expect(secondPsps).toEqual([expect.objectContaining({ psp: 'Stripe' })]);
 
     const onSuspendListener = mocks.onSuspend.getListener();
-    if (onSuspendListener === null) {
+    if (onSuspendListener === undefined) {
       throw new Error('Expected onSuspend listener to be registered');
     }
 
@@ -701,7 +701,7 @@ describe('background service onboarding and re-detect flow', () => {
     await flushAsyncTasks();
 
     const messageListener = mocks.onMessage.getListener();
-    if (messageListener === null) {
+    if (messageListener === undefined) {
       throw new Error(ON_MESSAGE_LISTENER_ERROR);
     }
 
@@ -753,7 +753,7 @@ describe('background service onboarding and re-detect flow', () => {
     );
 
     await flushAsyncTasks();
-    expect(detectResponse).toHaveBeenCalledWith(null);
+    expect(detectResponse).toHaveBeenCalledWith();
 
     const pspResponse = jest.fn();
     messageListener(
@@ -802,7 +802,7 @@ describe('background service onboarding and re-detect flow', () => {
     await flushAsyncTasks();
 
     const activatedListener = mocks.onActivated.getListener();
-    if (activatedListener === null) {
+    if (activatedListener === undefined) {
       throw new Error('Expected onActivated listener to be registered');
     }
 
@@ -869,8 +869,8 @@ describe('background service onboarding and re-detect flow', () => {
 
     await flushAsyncTasks();
 
-    expect(stripeResponse).toHaveBeenCalledWith(null);
-    expect(adyenResponse).toHaveBeenCalledWith(null);
+    expect(stripeResponse).toHaveBeenCalledWith();
+    expect(adyenResponse).toHaveBeenCalledWith();
     expect(await getDetectedPspsForTab(messageListener, 91)).toEqual([
       expect.objectContaining({ psp: 'Adyen' }),
       expect.objectContaining({ psp: 'Stripe' }),

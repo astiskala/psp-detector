@@ -26,12 +26,12 @@ export function createSafeUrl(url: string): string {
 Compiles a case-insensitive regex and converts invalid patterns into a
 logged `null` result so bad data never breaks detection startup.
  */
-export function safeCompileRegex(pattern: string): RegExp | null {
+export function safeCompileRegex(pattern: string): RegExp | undefined {
   try {
     return new RegExp(pattern, 'i');
   } catch (error) {
     logger.error(`Invalid regex pattern: ${pattern}`, error);
-    return null;
+    return undefined;
   }
 }
 
@@ -144,11 +144,11 @@ export function debouncedMutation<
   wait = 100,
   immediate = false,
 ): (...arguments_: Parameters<T>) => void {
-  let timeout: NodeJS.Timeout | null = null;
+  let timeout: NodeJS.Timeout | undefined;
 
   return (...arguments_: Parameters<T>): void => {
     const later = (): void => {
-      timeout = null;
+      timeout = undefined;
       if (!immediate) function_(...arguments_);
     };
 

@@ -48,13 +48,13 @@ function matchesDetectionSignature(
 function getMatchingFirstDetectedAt(
   existing: HistoryEntry,
   incoming: HistoryEntry,
-): number | null {
+): number | undefined {
   if (normalizeDomain(existing.domain) !== normalizeDomain(incoming.domain)) {
-    return null;
+    return undefined;
   }
 
   if (incoming.psps.length === 0) {
-    return null;
+    return undefined;
   }
 
   let firstDetectedAt = Infinity;
@@ -63,7 +63,7 @@ function getMatchingFirstDetectedAt(
       matchesDetectionSignature(existingMatch, incomingMatch),
     );
     if (matching === undefined) {
-      return null;
+      return undefined;
     }
 
     firstDetectedAt = Math.min(
@@ -72,7 +72,7 @@ function getMatchingFirstDetectedAt(
     );
   }
 
-  return Number.isFinite(firstDetectedAt) ? firstDetectedAt : null;
+  return Number.isFinite(firstDetectedAt) ? firstDetectedAt : undefined;
 }
 
 function sourcePriority(sourceType: string | undefined): number {
@@ -116,7 +116,7 @@ function shouldReplaceMatch(
 function mergeHistoryPsps(
   existing: readonly HistoryPSPMatch[],
   incoming: readonly HistoryPSPMatch[],
-): HistoryPSPMatch[] | null {
+): HistoryPSPMatch[] | undefined {
   const mergedPsps = [...existing];
   let hasChanges = false;
   for (const incomingMatch of incoming) {
@@ -140,7 +140,7 @@ function mergeHistoryPsps(
     }
   }
 
-  return hasChanges ? mergedPsps : null;
+  return hasChanges ? mergedPsps : undefined;
 }
 
 /*
@@ -165,8 +165,8 @@ function findEntryStatus(
   const normalizedEntry = normalizeHistoryEntry(entry);
   const mergeThreshold =
     normalizedEntry.timestamp - HISTORY_ENTRY_MERGE_WINDOW_MS;
-  let matchingIndex: number | null = null;
-  let firstDetectedAt: number | null = null;
+  let matchingIndex: number | undefined;
+  let firstDetectedAt: number | undefined;
 
   for (const [index, existing] of history.entries()) {
     if (existing === undefined) {
@@ -180,7 +180,7 @@ function findEntryStatus(
       return { kind: 'merge', index: index };
     }
 
-    if (matchingIndex !== null) {
+    if (matchingIndex !== undefined) {
       continue;
     }
 
@@ -188,7 +188,7 @@ function findEntryStatus(
       existing,
       normalizedEntry,
     );
-    if (matchedFirstDetectedAt === null) {
+    if (matchedFirstDetectedAt === undefined) {
       continue;
     }
 
@@ -196,7 +196,7 @@ function findEntryStatus(
     firstDetectedAt = matchedFirstDetectedAt;
   }
 
-  if (matchingIndex === null || firstDetectedAt === null) {
+  if (matchingIndex === undefined || firstDetectedAt === undefined) {
     return { kind: 'none' };
   }
 
@@ -252,7 +252,7 @@ async function writeHistoryEntryUnsafe(entry: HistoryEntry): Promise<void> {
       }
 
       const mergedPsps = mergeHistoryPsps(existing.psps, normalizedEntry.psps);
-      if (mergedPsps === null) {
+      if (mergedPsps === undefined) {
         logger.debug('Skipping merge: no new or higher-priority PSP matches');
         return;
       }

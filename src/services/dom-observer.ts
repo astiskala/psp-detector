@@ -5,12 +5,11 @@ Watches for payment-relevant DOM changes and batches them before triggering
 a new detection pass.
  */
 export class DOMObserverService {
-  private observer: MutationObserver | null = null;
+  private observer: MutationObserver | undefined;
   private isObserving = false;
   private pendingMutations: MutationRecord[] = [];
-  private debounceTimer: ReturnType<typeof setTimeout> | null = null;
-  private debounceCallback: ((mutations: MutationRecord[]) => void) | null =
-    null;
+  private debounceTimer: ReturnType<typeof setTimeout> | undefined;
+  private debounceCallback: ((mutations: MutationRecord[]) => void) | undefined;
 
   /**
   Creates the underlying `MutationObserver` and debounces callback delivery
@@ -47,12 +46,12 @@ export class DOMObserverService {
 
           this.pendingMutations.push(...relevantMutations);
 
-          if (this.debounceTimer !== null) {
+          if (this.debounceTimer !== undefined) {
             clearTimeout(this.debounceTimer);
           }
 
           this.debounceTimer = setTimeout(() => {
-            this.debounceTimer = null;
+            this.debounceTimer = undefined;
             const accumulated = this.pendingMutations;
             this.pendingMutations = [];
             this.debounceCallback?.(accumulated);
@@ -169,7 +168,7 @@ export class DOMObserverService {
 
       try {
         const observer = this.observer;
-        if (observer === null) {
+        if (observer === undefined) {
           return;
         }
 
@@ -196,9 +195,9 @@ export class DOMObserverService {
     try {
       this.observer.disconnect();
       this.isObserving = false;
-      if (this.debounceTimer !== null) {
+      if (this.debounceTimer !== undefined) {
         clearTimeout(this.debounceTimer);
-        this.debounceTimer = null;
+        this.debounceTimer = undefined;
       }
 
       this.pendingMutations = [];
@@ -211,7 +210,7 @@ export class DOMObserverService {
   /** Fully releases the observer and its callback references. */
   public cleanup(): void {
     this.stopObserving();
-    this.observer = null;
-    this.debounceCallback = null;
+    this.observer = undefined;
+    this.debounceCallback = undefined;
   }
 }

@@ -13,13 +13,13 @@ payment-related signals. Provider ordering is preserved so `psps.json`
 precedence stays deterministic.
  */
 export class PSPDetectorService {
-  private pspConfig: PSPConfig | null = null;
+  private pspConfig: PSPConfig | undefined;
   private exemptDomains: string[] = [];
 
   /**
   Flattened provider list cached once so every detection uses the same order.
    */
-  private providerCache: ReturnType<typeof getAllProviders> | null = null;
+  private providerCache: ReturnType<typeof getAllProviders> | undefined;
 
   private readonly maxContentSize = 1024 * 1024; // 1MB limit
 
@@ -71,7 +71,7 @@ export class PSPDetectorService {
       const truncatedContent = this.buildTruncatedContent(url, content);
 
       const providers = this.providerCache;
-      if (providers === null) {
+      if (providers === undefined) {
         logger.warn('PSP detector provider cache unavailable');
         return PSPDetectionResult.error(
           new Error('PSP providers are not initialized'),
@@ -107,8 +107,8 @@ export class PSPDetectorService {
     }
   }
 
-  private ensureInitialized(): PSPDetectionResult | null {
-    if (this.pspConfig) return null;
+  private ensureInitialized(): PSPDetectionResult | undefined {
+    if (this.pspConfig) return undefined;
 
     logger.warn('PSP detector not properly initialized');
     return PSPDetectionResult.error(
@@ -117,7 +117,7 @@ export class PSPDetectorService {
     );
   }
 
-  private validateInputs(url: string): PSPDetectionResult | null {
+  private validateInputs(url: string): PSPDetectionResult | undefined {
     if (url.trim().length === 0) {
       return PSPDetectionResult.error(
         new Error('Invalid URL provided'),
@@ -125,7 +125,7 @@ export class PSPDetectorService {
       );
     }
 
-    return null;
+    return undefined;
   }
 
   private getUrlToCheck(fallbackUrl: string): string {
@@ -157,9 +157,9 @@ export class PSPDetectorService {
   private checkExempt(
     urlToCheck: string,
     brandedURL: ReturnType<typeof TypeConverters.toURL>,
-  ): PSPDetectionResult | null {
-    if (!brandedURL) return null;
-    if (this.exemptDomains.length === 0) return null;
+  ): PSPDetectionResult | undefined {
+    if (!brandedURL) return undefined;
+    if (this.exemptDomains.length === 0) return undefined;
 
     try {
       const parsedUrl = new URL(urlToCheck);
@@ -193,7 +193,7 @@ export class PSPDetectorService {
       }
     }
 
-    return null;
+    return undefined;
   }
 
   private buildTruncatedContent(url: string, content: string): string {

@@ -74,11 +74,13 @@ async function sendRuntimeMessage<T>(
 
 async function resetStoredRuntimeState(page: Page): Promise<void> {
   await page.evaluate(async () => {
+    /* eslint-disable unicorn/no-null -- Chrome storage requires null to clear stored values; undefined is ignored by the set API */
     await chrome.storage.local.set({
       detectedPsp: null,
       currentTabId: null,
       psp_history: [],
     });
+    /* eslint-enable unicorn/no-null */
 
     await chrome.storage.session.set({
       tabPsps: {},
@@ -107,7 +109,7 @@ async function createMerchantTab(
       url: 'about:blank',
     });
 
-    return tab.id ?? null;
+    return tab.id ?? undefined;
   });
 
   if (typeof tabId !== 'number') {
@@ -271,7 +273,7 @@ test('popup renders seeded detections and keeps button sizing consistent', async
       const source = document.querySelector('.source-pill');
       const signal = document.querySelector('.match-value');
       if (!source || !signal) {
-        return null;
+        return;
       }
 
       const sourceStyle = getComputedStyle(source);
@@ -297,7 +299,7 @@ test('popup renders seeded detections and keeps button sizing consistent', async
       const historyButton = document.querySelector('#history-link');
       const suggestButton = document.querySelector('#psp-url a');
       if (!historyButton || !suggestButton) {
-        return null;
+        return;
       }
 
       return {

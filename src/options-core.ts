@@ -3,7 +3,7 @@ import type { HistoryEntry } from './types/history';
 export interface HistoryStats {
   readonly uniqueDomains: number;
   readonly uniquePsps: number;
-  readonly topPsp: string | null;
+  readonly topPsp: string | undefined;
 }
 
 export interface DistributionSlice {
@@ -96,7 +96,7 @@ export function getHistoryStats(history: HistoryEntry[]): HistoryStats {
   const domainSet = new Set(history.map((entry) => entry.domain));
   const uniqueDomains = domainSet.size;
   const pspCounts = new Map<string, number>();
-  let topPsp: string | null = null;
+  let topPsp: string | undefined;
   let topCount = 0;
 
   for (const entry of history) {
@@ -120,7 +120,8 @@ export function getHistoryStats(history: HistoryEntry[]): HistoryStats {
 
 /** Converts computed history stats into the compact header sentence. */
 export function formatHistorySummary(stats: HistoryStats): string {
-  const topPspSummary = stats.topPsp === null ? '' : ` · Top: ${stats.topPsp}`;
+  const topPspSummary =
+    stats.topPsp === undefined ? '' : ` · Top: ${stats.topPsp}`;
   return (
     `${stats.uniqueDomains} sites scanned · ` +
     `${stats.uniquePsps} unique PSPs${topPspSummary}`
