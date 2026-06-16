@@ -30,7 +30,7 @@ module.exports = {
         path: '^src/lib',
       },
       to: {
-        path: '^src/(services|background|content|popup|options)\\.ts$',
+        path: String.raw`^src/(services|background|content|popup|options)\.ts$`,
       },
     },
     {
@@ -41,7 +41,7 @@ module.exports = {
         path: '^src/services',
       },
       to: {
-        path: '^src/(background|content|popup|options)\\.ts$',
+        path: String.raw`^src/(background|content|popup|options)\.ts$`,
       },
     },
     {
@@ -49,17 +49,17 @@ module.exports = {
       comment: 'Runtime entrypoints should remain isolated from one another.',
       severity: 'error',
       from: {
-        path: '^src/(background|content|popup|options)\\.ts$',
+        path: String.raw`^src/(background|content|popup|options)\.ts$`,
       },
       to: {
-        path: '^src/(background|content|popup|options)\\.ts$',
+        path: String.raw`^src/(background|content|popup|options)\.ts$`,
       },
     },
   ],
   options: {
     includeOnly: '^src',
     exclude: {
-      path: '\\.(test|spec)\\.ts$|^src/test-helpers/',
+      path: String.raw`\.(test|spec)\.ts$|^src/test-helpers/`,
     },
     doNotFollow: {
       path: 'node_modules',

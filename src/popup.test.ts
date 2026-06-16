@@ -127,7 +127,7 @@ function mockSendMessageResponses(
   let cursor = 0;
   sendMessage.mockImplementation(
     (_message: { action: string }, callback: (response: unknown) => void) => {
-      const fallback = responses[responses.length - 1];
+      const fallback = responses.at(-1);
       const next = cursor < responses.length ? responses[cursor] : fallback;
       callback(next);
       cursor += 1;

@@ -187,11 +187,13 @@ class ContentScript {
       return;
     }
 
-    this.lastDetectionTime = now;
-
     if (this.pspDetected || !this.pspDetector.isInitialized()) {
       return;
     }
+
+    // Advance the cooldown only once we know a real detection pass will run,
+    // so early returns during startup don't suppress the first real scan.
+    this.lastDetectionTime = now;
 
     const url = TypeConverters.toURL(document.URL);
     if (!url) {
@@ -365,7 +367,7 @@ class ContentScript {
       return false;
     }
 
-    if (!relValues.some((rel) => RELEVANT_LINK_RELS.has(rel))) {
+    if (relValues.every((rel) => !RELEVANT_LINK_RELS.has(rel))) {
       return false;
     }
 
@@ -438,6 +440,38 @@ class ContentScript {
     this.domObserver.stopObserving();
   }
 
+  /**
+   * Returns the origin of `document.referrer` when it points at a different
+   * host than the current page. Used to record the merchant that redirected
+   * the user to a hosted-checkout PSP page; returns null when the referrer is
+   * empty, malformed, or same-origin (in which case the detection page already
+   * IS the merchant).
+   */
+  private getMerchantOriginFromReferrer(): string | null {
+    const referrer = document.referrer;
+    if (referrer.length === 0) {
+      return null;
+    }
+
+    try {
+      const referrerUrl = new URL(referrer);
+      if (
+        referrerUrl.protocol !== 'https:' &&
+        referrerUrl.protocol !== 'http:'
+      ) {
+        return null;
+      }
+
+      if (referrerUrl.hostname === globalThis.location.hostname) {
+        return null;
+      }
+
+      return referrerUrl.origin;
+    } catch {
+      return null;
+    }
+  }
+
   private async getActiveTabId(): Promise<ReturnType<
     typeof TypeConverters.toTabId
   > | null> {
@@ -459,12 +493,23 @@ class ContentScript {
         `PSP: ${pspName}, TabID: ${tabId}`,
     );
 
+    const brandedPspName = TypeConverters.toPSPName(pspName);
+    if (brandedPspName === null) {
+      logger.warn(
+        'Content: Skipping detection report for empty PSP name:',
+        pspName,
+      );
+      return;
+    }
+
+    const merchantOrigin = this.getMerchantOriginFromReferrer();
     const messageData = {
       action: MessageAction.DETECT_PSP,
       data: {
-        psp: TypeConverters.toPSPName(pspName),
+        psp: brandedPspName,
         tabId,
         detectionInfo: match.detectionInfo,
+        ...(merchantOrigin !== null && { merchantOrigin }),
       },
     };
 
@@ -693,12 +738,10 @@ class ContentScript {
 
 // Prevent multiple content script instances on the same page
 interface WindowWithPSPDetector {
-  pspDetectorContentScript?:
-    | {
-        initialized: boolean;
-        url: string;
-      }
-    | undefined;
+  pspDetectorContentScript?: {
+    initialized: boolean;
+    url: string;
+  };
 }
 const windowExt = globalThis as unknown as WindowWithPSPDetector;
 
@@ -732,7 +775,7 @@ const registerContentScriptCleanup = (
   globalThis.addEventListener('beforeunload', (): void => {
     contentScript.cleanup();
     if (windowExt.pspDetectorContentScript?.url === url) {
-      windowExt.pspDetectorContentScript = undefined;
+      delete windowExt.pspDetectorContentScript;
     }
   });
 };
@@ -747,7 +790,7 @@ const startContentScript = async (options: {
   }
 
   if (options.resetState) {
-    windowExt.pspDetectorContentScript = undefined;
+    delete windowExt.pspDetectorContentScript;
   }
 
   const contentScript = new ContentScript();

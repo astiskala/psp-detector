@@ -63,6 +63,26 @@ describe('buildCSV', () => {
     const csv = buildCSV([]);
     expect(csv.split('\r\n')).toHaveLength(1);
   });
+
+  it('includes the merchant origin column', () => {
+    const withMerchant: HistoryEntry = {
+      ...entry,
+      merchantOrigin: 'https://merchant.example.com',
+    };
+    const csv = buildCSV([withMerchant]);
+    const lines = csv.split('\r\n');
+    expect(lines[0]).toContain('Merchant Origin');
+    expect(lines[1]).toContain('https://merchant.example.com');
+  });
+
+  it('leaves merchant origin blank when absent', () => {
+    const csv = buildCSV([entry]);
+    const headers = csv.split('\r\n')[0]!.split(',');
+    const row = csv.split('\r\n')[1]!.split(',');
+    const merchantIndex = headers.indexOf('Merchant Origin');
+    expect(merchantIndex).toBeGreaterThanOrEqual(0);
+    expect(row[merchantIndex]).toBe('');
+  });
 });
 
 describe('filterEntries', () => {
@@ -89,6 +109,15 @@ describe('filterEntries', () => {
 
   it('matches by detection source type', () => {
     expect(filterEntries([entry], 'scriptsrc', '')).toHaveLength(1);
+  });
+
+  it('matches by merchant origin substring', () => {
+    const withMerchant: HistoryEntry = {
+      ...entry,
+      merchantOrigin: 'https://acme-merchant.example.com',
+    };
+    expect(filterEntries([withMerchant], 'acme-merchant', '')).toHaveLength(1);
+    expect(filterEntries([withMerchant], 'other-shop', '')).toHaveLength(0);
   });
 });
 

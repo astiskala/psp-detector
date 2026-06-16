@@ -34,7 +34,7 @@ export function buildCSV(entries: HistoryEntry[]): string {
   };
 
   const header =
-    'Date,Domain,URL,PSP Names,Types,Detection Sources,Detection Signals';
+    'Date,Domain,Merchant Origin,URL,PSP Names,Types,Detection Sources,Detection Signals';
   if (entries.length === 0) return header;
 
   const rows = entries.map((entry) => {
@@ -45,6 +45,7 @@ export function buildCSV(entries: HistoryEntry[]): string {
     return [
       escape(new Date(entry.timestamp).toISOString()),
       escape(entry.domain),
+      escape(entry.merchantOrigin ?? ''),
       escape(entry.url),
       escape(names),
       escape(types),
@@ -71,6 +72,10 @@ export function filterEntries(
     if (pspFilter && !pspNames.includes(pspFilter)) return false;
     if (!lowerQuery) return true;
     if (entry.domain.toLowerCase().includes(lowerQuery)) return true;
+    if (entry.merchantOrigin?.toLowerCase().includes(lowerQuery) === true) {
+      return true;
+    }
+
     if (pspNames.some((name) => name.toLowerCase().includes(lowerQuery))) {
       return true;
     }

@@ -1,7 +1,7 @@
 import type { PSPConfig } from './types';
 import type { HistoryEntry } from './types/history';
 import { clearHistory, readHistory } from './lib/history';
-import { getAllProviders, logger } from './lib/utils';
+import { createSafeUrl, getAllProviders, logger } from './lib/utils';
 import {
   buildCSV,
   filterEntries,
@@ -344,6 +344,19 @@ function createTableIcon(
   return icon;
 }
 
+function getMerchantHostname(entry: HistoryEntry): string | null {
+  const origin = entry.merchantOrigin?.trim();
+  if (origin === undefined || origin.length === 0) {
+    return null;
+  }
+
+  try {
+    return new globalThis.URL(origin).hostname || null;
+  } catch {
+    return null;
+  }
+}
+
 function appendDomainCellContent(
   cell: HTMLTableCellElement,
   entry: HistoryEntry,
@@ -367,11 +380,24 @@ function appendDomainCellContent(
     wrap.appendChild(img);
   }
 
+  const labels = document.createElement('div');
+  labels.className = 'domain-cell-labels';
+
   const text = document.createElement('span');
   text.className = 'cell-label';
   text.textContent = entry.domain;
+  labels.appendChild(text);
 
-  wrap.appendChild(text);
+  const merchantHostname = getMerchantHostname(entry);
+  if (merchantHostname !== null && merchantHostname !== entry.domain) {
+    const merchant = document.createElement('span');
+    merchant.className = 'cell-sublabel merchant-origin';
+    merchant.textContent = `via ${merchantHostname}`;
+    merchant.title = `Redirected from ${entry.merchantOrigin}`;
+    labels.appendChild(merchant);
+  }
+
+  wrap.appendChild(labels);
   cell.appendChild(wrap);
 }
 
@@ -383,7 +409,9 @@ function createPspTextElement(
   if (providerUrl !== undefined && providerUrl !== '') {
     const anchor = document.createElement('a');
     anchor.className = 'cell-label';
-    anchor.href = providerUrl;
+    // Route through createSafeUrl so unsupported protocols (e.g. javascript:)
+    // are stripped, matching the popup's hardening in UIService.
+    anchor.href = createSafeUrl(providerUrl);
     anchor.textContent = name;
     anchor.target = '_blank';
     anchor.rel = 'noopener noreferrer';
@@ -488,6 +516,13 @@ function populatePspFilter(history: HistoryEntry[]): void {
     'pspFilter',
   ) as HTMLSelectElement | null;
   if (!select) return;
+
+  // Preserve the first "All PSPs" placeholder option from the markup and
+  // drop everything we previously appended so a re-populate (after clear or
+  // re-init) doesn't leave stale provider names in the dropdown.
+  while (select.options.length > 1) {
+    select.remove(1);
+  }
 
   for (const name of getUniquePspNames(history)) {
     const option = document.createElement('option');
@@ -617,6 +652,17 @@ function bindControls(historyRef: HistoryRef): void {
     clearHistory()
       .then(() => {
         historyRef.setHistory([]);
+        // Reset the dropdown and search to match the now-empty history so
+        // the user isn't filtering against PSP names that no longer exist.
+        const searchInput = document.getElementById(
+          'search',
+        ) as HTMLInputElement | null;
+        if (searchInput) searchInput.value = '';
+        const pspFilterSelect = document.getElementById(
+          'pspFilter',
+        ) as HTMLSelectElement | null;
+        if (pspFilterSelect) pspFilterSelect.value = '';
+        populatePspFilter([]);
         renderStats([]);
         renderTable([]);
         scheduleIdle(() => renderCharts([]));

@@ -176,7 +176,11 @@ export class PSPDetectorService {
         error,
       );
 
-      if (this.exemptDomains.some((domain) => urlToCheck.includes(domain))) {
+      // Exempt domains are lowercased by normalizeStringArray; match
+      // case-insensitively here so a mixed-case URL that failed strict
+      // parsing still hits the exemption.
+      const lowered = urlToCheck.toLowerCase();
+      if (this.exemptDomains.some((domain) => lowered.includes(domain))) {
         logger.debug(
           'URL is exempt from PSP detection (fallback):',
           urlToCheck,
@@ -195,12 +199,20 @@ export class PSPDetectorService {
     const pageContent = `${url}\n\n${content}`;
     if (pageContent.length <= this.maxContentSize) return pageContent;
 
+    // Cut on the last newline within the limit so a matchString straddling
+    // the boundary is never split mid-pattern (which would silently miss the
+    // provider). If no newline is found, fall back to a hard cut.
+    const hardCut = pageContent.substring(0, this.maxContentSize);
+    const lastNewline = hardCut.lastIndexOf('\n');
+    const truncated =
+      lastNewline > 0 ? hardCut.substring(0, lastNewline) : hardCut;
+
     logger.debug(
       `Content truncated from ${pageContent.length} to ` +
-        `${this.maxContentSize} characters`,
+        `${truncated.length} characters`,
     );
 
-    return pageContent.substring(0, this.maxContentSize);
+    return truncated;
   }
 
   private collectAllMatches(

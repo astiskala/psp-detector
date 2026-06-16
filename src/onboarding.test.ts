@@ -11,12 +11,16 @@ interface PermissionState {
   webRequest: boolean;
 }
 
+const GRANT_HOST_ACCESS_BUTTON_ID = 'grant-host-access';
+const PERMISSION_STATUS_ID = 'permission-status';
+const NOT_ENABLED_TEXT = 'not enabled';
+
 function setupOnboardingDOM(): void {
   document.body.innerHTML = `
-    <button id="grant-host-access" type="button">
+    <button id="${GRANT_HOST_ACCESS_BUTTON_ID}" type="button">
       Grant required permissions
     </button>
-    <div id="permission-status"></div>
+    <div id="${PERMISSION_STATUS_ID}"></div>
   `;
 }
 
@@ -105,12 +109,12 @@ describe('onboarding page', () => {
     document.dispatchEvent(new Event('DOMContentLoaded'));
     await flushAsyncTasks();
 
-    const status = document.getElementById('permission-status');
+    const status = document.getElementById(PERMISSION_STATUS_ID);
     const button = document.getElementById(
-      'grant-host-access',
+      GRANT_HOST_ACCESS_BUTTON_ID,
     ) as HTMLButtonElement | null;
 
-    expect(status?.textContent).toContain('not enabled');
+    expect(status?.textContent).toContain(NOT_ENABLED_TEXT);
     expect(button?.disabled).toBe(false);
   });
 
@@ -120,12 +124,12 @@ describe('onboarding page', () => {
     document.dispatchEvent(new Event('DOMContentLoaded'));
     await flushAsyncTasks();
 
-    const status = document.getElementById('permission-status');
+    const status = document.getElementById(PERMISSION_STATUS_ID);
     const button = document.getElementById(
-      'grant-host-access',
+      GRANT_HOST_ACCESS_BUTTON_ID,
     ) as HTMLButtonElement | null;
 
-    expect(status?.textContent).toContain('not enabled');
+    expect(status?.textContent).toContain(NOT_ENABLED_TEXT);
     expect(button?.disabled).toBe(false);
   });
 
@@ -139,19 +143,19 @@ describe('onboarding page', () => {
     await flushAsyncTasks();
 
     const grantButton = document.getElementById(
-      'grant-host-access',
+      GRANT_HOST_ACCESS_BUTTON_ID,
     ) as HTMLButtonElement | null;
     if (grantButton === null) {
-      throw new Error('Expected grant-host-access button');
+      throw new Error(`Expected ${GRANT_HOST_ACCESS_BUTTON_ID} button`);
     }
 
     expect(grantButton.disabled).toBe(false);
     grantButton.click();
     await flushAsyncTasks();
 
-    const status = document.getElementById('permission-status');
+    const status = document.getElementById(PERMISSION_STATUS_ID);
     const button = document.getElementById(
-      'grant-host-access',
+      GRANT_HOST_ACCESS_BUTTON_ID,
     ) as HTMLButtonElement | null;
 
     expect(chromeMocks.request).toHaveBeenCalledWith({
@@ -165,5 +169,93 @@ describe('onboarding page', () => {
 
     expect(status?.textContent).toContain('enabled');
     expect(button?.disabled).toBe(true);
+  });
+
+  it('re-enables the grant button when permission is denied', async () => {
+    setupChromeMocks({ host: false, webRequest: false }, false);
+    await import('./onboarding');
+    document.dispatchEvent(new Event('DOMContentLoaded'));
+    await flushAsyncTasks();
+
+    const grantButton = document.getElementById(
+      GRANT_HOST_ACCESS_BUTTON_ID,
+    ) as HTMLButtonElement | null;
+    if (grantButton === null) {
+      throw new Error(`Expected ${GRANT_HOST_ACCESS_BUTTON_ID} button`);
+    }
+
+    grantButton.click();
+    await flushAsyncTasks();
+
+    const status = document.getElementById(PERMISSION_STATUS_ID);
+    expect(status?.textContent).toContain('not granted');
+    expect(grantButton.disabled).toBe(false);
+  });
+
+  it('re-enables the grant button when the permission request rejects', async () => {
+    const mocks = setupChromeMocks({ host: false, webRequest: false }, false);
+    // Replace the default implementation entirely so subsequent calls also
+    // reject — that way no fallthrough behavior can rewrite the status text
+    // after the catch handler runs.
+    mocks.request.mockImplementation(async () => {
+      throw new Error('permission API failure');
+    });
+
+    await import('./onboarding');
+    document.dispatchEvent(new Event('DOMContentLoaded'));
+    await flushAsyncTasks();
+
+    const grantButton = document.getElementById(
+      GRANT_HOST_ACCESS_BUTTON_ID,
+    ) as HTMLButtonElement | null;
+    if (grantButton === null) {
+      throw new Error(`Expected ${GRANT_HOST_ACCESS_BUTTON_ID} button`);
+    }
+
+    grantButton.click();
+    await flushAsyncTasks();
+
+    const status = document.getElementById(PERMISSION_STATUS_ID);
+    expect(status?.textContent).toContain('failed');
+    expect(grantButton.disabled).toBe(false);
+  });
+
+  it('disables the grant button while a permission request is in flight', async () => {
+    const mocks = setupChromeMocks({ host: false, webRequest: false }, false);
+    // Hold the permission promise open so we can observe the intermediate
+    // disabled state before it resolves. Use mockImplementation (not -Once)
+    // so the held-promise behavior wins over the default impl regardless of
+    // call ordering.
+    let resolvePermission: (granted: boolean) => void = () => {
+      /* assigned below */
+    };
+    mocks.request.mockImplementation(
+      () =>
+        new Promise<boolean>((resolve) => {
+          resolvePermission = resolve;
+        }),
+    );
+
+    await import('./onboarding');
+    document.dispatchEvent(new Event('DOMContentLoaded'));
+    await flushAsyncTasks();
+
+    const grantButton = document.getElementById(
+      GRANT_HOST_ACCESS_BUTTON_ID,
+    ) as HTMLButtonElement | null;
+    if (grantButton === null) {
+      throw new Error(`Expected ${GRANT_HOST_ACCESS_BUTTON_ID} button`);
+    }
+
+    expect(grantButton.disabled).toBe(false);
+    grantButton.click();
+    await Promise.resolve();
+    expect(grantButton.disabled).toBe(true);
+
+    resolvePermission(false);
+    await flushAsyncTasks();
+    // After the request resolves (denied), the button must be re-enabled so
+    // the user can try again without reloading the page.
+    expect(grantButton.disabled).toBe(false);
   });
 });

@@ -3,7 +3,16 @@ import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import jsdoc from 'eslint-plugin-jsdoc';
 import sonarjs from 'eslint-plugin-sonarjs';
+import unicorn from 'eslint-plugin-unicorn';
 import prettierConfig from 'eslint-config-prettier';
+
+const unicornAllPreset = unicorn.configs.all;
+const unicornAllRules = Object.fromEntries(
+  Object.entries(unicornAllPreset.rules).map(([ruleName, setting]) => [
+    ruleName,
+    Array.isArray(setting) ? ['error', ...setting.slice(1)] : 'error',
+  ]),
+);
 
 const strictTypeScriptRules = {
   '@typescript-eslint/consistent-type-imports': [
@@ -35,7 +44,7 @@ const strictTypeScriptRules = {
   'sonarjs/no-ignored-return': 'error',
   'sonarjs/no-collapsible-if': 'error',
   'sonarjs/no-redundant-assignments': 'error',
-  'sonarjs/no-duplicate-string': ['warn', { threshold: 5 }],
+  'sonarjs/no-duplicate-string': ['error', { threshold: 5 }],
   'sonarjs/no-inverted-boolean-check': 'error',
   'jsdoc/check-alignment': 'error',
   'jsdoc/check-tag-names': 'error',
@@ -76,6 +85,87 @@ export default [
   js.configs.recommended,
   ...tseslint.configs.recommended,
   ...tseslint.configs.stylistic,
+
+  // Full unicorn preset with repo-specific exceptions.
+  {
+    name: 'psp-detector/unicorn-all',
+    languageOptions: {
+      globals: {
+        ...unicornAllPreset.languageOptions.globals,
+      },
+    },
+    plugins: {
+      unicorn,
+    },
+    rules: unicornAllRules,
+  },
+  {
+    name: 'psp-detector/unicorn-exceptions',
+    rules: {
+      'unicorn/comment-content': 'off',
+      'unicorn/no-array-reduce': 'off',
+      'unicorn/consistent-class-member-order': 'off',
+      'unicorn/no-computed-property-existence-check': 'off',
+      'unicorn/no-error-property-assignment': 'off',
+      'unicorn/consistent-destructuring': 'off',
+      'unicorn/consistent-function-scoping': 'off',
+      'unicorn/consistent-function-style': 'off',
+      'unicorn/consistent-json-file-read': 'off',
+      'unicorn/no-negated-array-predicate': 'off',
+      'unicorn/no-asterisk-prefix-in-documentation-comments': 'off',
+      'unicorn/no-unsafe-property-key': 'off',
+      'unicorn/no-array-sort': 'off',
+      'unicorn/no-break-in-nested-loop': 'off',
+      'unicorn/no-for-each': 'off',
+      'unicorn/no-global-object-property-assignment': 'off',
+      'unicorn/explicit-length-check': 'off',
+      'unicorn/import-style': 'off',
+      'unicorn/max-nested-calls': 'off',
+      'unicorn/numeric-separators-style': 'off',
+      'unicorn/no-incorrect-query-selector': 'off',
+      'unicorn/no-keyword-prefix': 'off',
+      'unicorn/prefer-global-number-constants': 'off',
+      'unicorn/no-null': 'off',
+      'unicorn/no-unnecessary-global-this': 'off',
+      'unicorn/no-unreadable-new-expression': 'off',
+      'unicorn/no-unsafe-dom-html': 'off',
+      'unicorn/no-useless-template-literals': 'off',
+      'unicorn/prefer-abbreviations': 'off',
+      'unicorn/prefer-add-event-listener': 'off',
+      'unicorn/prefer-direct-iteration': 'off',
+      'unicorn/prefer-dispose': 'off',
+      'unicorn/prefer-dom-node-append': 'off',
+      'unicorn/prefer-dom-node-html-methods': 'off',
+      'unicorn/prefer-early-return': 'off',
+      'unicorn/prefer-path2d': 'off',
+      'unicorn/prefer-https': 'off',
+      'unicorn/prefer-iterator-to-array': 'off',
+      'unicorn/prefer-modern-dom-apis': 'off',
+      'unicorn/prefer-module': 'off',
+      'unicorn/prefer-number-coercion': 'off',
+      'unicorn/prefer-number-is-safe-integer': 'off',
+      'unicorn/prefer-object-define-properties': 'off',
+      'unicorn/prefer-await': 'off',
+      'unicorn/prefer-url-href': 'off',
+      'unicorn/prefer-top-level-await': 'off',
+      'unicorn/catch-error-name': 'off',
+      'unicorn/prefer-query-selector': 'off',
+      'unicorn/switch-case-break-position': 'off',
+      'unicorn/prefer-scoped-selector': 'off',
+      'unicorn/no-for-loop': 'off',
+      'unicorn/no-useless-else': 'off',
+      'unicorn/no-useless-undefined': 'off',
+      'unicorn/prefer-split-limit': 'off',
+      'unicorn/prefer-spread': 'off',
+      'unicorn/prefer-string-repeat': 'off',
+      'unicorn/prefer-string-slice': 'off',
+      'unicorn/prefer-temporal': 'off',
+      'unicorn/prefer-type-literal-last': 'off',
+      'unicorn/switch-case-braces': 'off',
+      'unicorn/try-complexity': 'off',
+      'unicorn/prevent-abbreviations': 'off',
+    },
+  },
 
   // General settings for all files
   {

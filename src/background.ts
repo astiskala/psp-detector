@@ -29,7 +29,6 @@ import { writeHistoryEntry } from './lib/history';
 import type { HistoryEntry, ProviderType } from './types/history';
 
 const BADGE_COLOR = '#6B7280';
-const TAB_STATE_PERSIST_DEBOUNCE_MS = 300;
 const NETWORK_REQUEST_TYPES: `${chrome.webRequest.ResourceType}`[] = [
   'script',
   'xmlhttprequest',
@@ -68,8 +67,8 @@ class BackgroundService {
   private inMemoryExemptDomains: string[] | null = null;
   private webRequestListenerRegistered = false;
   private readonly tabPspCache = new Map<number, StoredTabPsp[]>();
-  private tabPspPersistTimer: ReturnType<typeof setTimeout> | null = null;
   private tabPspPersistDirty = false;
+  private tabPspFlushInFlight: Promise<void> | null = null;
   private readonly providerPriorityByName = new Map<string, number>();
   private readonly networkMatchersByToken = new Map<string, NetworkMatcher[]>();
   private fallbackNetworkMatchers: NetworkMatcher[] = [];
@@ -111,25 +110,31 @@ class BackgroundService {
       });
     });
 
-    // Handle extension installation/update
-    chrome.runtime.onInstalled.addListener((details) => {
+    // Handle extension installation/update. The listener is async so Chrome
+    // keeps the MV3 service worker alive while setup completes — otherwise
+    // first-install storage seeding can be cut short on suspension.
+    chrome.runtime.onInstalled.addListener(async (details) => {
       logger.info('Extension installed/updated:', details.reason);
-      if (details.reason === 'install') {
-        this.handleFirstInstall();
-      } else if (details.reason === 'update') {
-        this.handleUpdate(details.previousVersion);
+      try {
+        if (details.reason === 'install') {
+          await this.handleFirstInstall();
+        } else if (details.reason === 'update') {
+          await this.handleUpdate(details.previousVersion);
+        }
+      } catch (error) {
+        logger.error('onInstalled handler failed:', error);
       }
     });
 
     // Handle service worker suspension/revival
     chrome.runtime.onSuspend.addListener(() => {
       logger.info('Service worker suspending');
-      this.persistState().catch((err) =>
-        logger.error('Failed to persist state on suspend:', err),
+      this.persistState().catch((error) =>
+        logger.error('Failed to persist state on suspend:', error),
       );
 
-      this.flushTabPspCache().catch((err) =>
-        logger.error('Failed to flush tab PSP cache on suspend:', err),
+      this.flushTabPspCache().catch((error) =>
+        logger.error('Failed to flush tab PSP cache on suspend:', error),
       );
     });
 
@@ -167,10 +172,6 @@ class BackgroundService {
     this.tabPspCache.clear();
     this.networkMatchedProvidersByTab.clear();
     this.tabPspPersistDirty = false;
-    if (this.tabPspPersistTimer !== null) {
-      clearTimeout(this.tabPspPersistTimer);
-      this.tabPspPersistTimer = null;
-    }
 
     await this.clearCachedConfig();
     await this.loadExemptDomains();
@@ -210,11 +211,10 @@ class BackgroundService {
         [STORAGE_KEYS.TAB_PSPS]: {} as Record<number, StoredTabPsp[]>,
       });
       const cachedConfig = localResult[STORAGE_KEYS.CACHED_PSP_CONFIG];
-      if (cachedConfig !== null && this.isValidPspConfig(cachedConfig)) {
-        this.inMemoryPspConfig = cachedConfig;
-      } else {
-        this.inMemoryPspConfig = null;
-      }
+      this.inMemoryPspConfig =
+        cachedConfig !== null && this.isValidPspConfig(cachedConfig)
+          ? cachedConfig
+          : null;
 
       this.rebuildNetworkMatcherIndex(this.inMemoryPspConfig);
 
@@ -246,7 +246,19 @@ class BackgroundService {
         continue;
       }
 
-      this.tabPspCache.set(tabId, this.sortStoredTabPsps(entries));
+      // Drop malformed records before they reach sortStoredTabPsps, which
+      // calls entry.psp.toLowerCase() and would crash on missing/non-string
+      // psp fields (e.g. after a schema drift across upgrades).
+      const valid = entries.filter(
+        (entry): entry is StoredTabPsp =>
+          typeof entry === 'object' &&
+          entry !== null &&
+          typeof (entry as StoredTabPsp).psp === 'string' &&
+          (entry as StoredTabPsp).psp.length > 0,
+      );
+      if (valid.length === 0) continue;
+
+      this.tabPspCache.set(tabId, this.sortStoredTabPsps(valid));
     }
   }
 
@@ -261,37 +273,46 @@ class BackgroundService {
 
   private markTabPspCacheDirty(): void {
     this.tabPspPersistDirty = true;
-    if (this.tabPspPersistTimer !== null) {
-      clearTimeout(this.tabPspPersistTimer);
-    }
-
-    this.tabPspPersistTimer = setTimeout(() => {
-      this.flushTabPspCache().catch((err) =>
-        logger.error('Failed to flush tab PSP cache:', err),
-      );
-    }, TAB_STATE_PERSIST_DEBOUNCE_MS);
+    // Kick a flush eagerly. MV3 service workers can be terminated without
+    // notice, so deferring this behind a setTimeout risks losing detections
+    // that arrived just before suspension. The trailing-flush logic inside
+    // flushTabPspCache collapses bursts to at most one in-flight set() plus
+    // one queued follow-up.
+    this.flushTabPspCache().catch((error) =>
+      logger.error('Failed to flush tab PSP cache:', error),
+    );
   }
 
   private async flushTabPspCache(): Promise<void> {
-    if (this.tabPspPersistTimer !== null) {
-      clearTimeout(this.tabPspPersistTimer);
-      this.tabPspPersistTimer = null;
+    if (this.tabPspFlushInFlight !== null) {
+      // Another flush is running; the dirty flag will cause it to loop.
+      return this.tabPspFlushInFlight;
     }
 
     if (!this.tabPspPersistDirty) {
       return;
     }
 
-    try {
-      await chrome.storage.session.set({
-        [STORAGE_KEYS.TAB_PSPS]: this.cloneTabPspCache(),
-      });
+    const run = async (): Promise<void> => {
+      while (this.tabPspPersistDirty) {
+        this.tabPspPersistDirty = false;
+        const snapshot = this.cloneTabPspCache();
+        try {
+          await chrome.storage.session.set({
+            [STORAGE_KEYS.TAB_PSPS]: snapshot,
+          });
+        } catch (error) {
+          logger.error('Failed to persist tab PSP cache:', error);
+          this.tabPspPersistDirty = true;
+          break;
+        }
+      }
+    };
 
-      this.tabPspPersistDirty = false;
-    } catch (error) {
-      logger.error('Failed to persist tab PSP cache:', error);
-      this.markTabPspCacheDirty();
-    }
+    this.tabPspFlushInFlight = run().finally(() => {
+      this.tabPspFlushInFlight = null;
+    });
+    return this.tabPspFlushInFlight;
   }
 
   /** Reads a local-storage value without letting storage failures escape. */
@@ -521,13 +542,11 @@ class BackgroundService {
 
           break;
 
-        case MessageAction.GET_EXEMPT_DOMAINS:
-          {
-            const exemptDomains = await this.getExemptDomains();
-            sendResponse({ exemptDomains });
-          }
-
+        case MessageAction.GET_EXEMPT_DOMAINS: {
+          const exemptDomains = await this.getExemptDomains();
+          sendResponse({ exemptDomains });
           break;
+        }
 
         case MessageAction.CHECK_TAB_STATE:
           await this.handleCheckTabState(sender, sendResponse);
@@ -558,7 +577,9 @@ class BackgroundService {
       typeof pspData.psp === 'string' &&
       (pspData.tabId === undefined || typeof pspData.tabId === 'number') &&
       (pspData.detectionInfo === undefined ||
-        typeof pspData.detectionInfo === 'object')
+        typeof pspData.detectionInfo === 'object') &&
+      (pspData.merchantOrigin === undefined ||
+        typeof pspData.merchantOrigin === 'string')
     );
   }
 
@@ -804,6 +825,7 @@ class BackgroundService {
         pspName,
         data.detectionInfo,
         sender,
+        data.merchantOrigin,
       );
     } catch (error) {
       logger.error('Background: Error processing PSP detection:', error);
@@ -818,7 +840,15 @@ class BackgroundService {
     tabId: number;
     pspName: NonNullable<PSPDetectionData['psp']>;
   } | null {
-    const tabId = data.tabId ?? TypeConverters.toTabId(sender.tab?.id ?? -1);
+    // Always derive tabId from sender.tab.id so a content script can't claim
+    // to be a different tab and poison another tab's PSP cache.
+    const senderTabId = sender.tab?.id;
+    if (typeof senderTabId !== 'number') {
+      logger.warn('Background: Detection message has no sender tab id');
+      return null;
+    }
+
+    const tabId = TypeConverters.toTabId(senderTabId);
     if (tabId === null || tabId === undefined) {
       logger.warn('Background: Invalid tab ID in detection payload');
       return null;
@@ -930,15 +960,21 @@ class BackgroundService {
     pspName: NonNullable<PSPDetectionData['psp']>,
     detectionInfo: PSPDetectionData['detectionInfo'] | undefined,
     sender: chrome.runtime.MessageSender,
+    merchantOrigin: string | undefined,
   ): Promise<void> {
     if (detectionInfo === undefined || pspName === PSP_DETECTION_EXEMPT) {
       return;
     }
 
     const now = Date.now();
+    const domain = this.getDomainFromSender(sender);
+    const resolvedMerchantOrigin = this.resolveMerchantOrigin(
+      merchantOrigin,
+      domain,
+    );
     const historyEntry: HistoryEntry = {
       id: `${tabId}_${now}`,
-      domain: this.getDomainFromSender(sender),
+      domain,
       url: sender.tab?.url ?? '',
       timestamp: now,
       psps: [
@@ -950,8 +986,37 @@ class BackgroundService {
           sourceType: detectionInfo.sourceType ?? 'pageUrl',
         },
       ],
+      ...(resolvedMerchantOrigin !== null && {
+        merchantOrigin: resolvedMerchantOrigin,
+      }),
     };
     await writeHistoryEntry(historyEntry);
+  }
+
+  /**
+   * Keeps the merchant origin only when it refers to a different host than the
+   * detection page. Returns null when the origin is empty, malformed, or
+   * matches the detection domain (in which case the content script already ran
+   * on the merchant itself, so the field would add nothing).
+   */
+  private resolveMerchantOrigin(
+    merchantOrigin: string | undefined,
+    domain: string,
+  ): string | null {
+    if (merchantOrigin === undefined || merchantOrigin.length === 0) {
+      return null;
+    }
+
+    try {
+      const parsed = new URL(merchantOrigin);
+      if (parsed.hostname.toLowerCase() === domain.toLowerCase()) {
+        return null;
+      }
+
+      return parsed.origin;
+    } catch {
+      return null;
+    }
   }
 
   /**
@@ -1380,11 +1445,11 @@ class BackgroundService {
 
     this.webRequestListenerRegistered = true;
     onBeforeRequest.addListener(
-      (details) => {
+      (details): undefined => {
         this.handleNetworkRequest(
           details as chrome.webRequest.WebRequestDetails,
-        ).catch((err) => {
-          logger.warn('webRequest handler error:', err);
+        ).catch((error) => {
+          logger.warn('webRequest handler error:', error);
         });
 
         return undefined;
@@ -1657,11 +1722,10 @@ class BackgroundService {
       if (pspInfo) {
         logger.debug('Background: Found PSP info:', pspInfo);
         return pspInfo;
-      } else {
-        logger.warn('Background: No PSP info found for:', psp);
-        logger.debug('Background: PSP not found in cached config');
-        return null;
       }
+      logger.warn('Background: No PSP info found for:', psp);
+      logger.debug('Background: PSP not found in cached config');
+      return null;
     } catch (error) {
       logger.error('Background: Error getting PSP info:', error);
       return null;

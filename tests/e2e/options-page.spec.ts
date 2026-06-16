@@ -27,7 +27,7 @@ const historyEntries: MockHistory[] = [
     id: '12_1708600000000',
     domain: 'checkout.example.com',
     url: 'https://checkout.example.com/pay',
-    timestamp: 1708600000000,
+    timestamp: 1_708_600_000_000,
     psps: [
       {
         name: 'Stripe',

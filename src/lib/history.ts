@@ -57,7 +57,7 @@ function getMatchingFirstDetectedAt(
     return null;
   }
 
-  let firstDetectedAt = Number.POSITIVE_INFINITY;
+  let firstDetectedAt = Infinity;
   for (const incomingMatch of incoming.psps) {
     const matching = existing.psps.find((existingMatch) =>
       matchesDetectionSignature(existingMatch, incomingMatch),
@@ -160,8 +160,7 @@ function findEntryStatus(
   let matchingIndex: number | null = null;
   let firstDetectedAt: number | null = null;
 
-  for (let i = 0; i < history.length; i++) {
-    const existing = history[i];
+  for (const [i, existing] of history.entries()) {
     if (existing === undefined) {
       continue;
     }
@@ -213,11 +212,23 @@ export async function readHistory(): Promise<HistoryEntry[]> {
     : [];
 }
 
+// Serializes writeHistoryEntry calls so concurrent invocations don't
+// read-modify-write the same starting history and clobber each other.
+let historyWriteChain: Promise<void> = Promise.resolve();
+
 /**
  * Writes a detection to history while preserving newest-first ordering,
  * merging near-duplicate page events, and debouncing repeated scans.
  */
 export async function writeHistoryEntry(entry: HistoryEntry): Promise<void> {
+  const next = historyWriteChain.then(() => writeHistoryEntryUnsafe(entry));
+  historyWriteChain = next.catch(() => {
+    /* swallow so the chain stays alive for the next caller */
+  });
+  return next;
+}
+
+async function writeHistoryEntryUnsafe(entry: HistoryEntry): Promise<void> {
   const normalizedEntry = normalizeHistoryEntry(entry);
 
   try {
@@ -266,21 +277,40 @@ export async function writeHistoryEntry(entry: HistoryEntry): Promise<void> {
     // status.kind === 'none': prepend new entry and cap at max
     const updated = [normalizedEntry, ...history].slice(0, HISTORY_MAX_ENTRIES);
     await chrome.storage.local.set({ [STORAGE_KEYS.PSP_HISTORY]: updated });
-  } catch (err) {
-    logger.warn('History write failed, attempting eviction:', err);
+  } catch (error) {
+    logger.warn('History write failed, attempting eviction:', error);
+    await evictAndWrite(normalizedEntry);
+  }
+}
 
-    // Note: the eviction retry path bypasses merge/debounce logic to avoid
-    // further async complexity. This could theoretically produce a duplicate
-    // on transient (non-quota) failures, but is acceptable given the rarity
-    // of quota errors in practice.
+// Iteratively halves the retained tail until the storage.set succeeds or only
+// the new entry remains. Each retry attempts roughly half the previous size so
+// a single quota-bound writeback recovers in O(log N) extra round-trips even
+// if individual entries are large.
+async function evictAndWrite(normalizedEntry: HistoryEntry): Promise<void> {
+  let history: HistoryEntry[];
+  try {
+    history = await readHistory();
+  } catch (readError) {
+    logger.error('History read failed during eviction:', readError);
+    history = [];
+  }
+
+  let retain = Math.min(history.length, HISTORY_MAX_ENTRIES - 101);
+  while (true) {
+    const trimmed = history.slice(0, retain);
     try {
-      const history = await readHistory();
-      const trimmed = history.slice(0, HISTORY_MAX_ENTRIES - 101);
       await chrome.storage.local.set({
         [STORAGE_KEYS.PSP_HISTORY]: [normalizedEntry, ...trimmed],
       });
+      return;
     } catch (error_) {
-      logger.error('History write failed after eviction:', error_);
+      if (retain === 0) {
+        logger.error('History write failed after full eviction:', error_);
+        return;
+      }
+
+      retain = Math.floor(retain / 2);
     }
   }
 }

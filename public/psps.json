@@ -31,10 +31,10 @@
         "checkoutshopper-live-apse.adyen.com",
         "checkoutshopper-live-au.adyen.com",
         "checkoutshopper-live-in.adyen.com",
+        "checkoutshopper-live-nea.adyen.com",
         "checkoutshopper-live-us.adyen.com",
         "checkoutshopper-live.adyen.com",
-        "checkoutshopper-test.adyen.com",
-        "live.adyen.com"
+        "checkoutshopper-test.adyen.com"
       ],
       "image": "adyen",
       "summary": "Adyen is a payment company offering businesses an end-to-end infrastructure for managing online, mobile, and in-store payments. Adyen provides solutions for risk management, analytics, and acquiring services, catering to enterprises with significant transaction volumes.",

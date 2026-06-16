@@ -9,7 +9,7 @@ const distImagesDir = path.resolve(__dirname, '../../dist/images');
 describe('PSP image assets', () => {
   let config: PSPConfig;
   beforeAll(() => {
-    config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+    config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
   });
 
   it('should have unique PSP names and images', () => {
@@ -57,7 +57,7 @@ describe('PSP image assets', () => {
       }
     }
 
-    if (missing.length) {
+    if (missing.length > 0) {
       console.error(`\n${missing.join('\n')}`);
     }
 
@@ -75,7 +75,7 @@ describe('PSP image assets', () => {
       }
     }
 
-    if (missing.length) {
+    if (missing.length > 0) {
       console.error(`\n${missing.join('\n')}`);
     }
 

@@ -86,11 +86,13 @@ function loadConfig(): PSPConfig {
 
     return {
       notice: group?.notice ?? '',
-      list: providers.map(convert).filter(Boolean) as PSP[],
+      list: providers.map((provider) => convert(provider)).filter(Boolean),
     };
   };
 
-  const psps = (raw.psps ?? []).map(convert).filter(Boolean) as PSP[];
+  const psps = (raw.psps ?? [])
+    .map((provider) => convert(provider))
+    .filter(Boolean);
   return {
     psps,
     orchestrators: buildGroup(raw.orchestrators),

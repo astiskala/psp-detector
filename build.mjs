@@ -3,7 +3,6 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import sharp from 'sharp';
-import { fileURLToPath } from 'node:url';
 
 /** Tiny sync helper used while preparing build metadata files. */
 function readJsonSync(filePath) {
@@ -15,8 +14,8 @@ function writeJsonSync(filePath, obj) {
   writeFileSync(filePath, `${JSON.stringify(obj, null, 2)}\n`);
 }
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __filename = import.meta.filename;
+const __dirname = import.meta.dirname;
 
 const mainEntryPoints = {
   content: './src/content.ts',
@@ -166,9 +165,9 @@ async function buildFiles() {
     await generatePspImages();
 
     console.log('🛠 Build complete');
-  } catch (err) {
-    console.error('Build failed:', err);
-    process.exit(1);
+  } catch (error) {
+    console.error('Build failed:', error);
+    throw error;
   }
 }
 

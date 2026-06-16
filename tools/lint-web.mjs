@@ -63,9 +63,13 @@ async function lintHtml(filePath) {
     issues,
   );
 
-  const charset = $('meta[charset]').first().attr('charset')?.toLowerCase();
+  const charset = $('meta[charset]')
+    .first()
+    .attr('charset')
+    ?.toLowerCase()
+    .replaceAll('-', '');
   ensure(
-    charset === 'utf-8',
+    charset === 'utf8',
     `${filePath}: expected <meta charset="utf-8">`,
     issues,
   );
@@ -150,7 +154,8 @@ async function lintManifest(filePath) {
 }
 
 async function main() {
-  const [, , mode, ...files] = process.argv;
+  const args = process.argv.slice(2);
+  const [mode, ...files] = args;
 
   if (!['html', 'manifest'].includes(mode) || files.length === 0) {
     fail('Usage: node tools/lint-web.mjs <html|manifest> <file...>');
@@ -160,8 +165,8 @@ async function main() {
 
   const issueLists =
     mode === 'html'
-      ? await Promise.all(files.map(lintHtml))
-      : await Promise.all(files.map(lintManifest));
+      ? await Promise.all(files.map((file) => lintHtml(file)))
+      : await Promise.all(files.map((file) => lintManifest(file)));
   const issues = issueLists.flat();
 
   if (issues.length > 0) {

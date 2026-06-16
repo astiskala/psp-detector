@@ -28,6 +28,12 @@ export interface PSPDetectionData {
     value: string;
     sourceType?: SourceType;
   };
+  /**
+   * Origin (scheme + host) of `document.referrer` when the content script ran
+   * on a hosted checkout page. Used to record the merchant that redirected the
+   * user to the PSP. Omitted when the referrer is empty or malformed.
+   */
+  merchantOrigin?: string;
 }
 
 /** Response shape for the bundled provider dataset. */

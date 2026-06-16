@@ -16,8 +16,8 @@ export function createSafeUrl(url: string): string {
     }
 
     return parsed.toString();
-  } catch (e) {
-    logger.error('Invalid URL:', e);
+  } catch (error) {
+    logger.error('Invalid URL:', error);
     return '#';
   }
 }

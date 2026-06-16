@@ -30,7 +30,8 @@ import * as path from 'node:path';
 import * as cheerio from 'cheerio';
 
 // sharp is ESM-only; dynamic import keeps this file standalone
-const sharp = (await import('sharp')).default;
+const sharpModule = await import('sharp');
+const sharp = sharpModule.default;
 
 // Be conservative to avoid native crashes under load
 sharp.cache(false);
@@ -51,6 +52,9 @@ const VERBOSE = ARGS.includes('--verbose') || process.env.LOGO_VERBOSE === '1';
 const vlog = (...args) => {
   if (VERBOSE) console.log('[v]', ...args);
 };
+
+const filterAcceptable = (items, isAcceptable) =>
+  items.filter((item) => isAcceptable(item));
 
 // Third-party favicon endpoints
 const GOOGLE_FAVICON = (domain) =>
@@ -223,7 +227,7 @@ function inferSizesFromUrl(rawUrl) {
 }
 
 function allSizesBelowMin(sizes) {
-  if (!sizes || !sizes.length) return false; // unknown sizes -> keep
+  if (!sizes?.length) return false; // unknown sizes -> keep
   return sizes.every((s) => Math.min(s.w || 0, s.h || 0) < MIN_SIZE);
 }
 
@@ -291,7 +295,7 @@ function sniffImageFormat(buffer, contentType = '', url = '') {
 }
 
 function sniffFromContentType(ct) {
-  if (!ct || !ct.startsWith('image/')) return null;
+  if (!ct?.startsWith('image/')) return null;
 
   if (ct.includes('svg')) return 'svg';
   if (
@@ -366,7 +370,7 @@ async function tryManifestIcons(manifestUrl, base) {
 
   const icons = Array.isArray(json.icons) ? json.icons : [];
   for (const icon of icons) {
-    if (!icon || !icon.src) continue;
+    if (!icon?.src) continue;
     const abs = toAbsolute(icon.src, txt.url || base);
     if (!abs) continue;
     const declaredSizes = parseSizes(icon.sizes);
@@ -608,11 +612,14 @@ async function tryWriteFromMetadataCandidates(
   const unique = await expandAndUniqCandidates(metaCands);
   vlog(`${pspName}: unique metadata candidates=${unique.length}`);
 
-  const measured = (
-    await withLimit(MEASURE_CONCURRENCY, unique, fetchAndMeasure)
-  ).filter(isAcceptable);
-  vlog(`${pspName}: meta measured acceptable = ${measured.length}`);
-  return await writeBestMeasured(pspName, measured, outputPath);
+  const measured = await withLimit(
+    MEASURE_CONCURRENCY,
+    unique,
+    fetchAndMeasure,
+  );
+  const measuredAccepted = filterAcceptable(measured, isAcceptable);
+  vlog(`${pspName}: meta measured acceptable = ${measuredAccepted.length}`);
+  return await writeBestMeasured(pspName, measuredAccepted, outputPath);
 }
 
 async function tryWriteFromCommonPaths(
@@ -624,16 +631,18 @@ async function tryWriteFromCommonPaths(
   const commonCands = collectCommonPathCandidates(bases);
   vlog(`${pspName}: trying common paths (${commonCands.length})`);
 
-  const expanded = (
-    await Promise.all(uniq(commonCands).map((c) => probeCandidate(c)))
-  )
-    .flat()
-    .filter(Boolean);
-  const measured = (
-    await withLimit(MEASURE_CONCURRENCY, expanded, fetchAndMeasure)
-  ).filter(isAcceptable);
-  vlog(`${pspName}: common measured acceptable = ${measured.length}`);
-  return await writeBestMeasured(pspName, measured, outputPath);
+  const probed = await Promise.all(
+    uniq(commonCands).map((c) => probeCandidate(c)),
+  );
+  const expanded = probed.flat().filter(Boolean);
+  const measured = await withLimit(
+    MEASURE_CONCURRENCY,
+    expanded,
+    fetchAndMeasure,
+  );
+  const measuredAccepted = filterAcceptable(measured, isAcceptable);
+  vlog(`${pspName}: common measured acceptable = ${measuredAccepted.length}`);
+  return await writeBestMeasured(pspName, measuredAccepted, outputPath);
 }
 
 async function tryWriteFromThirdParty(
@@ -648,27 +657,33 @@ async function tryWriteFromThirdParty(
   ];
   vlog(`${pspName}: falling back to third-party favicons`);
 
-  const measured = (
-    await withLimit(MEASURE_CONCURRENCY, thirdParty, fetchAndMeasure)
-  ).filter(isAcceptable);
-  return await writeBestMeasured(pspName, measured, outputPath);
+  const measured = await withLimit(
+    MEASURE_CONCURRENCY,
+    thirdParty,
+    fetchAndMeasure,
+  );
+  const measuredAccepted = filterAcceptable(measured, isAcceptable);
+  return await writeBestMeasured(pspName, measuredAccepted, outputPath);
 }
 
 async function collectMetaCandidates(bases) {
   const metaCands = [];
   for (const base of bases) {
-    const got = await collectCandidatesForBase(base).catch(() => []);
-    metaCands.push(...got);
+    try {
+      const got = await collectCandidatesForBase(base);
+      metaCands.push(...got);
+    } catch {
+      // Ignore per-base fetch failures and keep processing the rest.
+    }
   }
 
   return metaCands;
 }
 
 async function expandAndUniqCandidates(candidates) {
-  const expanded = (await Promise.all(candidates.map((c) => probeCandidate(c))))
-    .flat()
-    .filter(Boolean);
-  return uniq(expanded.filter(isValidUrlCandidate));
+  const probed = await Promise.all(candidates.map((c) => probeCandidate(c)));
+  const expanded = probed.flat().filter(Boolean);
+  return uniq(expanded.filter((candidate) => isValidUrlCandidate(candidate)));
 }
 
 function isValidUrlCandidate(c) {
@@ -759,9 +774,8 @@ async function writeOut128(inputBuffer, outputPath, fmt) {
 
 function createSharpBase(inputBuffer, fmt) {
   const svg = (fmt || '').toLowerCase() === 'svg';
-  return svg
-    ? sharp(inputBuffer, { density: 512 })
-    : sharp(inputBuffer, { animated: false });
+  const sharpOptions = svg ? { density: 512 } : { animated: false };
+  return sharp(inputBuffer, sharpOptions);
 }
 
 async function analyzeForWriteOut128(base, outputPath, fmt) {
@@ -949,26 +963,23 @@ function buildWriteOut128Pipeline(base, analysis) {
   } = analysis;
   const targetSize = Math.round(MIN_SIZE * scale);
 
-  let output;
-  if (shouldHandleTransparency) {
-    output = base
-      .clone()
-      .flatten({ background: bgColor })
-      .resize(targetSize, targetSize, {
-        fit: 'contain',
-        background: bgColor,
-        withoutEnlargement: true,
-      });
-  } else {
-    output = base
-      .clone()
-      .ensureAlpha()
-      .resize(targetSize, targetSize, {
-        fit: 'contain',
-        background: { r: 0, g: 0, b: 0, alpha: 0 },
-        withoutEnlargement: true,
-      });
-  }
+  const output = shouldHandleTransparency
+    ? base
+        .clone()
+        .flatten({ background: bgColor })
+        .resize(targetSize, targetSize, {
+          fit: 'contain',
+          background: bgColor,
+          withoutEnlargement: true,
+        })
+    : base
+        .clone()
+        .ensureAlpha()
+        .resize(targetSize, targetSize, {
+          fit: 'contain',
+          background: { r: 0, g: 0, b: 0, alpha: 0 },
+          withoutEnlargement: true,
+        });
 
   return output.extend({
     top: padTop,
@@ -1153,7 +1164,10 @@ function parseCliMode(args) {
       after.find((a) => !a.startsWith('--')) || './public/psps.json';
 
     const startIdx = args.indexOf('--start');
-    const val = startIdx >= 0 ? args[startIdx + 1] : undefined;
+    let val;
+    if (startIdx !== -1) {
+      val = args[startIdx + 1];
+    }
     const startFrom = val && !val.startsWith('--') ? val : undefined;
 
     return { kind: 'bulk', pspsArg, startFrom };
@@ -1203,10 +1217,13 @@ async function runSingleSiteMode(mode) {
 async function tryWriteSingleFromMetadata(bases, outPath, isAcceptable) {
   const metaCands = await collectMetaCandidates(bases);
   const unique = await expandAndUniqCandidates(metaCands);
-  const measured = (
-    await withLimit(MEASURE_CONCURRENCY, unique, fetchAndMeasure)
-  ).filter(isAcceptable);
-  return await writeSingleChoiceOrNull(measured, outPath);
+  const measured = await withLimit(
+    MEASURE_CONCURRENCY,
+    unique,
+    fetchAndMeasure,
+  );
+  const measuredAccepted = filterAcceptable(measured, isAcceptable);
+  return await writeSingleChoiceOrNull(measuredAccepted, outPath);
 }
 
 async function tryWriteSingleFromCommonPaths(bases, outPath, isAcceptable) {
@@ -1235,10 +1252,13 @@ async function tryWriteSingleFromCommonPaths(bases, outPath, isAcceptable) {
     }
   }
 
-  const measured = (
-    await withLimit(MEASURE_CONCURRENCY, uniq(common), fetchAndMeasure)
-  ).filter(isAcceptable);
-  return await writeSingleChoiceOrNull(measured, outPath);
+  const measured = await withLimit(
+    MEASURE_CONCURRENCY,
+    uniq(common),
+    fetchAndMeasure,
+  );
+  const measuredAccepted = filterAcceptable(measured, isAcceptable);
+  return await writeSingleChoiceOrNull(measuredAccepted, outPath);
 }
 
 async function writeSingleFromThirdParty(domain, outPath, isAcceptable) {
@@ -1246,10 +1266,9 @@ async function writeSingleFromThirdParty(domain, outPath, isAcceptable) {
     { url: GOOGLE_FAVICON(domain), source: 'google-favicon' },
     { url: DUCK_FAVICON(domain), source: 'duckduckgo-favicon' },
   ];
-  const measured = (
-    await withLimit(MEASURE_CONCURRENCY, tp, fetchAndMeasure)
-  ).filter(isAcceptable);
-  const wrote = await writeSingleChoiceOrNull(measured, outPath);
+  const measured = await withLimit(MEASURE_CONCURRENCY, tp, fetchAndMeasure);
+  const measuredAccepted = filterAcceptable(measured, isAcceptable);
+  const wrote = await writeSingleChoiceOrNull(measuredAccepted, outPath);
   if (wrote) return;
 
   console.error('No acceptable icons (>=128px and square-ish).');

@@ -1,4 +1,4 @@
-import { MessageAction, type PSPDetectionResult } from './types';
+import { MessageAction } from './types';
 
 const setExemptDomainsMock = jest.fn();
 const initializePspMock = jest.fn();
@@ -17,12 +17,10 @@ interface RuntimeMessage {
 type MutationCallbackArg = (mutations?: MutationRecord[]) => Promise<void>;
 
 interface WindowContentState {
-  pspDetectorContentScript?:
-    | {
-        initialized: boolean;
-        url: string;
-      }
-    | undefined;
+  pspDetectorContentScript?: {
+    initialized: boolean;
+    url: string;
+  };
 }
 
 jest.mock('./services/psp-detector', () => ({
@@ -59,7 +57,7 @@ function setupIdleCallbackMock(): void {
       callback({
         didTimeout: false,
         timeRemaining: (): number => 50,
-      } as IdleDeadline);
+      });
 
       return 1;
     },
@@ -126,12 +124,12 @@ describe('content bootstrap', () => {
     setupIdleCallbackMock();
 
     const windowState = globalThis as typeof globalThis & WindowContentState;
-    windowState.pspDetectorContentScript = undefined;
+    delete windowState.pspDetectorContentScript;
 
     isInitializedMock.mockReturnValue(true);
     detectPSPMock.mockReturnValue({
       type: 'none',
-    } as PSPDetectionResult);
+    });
   });
 
   it('initializes and runs detection flow on first bootstrap', async () => {
@@ -177,6 +175,77 @@ describe('content bootstrap', () => {
 
     expect(setExemptDomainsMock).not.toHaveBeenCalled();
     expect(domObserverStartObservingMock).not.toHaveBeenCalled();
+  });
+
+  it('forwards merchant origin from document.referrer on a redirect detection', async () => {
+    Object.defineProperty(document, 'referrer', {
+      value: 'https://shop.merchant.example/checkout?session=abc',
+      configurable: true,
+    });
+
+    detectPSPMock.mockReturnValue({
+      type: 'detected',
+      psps: [
+        {
+          psp: 'Stripe',
+          detectionInfo: {
+            method: 'matchString',
+            value: 'js.stripe.com',
+            sourceType: 'pageUrl',
+          },
+        },
+      ],
+    });
+
+    const sendMessageMock = setupChromeRuntimeMock(false);
+    await import('./content');
+    await flushAsyncTasks();
+
+    const detectCall = sendMessageMock.mock.calls.find((call) => {
+      const [message] = call as [RuntimeMessage];
+      return message.action === MessageAction.DETECT_PSP;
+    });
+    expect(detectCall).toBeDefined();
+
+    const [detectMessage] = detectCall as [
+      { data: { merchantOrigin?: string } },
+    ];
+    expect(detectMessage.data.merchantOrigin).toBe(
+      'https://shop.merchant.example',
+    );
+  });
+
+  it('omits merchant origin when referrer is empty', async () => {
+    Object.defineProperty(document, 'referrer', {
+      value: '',
+      configurable: true,
+    });
+
+    detectPSPMock.mockReturnValue({
+      type: 'detected',
+      psps: [
+        {
+          psp: 'Stripe',
+          detectionInfo: {
+            method: 'matchString',
+            value: 'js.stripe.com',
+            sourceType: 'pageUrl',
+          },
+        },
+      ],
+    });
+
+    const sendMessageMock = setupChromeRuntimeMock(false);
+    await import('./content');
+    await flushAsyncTasks();
+
+    const detectCall = sendMessageMock.mock.calls.find((call) => {
+      const [message] = call as [RuntimeMessage];
+      return message.action === MessageAction.DETECT_PSP;
+    });
+    expect(detectCall).toBeDefined();
+    const [detectMessage] = detectCall as [{ data: Record<string, unknown> }];
+    expect(detectMessage.data).not.toHaveProperty('merchantOrigin');
   });
 
   it('detects iframe src added via attributes mutation', async () => {

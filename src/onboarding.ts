@@ -64,6 +64,9 @@ async function requestPermissionFromOnboarding(
   statusElement: HTMLElement,
   grantButton: HTMLButtonElement,
 ): Promise<void> {
+  // Disable while the async request is in flight so a rapid second click
+  // doesn't spawn a parallel permission prompt.
+  grantButton.disabled = true;
   try {
     const granted = await chrome.permissions.request({
       origins: ['https://*/*'],
@@ -74,6 +77,7 @@ async function requestPermissionFromOnboarding(
         'Permission was not granted. You can try again any time.';
 
       statusElement.classList.remove('ready');
+      grantButton.disabled = false;
       return;
     }
 
@@ -85,6 +89,8 @@ async function requestPermissionFromOnboarding(
       logger.debug('Redetect trigger from onboarding skipped:', error);
     }
 
+    // updatePermissionStatus owns the final disabled/enabled state on
+    // success, so no explicit re-enable is needed here.
     await updatePermissionStatus(statusElement, grantButton);
   } catch (error) {
     logger.error(
@@ -94,6 +100,7 @@ async function requestPermissionFromOnboarding(
 
     statusElement.textContent = 'Permission request failed. Please try again.';
     statusElement.classList.remove('ready');
+    grantButton.disabled = false;
   }
 }
 

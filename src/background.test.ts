@@ -1,6 +1,11 @@
 import { STORAGE_KEYS } from './lib/storage-keys';
 import { MessageAction } from './types';
 
+interface HistoryEntryLike {
+  readonly domain?: string;
+  readonly merchantOrigin?: string;
+}
+
 type StorageQuery = string | string[] | Record<string, unknown>;
 
 type InstalledListener = (details: chrome.runtime.InstalledDetails) => void;
@@ -396,6 +401,22 @@ async function getDetectedPspsForTab(
   return payload?.psps ?? [];
 }
 
+function getLatestHistoryEntries(
+  localSet: jest.Mock<Promise<void>, [Record<string, unknown>]>,
+): HistoryEntryLike[] | undefined {
+  const historyWrites = localSet.mock.calls
+    .map((call) => call[0])
+    .filter(
+      (
+        payload,
+      ): payload is { [STORAGE_KEYS.PSP_HISTORY]: HistoryEntryLike[] } =>
+        typeof payload === 'object' &&
+        payload !== null &&
+        STORAGE_KEYS.PSP_HISTORY in payload,
+    );
+  return historyWrites.at(-1)?.[STORAGE_KEYS.PSP_HISTORY];
+}
+
 describe('background service onboarding and re-detect flow', () => {
   beforeEach(() => {
     jest.resetModules();
@@ -528,7 +549,7 @@ describe('background service onboarding and re-detect flow', () => {
     expect(mocks.sessionGet).toHaveBeenCalledTimes(1);
   });
 
-  it('flushes debounced tab PSP persistence on suspend', async () => {
+  it('persists tab PSP cache immediately and again on suspend', async () => {
     const mocks = setupChromeMocks();
     await import('./background');
     await flushAsyncTasks();
@@ -545,7 +566,6 @@ describe('background service onboarding and re-detect flow', () => {
         action: MessageAction.DETECT_PSP,
         data: {
           psp: 'Primer',
-          tabId: 77,
           detectionInfo: {
             method: 'matchString',
             value: 'api.primer.io',
@@ -560,11 +580,8 @@ describe('background service onboarding and re-detect flow', () => {
     await flushAsyncTasks();
 
     expect(sendResponse).toHaveBeenCalledWith(null);
-    expect(mocks.sessionSet).not.toHaveBeenCalled();
-
-    onSuspendListener();
-    await flushAsyncTasks();
-
+    // Persist runs immediately so MV3 worker termination cannot drop the
+    // detection while a debounce timer was still pending.
     expect(mocks.sessionSet).toHaveBeenCalledWith({
       [STORAGE_KEYS.TAB_PSPS]: expect.objectContaining({
         77: expect.arrayContaining([
@@ -572,6 +589,15 @@ describe('background service onboarding and re-detect flow', () => {
         ]),
       }),
     });
+
+    const setCallsBeforeSuspend = mocks.sessionSet.mock.calls.length;
+
+    onSuspendListener();
+    await flushAsyncTasks();
+
+    // onSuspend keeps acting as a safety net but is a no-op here because the
+    // cache is already clean.
+    expect(mocks.sessionSet.mock.calls.length).toBe(setCallsBeforeSuspend);
   });
 
   it('registers webRequest listener with narrowed request types', async () => {
@@ -871,5 +897,102 @@ describe('background service onboarding and re-detect flow', () => {
     expect(mocks.actionSetBadgeBackgroundColor).toHaveBeenLastCalledWith({
       color: '#6B7280',
     });
+  });
+
+  it('records merchantOrigin on the history entry for redirect detections', async () => {
+    const mocks = setupChromeMocks({
+      activeTabUrl: 'https://checkout.psp.example/pay',
+    });
+    await import('./background');
+    await flushAsyncTasks();
+
+    const messageListener = getRegisteredMessageListener(mocks);
+    const configResponse = jest.fn();
+    messageListener(
+      { action: MessageAction.GET_PSP_CONFIG },
+      {} as chrome.runtime.MessageSender,
+      configResponse,
+    );
+    await flushAsyncTasks();
+
+    const detectResponse = jest.fn();
+    messageListener(
+      {
+        action: MessageAction.DETECT_PSP,
+        data: {
+          psp: 'Stripe',
+          tabId: 91,
+          detectionInfo: {
+            method: 'matchString',
+            value: STRIPE_MATCH_STRING,
+            sourceType: 'pageUrl',
+          },
+          merchantOrigin: 'https://shop.merchant.example',
+        },
+      },
+      {
+        tab: {
+          id: 91,
+          url: 'https://checkout.psp.example/pay',
+        } as chrome.tabs.Tab,
+      } as chrome.runtime.MessageSender,
+      detectResponse,
+    );
+    await flushAsyncTasks();
+
+    const entries = getLatestHistoryEntries(mocks.localSet);
+    expect(entries).toBeDefined();
+    expect(entries?.[0]).toEqual(
+      expect.objectContaining({
+        domain: 'checkout.psp.example',
+        merchantOrigin: 'https://shop.merchant.example',
+      }),
+    );
+  });
+
+  it('omits merchantOrigin when it matches the detection page domain', async () => {
+    const mocks = setupChromeMocks({
+      activeTabUrl: 'https://shop.merchant.example/cart',
+    });
+    await import('./background');
+    await flushAsyncTasks();
+
+    const messageListener = getRegisteredMessageListener(mocks);
+    const configResponse = jest.fn();
+    messageListener(
+      { action: MessageAction.GET_PSP_CONFIG },
+      {} as chrome.runtime.MessageSender,
+      configResponse,
+    );
+    await flushAsyncTasks();
+
+    const detectResponse = jest.fn();
+    messageListener(
+      {
+        action: MessageAction.DETECT_PSP,
+        data: {
+          psp: 'Stripe',
+          tabId: 92,
+          detectionInfo: {
+            method: 'matchString',
+            value: STRIPE_MATCH_STRING,
+            sourceType: 'scriptSrc',
+          },
+          merchantOrigin: 'https://shop.merchant.example',
+        },
+      },
+      {
+        tab: {
+          id: 92,
+          url: 'https://shop.merchant.example/cart',
+        } as chrome.tabs.Tab,
+      } as chrome.runtime.MessageSender,
+      detectResponse,
+    );
+    await flushAsyncTasks();
+
+    const entries = getLatestHistoryEntries(mocks.localSet);
+    expect(entries).toBeDefined();
+    expect(entries?.[0]).not.toHaveProperty('merchantOrigin');
   });
 });

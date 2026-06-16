@@ -1,5 +1,5 @@
 import { PSPDetectorService } from './psp-detector';
-import type { PSPConfig } from '../types';
+import type { PSPConfig, PSPDetectionResult } from '../types';
 import { TypeConverters } from '../types';
 import {
   TEST_PSP_CONFIGS,
@@ -422,6 +422,116 @@ describe('PSPDetectorService', () => {
     if (result.type === 'error') {
       expect(result.context).toBe('config_validation');
     }
+  });
+
+  it('matches exempt domain case-insensitively in URL-parse fallback', () => {
+    // jsdom's window.top.location is non-configurable, so we can't reach the
+    // catch branch in checkExempt via detectPSP. Drive it directly: invoke
+    // the private method with a malformed URL that contains the exempt token
+    // in upper case. The substring fallback must still treat it as exempt.
+    interface CheckExemptInternal {
+      checkExempt: (
+        urlToCheck: string,
+        brandedURL: ReturnType<typeof TypeConverters.toURL>,
+      ) => PSPDetectionResult | null;
+    }
+    const branded = TypeConverters.toURL('https://placeholder.invalid/x');
+    const result = (service as unknown as CheckExemptInternal).checkExempt(
+      'malformed-url-with-EXAMPLE.com-in-uppercase',
+      branded,
+    );
+    expect(result?.type).toBe('exempt');
+  });
+
+  it('does not exempt via fallback when no exempt domain appears in URL', () => {
+    interface CheckExemptInternal {
+      checkExempt: (
+        urlToCheck: string,
+        brandedURL: ReturnType<typeof TypeConverters.toURL>,
+      ) => PSPDetectionResult | null;
+    }
+    const branded = TypeConverters.toURL('https://placeholder.invalid/x');
+    const result = (service as unknown as CheckExemptInternal).checkExempt(
+      'malformed-url-with-UNRELATED.org-only',
+      branded,
+    );
+    expect(result).toBeNull();
+  });
+
+  it('truncates oversized content at the last newline within the limit', () => {
+    // The detector caps scanned content at 1 MB. Build a body where a
+    // matchString lives *after* the last newline inside the 1 MB window:
+    //   [...filler... '\n' ...padding... matchString ...padding...]
+    //                  ^ last newline    ^ inside 1 MB
+    // Old (hard-cut) behavior keeps the matchString → detects it.
+    // New behavior cuts at the last newline, dropping the matchString.
+    const limit = 1024 * 1024;
+    const url = 'https://shop.example.org/checkout';
+    const prefix = `${url}\n\n`; // detector prepends url + '\n\n'
+
+    const tailKeyword = `unique-marker-${'x'.repeat(8)}`;
+    const PRE_LIMIT_OFFSET = 100;
+    const overflowPad = 500;
+
+    const fillerSize = limit - PRE_LIMIT_OFFSET - prefix.length;
+    const filler = 'a'.repeat(fillerSize);
+    const tail = `${'b'.repeat(
+      PRE_LIMIT_OFFSET - tailKeyword.length - 10,
+    )}${tailKeyword}${'c'.repeat(10 + overflowPad)}`;
+
+    // Content laid out: filler '\n' tail
+    // The only '\n' in `content` is the one we put just before `tail`.
+    // The prefix has '\n\n' which we replicate, but those land near pos 0.
+    const content = `${filler}\n${tail}`;
+
+    const cfg: PSPConfig = {
+      psps: [
+        {
+          name: TypeConverters.toPSPName('Marker')!,
+          matchStrings: [tailKeyword],
+          url: TypeConverters.toURL('https://marker.example')!,
+          image: 'marker',
+          summary: 'marker summary',
+        },
+      ],
+    };
+    const localService = new PSPDetectorService();
+    localService.initialize(cfg);
+    localService.setExemptDomains([]);
+
+    const oversized = localService.detectPSP(url, content);
+    expect(oversized.type).toBe('none');
+
+    const smallContent = `preamble\n${tailKeyword}`;
+    const inLimit = localService.detectPSP(url, smallContent);
+    expect(inLimit.type).toBe('detected');
+  });
+
+  it('falls back to hard cut when no newline exists within the limit', () => {
+    // No newlines anywhere → buildTruncatedContent must still bound the
+    // returned string to maxContentSize (would otherwise loop forever or
+    // return the full input). We assert the detection still produces a
+    // result without throwing.
+    const limit = 1024 * 1024;
+    const cfg: PSPConfig = {
+      psps: [
+        {
+          name: TypeConverters.toPSPName('Marker')!,
+          matchStrings: ['z'.repeat(40)],
+          url: TypeConverters.toURL('https://marker.example')!,
+          image: 'marker',
+          summary: 'marker summary',
+        },
+      ],
+    };
+    const localService = new PSPDetectorService();
+    localService.initialize(cfg);
+    localService.setExemptDomains([]);
+
+    const noNewlines = 'a'.repeat(limit + 1000);
+    expect(() =>
+      localService.detectPSP('https://shop.example.org/x', noNewlines),
+    ).not.toThrow();
   });
 
   it('should treat is.adyen.com and its subdomains as exempt', () => {

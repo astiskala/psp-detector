@@ -136,6 +136,10 @@ export class PopupManager {
         const pspConfig = await this.getPSPConfigWithCache();
         this.ui.renderMultiplePSPs(detectedPsps, pspConfig);
 
+        // Lock the popup only on the rendered-detected path. The empty and
+        // exempt branches deliberately leave isInitialized false so the
+        // grant-permission flow can re-run initialize() after the user
+        // changes optional permissions.
         this.isInitialized = true;
       }, 'Popup initialization');
     } catch (error) {
