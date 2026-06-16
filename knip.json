@@ -6,6 +6,5 @@
     "src/popup.ts",
     "src/options.ts"
   ],
-  "project": ["src/**/*.ts"],
-  "ignoreUnresolved": ["tslib"]
+  "project": ["src/**/*.ts"]
 }
