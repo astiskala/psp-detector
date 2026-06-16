@@ -12,7 +12,7 @@ function getElementByIdOrThrow<T extends HTMLElement>(id: string): T {
     throw new Error(`Element #${id} not found`);
   }
 
-  return element as T;
+  return element;
 }
 
 async function getDetectionPermissionState(): Promise<DetectionPermissionState> {

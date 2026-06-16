@@ -177,7 +177,7 @@ describe('utils', () => {
         json: async () => ({}),
       } as unknown as Response;
       const fetchMock = jest.fn().mockResolvedValue(response);
-      globalThis.fetch = fetchMock as unknown as typeof fetch;
+      globalThis.fetch = fetchMock;
 
       try {
         const result = await fetchWithTimeout(EXAMPLE_URL, 100, {
@@ -232,8 +232,8 @@ describe('utils', () => {
         status: 204,
         statusText: 'No Content',
         json: async () => ({}),
-      } as unknown as Response);
-      globalThis.fetch = fetchMock as unknown as typeof fetch;
+      });
+      globalThis.fetch = fetchMock;
       const controller = new AbortController();
       controller.abort();
 

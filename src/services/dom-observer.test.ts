@@ -94,7 +94,7 @@ describe('DOMObserverService', () => {
         takeRecords(): MutationRecord[] {
           return [];
         }
-      } as unknown as typeof MutationObserver;
+      };
 
       service = new DOMObserverService();
       service.initialize(callback, 0);

@@ -21,6 +21,7 @@ const strictTypeScriptRules = {
   ],
   '@typescript-eslint/switch-exhaustiveness-check': 'error',
   '@typescript-eslint/no-non-null-assertion': 'error',
+  '@typescript-eslint/no-unnecessary-type-assertion': 'error',
   '@typescript-eslint/strict-boolean-expressions': 'error',
   '@typescript-eslint/prefer-nullish-coalescing': 'error',
   '@typescript-eslint/prefer-optional-chain': 'error',

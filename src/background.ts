@@ -211,12 +211,16 @@ class BackgroundService {
   /** Rehydrates cached config, exempt domains, and per-tab detection state. */
   private async restoreState(): Promise<void> {
     try {
+      const defaultCachedPspConfig: PSPConfig | null = null;
+      const defaultExemptDomains: string[] = [];
+      const defaultTabPsps: Record<number, StoredTabPsp[]> = {};
+
       const localResult = await chrome.storage.local.get({
-        [STORAGE_KEYS.CACHED_PSP_CONFIG]: null as PSPConfig | null,
-        [STORAGE_KEYS.EXEMPT_DOMAINS]: [] as string[],
+        [STORAGE_KEYS.CACHED_PSP_CONFIG]: defaultCachedPspConfig,
+        [STORAGE_KEYS.EXEMPT_DOMAINS]: defaultExemptDomains,
       });
       const sessionResult = await chrome.storage.session.get({
-        [STORAGE_KEYS.TAB_PSPS]: {} as Record<number, StoredTabPsp[]>,
+        [STORAGE_KEYS.TAB_PSPS]: defaultTabPsps,
       });
       const cachedConfig = localResult[STORAGE_KEYS.CACHED_PSP_CONFIG];
       this.inMemoryPspConfig =
@@ -265,8 +269,9 @@ class BackgroundService {
         (entry): entry is StoredTabPsp =>
           typeof entry === 'object' &&
           entry !== null &&
-          typeof (entry as StoredTabPsp).psp === 'string' &&
-          (entry as StoredTabPsp).psp.length > 0,
+          'psp' in entry &&
+          typeof entry.psp === 'string' &&
+          entry.psp.length > 0,
       );
       if (valid.length === 0) continue;
 

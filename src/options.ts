@@ -506,9 +506,7 @@ async function loadProviderIcons(): Promise<void> {
 }
 
 function populatePspFilter(history: HistoryEntry[]): void {
-  const select = document.querySelector(
-    '#pspFilter',
-  ) as HTMLSelectElement | null;
+  const select = document.querySelector<HTMLSelectElement>('#pspFilter');
   if (!select) return;
 
   // Preserve the first "All PSPs" placeholder option from the markup and
@@ -586,10 +584,8 @@ interface HistoryReference {
 }
 
 function bindControls(historyReference: HistoryReference): void {
-  const search = document.querySelector('#search') as HTMLInputElement | null;
-  const pspFilter = document.querySelector(
-    '#pspFilter',
-  ) as HTMLSelectElement | null;
+  const search = document.querySelector<HTMLInputElement>('#search');
+  const pspFilter = document.querySelector<HTMLSelectElement>('#pspFilter');
   let searchRefreshTimer: ReturnType<typeof setTimeout> | null = null;
 
   const getFilteredEntries = (): HistoryEntry[] =>
@@ -647,13 +643,10 @@ function bindControls(historyReference: HistoryReference): void {
         historyReference.setHistory([]);
         // Reset the dropdown and search to match the now-empty history so
         // the user isn't filtering against PSP names that no longer exist.
-        const searchInput = document.querySelector(
-          '#search',
-        ) as HTMLInputElement | null;
+        const searchInput = document.querySelector<HTMLInputElement>('#search');
         if (searchInput) searchInput.value = '';
-        const pspFilterSelect = document.querySelector(
-          '#pspFilter',
-        ) as HTMLSelectElement | null;
+        const pspFilterSelect =
+          document.querySelector<HTMLSelectElement>('#pspFilter');
         if (pspFilterSelect) pspFilterSelect.value = '';
         populatePspFilter([]);
         renderStats([]);

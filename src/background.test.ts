@@ -192,7 +192,7 @@ function setupChromeMocks(options: ChromeMockOptions = {}): ChromeMockContext {
   const sessionStore: Record<string, unknown> = {
     [STORAGE_KEYS.TAB_PSPS]: {
       12: [{ psp: 'Stripe' }],
-    } as Record<number, { psp: string }[]>,
+    },
   };
 
   const eventMocks = createChromeEventMocks();
@@ -271,7 +271,7 @@ function setupChromeMocks(options: ChromeMockOptions = {}): ChromeMockContext {
 
   const webRequestAddListener = jest.fn();
 
-  globalThis.fetch = fetchMock as unknown as typeof fetch;
+  globalThis.fetch = fetchMock;
 
   globalThis.chrome = {
     runtime: {
@@ -389,7 +389,7 @@ async function getDetectedPspsForTab(
   const sendResponse = jest.fn();
   messageListener(
     { action: MessageAction.GET_PSP },
-    { tab: { id: tabId } as chrome.tabs.Tab } as chrome.runtime.MessageSender,
+    { tab: { id: tabId } as chrome.tabs.Tab },
     sendResponse,
   );
 
@@ -435,7 +435,7 @@ describe('background service onboarding and re-detect flow', () => {
 
     installedListener({
       reason: 'install',
-    } as chrome.runtime.InstalledDetails);
+    });
 
     await flushAsyncTasks();
 
@@ -466,7 +466,7 @@ describe('background service onboarding and re-detect flow', () => {
     const sendResponse = jest.fn();
     messageListener(
       { action: MessageAction.REDETECT_CURRENT_TAB },
-      {} as chrome.runtime.MessageSender,
+      {},
       sendResponse,
     );
 
@@ -505,7 +505,7 @@ describe('background service onboarding and re-detect flow', () => {
     const sendResponse = jest.fn();
     messageListener(
       { action: MessageAction.REDETECT_CURRENT_TAB },
-      {} as chrome.runtime.MessageSender,
+      {},
       sendResponse,
     );
 
@@ -531,7 +531,7 @@ describe('background service onboarding and re-detect flow', () => {
     const sendResponse = jest.fn();
     messageListener(
       { action: MessageAction.GET_PSP },
-      { tab: { id: 12 } as chrome.tabs.Tab } as chrome.runtime.MessageSender,
+      { tab: { id: 12 } as chrome.tabs.Tab },
       sendResponse,
     );
 
@@ -539,7 +539,7 @@ describe('background service onboarding and re-detect flow', () => {
 
     messageListener(
       { action: MessageAction.GET_PSP },
-      { tab: { id: 12 } as chrome.tabs.Tab } as chrome.runtime.MessageSender,
+      { tab: { id: 12 } as chrome.tabs.Tab },
       sendResponse,
     );
 
@@ -638,7 +638,7 @@ describe('background service onboarding and re-detect flow', () => {
     const getConfigResponse = jest.fn();
     messageListener(
       { action: MessageAction.GET_PSP_CONFIG },
-      {} as chrome.runtime.MessageSender,
+      {},
       getConfigResponse,
     );
 
@@ -677,9 +677,7 @@ describe('background service onboarding and re-detect flow', () => {
     await flushAsyncTasks();
 
     expect(mocks.sessionSet).toHaveBeenCalled();
-    const persisted = mocks.sessionSet.mock.calls.at(-1)?.[0] as
-      | Record<string, unknown>
-      | undefined;
+    const persisted = mocks.sessionSet.mock.calls.at(-1)?.[0];
     const tabPsps = persisted?.[STORAGE_KEYS.TAB_PSPS] as
       | Record<string, { psp: string }[]>
       | undefined;
@@ -715,7 +713,7 @@ describe('background service onboarding and re-detect flow', () => {
     const getConfigResponse = jest.fn();
     messageListener(
       { action: MessageAction.GET_PSP_CONFIG },
-      {} as chrome.runtime.MessageSender,
+      {},
       getConfigResponse,
     );
 
@@ -755,7 +753,7 @@ describe('background service onboarding and re-detect flow', () => {
           id: 91,
           url: CHECKOUT_EXAMPLE_URL,
         } as chrome.tabs.Tab,
-      } as chrome.runtime.MessageSender,
+      },
       detectResponse,
     );
 
@@ -765,7 +763,7 @@ describe('background service onboarding and re-detect flow', () => {
     const pspResponse = jest.fn();
     messageListener(
       { action: MessageAction.GET_PSP },
-      { tab: { id: 91 } as chrome.tabs.Tab } as chrome.runtime.MessageSender,
+      { tab: { id: 91 } as chrome.tabs.Tab },
       pspResponse,
     );
 
@@ -820,7 +818,7 @@ describe('background service onboarding and re-detect flow', () => {
     const configResponse = jest.fn();
     messageListener(
       { action: MessageAction.GET_PSP_CONFIG },
-      {} as chrome.runtime.MessageSender,
+      {},
       configResponse,
     );
 
@@ -845,7 +843,7 @@ describe('background service onboarding and re-detect flow', () => {
           id: 91,
           url: CHECKOUT_EXAMPLE_URL,
         } as chrome.tabs.Tab,
-      } as chrome.runtime.MessageSender,
+      },
       stripeResponse,
     );
 
@@ -870,7 +868,7 @@ describe('background service onboarding and re-detect flow', () => {
           id: 91,
           url: CHECKOUT_EXAMPLE_URL,
         } as chrome.tabs.Tab,
-      } as chrome.runtime.MessageSender,
+      },
       adyenResponse,
     );
 
@@ -910,7 +908,7 @@ describe('background service onboarding and re-detect flow', () => {
     const configResponse = jest.fn();
     messageListener(
       { action: MessageAction.GET_PSP_CONFIG },
-      {} as chrome.runtime.MessageSender,
+      {},
       configResponse,
     );
     await flushAsyncTasks();
@@ -935,7 +933,7 @@ describe('background service onboarding and re-detect flow', () => {
           id: 91,
           url: 'https://checkout.psp.example/pay',
         } as chrome.tabs.Tab,
-      } as chrome.runtime.MessageSender,
+      },
       detectResponse,
     );
     await flushAsyncTasks();
@@ -961,7 +959,7 @@ describe('background service onboarding and re-detect flow', () => {
     const configResponse = jest.fn();
     messageListener(
       { action: MessageAction.GET_PSP_CONFIG },
-      {} as chrome.runtime.MessageSender,
+      {},
       configResponse,
     );
     await flushAsyncTasks();
@@ -986,7 +984,7 @@ describe('background service onboarding and re-detect flow', () => {
           id: 92,
           url: 'https://shop.merchant.example/cart',
         } as chrome.tabs.Tab,
-      } as chrome.runtime.MessageSender,
+      },
       detectResponse,
     );
     await flushAsyncTasks();

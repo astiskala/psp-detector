@@ -29,8 +29,7 @@ class MockMutationObserver {
 
 /** Installs a deterministic MutationObserver mock for jsdom-based tests. */
 export function setupMutationObserverMock(): void {
-  globalThis.MutationObserver =
-    MockMutationObserver as unknown as typeof MutationObserver;
+  globalThis.MutationObserver = MockMutationObserver;
 }
 
 /** Resets the document body to the minimal DOM used in unit tests. */

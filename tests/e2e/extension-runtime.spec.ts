@@ -69,7 +69,7 @@ async function sendRuntimeMessage<T>(
         resolve(response);
       });
     });
-  }, payload) as Promise<T>;
+  }, payload);
 }
 
 async function resetStoredRuntimeState(page: Page): Promise<void> {

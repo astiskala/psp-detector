@@ -167,7 +167,7 @@ function getRequiredElementById<T extends HTMLElement>(id: string): T {
     throw new Error(`Missing #${id} element`);
   }
 
-  return element as T;
+  return element;
 }
 
 function getRequiredElement<T extends Element>(selector: string): T {
@@ -203,8 +203,8 @@ function setupSuccessMocks(): OptionsPageSuccessMocks {
     ok: true,
     status: 200,
     json: async () => createProviderConfig(),
-  } as unknown as Response);
-  globalThis.fetch = fetchMock as unknown as typeof fetch;
+  });
+  globalThis.fetch = fetchMock;
 
   const readHistoryMock = jest
     .mocked(readHistory)
@@ -360,7 +360,7 @@ describe('options page wiring', () => {
       ok: false,
       status: 500,
       json: async () => ({ error: true }),
-    } as unknown as Response);
+    });
 
     readHistoryMock.mockRejectedValueOnce(new Error('Read failed'));
     await initializeOptionsPage();
