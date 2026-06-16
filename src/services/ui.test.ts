@@ -80,12 +80,12 @@ describe('UIService', () => {
       'status-icon',
     ];
 
-    requiredElementIds.forEach((id) => {
+    for (const id of requiredElementIds) {
       const element = document.querySelector<HTMLElement>(`#${id}`);
       if (!element) {
         throw new Error(`Element ${id} not found`);
       }
-    });
+    }
 
     // Check for popup-container by class
     const popupContainer = document.querySelector('.popup-container');

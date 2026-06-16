@@ -52,7 +52,7 @@ describe('DOMObserverService', () => {
     service.startObserving();
 
     const observerReference = service as unknown as {
-      observer: { observe: jest.Mock } | null;
+      observer: null | { observe: jest.Mock };
     };
     const observeMock = observerReference.observer?.observe;
     expect(observeMock).toBeDefined();
@@ -189,7 +189,7 @@ describe('DOMObserverService', () => {
     consoleSpy.mockRestore();
   });
 
-  it('should handle rapid mutations efficiently', () => {
+  it('should handle rapid mutations efficiently', async () => {
     let callCount = 0;
     const countingCallback = jest.fn(() => {
       callCount++;
@@ -199,10 +199,8 @@ describe('DOMObserverService', () => {
     service.startObserving();
 
     // Due to debouncing, multiple rapid calls should result in fewer executions
-    const delay = new Promise((resolve) => setTimeout(resolve, 50));
-    return delay.then(() => {
-      // The mock observer fires once when startObserving is called
-      expect(callCount).toBeLessThanOrEqual(1);
-    });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    // The mock observer fires once when startObserving is called
+    expect(callCount).toBeLessThanOrEqual(1);
   });
 });

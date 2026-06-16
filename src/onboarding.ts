@@ -104,20 +104,22 @@ async function requestPermissionFromOnboarding(
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   const grantButton =
     getElementByIdOrThrow<HTMLButtonElement>('grant-host-access');
   const statusElement = getElementByIdOrThrow<HTMLElement>('permission-status');
 
-  updatePermissionStatus(statusElement, grantButton).catch((error) => {
+  try {
+    await updatePermissionStatus(statusElement, grantButton);
+  } catch (error) {
     logger.error('Onboarding status initialization failed:', error);
-  });
+  }
 
-  grantButton.addEventListener('click', () => {
-    requestPermissionFromOnboarding(statusElement, grantButton).catch(
-      (error) => {
-        logger.error('Onboarding permission request failed:', error);
-      },
-    );
+  grantButton.addEventListener('click', async () => {
+    try {
+      await requestPermissionFromOnboarding(statusElement, grantButton);
+    } catch (error) {
+      logger.error('Onboarding permission request failed:', error);
+    }
   });
 });

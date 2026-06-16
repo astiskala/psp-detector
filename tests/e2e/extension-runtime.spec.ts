@@ -265,7 +265,7 @@ test('popup renders seeded detections and keeps button sizing consistent', async
     const bodyWidth = await popupPage.evaluate(
       () => getComputedStyle(document.body).width,
     );
-    expect(Number.parseInt(bodyWidth, 10)).toBeGreaterThanOrEqual(420);
+    expect(Number(bodyWidth)).toBeGreaterThanOrEqual(420);
 
     const styleComparison = await popupPage.evaluate(() => {
       const source = document.querySelector('.source-pill');

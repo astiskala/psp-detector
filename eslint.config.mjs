@@ -116,13 +116,7 @@ export default [
     name: 'psp-detector/unicorn-exceptions',
     rules: {
       // Intentional design decisions — not a style fit for this codebase
-      'unicorn/comment-content': 'off',
-      'unicorn/no-array-reduce': 'off',
-      'unicorn/no-for-each': 'off',
       'unicorn/consistent-class-member-order': 'off',
-      'unicorn/no-computed-property-existence-check': 'off',
-      'unicorn/consistent-destructuring': 'off',
-      'unicorn/consistent-function-style': 'off',
       // no-asterisk-prefix-in-documentation-comments conflicts with jsdoc/check-alignment:
       // one rule removes the ' * ' prefix, the other requires it
       'unicorn/no-asterisk-prefix-in-documentation-comments': 'off',
@@ -130,7 +124,6 @@ export default [
       'unicorn/no-negated-array-predicate': 'off',
       // no-keyword-prefix: flags 'className' (standard DOM API name) and similar legitimate identifiers
       'unicorn/no-keyword-prefix': 'off',
-      'unicorn/explicit-length-check': 'off',
       'unicorn/import-style': 'off',
       // max-nested-calls / try-complexity overlap with SonarQube cognitive-complexity
       'unicorn/max-nested-calls': 'off',
@@ -139,13 +132,7 @@ export default [
       'unicorn/prefer-abbreviations': 'off',
       'unicorn/prefer-dispose': 'off',
       'unicorn/prefer-path2d': 'off',
-      // prefer-number-coercion: Number() is more readable than unary + in a typed codebase
-      'unicorn/prefer-number-coercion': 'off',
-      'unicorn/prefer-await': 'off',
       'unicorn/prefer-temporal': 'off',
-      'unicorn/prefer-type-literal-last': 'off',
-      // catch-error-name conflicts with existing convention (error is fine)
-      'unicorn/catch-error-name': 'off',
       // rel is a legitimate HTML attribute name, not an abbreviation
       'unicorn/prevent-abbreviations': ['error', { allowList: { rel: true } }],
     },

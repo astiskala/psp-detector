@@ -65,24 +65,23 @@ export class PopupManager {
     if (!button || this.permissionButtonBound) return;
     this.permissionButtonBound = true;
 
-    button.addEventListener('click', () => {
-      chrome.permissions
-        .request({
+    button.addEventListener('click', async () => {
+      try {
+        const granted = await chrome.permissions.request({
           origins: ['https://*/*'],
           permissions: ['webRequest'],
-        })
-        .then(async (granted) => {
-          if (!granted) {
-            return;
-          }
-
-          this.hidePermissionRequest();
-          await this.requestCurrentTabRedetect();
-          await this.initialize();
-        })
-        .catch((error) => {
-          logger.error('Permission request failed:', error);
         });
+
+        if (!granted) {
+          return;
+        }
+
+        this.hidePermissionRequest();
+        await this.requestCurrentTabRedetect();
+        await this.initialize();
+      } catch (error) {
+        logger.error('Permission request failed:', error);
+      }
     });
   }
 
@@ -318,10 +317,12 @@ export class PopupManager {
       return;
     }
 
-    historyButton.addEventListener('click', () => {
-      chrome.runtime.openOptionsPage().catch((error) => {
+    historyButton.addEventListener('click', async () => {
+      try {
+        await chrome.runtime.openOptionsPage();
+      } catch (error) {
         logger.error('Failed to open history page:', error);
-      });
+      }
     });
   }
 }

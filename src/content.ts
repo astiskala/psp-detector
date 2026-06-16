@@ -114,6 +114,7 @@ class ContentScript {
 
         // Schedule initial detection
         scheduleIdle(() => {
+          // eslint-disable-next-line unicorn/prefer-await -- fire-and-forget in sync event listener
           this.detectPSP().catch((error) => {
             logger.error('Initial PSP detection failed:', error);
           });
@@ -131,6 +132,7 @@ class ContentScript {
     };
 
     scheduleIdle(() => {
+      // eslint-disable-next-line unicorn/prefer-await -- fire-and-forget in sync event listener
       setup().catch((error) => {
         logger.error('Content script setup failed:', error);
       });
@@ -873,6 +875,7 @@ const bootstrap = async (): Promise<void> => {
   });
 };
 
+// eslint-disable-next-line unicorn/prefer-await -- no top-level await in content scripts
 bootstrap().catch((error) => {
   // NOSONAR
   if (isExtensionContextInvalidated(error)) {

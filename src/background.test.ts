@@ -153,19 +153,14 @@ function readStorage(
   }
 
   if (Array.isArray(query)) {
-    return query.reduce<Record<string, unknown>>((accumulator, key) => {
-      accumulator[key] = store[key];
-      return accumulator;
-    }, {});
+    return Object.fromEntries(query.map((key) => [key, store[key]]));
   }
 
-  return Object.entries(query).reduce<Record<string, unknown>>(
-    (accumulator, [key, fallback]) => {
+  return Object.fromEntries(
+    Object.entries(query).map(([key, fallback]) => {
       const value = store[key];
-      accumulator[key] = value === undefined ? fallback : value;
-      return accumulator;
-    },
-    {},
+      return [key, value === undefined ? fallback : value];
+    }),
   );
 }
 
@@ -396,8 +391,8 @@ async function getDetectedPspsForTab(
   await flushAsyncTasks();
 
   const payload = sendResponse.mock.calls.at(-1)?.[0] as
-    | { psps?: unknown }
-    | undefined;
+    | undefined
+    | { psps?: unknown };
   return payload?.psps ?? [];
 }
 
@@ -409,10 +404,10 @@ function getLatestHistoryEntries(
     .filter(
       (
         payload,
-      ): payload is { [STORAGE_KEYS.PSP_HISTORY]: HistoryEntryLike[] } =>
-        typeof payload === 'object' &&
-        payload !== null &&
-        STORAGE_KEYS.PSP_HISTORY in payload,
+      ): payload is { [STORAGE_KEYS.PSP_HISTORY]: HistoryEntryLike[] } => {
+        if (typeof payload !== 'object' || payload === null) return false;
+        return Object.hasOwn(payload, STORAGE_KEYS.PSP_HISTORY);
+      },
     );
   return historyWrites.at(-1)?.[STORAGE_KEYS.PSP_HISTORY];
 }

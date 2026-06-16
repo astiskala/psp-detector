@@ -64,13 +64,13 @@ describe('PSP Data Validation', () => {
         const duplicates: string[] = [];
         const seen = new Set<string>();
 
-        names.forEach((name) => {
+        for (const name of names) {
           if (seen.has(name) && !duplicates.includes(name)) {
             duplicates.push(name);
           } else {
             seen.add(name);
           }
-        });
+        }
 
         console.log('Duplicate provider names found:', duplicates);
       }
@@ -108,7 +108,7 @@ describe('PSP Data Validation', () => {
     it('should have valid image references', () => {
       const allProviders = getAllProviders(pspConfig);
 
-      allProviders.forEach((provider) => {
+      for (const provider of allProviders) {
         expect(provider.image).toBeDefined();
         expect(typeof provider.image).toBe('string');
         expect(provider.image.trim()).not.toBe('');
@@ -116,7 +116,7 @@ describe('PSP Data Validation', () => {
         // Image should be a filename without extension
         expect(provider.image).not.toContain('/');
         expect(provider.image).not.toContain('\\');
-      });
+      }
     });
 
     it('should have valid URLs', () => {

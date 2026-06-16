@@ -403,7 +403,7 @@ function createPspTextElement(
   if (providerUrl !== undefined && providerUrl !== '') {
     const anchor = document.createElement('a');
     anchor.className = 'cell-label';
-    // Route through createSafeUrl so unsupported protocols (e.g. javascript:)
+    // Route through createSafeUrl so unsupported protocols (e.g. JavaScript:)
     // are stripped, matching the popup's hardening in UIService.
     anchor.href = createSafeUrl(providerUrl);
     anchor.textContent = name;
@@ -633,29 +633,28 @@ function bindControls(historyReference: HistoryReference): void {
     URL.revokeObjectURL(url);
   });
 
-  document.querySelector('#clearBtn')?.addEventListener('click', () => {
+  document.querySelector('#clearBtn')?.addEventListener('click', async () => {
     if (!confirm('Clear all PSP detection history? This cannot be undone.')) {
       return;
     }
 
-    clearHistory()
-      .then(() => {
-        historyReference.setHistory([]);
-        // Reset the dropdown and search to match the now-empty history so
-        // the user isn't filtering against PSP names that no longer exist.
-        const searchInput = document.querySelector<HTMLInputElement>('#search');
-        if (searchInput) searchInput.value = '';
-        const pspFilterSelect =
-          document.querySelector<HTMLSelectElement>('#pspFilter');
-        if (pspFilterSelect) pspFilterSelect.value = '';
-        populatePspFilter([]);
-        renderStats([]);
-        renderTable([]);
-        scheduleIdle(() => renderCharts([]));
-      })
-      .catch((error) => {
-        logger.error('Failed to clear history', error);
-      });
+    try {
+      await clearHistory();
+      historyReference.setHistory([]);
+      // Reset the dropdown and search to match the now-empty history so
+      // the user isn't filtering against PSP names that no longer exist.
+      const searchInput = document.querySelector<HTMLInputElement>('#search');
+      if (searchInput) searchInput.value = '';
+      const pspFilterSelect =
+        document.querySelector<HTMLSelectElement>('#pspFilter');
+      if (pspFilterSelect) pspFilterSelect.value = '';
+      populatePspFilter([]);
+      renderStats([]);
+      renderTable([]);
+      scheduleIdle(() => renderCharts([]));
+    } catch (error) {
+      logger.error('Failed to clear history', error);
+    }
   });
 }
 
@@ -674,8 +673,10 @@ async function init(): Promise<void> {
   });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  init().catch((error) => {
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    await init();
+  } catch (error) {
     logger.error('Failed to initialize options page', error);
-  });
+  }
 });

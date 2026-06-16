@@ -20,14 +20,14 @@ export class UIService {
    */
   private initializeDOMElements(): void {
     const elementIds = ['name', 'description', 'notice', 'url', 'image'];
-    elementIds.forEach((id) => {
+    for (const id of elementIds) {
       const element = document.querySelector<HTMLElement>(`#psp-${id}`);
       if (!element) {
         throw new Error(`Element psp-${id} not found`);
       }
 
       this.elements[id] = element;
-    });
+    }
 
     const subtitleElement =
       document.querySelector<HTMLElement>('#psp-subtitle');

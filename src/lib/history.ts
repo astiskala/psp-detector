@@ -226,7 +226,9 @@ let historyWriteChain: Promise<void> = Promise.resolve();
 
 /** Writes a detection to history, merging near-duplicate page events and debouncing repeated scans. Preserves newest-first ordering. */
 export async function writeHistoryEntry(entry: HistoryEntry): Promise<void> {
+  // eslint-disable-next-line unicorn/prefer-await -- deliberate serial write queue; converting to await would break queue semantics
   const next = historyWriteChain.then(() => writeHistoryEntryUnsafe(entry));
+  // eslint-disable-next-line unicorn/prefer-await -- deliberate serial write queue; converting to await would break queue semantics
   historyWriteChain = next.catch(() => {
     /* swallow so the chain stays alive for the next caller */
   });

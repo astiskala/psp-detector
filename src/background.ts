@@ -113,6 +113,7 @@ class BackgroundService {
     // Handle extension startup
     chrome.runtime.onStartup.addListener(() => {
       logger.info('Extension startup detected');
+      // eslint-disable-next-line unicorn/prefer-await -- fire-and-forget in sync event listener
       this.initializeServiceWorker().catch((error) => {
         logger.error('Failed to initialize service worker on startup:', error);
       });
@@ -137,10 +138,12 @@ class BackgroundService {
     // Handle service worker suspension/revival
     chrome.runtime.onSuspend.addListener(() => {
       logger.info('Service worker suspending');
+      // eslint-disable-next-line unicorn/prefer-await -- fire-and-forget in sync event listener
       this.persistState().catch((error) =>
         logger.error('Failed to persist state on suspend:', error),
       );
 
+      // eslint-disable-next-line unicorn/prefer-await -- fire-and-forget in sync event listener
       this.flushTabPspCache().catch((error) =>
         logger.error('Failed to flush tab PSP cache on suspend:', error),
       );
@@ -295,6 +298,7 @@ class BackgroundService {
     // that arrived just before suspension. The trailing-flush logic inside
     // flushTabPspCache collapses bursts to at most one in-flight set() plus
     // one queued follow-up.
+    // eslint-disable-next-line unicorn/prefer-await -- fire-and-forget in sync event listener
     this.flushTabPspCache().catch((error) =>
       logger.error('Failed to flush tab PSP cache:', error),
     );
@@ -326,6 +330,7 @@ class BackgroundService {
       }
     };
 
+    // eslint-disable-next-line unicorn/prefer-await -- structural state-management chain; .finally resets tabPspFlushInFlight
     this.tabPspFlushInFlight = run().finally(() => {
       this.tabPspFlushInFlight = null;
     });
@@ -864,10 +869,10 @@ class BackgroundService {
   private resolveDetectionPayload(
     data: PSPDetectionData,
     sender: chrome.runtime.MessageSender,
-  ): {
+  ): null | {
     tabId: number;
     pspName: NonNullable<PSPDetectionData['psp']>;
-  } | null {
+  } {
     // Content scripts must always be bound to sender.tab.id. Extension pages
     // are privileged and may target a specific tab explicitly.
     const senderUrl = sender.url ?? sender.tab?.url ?? '';
@@ -1492,9 +1497,11 @@ class BackgroundService {
     this.webRequestListenerRegistered = true;
     onBeforeRequest.addListener(
       (details): chrome.webRequest.BlockingResponse | undefined => {
-        this.handleNetworkRequest(
+        const networkRequest = this.handleNetworkRequest(
           details as chrome.webRequest.WebRequestDetails,
-        ).catch((error) => {
+        );
+        // eslint-disable-next-line unicorn/prefer-await -- fire-and-forget in sync event listener
+        networkRequest.catch((error) => {
           logger.warn('webRequest handler error:', error);
         });
 
@@ -1787,18 +1794,19 @@ class BackgroundService {
   async injectContentScript(tabId: number): Promise<void> {
     // Check optional host permission before attempting injection.
     // Without it, executeScript will throw in service-worker context.
-    const hasHostPermission = await chrome.permissions
-      .contains({
+    let hasHostPermission: boolean | null;
+    try {
+      hasHostPermission = await chrome.permissions.contains({
         origins: ['https://*/*'],
-      })
-      .catch(() => {
-        logger.debug(
-          `Skipping content script injection for tab ${tabId}: ` +
-            'could not check host permission',
-        );
-
-        return null;
       });
+    } catch {
+      logger.debug(
+        `Skipping content script injection for tab ${tabId}: ` +
+          'could not check host permission',
+      );
+
+      hasHostPermission = null;
+    }
 
     if (hasHostPermission !== true) {
       logger.debug(
@@ -1859,6 +1867,7 @@ class BackgroundService {
 // Initialize background service
 const backgroundService = new BackgroundService();
 
+// eslint-disable-next-line unicorn/prefer-await -- no top-level await in MV3 service workers
 backgroundService.initialize().catch((error) => {
   // NOSONAR
   logger.error('Failed to initialize background service:', error);

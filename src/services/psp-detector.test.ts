@@ -491,7 +491,7 @@ describe('PSPDetectorService', () => {
     // New behavior cuts at the last newline, dropping the matchString.
     const limit = 1024 * 1024;
     const url = 'https://shop.example.org/checkout';
-    const prefix = `${url}\n\n`; // detector prepends url + '\n\n'
+    const prefix = `${url}\n\n`; // detector prepends URL + '\n\n'
 
     const tailKeyword = `unique-marker-${'x'.repeat(8)}`;
     const PRE_LIMIT_OFFSET = 100;
