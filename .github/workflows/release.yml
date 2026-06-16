@@ -10,7 +10,7 @@ on:
       - 'assets/**'
       - 'tests/**'
       - 'package.json'
-      - 'package-lock.json'
+      - 'pnpm-lock.yaml'
       - 'build.mjs'
       - 'playwright.config.ts'
       - 'tsconfig.json'
@@ -25,25 +25,31 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.7.0
+
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
           node-version: 22
+          cache: 'pnpm'
 
       - name: Install dependencies
-        run: npm ci --ignore-scripts
+        run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Validate project (lint, typecheck, unit tests, build)
-        run: npm run validate
+        run: pnpm run validate
 
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
+        run: pnpm exec playwright install --with-deps chromium
 
       - name: Run integration tests (Playwright)
-        run: npx playwright test tests/integration --project=chromium --reporter=line
+        run: pnpm exec playwright test tests/integration --project=chromium --reporter=line
 
       - name: Run E2E tests (Playwright)
-        run: npx playwright test --config=playwright.e2e.config.ts --project=chromium --reporter=line
+        run: pnpm exec playwright test --config=playwright.e2e.config.ts --project=chromium --reporter=line
 
       - name: Get version from manifest
         id: manifest

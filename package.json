@@ -1,15 +1,15 @@
 {
   "name": "psp-detector",
-  "version": "3.2026.327.342",
+  "version": "3.2026.616.1537",
   "description": "Chrome extension to detect Payment Service Providers on web pages",
   "private": true,
   "scripts": {
     "build:debug": "DEBUG=true node build.mjs",
     "build": "node build.mjs",
     "check": "gts check",
-    "ci": "npm run lint && npm run lint:scripts && npm run lint:web && npm run lint:deps && npm run typecheck && npm run deadcode && npm run test",
+    "ci": "pnpm run lint && pnpm run lint:scripts && pnpm run lint:web && pnpm run lint:deps && pnpm run typecheck && pnpm run deadcode && pnpm run test",
     "clean": "gts clean",
-    "deadcode": "npm run knip:prod && node tools/check-unused-public-methods.mjs",
+    "deadcode": "pnpm run knip:prod && node tools/check-unused-public-methods.mjs",
     "fix": "gts fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -19,15 +19,15 @@
     "lint:html": "node tools/lint-web.mjs html public/popup.html public/options.html docs/privacy-policy.html",
     "lint:manifest": "node tools/lint-web.mjs manifest assets/manifest.json",
     "lint:scripts": "eslint --no-error-on-unmatched-pattern \".dependency-cruiser.cjs\" \"**/*.{js,cjs,mjs}\"",
-    "lint:web": "npm run lint:html && npm run lint:manifest",
+    "lint:web": "pnpm run lint:html && pnpm run lint:manifest",
     "lint": "gts lint",
-    "test:coverage": "npm run build && jest --coverage",
-    "test:e2e": "npm run build && npx playwright install chromium && playwright test --config=playwright.e2e.config.ts",
-    "test:integration": "npm run build && npx playwright install chromium && playwright test --config=playwright.config.ts",
+    "test:coverage": "pnpm run build && jest --coverage",
+    "test:e2e": "pnpm run build && pnpm exec playwright install chromium && playwright test --config=playwright.e2e.config.ts",
+    "test:integration": "pnpm run build && pnpm exec playwright install chromium && playwright test --config=playwright.config.ts",
     "test:watch": "jest --watch",
-    "test": "npm run build && jest",
+    "test": "pnpm run build && jest",
     "typecheck": "tsc --noEmit",
-    "validate": "npm run format:check && npm run lint && npm run lint:scripts && npm run typecheck && npm run knip && npm run deadcode && npm run lint:deps && npm run build && npm run test && npm run lint:web",
+    "validate": "pnpm run format:check && pnpm run lint && pnpm run lint:scripts && pnpm run typecheck && pnpm run knip && pnpm run deadcode && pnpm run lint:deps && pnpm run build && pnpm run test && pnpm run lint:web",
     "prepare": "husky"
   },
   "devDependencies": {
@@ -55,15 +55,16 @@
     "prettier": "^3.8.4",
     "sharp": "^0.35.1",
     "ts-jest": "^29.4.11",
-    "typescript": "^5.9.3",
+    "typescript": "^6.0.3",
     "typescript-eslint": "^8.61.0"
   },
+  "packageManager": "pnpm@11.7.0",
   "overrides": {
     "flatted": "^3.4.2",
     "glob": "^11.0.3",
     "minimatch": "^10.2.4",
     "tmp": "^0.2.6",
-    "typescript": "^5.9.3",
+    "typescript": "^6.0.3",
     "ws": "^8.19.0"
   }
 }

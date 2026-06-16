@@ -18,6 +18,8 @@
     "allowArbitraryExtensions": false,
     "noResolve": false,
 
+    "ignoreDeprecations": "6.0",
+
     // Emit
     "declaration": true,
     "declarationMap": true,
@@ -41,7 +43,7 @@
     "preserveSymlinks": false,
     "forceConsistentCasingInFileNames": true,
 
-    // Type Checking - Strictness (TypeScript 5.9 best practices)
+    // Type Checking - Strictness (TypeScript 6.x best practices)
     "strict": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
