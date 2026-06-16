@@ -264,10 +264,10 @@ test('popup renders seeded detections and keeps button sizing consistent', async
       popupPage.getByText('Detection Signal:').first(),
     ).toBeVisible();
 
-    const bodyWidth = await popupPage.evaluate(
-      () => getComputedStyle(document.body).width,
-    );
-    expect(Number(bodyWidth)).toBeGreaterThanOrEqual(420);
+    // Read the rendered width as a number directly; getComputedStyle returns
+    // a "<n>px" string that cannot be coerced with Number().
+    const bodyWidth = await popupPage.evaluate(() => document.body.offsetWidth);
+    expect(bodyWidth).toBeGreaterThanOrEqual(420);
 
     const styleComparison = await popupPage.evaluate(() => {
       const source = document.querySelector('.source-pill');

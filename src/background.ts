@@ -340,10 +340,13 @@ class BackgroundService {
   /** Reads a local-storage value without letting storage failures escape. */
   private async getLocalStorage<T>(key: string, fallback: T): Promise<T> {
     try {
-      const result = await chrome.storage.local.get({
-        [key]: fallback,
-      } as Record<string, T>);
-      return (result[key] as T) ?? fallback;
+      // Query by bare key rather than an object of defaults: Chrome drops
+      // object keys whose default value is `undefined`, which would turn this
+      // into a "get nothing" call and always yield the fallback (e.g. the
+      // current tab id would never be read back). We apply the fallback below.
+      const result = await chrome.storage.local.get(key);
+      const value = result[key] as T | undefined;
+      return value ?? fallback;
     } catch (error) {
       logger.error(`Failed to get storage key ${key}:`, error);
       return fallback;
@@ -1144,6 +1147,25 @@ class BackgroundService {
     if (tabId === undefined) return;
 
     logger.debug(`Background: Tab activated - ID: ${tabId}`);
+
+    let tab: chrome.tabs.Tab;
+    try {
+      tab = await chrome.tabs.get(activeInfo.tabId);
+    } catch (error) {
+      logger.warn('Tab access error:', error);
+      this.resetIcon();
+      return;
+    }
+
+    // Activating one of the extension's own pages (popup, options, history,
+    // onboarding) must not change which website tab is considered current.
+    // The real browser-action popup is not a tab and never fires this event;
+    // only extension pages opened in a tab do, and treating them as the
+    // current tab would lose the user's actual merchant-tab context.
+    if (typeof tab.url === 'string' && this.isOwnExtensionPage(tab.url)) {
+      return;
+    }
+
     await this.setCurrentTabId(tabId);
 
     const detectedPsp = this.toDetectionResult(
@@ -1152,13 +1174,12 @@ class BackgroundService {
 
     logger.debug(`Background: Retrieved PSP for tab ${tabId}:`, detectedPsp);
 
-    try {
-      const tab = await chrome.tabs.get(activeInfo.tabId);
-      await this.handleActivatedTab(tabId, activeInfo.tabId, tab, detectedPsp);
-    } catch (error) {
-      logger.warn('Tab access error:', error);
-      this.resetIcon();
-    }
+    await this.handleActivatedTab(tabId, activeInfo.tabId, tab, detectedPsp);
+  }
+
+  /** True when the URL belongs to one of this extension's own pages. */
+  private isOwnExtensionPage(url: string): boolean {
+    return url.startsWith(chrome.runtime.getURL(''));
   }
 
   private async handleActivatedTab(
