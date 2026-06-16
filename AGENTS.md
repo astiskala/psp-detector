@@ -27,11 +27,11 @@ Focused guidance for AI coding agents working in this repository. Keep answers c
 
 ### 4. Commands / Workflows
 
-- Full local check: `npm run validate` (format:check → lint → typecheck → build → unit tests → web lint).
-- Unit tests: `npm test` (Jest, jsdom).
-- Integration: `npm run test:integration` (Playwright real-site checks; installs Chromium).
-- E2E: `npm run test:e2e` (Playwright popup, options, history, and export flows in loaded extension).
-- Format: `npm run format` (write) / `npm run format:check` (verify).
+- Full local check: `pnpm run validate` (format:check → lint → typecheck → build → unit tests → web lint).
+- Unit tests: `pnpm test` (Jest, jsdom).
+- Integration: `pnpm run test:integration` (Playwright real-site checks; installs Chromium).
+- E2E: `pnpm run test:e2e` (Playwright popup, options, history, and export flows in loaded extension).
+- Format: `pnpm run format` (write) / `pnpm run format:check` (verify).
 - CI: `.github/workflows/release.yml` runs validate + Playwright on pushes affecting relevant paths.
 - Pre-commit hooks: Husky runs lint-staged on commit, typecheck + build + test on push, commitlint on commit-msg.
 
@@ -48,7 +48,7 @@ Focused guidance for AI coding agents working in this repository. Keep answers c
 1. Add `assets/images/newpsp.png` (square/transparent 128px) Attempt to find a favicon or the logo used on social media for the company (LinkedIn, X, Facebook).
 2. Append to `public/psps.json`:
    `{ "name": "NewPSP", "matchStrings": ["cdn.newpsp.com"], "image": "newpsp", "summary": "…", "url": "https://www.newpsp.com" }`
-3. `npm run build` (verifies image resizing & version bump).
+3. `pnpm run build` (verifies image resizing & version bump).
 4. Add to README
 
 ### 7. Pitfalls
@@ -75,4 +75,4 @@ Focused guidance for AI coding agents working in this repository. Keep answers c
 
 Assume the project is using version control, no need to comment out new code, leave in place "legacy support", or call out when you've made changes.
 
-Always produce diffs only for changed files and run `npm run validate` before concluding substantial edits.
+Always produce diffs only for changed files and run `pnpm run validate` before concluding substantial edits.
