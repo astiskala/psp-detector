@@ -2,24 +2,23 @@
 
 Curious about which Payment Service Provider (PSP) is used on a webpage? PSP Detector is a straightforward extension that helps you identify the payment gateway powering any site you visit.
 
-With PSP Detector, you can quickly find out which PSP is handling payments on a specific website. The extension displays the PSP’s logo, offers a brief description, and provides a link to its official website for more information.
+With PSP Detector, you can quickly find out which PSP is handling payments on a specific website. The extension displays the PSP's logo, offers a brief description, and provides a link to its official website for more information.
 
 ## Why Install PSP Detector?
 
 - Quick Identification: Easily see which payment service provider is used on any site without needing to dig through code.
-- Wide Coverage: Supports various PSPs, making it easier to learn about the payment technology in use across different websites.
-- Useful Insights: Whether you’re a business owner looking to compare payment options or just curious about the payment providers in use, this tool can offer you valuable insights.
+- Wide Coverage: Supports 160+ PSPs, making it easier to learn about the payment technology in use across different websites.
+- Useful Insights: Whether you're a business owner looking to compare payment options or just curious about the payment providers in use, this tool can offer you valuable insights.
 
 ## Key Features:
 
 - Real-Time Detection: Identify PSPs, orchestrators, and TSPs on the active tab.
 - History Dashboard: Track detections over time, filter/search, and export CSV.
-- Direct Links: Quickly navigate to provider websites or suggest coverage
-  improvements.
+- Direct Links: Quickly navigate to provider websites or suggest coverage improvements.
 
 ## How to Use:
 
-Just install the PSP Detector extension (available in the Chrome Web Store at https://chromewebstore.google.com/detail/iblfofcbjioicompkmafdehbdakdbjle), visit any website, navigate to the checkout page, and click on the extension icon to see the payment provider in use. It’s that simple!
+Just install the PSP Detector extension (available in the Chrome Web Store at https://chromewebstore.google.com/detail/iblfofcbjioicompkmafdehbdakdbjle), visit any website, navigate to the checkout page, and click on the extension icon to see the payment provider in use. It's that simple!
 
 ## Supported PSPs:
 
@@ -65,8 +64,8 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Eway
 - Eximbay
 - FastSpring
-- Fawry
 - Fat Zebra
+- Fawry
 - Fiserv
 - Fiuu
 - Flutterwave
@@ -132,8 +131,8 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Peach Payments
 - Pine Labs
 - Plastiq
-- Polar
 - Plug'n Pay
+- Polar
 - PPRO
 - Przelewy24
 - Quickpay
@@ -211,22 +210,21 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 ### Setup
 
 ```bash
-npm install
+pnpm install
 ```
 
-The project CI workflows use Node.js 22. Matching that locally avoids
-tooling drift.
+The project CI workflows use Node.js 22. Matching that locally avoids tooling drift.
 
 ### Building
 
 ```bash
-npm run build          # Production build
-npm run build:debug    # Development build with debug info
+pnpm run build          # Production build
+pnpm run build:debug    # Development build with debug info
 ```
 
 ### Loading In Chrome
 
-1. Run `npm run build`.
+1. Run `pnpm run build`.
 2. Open `chrome://extensions` and enable **Developer mode**.
 3. Click **Load unpacked** and select the `dist/` folder (not `assets/`).
 4. After rebuilding, click **Reload** on the extension.
@@ -234,60 +232,61 @@ npm run build:debug    # Development build with debug info
 ### Testing
 
 ```bash
-npm test                 # Run all tests
-npm run test:watch       # Run tests in watch mode
-npm run test:coverage    # Run Jest coverage report
-npm run test:integration # Run Playwright extension + demo-site E2E tests
+pnpm test                 # Run all tests
+pnpm run test:watch       # Run tests in watch mode
+pnpm run test:coverage    # Run Jest coverage report
+pnpm run test:integration # Run Playwright integration/E2E tests
 ```
 
 ### Linting
 
 ```bash
-npm run lint          # TypeScript/JavaScript linting with ESLint
-npm run lint:scripts  # Lint repository JS/MJS/CJS tooling files
-npm run lint:deps     # dependency-cruiser architectural boundary checks
-npm run lint:html     # HTML structure/safety checks via tools/lint-web.mjs
-npm run lint:manifest # Chrome extension manifest checks via tools/lint-web.mjs
-npm run lint:web      # Combined HTML and manifest linting
-npm run fix           # Auto-fix TypeScript/JavaScript issues
-npm run knip          # Unused files/dependencies/exports checks
+pnpm run lint          # TypeScript/JavaScript linting with ESLint
+pnpm run lint:scripts  # Lint repository JS/MJS/CJS tooling files
+pnpm run lint:deps     # dependency-cruiser architectural boundary checks
+pnpm run lint:html     # HTML structure/safety checks via tools/lint-web.mjs
+pnpm run lint:manifest # Chrome extension manifest checks via tools/lint-web.mjs
+pnpm run lint:web      # Combined HTML and manifest linting
+pnpm run fix           # Auto-fix TypeScript/JavaScript issues
+pnpm run knip          # Unused files/dependencies/exports checks
 ```
 
-ESLint includes SonarJS quality rules plus JSDoc enforcement for public APIs.
+ESLint includes SonarJS quality rules plus unicorn and JSDoc enforcement for public APIs.
 
 ### Quality Assurance
 
 ```bash
-npm run typecheck     # TypeScript type checking
-npm run ci            # Core CI script (lint + typecheck + unit tests + web/dependency checks)
-npm run validate      # Local validation (fix + lint + typecheck + knip + dep checks + build + unit tests + web lint)
+pnpm run typecheck     # TypeScript type checking
+pnpm run ci            # Core CI script (lint + typecheck + unit tests + web/dependency checks)
+pnpm run validate      # Local validation (fix + lint + typecheck + knip + dep checks + build + unit tests + web lint)
 ```
 
-`npm run validate` does not include Playwright. The GitHub Actions workflows run
-`npm run validate` first, then run `npm run test:integration` separately.
+`pnpm run validate` does not include Playwright. The GitHub Actions workflows run
+`pnpm run validate` first, then run integration and E2E tests separately.
 
 ### Versioning
 
 Extension versions are generated by `build.mjs` in the format
 `3.YYYY.MMDD.HHMM`. Do not edit the `package.json` version manually.
 
-- `build` - Build the extension for production
-- `build:debug` - Build with debug information
-- `check` - Run the default GTS checks
-- `fix` - Auto-fix TypeScript and JavaScript issues
-- `test` - Run Jest tests
-- `test:watch` - Run tests in watch mode
-- `test:coverage` - Run Jest with coverage output
-- `lint` - Run ESLint on TypeScript files
-- `lint:scripts` - Lint repository JavaScript tooling files
-- `lint:deps` - Run dependency-cruiser rules on `src/`
-- `lint:html` - Run HTML checks with `tools/lint-web.mjs`
-- `lint:manifest` - Run manifest checks with `tools/lint-web.mjs`
-- `lint:web` - Run both HTML and manifest linting
-- `knip` - Find unused files, dependencies, and exports
-- `test:integration` - Run Playwright integration/E2E tests
-- `typecheck` - Run TypeScript compiler checks
-- `ci` - Run the repository's core CI script
-- `validate` - Full validation before commit
-- `precommit` - Alias for `npm run validate`
-- `clean` - Clean build artifacts
+### Script Reference
+
+- `build` — Production build
+- `build:debug` — Build with debug information
+- `check` — Run the default GTS checks
+- `fix` — Auto-fix TypeScript and JavaScript issues
+- `test` — Run Jest tests
+- `test:watch` — Run tests in watch mode
+- `test:coverage` — Run Jest with coverage output
+- `lint` — Run ESLint on TypeScript files
+- `lint:scripts` — Lint repository JavaScript tooling files
+- `lint:deps` — Run dependency-cruiser rules on `src/`
+- `lint:html` — Run HTML checks with `tools/lint-web.mjs`
+- `lint:manifest` — Run manifest checks with `tools/lint-web.mjs`
+- `lint:web` — Run both HTML and manifest linting
+- `knip` — Find unused files, dependencies, and exports
+- `test:integration` — Run Playwright integration/E2E tests
+- `typecheck` — Run TypeScript compiler checks
+- `ci` — Run the repository's core CI script
+- `validate` — Full validation before commit
+- `clean` — Clean build artifacts

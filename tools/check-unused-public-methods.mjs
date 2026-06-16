@@ -78,8 +78,6 @@ function getMethodName(node) {
   ) {
     return node.name.text;
   }
-
-  return null;
 }
 
 function isDefinitionReference(reference, declarationPath) {

@@ -11,7 +11,7 @@ function readJsonSync(filePath) {
 
 /** Writes JSON with stable formatting so generated metadata stays diffable. */
 function writeJsonSync(filePath, object) {
-  writeFileSync(filePath, `${JSON.stringify(object, null, 2)}\n`);
+  writeFileSync(filePath, `${JSON.stringify(object, undefined, 2)}\n`);
 }
 
 const __filename = import.meta.filename;
@@ -143,11 +143,11 @@ async function buildFiles() {
     }
 
     if (Array.isArray(manifest.content_scripts)) {
-      manifest.content_scripts.forEach((cs) => {
+      for (const cs of manifest.content_scripts) {
         if (cs.js) {
           cs.js = cs.js.map((js) => js.replace(/^dist\//, ''));
         }
-      });
+      }
     }
 
     writeJsonSync(manifestDestination, manifest);
