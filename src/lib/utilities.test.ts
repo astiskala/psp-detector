@@ -169,7 +169,6 @@ describe('utils', () => {
 
   describe('fetchWithTimeout', () => {
     it('forwards request init and returns fetch response', async () => {
-      // eslint-disable-next-line unicorn/no-unnecessary-global-this -- fetch may not be declared in jsdom
       const originalFetch = globalThis.fetch;
       const response = {
         ok: true,
@@ -202,7 +201,6 @@ describe('utils', () => {
 
     it('aborts when timeout elapses', async () => {
       jest.useFakeTimers();
-      // eslint-disable-next-line unicorn/no-unnecessary-global-this -- fetch may not be declared in jsdom
       const originalFetch = globalThis.fetch;
       const fetchMock = jest.fn((_url: string, init?: RequestInit) => {
         return new Promise((_resolve, reject) => {
@@ -228,7 +226,6 @@ describe('utils', () => {
     });
 
     it('propagates parent abort signal to the request signal', async () => {
-      // eslint-disable-next-line unicorn/no-unnecessary-global-this -- fetch may not be declared in jsdom
       const originalFetch = globalThis.fetch;
       const fetchMock = jest.fn().mockResolvedValue({
         ok: true,

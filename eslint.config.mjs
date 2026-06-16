@@ -79,6 +79,12 @@ const testTypeScriptRuleOverrides = {
   // TypeScript narrowing (e.g. `typeof query === 'string'`) satisfies safety but
   // the rule doesn't follow narrowed union types — suppress in tests only
   'unicorn/no-unsafe-property-key': 'off',
+  // Tests mock globals: globalThis.fetch = ..., globalThis.chrome = ..., etc.
+  'unicorn/no-global-object-property-assignment': 'off',
+  // fetch / MutationObserver / requestIdleCallback may be absent in jsdom
+  'unicorn/no-unnecessary-global-this': 'off',
+  // Tests run under CommonJS/Jest where __dirname / require() are available
+  'unicorn/prefer-module': 'off',
 };
 
 export default [
@@ -121,8 +127,6 @@ export default [
       'unicorn/no-asterisk-prefix-in-documentation-comments': 'off',
       // no-negated-array-predicate requires Array.excludes() which is not yet standard
       'unicorn/no-negated-array-predicate': 'off',
-      // no-global-object-property-assignment: tests must assign globalThis.fetch / .chrome / .window
-      'unicorn/no-global-object-property-assignment': 'off',
       // no-keyword-prefix: flags 'className' (standard DOM API name) and similar legitimate identifiers
       'unicorn/no-keyword-prefix': 'off',
       'unicorn/explicit-length-check': 'off',
@@ -134,15 +138,11 @@ export default [
       'unicorn/prefer-abbreviations': 'off',
       'unicorn/prefer-dispose': 'off',
       'unicorn/prefer-path2d': 'off',
-      // prefer-module: zero TS violations; kept off globally to avoid breaking .cjs tools
-      'unicorn/prefer-module': 'off',
       // prefer-number-coercion: Number() is more readable than unary + in a typed codebase
       'unicorn/prefer-number-coercion': 'off',
       'unicorn/prefer-await': 'off',
       'unicorn/prefer-temporal': 'off',
       'unicorn/prefer-type-literal-last': 'off',
-      // MV3 service worker and content script restriction (no top-level await)
-      'unicorn/prefer-top-level-await': 'off',
       // catch-error-name conflicts with existing convention (error is fine)
       'unicorn/catch-error-name': 'off',
       // rel is a legitimate HTML attribute name, not an abbreviation
@@ -191,6 +191,8 @@ export default [
       '@typescript-eslint/no-require-imports': 'off',
       '@typescript-eslint/explicit-function-return-type': 'off',
       'no-undef': 'off',
+      // Node.js tools use CommonJS/require — prefer-module would flag all require() calls
+      'unicorn/prefer-module': 'off',
     },
   },
 
@@ -248,7 +250,7 @@ export default [
   {
     files: ['src/background.ts'],
     rules: {
-      'prefer-top-level-await': 'off',
+      'unicorn/prefer-top-level-await': 'off',
     },
   },
 
@@ -256,7 +258,7 @@ export default [
   {
     files: ['src/content.ts'],
     rules: {
-      'prefer-top-level-await': 'off',
+      'unicorn/prefer-top-level-await': 'off',
     },
   },
 
