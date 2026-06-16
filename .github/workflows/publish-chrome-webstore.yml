@@ -1,29 +1,101 @@
 name: Publish to Chrome Web Store
 
 on:
+  # Auto-publish to Trusted Testers after every successful release.
+  workflow_run:
+    workflows:
+      - Build and Release Extension
+    types:
+      - completed
+    branches:
+      - main
+
+  # Manual dispatch: re-upload a specific tag to Trusted Testers.
+  # Use the Chrome Web Store Developer Dashboard to promote a build to all users.
   workflow_dispatch:
     inputs:
       tag:
-        description: 'GitHub Release tag to publish (must match the extension version, e.g. 3.2026.321.1153)'
+        description: 'GitHub Release tag to upload (e.g. 3.2026.616.1758)'
         required: true
         type: string
-      tester:
-        description: 'Publish to Trusted Testers only'
-        required: false
-        type: boolean
-        default: true
-      publish:
-        description: 'Publish after upload'
-        required: false
-        type: boolean
-        default: true
-
-permissions:
-  contents: read
 
 jobs:
-  publish:
+  # ── Automatic path (triggered by workflow_run) ──────────────────────────────
+  publish-auto:
+    name: Auto-publish to Trusted Testers
+    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Resolve release tag from completed workflow run
+        id: resolve
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+
+          # The release workflow creates a lightweight tag at the triggering commit.
+          # Look up the tag ref whose object SHA matches that commit directly.
+          TAG=$(gh api "repos/${{ github.repository }}/git/refs/tags" \
+            --jq ".[] | select(.object.sha == \"$HEAD_SHA\") | .ref | ltrimstr(\"refs/tags/\")" \
+            | head -1)
+
+          # Fallback: most-recently-published release (covers the rare case where
+          # the tag object is annotated and doesn't directly reference HEAD_SHA).
+          if [ -z "$TAG" ]; then
+            TAG=$(gh release list \
+              --repo "${{ github.repository }}" \
+              --limit 1 \
+              --json tagName \
+              --jq '.[0].tagName')
+          fi
+
+          if [ -z "$TAG" ]; then
+            echo "Error: Could not resolve release tag for HEAD_SHA=$HEAD_SHA"
+            exit 1
+          fi
+
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "Resolved tag: $TAG"
+
+      - name: Download release ZIP
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.resolve.outputs.tag }}
+        run: |
+          set -euo pipefail
+          gh release download "$TAG" \
+            --repo "${{ github.repository }}" \
+            --pattern "psp-detector-$TAG.zip"
+
+          if [ ! -f "psp-detector-$TAG.zip" ]; then
+            echo "Error: psp-detector-$TAG.zip not found for tag '$TAG'"
+            ls -la
+            exit 1
+          fi
+          echo "Downloaded psp-detector-$TAG.zip"
+
+      - name: Upload and publish to Trusted Testers
+        uses: furkanipek/chrome-extension-action@7b8043da23667cbbf606ad7b075faa23fd16d09f # v1.0.1
+        with:
+          refresh-token: ${{ secrets.CWS_REFRESH_TOKEN }}
+          extension-id: ${{ secrets.CWS_EXTENSION_ID }}
+          client-id: ${{ secrets.CWS_CLIENT_ID }}
+          client-secret: ${{ secrets.CWS_CLIENT_SECRET }}
+          extension-file: psp-detector-${{ steps.resolve.outputs.tag }}.zip
+          publish: 'true'
+          tester: 'true'
+
+  # ── Manual path (workflow_dispatch) ─────────────────────────────────────────
+  publish-manual:
+    name: Manual upload to Trusted Testers (${{ inputs.tag }})
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - name: Download release ZIP for the selected tag
@@ -37,14 +109,13 @@ jobs:
             --pattern "psp-detector-$TAG.zip"
 
           if [ ! -f "psp-detector-$TAG.zip" ]; then
-            echo "Error: Expected asset 'psp-detector-$TAG.zip' was not found for tag '$TAG'."
-            echo "Available files in the current directory:"
+            echo "Error: psp-detector-$TAG.zip not found for tag '$TAG'"
             ls -la
             exit 1
           fi
           ls -la
 
-      - name: Upload and publish to Chrome Web Store
+      - name: Upload and publish to Trusted Testers
         uses: furkanipek/chrome-extension-action@7b8043da23667cbbf606ad7b075faa23fd16d09f # v1.0.1
         with:
           refresh-token: ${{ secrets.CWS_REFRESH_TOKEN }}
@@ -52,5 +123,5 @@ jobs:
           client-id: ${{ secrets.CWS_CLIENT_ID }}
           client-secret: ${{ secrets.CWS_CLIENT_SECRET }}
           extension-file: psp-detector-${{ inputs.tag }}.zip
-          publish: ${{ inputs.publish }}
-          tester: ${{ inputs.tester }}
+          publish: 'true'
+          tester: 'true'
