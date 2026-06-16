@@ -31,7 +31,7 @@ const strictTypeScriptRules = {
   ],
   complexity: ['error', { max: 15 }],
   'max-depth': ['error', { max: 4 }],
-  'max-statements': ['warn', { max: 30 }],
+  'max-statements': ['error', { max: 30 }],
   'no-console': 'error',
   'no-void': ['error', { allowAsStatement: false }],
   'prefer-template': 'error',
@@ -73,6 +73,9 @@ const testTypeScriptRuleOverrides = {
   'jsdoc/require-description': 'off',
   'jsdoc/require-jsdoc': 'off',
   'no-console': 'off',
+  // setHTML() is not available in jsdom — tests use innerHTML for fixture setup
+  'unicorn/prefer-dom-node-html-methods': 'off',
+  'unicorn/no-unsafe-dom-html': 'off',
 };
 
 export default [
@@ -102,21 +105,20 @@ export default [
   {
     name: 'psp-detector/unicorn-exceptions',
     rules: {
+      // Intentional design decisions — not a style fit for this codebase
       'unicorn/comment-content': 'off',
       'unicorn/no-array-reduce': 'off',
+      'unicorn/no-for-each': 'off',
+      'unicorn/no-for-loop': 'off',
       'unicorn/consistent-class-member-order': 'off',
       'unicorn/no-computed-property-existence-check': 'off',
       'unicorn/no-error-property-assignment': 'off',
       'unicorn/consistent-destructuring': 'off',
-      'unicorn/consistent-function-scoping': 'off',
       'unicorn/consistent-function-style': 'off',
       'unicorn/consistent-json-file-read': 'off',
       'unicorn/no-negated-array-predicate': 'off',
       'unicorn/no-asterisk-prefix-in-documentation-comments': 'off',
       'unicorn/no-unsafe-property-key': 'off',
-      'unicorn/no-array-sort': 'off',
-      'unicorn/no-break-in-nested-loop': 'off',
-      'unicorn/no-for-each': 'off',
       'unicorn/no-global-object-property-assignment': 'off',
       'unicorn/explicit-length-check': 'off',
       'unicorn/import-style': 'off',
@@ -126,44 +128,33 @@ export default [
       'unicorn/no-keyword-prefix': 'off',
       'unicorn/prefer-global-number-constants': 'off',
       'unicorn/no-null': 'off',
-      'unicorn/no-unnecessary-global-this': 'off',
       'unicorn/no-unreadable-new-expression': 'off',
-      'unicorn/no-unsafe-dom-html': 'off',
       'unicorn/no-useless-template-literals': 'off',
       'unicorn/prefer-abbreviations': 'off',
       'unicorn/prefer-add-event-listener': 'off',
       'unicorn/prefer-direct-iteration': 'off',
       'unicorn/prefer-dispose': 'off',
-      'unicorn/prefer-dom-node-append': 'off',
-      'unicorn/prefer-dom-node-html-methods': 'off',
-      'unicorn/prefer-early-return': 'off',
       'unicorn/prefer-path2d': 'off',
       'unicorn/prefer-https': 'off',
-      'unicorn/prefer-iterator-to-array': 'off',
-      'unicorn/prefer-modern-dom-apis': 'off',
       'unicorn/prefer-module': 'off',
       'unicorn/prefer-number-coercion': 'off',
-      'unicorn/prefer-number-is-safe-integer': 'off',
       'unicorn/prefer-object-define-properties': 'off',
       'unicorn/prefer-await': 'off',
       'unicorn/prefer-url-href': 'off',
-      'unicorn/prefer-top-level-await': 'off',
-      'unicorn/catch-error-name': 'off',
-      'unicorn/prefer-query-selector': 'off',
       'unicorn/switch-case-break-position': 'off',
       'unicorn/prefer-scoped-selector': 'off',
-      'unicorn/no-for-loop': 'off',
       'unicorn/no-useless-else': 'off',
-      'unicorn/no-useless-undefined': 'off',
       'unicorn/prefer-split-limit': 'off',
       'unicorn/prefer-spread': 'off',
-      'unicorn/prefer-string-repeat': 'off',
-      'unicorn/prefer-string-slice': 'off',
       'unicorn/prefer-temporal': 'off',
       'unicorn/prefer-type-literal-last': 'off',
-      'unicorn/switch-case-braces': 'off',
       'unicorn/try-complexity': 'off',
-      'unicorn/prevent-abbreviations': 'off',
+      // MV3 service worker and content script restriction (no top-level await)
+      'unicorn/prefer-top-level-await': 'off',
+      // catch-error-name conflicts with existing convention (error is fine)
+      'unicorn/catch-error-name': 'off',
+      // rel is a legitimate HTML attribute name, not an abbreviation
+      'unicorn/prevent-abbreviations': ['error', { allowList: { rel: true } }],
     },
   },
 
@@ -255,7 +246,7 @@ export default [
 
   // Console output is allowed only in logger utility and test code.
   {
-    files: ['src/lib/utils.ts'],
+    files: ['src/lib/utilities.ts'],
     rules: {
       'no-console': 'off',
     },

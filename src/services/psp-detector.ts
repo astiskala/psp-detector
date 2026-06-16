@@ -5,7 +5,7 @@ import {
   logger,
   getAllProviders,
   normalizeStringArray,
-} from '../lib/utils';
+} from '../lib/utilities';
 
 /**
  * Runs the two-phase provider scan against the current page URL and collected
@@ -132,7 +132,7 @@ export class PSPDetectorService {
     let urlToCheck = fallbackUrl;
 
     try {
-      const win = (globalThis as unknown as { window?: Window }).window;
+      const win = globalThis;
       const topHref = win?.top?.location?.href;
 
       // In browser context, use window.top.location.href as specified in
@@ -162,7 +162,7 @@ export class PSPDetectorService {
     if (this.exemptDomains.length === 0) return null;
 
     try {
-      const host = new globalThis.URL(urlToCheck).hostname.toLowerCase();
+      const host = new URL(urlToCheck).hostname.toLowerCase();
       if (this.isHostExempt(host)) {
         logger.debug('URL is exempt from PSP detection:', urlToCheck);
         return PSPDetectionResult.exempt(
@@ -202,10 +202,10 @@ export class PSPDetectorService {
     // Cut on the last newline within the limit so a matchString straddling
     // the boundary is never split mid-pattern (which would silently miss the
     // provider). If no newline is found, fall back to a hard cut.
-    const hardCut = pageContent.substring(0, this.maxContentSize);
+    const hardCut = pageContent.slice(0, Math.max(0, this.maxContentSize));
     const lastNewline = hardCut.lastIndexOf('\n');
     const truncated =
-      lastNewline > 0 ? hardCut.substring(0, lastNewline) : hardCut;
+      lastNewline > 0 ? hardCut.slice(0, Math.max(0, lastNewline)) : hardCut;
 
     logger.debug(
       `Content truncated from ${pageContent.length} to ` +
@@ -233,19 +233,15 @@ export class PSPDetectorService {
         continue;
       }
 
-      for (const matchString of matchStrings) {
-        if (content.includes(matchString)) {
-          results.push({
-            psp: psp.name,
-            detectionInfo: {
-              method: 'matchString',
-              value: matchString,
-            },
-          });
-
-          matched.add(psp.name);
-          break;
-        }
+      const hit = matchStrings.find((matchString) =>
+        content.includes(matchString),
+      );
+      if (hit !== undefined) {
+        results.push({
+          psp: psp.name,
+          detectionInfo: { method: 'matchString', value: hit },
+        });
+        matched.add(psp.name);
       }
     }
 

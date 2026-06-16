@@ -8,7 +8,7 @@ const ALLOWED_URL_PROTOCOLS = new Set(['http:', 'https:', 'mailto:']);
  */
 export function createSafeUrl(url: string): string {
   try {
-    const parsed = new globalThis.URL(url);
+    const parsed = new URL(url);
 
     if (!ALLOWED_URL_PROTOCOLS.has(parsed.protocol)) {
       logger.warn('Blocked unsupported URL protocol:', parsed.protocol);
@@ -105,21 +105,21 @@ const isDebugLoggingEnabled = (): boolean => {
 };
 
 export const logger = {
-  debug: (message: string, ...args: unknown[]): void => {
+  debug: (message: string, ...arguments_: unknown[]): void => {
     if (isDebugLoggingEnabled()) {
-      console.debug(LOG_PREFIX + message, ...args);
+      console.debug(LOG_PREFIX + message, ...arguments_);
     }
   },
-  info: (message: string, ...args: unknown[]): void => {
+  info: (message: string, ...arguments_: unknown[]): void => {
     if (isDebugLoggingEnabled()) {
-      console.log(LOG_PREFIX + message, ...args);
+      console.log(LOG_PREFIX + message, ...arguments_);
     }
   },
-  warn: (message: string, ...args: unknown[]): void => {
-    console.warn(LOG_PREFIX + message, ...args);
+  warn: (message: string, ...arguments_: unknown[]): void => {
+    console.warn(LOG_PREFIX + message, ...arguments_);
   },
-  error: (message: string, ...args: unknown[]): void => {
-    console.error(LOG_PREFIX + message, ...args);
+  error: (message: string, ...arguments_: unknown[]): void => {
+    console.error(LOG_PREFIX + message, ...arguments_);
   },
   time: (label: string): void => {
     if (isDebugLoggingEnabled()) {
@@ -137,24 +137,26 @@ export const logger = {
  * Debounces noisy mutation-driven callbacks while optionally allowing a
  * leading-edge invocation.
  */
-export function debouncedMutation<T extends (...args: unknown[]) => unknown>(
-  func: T,
+export function debouncedMutation<
+  T extends (...arguments_: unknown[]) => unknown,
+>(
+  function_: T,
   wait = 100,
   immediate = false,
-): (...args: Parameters<T>) => void {
+): (...arguments_: Parameters<T>) => void {
   let timeout: NodeJS.Timeout | null = null;
 
-  return (...args: Parameters<T>): void => {
+  return (...arguments_: Parameters<T>): void => {
     const later = (): void => {
       timeout = null;
-      if (!immediate) func(...args);
+      if (!immediate) function_(...arguments_);
     };
 
     const callNow = immediate && !timeout;
     if (timeout) clearTimeout(timeout);
     timeout = setTimeout(later, wait);
 
-    if (callNow) func(...args);
+    if (callNow) function_(...arguments_);
   };
 }
 
@@ -174,29 +176,29 @@ export function getAllProviders(pspConfig: PSPConfig): PSP[] {
  * be profiled in debug mode without affecting production logs.
  */
 export async function measureAsync<T>(
-  fn: () => Promise<T>,
+  function_: () => Promise<T>,
   label: string,
 ): Promise<T> {
   logger.time(label);
   try {
-    return await fn();
+    return await function_();
   } finally {
     logger.timeEnd(label);
   }
 }
 
-export const errorUtils = {
+export const errorUtilities = {
   /**
    * Executes an async operation and returns a caller-provided fallback after
    * logging the failure context.
    */
   safeExecuteAsync: async <T>(
-    fn: () => Promise<T>,
+    function_: () => Promise<T>,
     context: string,
     fallback: T,
   ): Promise<T> => {
     try {
-      return await fn();
+      return await function_();
     } catch (error) {
       logger.error(`Error in ${context}:`, error);
       return fallback;
@@ -208,7 +210,7 @@ export const errorUtils = {
    * network failures.
    */
   withRetry: <T>(
-    fn: () => Promise<T>,
+    function_: () => Promise<T>,
     maxAttempts = 3,
     delay = 1000,
   ): (() => Promise<T>) => {
@@ -218,7 +220,7 @@ export const errorUtils = {
 
       for (let attempt = 1; attempt <= attempts; attempt++) {
         try {
-          return await fn();
+          return await function_();
         } catch (error) {
           lastError = error instanceof Error ? error : new Error(String(error));
 

@@ -1,5 +1,5 @@
 import { PopupManager } from './services/popup-manager';
-import { logger } from './lib/utils';
+import { logger } from './lib/utilities';
 
 // Initialize popup
 document.addEventListener('DOMContentLoaded', () => {

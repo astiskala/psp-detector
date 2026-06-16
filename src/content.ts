@@ -14,7 +14,7 @@ import {
   type PSPMatch,
   type SourceType,
 } from './types';
-import { logger } from './lib/utils';
+import { logger } from './lib/utilities';
 
 const EXTENSION_CONTEXT_INVALIDATED_MESSAGE = 'Extension context invalidated';
 const SERVICE_WORKER_RESTART_ERRORS = [
@@ -219,7 +219,7 @@ class ContentScript {
     const result = this.pspDetector.detectPSP(url, scanContent);
 
     switch (result.type) {
-      case 'detected':
+      case 'detected': {
         for (const match of result.psps) {
           const sourceType = match.detectionInfo
             ? this.determineSourceType(match.detectionInfo.value, scanSources)
@@ -235,15 +235,19 @@ class ContentScript {
         }
 
         break;
-      case 'exempt':
+      }
+      case 'exempt': {
         await this.handlePSPDetection(result);
         break;
-      case 'none':
+      }
+      case 'none': {
         // No PSP detected, continue monitoring
         break;
-      case 'error':
+      }
+      case 'error': {
         logger.error('PSP detection error:', result.error);
         break;
+      }
     }
   }
 
@@ -262,9 +266,9 @@ class ContentScript {
     const addElementSources = (element: Element): void => {
       switch (element.tagName) {
         case 'SCRIPT': {
-          const src = (element as HTMLScriptElement).src;
-          if (src) {
-            scriptSrcs.push(src);
+          const source = (element as HTMLScriptElement).src;
+          if (source) {
+            scriptSrcs.push(source);
           }
 
           break;
@@ -272,11 +276,11 @@ class ContentScript {
 
         case 'IFRAME': {
           const iframe = element as HTMLIFrameElement;
-          const src = iframe.src;
-          if (src) {
-            iframeSrcs.push(src);
-            if (!seenIframes.has(src)) {
-              seenIframes.add(src);
+          const source = iframe.src;
+          if (source) {
+            iframeSrcs.push(source);
+            if (!seenIframes.has(source)) {
+              seenIframes.add(source);
               iframeElements.push(iframe);
             }
           }
@@ -307,8 +311,9 @@ class ContentScript {
           break;
         }
 
-        default:
+        default: {
           break;
+        }
       }
     };
 
@@ -462,7 +467,7 @@ class ContentScript {
         return null;
       }
 
-      if (referrerUrl.hostname === globalThis.location.hostname) {
+      if (referrerUrl.hostname === location.hostname) {
         return null;
       }
 
@@ -603,12 +608,12 @@ class ContentScript {
     const seenSrcs = new Set<string>();
 
     for (const iframe of iframeCandidates) {
-      const src = iframe.src;
-      if (!src || seenSrcs.has(src)) {
+      const source = iframe.src;
+      if (!source || seenSrcs.has(source)) {
         continue;
       }
 
-      seenSrcs.add(src);
+      seenSrcs.add(source);
       uniqueIframes.push(iframe);
       if (uniqueIframes.length >= this.maxIframeProcessing) {
         logger.debug(
@@ -620,21 +625,21 @@ class ContentScript {
     }
 
     const tasks = uniqueIframes.map((iframe) => async (): Promise<void> => {
-      const src = iframe.src;
+      const source = iframe.src;
       if (
-        !src ||
-        this.processedIframes.has(src) ||
-        !this.canAccessIframe(src)
+        !source ||
+        this.processedIframes.has(source) ||
+        !this.canAccessIframe(source)
       ) {
         return;
       }
 
-      this.processedIframes.add(src);
+      this.processedIframes.add(source);
 
       try {
-        const iframeDoc = await this.getAccessibleIframeDocument(iframe);
-        if (iframeDoc) {
-          this.extractNestedSources(iframeDoc, iframeContent);
+        const iframeDocument = await this.getAccessibleIframeDocument(iframe);
+        if (iframeDocument) {
+          this.extractNestedSources(iframeDocument, iframeContent);
         }
       } catch (error) {
         logger.debug('Skipping iframe content due to access error', error);
@@ -673,10 +678,10 @@ class ContentScript {
   private async getAccessibleIframeDocument(
     iframe: HTMLIFrameElement,
   ): Promise<Document | null> {
-    const existingDoc =
+    const existingDocument =
       iframe.contentDocument ?? iframe.contentWindow?.document;
-    if (existingDoc) {
-      return existingDoc;
+    if (existingDocument) {
+      return existingDocument;
     }
 
     if (iframe.contentWindow === null) {
@@ -696,26 +701,26 @@ class ContentScript {
   }
 
   /** Pulls nested script, iframe, and form URLs out of an accessible iframe. */
-  private extractNestedSources(doc: Document, content: string[]): void {
+  private extractNestedSources(document_: Document, content: string[]): void {
     // Get nested iframe sources
-    doc.querySelectorAll('iframe[src]').forEach((nestedIframe) => {
-      const nestedSrc = (nestedIframe as HTMLIFrameElement).src;
-      if (nestedSrc && !this.processedIframes.has(nestedSrc)) {
-        content.push(nestedSrc);
-        this.processedIframes.add(nestedSrc);
+    document_.querySelectorAll('iframe[src]').forEach((nestedIframe) => {
+      const nestedSource = (nestedIframe as HTMLIFrameElement).src;
+      if (nestedSource && !this.processedIframes.has(nestedSource)) {
+        content.push(nestedSource);
+        this.processedIframes.add(nestedSource);
       }
     });
 
     // Get script sources from iframe
-    doc.querySelectorAll('script[src]').forEach((script) => {
-      const scriptSrc = (script as HTMLScriptElement).src;
-      if (scriptSrc) {
-        content.push(scriptSrc);
+    document_.querySelectorAll('script[src]').forEach((script) => {
+      const scriptSource = (script as HTMLScriptElement).src;
+      if (scriptSource) {
+        content.push(scriptSource);
       }
     });
 
     // Get form actions from iframe
-    doc.querySelectorAll('form[action]').forEach((form) => {
+    document_.querySelectorAll('form[action]').forEach((form) => {
       const action = (form as HTMLFormElement).action;
       if (action) {
         content.push(action);
@@ -726,10 +731,10 @@ class ContentScript {
   /**
    * Restricts iframe scraping to same-origin documents to avoid access errors.
    */
-  private canAccessIframe(src: string): boolean {
+  private canAccessIframe(source: string): boolean {
     try {
-      const srcOrigin = new URL(src, document.baseURI).origin;
-      return srcOrigin === globalThis.location.origin;
+      const sourceOrigin = new URL(source, document.baseURI).origin;
+      return sourceOrigin === location.origin;
     } catch {
       return false;
     }
@@ -743,10 +748,10 @@ interface WindowWithPSPDetector {
     url: string;
   };
 }
-const windowExt = globalThis as unknown as WindowWithPSPDetector;
+const windowExtension = globalThis as unknown as WindowWithPSPDetector;
 
 const currentUrl = document.URL;
-const existingScript = windowExt.pspDetectorContentScript;
+const existingScript = windowExtension.pspDetectorContentScript;
 
 // Function to check if background script has state for this tab
 const checkBackgroundState = async (): Promise<boolean> => {
@@ -772,10 +777,10 @@ const registerContentScriptCleanup = (
   contentScript: ContentScript,
   url: string,
 ): void => {
-  globalThis.addEventListener('beforeunload', (): void => {
+  addEventListener('beforeunload', (): void => {
     contentScript.cleanup();
-    if (windowExt.pspDetectorContentScript?.url === url) {
-      delete windowExt.pspDetectorContentScript;
+    if (windowExtension.pspDetectorContentScript?.url === url) {
+      delete windowExtension.pspDetectorContentScript;
     }
   });
 };
@@ -790,7 +795,7 @@ const startContentScript = async (options: {
   }
 
   if (options.resetState) {
-    delete windowExt.pspDetectorContentScript;
+    delete windowExtension.pspDetectorContentScript;
   }
 
   const contentScript = new ContentScript();
@@ -799,7 +804,7 @@ const startContentScript = async (options: {
     contentScript.resetForNewPage();
   }
 
-  windowExt.pspDetectorContentScript = {
+  windowExtension.pspDetectorContentScript = {
     initialized: true,
     url: currentUrl,
   };

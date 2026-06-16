@@ -34,9 +34,9 @@ interface PspResponse {
 }
 
 async function launchExtensionContext(
-  userDataDir: string,
+  userDataDirectory: string,
 ): Promise<BrowserContext> {
-  return chromium.launchPersistentContext(userDataDir, {
+  return chromium.launchPersistentContext(userDataDirectory, {
     channel: 'chromium',
     headless: true,
     args: [
@@ -209,12 +209,12 @@ async function expectHistoryRowsAndMetadata(optionsPage: Page): Promise<void> {
     .evaluateAll((elements) =>
       elements.map((element) => (element as HTMLImageElement).src),
     );
-  expect(pspIconSources.some((src) => src.includes('checkout_48.png'))).toBe(
-    true,
-  );
-  expect(pspIconSources.some((src) => src.includes('primer_48.png'))).toBe(
-    true,
-  );
+  expect(
+    pspIconSources.some((source) => source.includes('checkout_48.png')),
+  ).toBe(true);
+  expect(
+    pspIconSources.some((source) => source.includes('primer_48.png')),
+  ).toBe(true);
 
   await expect(optionsPage.locator('#historyBody')).toContainText('scriptSrc');
   await expect(optionsPage.locator('#historyBody')).toContainText(
@@ -293,7 +293,7 @@ test('popup renders seeded detections and keeps button sizing consistent', async
     );
 
     const actionHeights = await popupPage.evaluate(() => {
-      const historyButton = document.getElementById('history-link');
+      const historyButton = document.querySelector('#history-link');
       const suggestButton = document.querySelector('#psp-url a');
       if (!historyButton || !suggestButton) {
         return null;

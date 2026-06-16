@@ -23,7 +23,7 @@ import {
   getAllProviders,
   normalizeStringArray,
   fetchWithTimeout,
-} from './lib/utils';
+} from './lib/utilities';
 import { STORAGE_KEYS } from './lib/storage-keys';
 import { writeHistoryEntry } from './lib/history';
 import type { HistoryEntry, ProviderType } from './types/history';
@@ -37,22 +37,30 @@ const NETWORK_REQUEST_TYPES: `${chrome.webRequest.ResourceType}`[] = [
 
 const sourcePriority = (sourceType?: string): number => {
   switch (sourceType) {
-    case undefined:
+    case undefined: {
       return -1;
-    case 'networkRequest':
+    }
+    case 'networkRequest': {
       return 0;
-    case 'pageUrl':
+    }
+    case 'pageUrl': {
       return 1;
-    case 'linkHref':
+    }
+    case 'linkHref': {
       return 2;
-    case 'formAction':
+    }
+    case 'formAction': {
       return 3;
-    case 'iframeSrc':
+    }
+    case 'iframeSrc': {
       return 4;
-    case 'scriptSrc':
+    }
+    case 'scriptSrc': {
       return 5;
-    default:
+    }
+    default: {
       return -1;
+    }
   }
 };
 
@@ -242,7 +250,11 @@ class BackgroundService {
 
     for (const [tabIdKey, entries] of Object.entries(tabPsps)) {
       const tabId = Number(tabIdKey);
-      if (!Number.isInteger(tabId) || tabId < 0 || !Array.isArray(entries)) {
+      if (
+        !Number.isSafeInteger(tabId) ||
+        tabId < 0 ||
+        !Array.isArray(entries)
+      ) {
         continue;
       }
 
@@ -501,7 +513,6 @@ class BackgroundService {
     sender: chrome.runtime.MessageSender,
     sendResponse: (response?: unknown) => void,
   ): Promise<void> {
-    // Validate message structure
     if (typeof message.action !== 'string') {
       logger.error('Invalid message format received:', message);
       sendResponse({ error: 'Invalid message format' });
@@ -509,60 +520,72 @@ class BackgroundService {
     }
 
     try {
-      switch (message.action) {
-        case MessageAction.GET_PSP_CONFIG:
-          await this.handleGetPspConfig(sendResponse);
-          break;
-
-        case MessageAction.DETECT_PSP:
-          if (!this.isValidPspDetectionData(message.data)) {
-            logger.error('Invalid PSP detection data:', message.data);
-            sendResponse({ error: 'Invalid PSP detection data' });
-            break;
-          }
-
-          {
-            const detectionData = message.data;
-            await this.handleDetectPsp(detectionData, sender);
-            sendResponse(null);
-          }
-
-          break;
-
-        case MessageAction.GET_PSP:
-          await this.handleGetPsp(sender, sendResponse);
-          break;
-
-        case MessageAction.GET_TAB_ID:
-          if (typeof sender.tab?.id === 'number') {
-            sendResponse({ tabId: sender.tab.id });
-          } else {
-            sendResponse({ error: 'No tab ID available' });
-          }
-
-          break;
-
-        case MessageAction.GET_EXEMPT_DOMAINS: {
-          const exemptDomains = await this.getExemptDomains();
-          sendResponse({ exemptDomains });
-          break;
-        }
-
-        case MessageAction.CHECK_TAB_STATE:
-          await this.handleCheckTabState(sender, sendResponse);
-          break;
-
-        case MessageAction.REDETECT_CURRENT_TAB:
-          await this.handleRedetectCurrentTab(sendResponse);
-          break;
-
-        default:
-          logger.warn('Unknown message action:', message.action);
-          sendResponse({ error: 'Unknown message action' });
-      }
+      await this.dispatchMessage(message, sender, sendResponse);
     } catch (error) {
       logger.error('Error handling message:', error);
       sendResponse({ error: 'Internal error processing message' });
+    }
+  }
+
+  /** Dispatches a validated message to its action-specific handler. */
+  private async dispatchMessage(
+    message: ChromeMessage,
+    sender: chrome.runtime.MessageSender,
+    sendResponse: (response?: unknown) => void,
+  ): Promise<void> {
+    switch (message.action) {
+      case MessageAction.GET_PSP_CONFIG: {
+        await this.handleGetPspConfig(sendResponse);
+        break;
+      }
+
+      case MessageAction.DETECT_PSP: {
+        if (!this.isValidPspDetectionData(message.data)) {
+          logger.error('Invalid PSP detection data:', message.data);
+          sendResponse({ error: 'Invalid PSP detection data' });
+          break;
+        }
+
+        await this.handleDetectPsp(message.data, sender);
+        sendResponse(null);
+        break;
+      }
+
+      case MessageAction.GET_PSP: {
+        await this.handleGetPsp(sender, sendResponse);
+        break;
+      }
+
+      case MessageAction.GET_TAB_ID: {
+        if (typeof sender.tab?.id === 'number') {
+          sendResponse({ tabId: sender.tab.id });
+        } else {
+          sendResponse({ error: 'No tab ID available' });
+        }
+
+        break;
+      }
+
+      case MessageAction.GET_EXEMPT_DOMAINS: {
+        const exemptDomains = await this.getExemptDomains();
+        sendResponse({ exemptDomains });
+        break;
+      }
+
+      case MessageAction.CHECK_TAB_STATE: {
+        await this.handleCheckTabState(sender, sendResponse);
+        break;
+      }
+
+      case MessageAction.REDETECT_CURRENT_TAB: {
+        await this.handleRedetectCurrentTab(sendResponse);
+        break;
+      }
+
+      default: {
+        logger.warn('Unknown message action:', message.action);
+        sendResponse({ error: 'Unknown message action' });
+      }
     }
   }
 
@@ -860,7 +883,7 @@ class BackgroundService {
       return null;
     }
 
-    if (!Number.isInteger(tabId) || tabId < 0) {
+    if (!Number.isSafeInteger(tabId) || tabId < 0) {
       logger.warn(`Background: Invalid tab ID: ${tabId}`);
       return null;
     }
@@ -1304,30 +1327,34 @@ class BackgroundService {
         continue;
       }
 
-      for (const rawMatchString of matchStrings) {
-        const matchString = rawMatchString.trim().toLowerCase();
-        if (matchString.length === 0) {
-          continue;
-        }
+      this.indexMatchStrings(matchStrings, provider.name);
+    }
+  }
 
-        const matcher: NetworkMatcher = {
-          pspName: provider.name,
-          matchString,
-        };
-        const token = this.extractMatcherToken(matchString);
-        if (token === null) {
-          this.fallbackNetworkMatchers.push(matcher);
-          continue;
-        }
-
-        const bucket = this.networkMatchersByToken.get(token);
-        if (bucket !== undefined) {
-          bucket.push(matcher);
-          continue;
-        }
-
-        this.networkMatchersByToken.set(token, [matcher]);
+  private indexMatchStrings(
+    matchStrings: string[],
+    pspName: NonNullable<PSPDetectionData['psp']>,
+  ): void {
+    for (const rawMatchString of matchStrings) {
+      const matchString = rawMatchString.trim().toLowerCase();
+      if (matchString.length === 0) {
+        continue;
       }
+
+      const matcher: NetworkMatcher = { pspName, matchString };
+      const token = this.extractMatcherToken(matchString);
+      if (token === null) {
+        this.fallbackNetworkMatchers.push(matcher);
+        continue;
+      }
+
+      const bucket = this.networkMatchersByToken.get(token);
+      if (bucket !== undefined) {
+        bucket.push(matcher);
+        continue;
+      }
+
+      this.networkMatchersByToken.set(token, [matcher]);
     }
   }
 
@@ -1373,8 +1400,8 @@ class BackgroundService {
       }
 
       const tokens = new Set<string>([host]);
-      for (let i = 1; i < hostParts.length; i++) {
-        const suffix = hostParts.slice(i).join('.');
+      for (let index = 1; index < hostParts.length; index++) {
+        const suffix = hostParts.slice(index).join('.');
         if (suffix.length > 0) {
           tokens.add(suffix);
         }
@@ -1397,22 +1424,24 @@ class BackgroundService {
         continue;
       }
 
-      for (const matcher of bucket) {
-        const key = `${matcher.pspName}|${matcher.matchString}`;
-        if (seen.has(key)) {
-          continue;
-        }
-
-        seen.add(key);
-        candidates.push(matcher);
-      }
+      this.collectUniqueMatchers(bucket, seen, candidates);
     }
 
     if (candidates.length > 0) {
       return candidates;
     }
 
-    for (const matcher of this.fallbackNetworkMatchers) {
+    this.collectUniqueMatchers(this.fallbackNetworkMatchers, seen, candidates);
+
+    return candidates;
+  }
+
+  private collectUniqueMatchers(
+    bucket: NetworkMatcher[],
+    seen: Set<string>,
+    candidates: NetworkMatcher[],
+  ): void {
+    for (const matcher of bucket) {
       const key = `${matcher.pspName}|${matcher.matchString}`;
       if (seen.has(key)) {
         continue;
@@ -1421,8 +1450,6 @@ class BackgroundService {
       seen.add(key);
       candidates.push(matcher);
     }
-
-    return candidates;
   }
 
   private async setupOptionalNetworkScanning(): Promise<void> {
@@ -1452,7 +1479,7 @@ class BackgroundService {
           logger.warn('webRequest handler error:', error);
         });
 
-        return undefined;
+        return;
       },
       {
         urls: ['https://*/*'],
@@ -1635,7 +1662,7 @@ class BackgroundService {
   private sortStoredTabPsps(entries: StoredTabPsp[]): StoredTabPsp[] {
     return entries
       .map((entry, index) => ({ entry, index }))
-      .sort((left, right) => {
+      .toSorted((left, right) => {
         const leftPriority = this.providerPriorityByName.get(
           left.entry.psp.toLowerCase(),
         );

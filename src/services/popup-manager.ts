@@ -8,9 +8,9 @@ import { UIService } from './ui';
 import {
   logger,
   measureAsync,
-  errorUtils,
+  errorUtilities,
   fetchWithTimeout,
-} from '../lib/utils';
+} from '../lib/utilities';
 import { STORAGE_KEYS } from '../lib/storage-keys';
 
 /**
@@ -63,22 +63,24 @@ export class PopupManager {
     this.setElementDisplay('loading-state', 'none');
     this.setElementDisplay('permission-state', 'block');
 
-    const btn = document.getElementById('grant-permission-btn');
-    if (!btn || this.permissionButtonBound) return;
+    const button = document.querySelector('#grant-permission-btn');
+    if (!button || this.permissionButtonBound) return;
     this.permissionButtonBound = true;
 
-    btn.addEventListener('click', () => {
+    button.addEventListener('click', () => {
       chrome.permissions
         .request({
           origins: ['https://*/*'],
           permissions: ['webRequest'],
         })
         .then(async (granted) => {
-          if (granted) {
-            this.hidePermissionRequest();
-            await this.requestCurrentTabRedetect();
-            await this.initialize();
+          if (!granted) {
+            return;
           }
+
+          this.hidePermissionRequest();
+          await this.requestCurrentTabRedetect();
+          await this.initialize();
         })
         .catch((error) => {
           logger.error('Permission request failed:', error);
@@ -96,7 +98,9 @@ export class PopupManager {
   }
 
   private setElementDisplay(id: string, display: string): void {
-    document.getElementById(id)?.style.setProperty('display', display);
+    document
+      .querySelector<HTMLElement>(`#${id}`)
+      ?.style.setProperty('display', display);
   }
 
   /**
@@ -152,14 +156,14 @@ export class PopupManager {
    * Retries transient background failures before falling back to an empty list.
    */
   private async getDetectedPSPsWithRetry(): Promise<PSPResponse['psps']> {
-    const retryFn = errorUtils.withRetry(
+    const retryFunction = errorUtilities.withRetry(
       () => this.getDetectedPSPs(),
       2, // 2 retry attempts
       500, // 500ms delay
     );
 
-    return errorUtils.safeExecuteAsync(
-      retryFn,
+    return errorUtilities.safeExecuteAsync(
+      retryFunction,
       'get detected PSP with retry',
       [],
     );
@@ -312,7 +316,7 @@ export class PopupManager {
   }
 
   public bindHistoryAction(): void {
-    const historyButton = document.getElementById('history-link');
+    const historyButton = document.querySelector('#history-link');
     if (!historyButton) {
       return;
     }

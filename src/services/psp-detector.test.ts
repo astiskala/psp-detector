@@ -219,7 +219,7 @@ describe('PSPDetectorService', () => {
 
   it('should handle window.top access errors gracefully', () => {
     // Mock window.top to throw error (cross-origin)
-    const originalWindow = globalThis.window;
+    const originalWindow = globalThis as Window & typeof globalThis;
     globalThis.window = createCrossOriginWindowMock();
 
     const result = service.detectPSP(
@@ -237,12 +237,12 @@ describe('PSPDetectorService', () => {
   it('should handle performance timing edge cases', () => {
     // Test with very large config to ensure timing works
     const largeConfig: PSPConfig = {
-      psps: Array.from({ length: 100 }, (_, i) => ({
-        name: TypeConverters.toPSPName(`PSP${i}`)!,
-        regex: TypeConverters.toRegexPattern(String.raw`psp${i}\.com`)!,
-        url: TypeConverters.toURL(`https://psp${i}.com`)!,
-        image: `psp${i}`,
-        summary: `PSP ${i} summary`,
+      psps: Array.from({ length: 100 }, (_, index) => ({
+        name: TypeConverters.toPSPName(`PSP${index}`)!,
+        regex: TypeConverters.toRegexPattern(String.raw`psp${index}\.com`)!,
+        url: TypeConverters.toURL(`https://psp${index}.com`)!,
+        image: `psp${index}`,
+        summary: `PSP ${index} summary`,
       })),
     };
 

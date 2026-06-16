@@ -1,5 +1,5 @@
 import { MessageAction } from './types';
-import { logger } from './lib/utils';
+import { logger } from './lib/utilities';
 
 interface DetectionPermissionState {
   hasHostPermission: boolean;
@@ -7,7 +7,7 @@ interface DetectionPermissionState {
 }
 
 function getElementByIdOrThrow<T extends HTMLElement>(id: string): T {
-  const element = document.getElementById(id);
+  const element = document.querySelector<T>(`#${id}`);
   if (!element) {
     throw new Error(`Element #${id} not found`);
   }

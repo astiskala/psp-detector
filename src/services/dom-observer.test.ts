@@ -40,21 +40,21 @@ describe('DOMObserverService', () => {
 
     await waitFor(TEST_TIMEOUTS.DOM_MUTATION_DELAY);
 
-    const firstCallArgs = callback.mock.calls[0] as
+    const firstCallArguments = callback.mock.calls[0] as
       | [MutationRecord[] | undefined]
       | undefined;
-    expect(firstCallArgs?.[0]).toBeDefined();
-    expect(Array.isArray(firstCallArgs?.[0])).toBe(true);
+    expect(firstCallArguments?.[0]).toBeDefined();
+    expect(Array.isArray(firstCallArguments?.[0])).toBe(true);
   });
 
   it('observes relevant attribute changes for dynamic sources', () => {
     service.initialize(callback, 0);
     service.startObserving();
 
-    const observerRef = service as unknown as {
+    const observerReference = service as unknown as {
       observer: { observe: jest.Mock } | null;
     };
-    const observeMock = observerRef.observer?.observe;
+    const observeMock = observerReference.observer?.observe;
     expect(observeMock).toBeDefined();
 
     const options = observeMock?.mock.calls[0]?.[1] as MutationObserverInit;
@@ -65,7 +65,7 @@ describe('DOMObserverService', () => {
   });
 
   it('forwards relevant attribute mutation records', async () => {
-    const originalMutationObserver = globalThis.MutationObserver;
+    const originalMutationObserver = MutationObserver;
 
     try {
       globalThis.MutationObserver = class {
@@ -103,10 +103,10 @@ describe('DOMObserverService', () => {
       await waitFor(TEST_TIMEOUTS.DEBOUNCE_SHORT);
 
       expect(callback).toHaveBeenCalled();
-      const firstCallArgs = callback.mock.calls[0] as
+      const firstCallArguments = callback.mock.calls[0] as
         | [MutationRecord[] | undefined]
         | undefined;
-      expect(firstCallArgs?.[0]?.[0]?.type).toBe('attributes');
+      expect(firstCallArguments?.[0]?.[0]?.type).toBe('attributes');
     } finally {
       globalThis.MutationObserver = originalMutationObserver;
     }
@@ -117,7 +117,7 @@ describe('DOMObserverService', () => {
     service.startObserving();
     service.stopObserving();
     const newNode = document.createElement('div');
-    document.body.appendChild(newNode);
+    document.body.append(newNode);
 
     await waitFor(TEST_TIMEOUTS.DEBOUNCE_SHORT);
 
@@ -155,7 +155,7 @@ describe('DOMObserverService', () => {
 
   it('should handle observer start errors gracefully', () => {
     // Mock observer.observe to throw error
-    const originalMutationObserver = globalThis.MutationObserver;
+    const originalMutationObserver = MutationObserver;
     globalThis.MutationObserver = class {
       constructor(callback: MutationCallback) {
         this.callback = callback;

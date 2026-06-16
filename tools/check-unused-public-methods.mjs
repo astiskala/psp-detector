@@ -105,19 +105,11 @@ function findUnusedPublicMethods(sourceFile) {
         languageService.findReferences(sourceFile.fileName, position) ?? [];
 
       const declarationPath = path.resolve(sourceFile.fileName);
-      let hasNonDefinitionReference = false;
-      for (const referencedSymbol of references) {
-        for (const reference of referencedSymbol.references) {
-          if (!isDefinitionReference(reference, declarationPath)) {
-            hasNonDefinitionReference = true;
-            break;
-          }
-        }
-
-        if (hasNonDefinitionReference) {
-          break;
-        }
-      }
+      const hasNonDefinitionReference = references.some((referencedSymbol) =>
+        referencedSymbol.references.some(
+          (reference) => !isDefinitionReference(reference, declarationPath),
+        ),
+      );
 
       if (!hasNonDefinitionReference) {
         const owner = node.parent;

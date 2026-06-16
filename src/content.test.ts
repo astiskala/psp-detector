@@ -14,7 +14,7 @@ interface RuntimeMessage {
   action: MessageAction | string;
 }
 
-type MutationCallbackArg = (mutations?: MutationRecord[]) => Promise<void>;
+type MutationCallbackArgument = (mutations?: MutationRecord[]) => Promise<void>;
 
 interface WindowContentState {
   pspDetectorContentScript?: {
@@ -74,18 +74,22 @@ function setupChromeRuntimeMock(checkTabState: boolean): jest.Mock {
     ): Promise<unknown> | void => {
       if (typeof callback === 'function') {
         switch (message.action) {
-          case MessageAction.GET_EXEMPT_DOMAINS:
+          case MessageAction.GET_EXEMPT_DOMAINS: {
             callback({ exemptDomains: ['example.com'] });
             return;
-          case MessageAction.GET_PSP_CONFIG:
+          }
+          case MessageAction.GET_PSP_CONFIG: {
             callback({ config: { psps: [] } });
             return;
-          case MessageAction.GET_TAB_ID:
+          }
+          case MessageAction.GET_TAB_ID: {
             callback({ tabId: 123 });
             return;
-          default:
+          }
+          default: {
             callback({});
             return;
+          }
         }
       }
 
@@ -153,7 +157,7 @@ describe('content bootstrap', () => {
     const windowState = globalThis as typeof globalThis & WindowContentState;
     expect(windowState.pspDetectorContentScript?.initialized).toBe(true);
 
-    globalThis.dispatchEvent(new Event('beforeunload'));
+    dispatchEvent(new Event('beforeunload'));
     expect(domObserverCleanupMock).toHaveBeenCalledTimes(1);
   });
 
@@ -255,14 +259,14 @@ describe('content bootstrap', () => {
     await flushAsyncTasks();
 
     const mutationCallback = domObserverInitializeMock.mock.calls[0]?.[0] as
-      | MutationCallbackArg
+      | MutationCallbackArgument
       | undefined;
     expect(mutationCallback).toBeDefined();
 
     detectPSPMock.mockClear();
 
     const iframe = document.createElement('iframe');
-    document.body.appendChild(iframe);
+    document.body.append(iframe);
     iframe.src =
       'https://assets.braintreegateway.com/web/3.123.2/html/hosted-fields-frame.min.html';
 

@@ -2,14 +2,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { PSPConfig, PSP } from '../types/psp';
 
+const expectNonEmptyString = (value: unknown): void => {
+  expect(value).toBeDefined();
+  expect(typeof value).toBe('string');
+  expect((value as string).trim()).not.toBe('');
+};
+
 describe('PSP Data Validation', () => {
   let pspConfig: PSPConfig;
-
-  const expectNonEmptyString = (value: unknown): void => {
-    expect(value).toBeDefined();
-    expect(typeof value).toBe('string');
-    expect((value as string).trim()).not.toBe('');
-  };
 
   const getAllProviders = (config: PSPConfig): (PSP & { type: string })[] => {
     const psps = config.psps;

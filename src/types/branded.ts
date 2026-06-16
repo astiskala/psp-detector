@@ -24,7 +24,7 @@ export const TypeConverters = {
    * Accepts only non-negative integer tab ids returned by the browser APIs.
    */
   toTabId: (id: number): TabId | null => {
-    if (!Number.isInteger(id) || id < 0) {
+    if (!Number.isSafeInteger(id) || id < 0) {
       return null;
     }
 

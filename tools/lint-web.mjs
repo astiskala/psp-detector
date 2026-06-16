@@ -154,8 +154,8 @@ async function lintManifest(filePath) {
 }
 
 async function main() {
-  const args = process.argv.slice(2);
-  const [mode, ...files] = args;
+  const arguments_ = process.argv.slice(2);
+  const [mode, ...files] = arguments_;
 
   if (!['html', 'manifest'].includes(mode) || files.length === 0) {
     fail('Usage: node tools/lint-web.mjs <html|manifest> <file...>');

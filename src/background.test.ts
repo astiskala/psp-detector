@@ -27,7 +27,7 @@ type PermissionAddedListener = (
   permissions: chrome.permissions.Permissions,
 ) => void;
 
-interface EventMock<T extends (...args: never[]) => unknown> {
+interface EventMock<T extends (...arguments_: never[]) => unknown> {
   addListener: jest.Mock<void, [T]>;
   getListener: () => T | null;
 }
@@ -132,7 +132,7 @@ function createChromeEventMocks(): ChromeEventMocks {
 }
 
 function createEventMock<
-  T extends (...args: never[]) => unknown,
+  T extends (...arguments_: never[]) => unknown,
 >(): EventMock<T> {
   let listener: T | null = null;
   const addListener = jest.fn<void, [T]>((nextListener: T) => {
@@ -153,17 +153,17 @@ function readStorage(
   }
 
   if (Array.isArray(query)) {
-    return query.reduce<Record<string, unknown>>((acc, key) => {
-      acc[key] = store[key];
-      return acc;
+    return query.reduce<Record<string, unknown>>((accumulator, key) => {
+      accumulator[key] = store[key];
+      return accumulator;
     }, {});
   }
 
   return Object.entries(query).reduce<Record<string, unknown>>(
-    (acc, [key, fallback]) => {
+    (accumulator, [key, fallback]) => {
       const value = store[key];
-      acc[key] = value === undefined ? fallback : value;
-      return acc;
+      accumulator[key] = value === undefined ? fallback : value;
+      return accumulator;
     },
     {},
   );

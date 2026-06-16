@@ -6,9 +6,9 @@ import {
   normalizeStringArray,
   fetchWithTimeout,
   measureAsync,
-  errorUtils,
+  errorUtilities,
   getAllProviders,
-} from './utils';
+} from './utilities';
 import { TypeConverters } from '../types';
 import type { PSPConfig } from '../types';
 
@@ -94,7 +94,7 @@ describe('utils', () => {
   });
 
   it('logger.info is disabled in production unless runtime debug flag is set', () => {
-    const originalEnv = process.env['NODE_ENV'];
+    const originalEnvironment = process.env['NODE_ENV'];
     const runtimeWindow = globalThis as typeof globalThis & {
       __PSP_DETECTOR_DEBUG__?: boolean;
     };
@@ -114,7 +114,7 @@ describe('utils', () => {
     expect(logSpy).toHaveBeenCalledWith('[PSP Detector] should-log');
 
     logSpy.mockRestore();
-    process.env['NODE_ENV'] = originalEnv;
+    process.env['NODE_ENV'] = originalEnvironment;
     if (originalDebugFlag === undefined) {
       delete runtimeWindow.__PSP_DETECTOR_DEBUG__;
     } else {
@@ -123,23 +123,23 @@ describe('utils', () => {
   });
 
   it('debouncedMutation delays function calls', (done) => {
-    const mockFn = jest.fn();
-    const debouncedFn = debouncedMutation(mockFn, 50);
+    const mockFunction = jest.fn();
+    const debouncedFunction = debouncedMutation(mockFunction, 50);
 
-    debouncedFn();
-    debouncedFn();
-    debouncedFn();
+    debouncedFunction();
+    debouncedFunction();
+    debouncedFunction();
 
-    expect(mockFn).not.toHaveBeenCalled();
+    expect(mockFunction).not.toHaveBeenCalled();
 
     setTimeout(() => {
-      expect(mockFn).toHaveBeenCalledTimes(1);
+      expect(mockFunction).toHaveBeenCalledTimes(1);
       done();
     }, 100);
   });
 
   it('logger.time and logger.timeEnd work in development mode', () => {
-    const originalEnv = process.env['NODE_ENV'];
+    const originalEnvironment = process.env['NODE_ENV'];
     process.env['NODE_ENV'] = 'development';
 
     const timeSpy = jest.spyOn(console, 'time').mockImplementation(() => {
@@ -157,7 +157,7 @@ describe('utils', () => {
 
     timeSpy.mockRestore();
     timeEndSpy.mockRestore();
-    process.env['NODE_ENV'] = originalEnv;
+    process.env['NODE_ENV'] = originalEnvironment;
   });
 
   describe('array normalization utilities', () => {
@@ -169,6 +169,7 @@ describe('utils', () => {
 
   describe('fetchWithTimeout', () => {
     it('forwards request init and returns fetch response', async () => {
+      // eslint-disable-next-line unicorn/no-unnecessary-global-this -- fetch may not be declared in jsdom
       const originalFetch = globalThis.fetch;
       const response = {
         ok: true,
@@ -201,6 +202,7 @@ describe('utils', () => {
 
     it('aborts when timeout elapses', async () => {
       jest.useFakeTimers();
+      // eslint-disable-next-line unicorn/no-unnecessary-global-this -- fetch may not be declared in jsdom
       const originalFetch = globalThis.fetch;
       const fetchMock = jest.fn((_url: string, init?: RequestInit) => {
         return new Promise((_resolve, reject) => {
@@ -227,6 +229,7 @@ describe('utils', () => {
     });
 
     it('propagates parent abort signal to the request signal', async () => {
+      // eslint-disable-next-line unicorn/no-unnecessary-global-this -- fetch may not be declared in jsdom
       const originalFetch = globalThis.fetch;
       const fetchMock = jest.fn().mockResolvedValue({
         ok: true,
@@ -253,7 +256,7 @@ describe('utils', () => {
 
   describe('measureAsync', () => {
     it('calls timeEnd even when function rejects', async () => {
-      const originalEnv = process.env['NODE_ENV'];
+      const originalEnvironment = process.env['NODE_ENV'];
       process.env['NODE_ENV'] = 'development';
       const timeSpy = jest.spyOn(console, 'time').mockImplementation(() => {
         // No-op for testing
@@ -275,14 +278,14 @@ describe('utils', () => {
 
       timeSpy.mockRestore();
       timeEndSpy.mockRestore();
-      process.env['NODE_ENV'] = originalEnv;
+      process.env['NODE_ENV'] = originalEnvironment;
     });
   });
 
   describe('error utilities', () => {
     it('safeExecuteAsync returns fallback when async function throws', async () => {
       await expect(
-        errorUtils.safeExecuteAsync(
+        errorUtilities.safeExecuteAsync(
           async () => {
             throw new Error('oops');
           },
@@ -293,22 +296,24 @@ describe('utils', () => {
     });
 
     it('withRetry retries and resolves on a later success', async () => {
-      const fn = jest
+      const function_ = jest
         .fn<Promise<string>, []>()
         .mockRejectedValueOnce('temporary failure')
         .mockResolvedValueOnce('ok');
-      const retry = errorUtils.withRetry(fn, 2, 0);
+      const retry = errorUtilities.withRetry(function_, 2, 0);
 
       await expect(retry()).resolves.toBe('ok');
-      expect(fn).toHaveBeenCalledTimes(2);
+      expect(function_).toHaveBeenCalledTimes(2);
     });
 
     it('withRetry enforces at least one attempt and rethrows final error', async () => {
-      const fn = jest.fn<Promise<string>, []>().mockRejectedValue('fatal');
-      const retry = errorUtils.withRetry(fn, 0, 0);
+      const function_ = jest
+        .fn<Promise<string>, []>()
+        .mockRejectedValue('fatal');
+      const retry = errorUtilities.withRetry(function_, 0, 0);
 
       await expect(retry()).rejects.toBeInstanceOf(Error);
-      expect(fn).toHaveBeenCalledTimes(1);
+      expect(function_).toHaveBeenCalledTimes(1);
     });
   });
 

@@ -1,7 +1,7 @@
 import type { HistoryEntry, HistoryPSPMatch } from '../types/history';
 import { HISTORY_MAX_ENTRIES } from '../types/history';
 import { STORAGE_KEYS } from './storage-keys';
-import { logger } from './utils';
+import { logger } from './utilities';
 
 export const HISTORY_ENTRY_DEBOUNCE_MS = 15 * 60_000;
 export const HISTORY_ENTRY_MERGE_WINDOW_MS = 30_000;
@@ -77,22 +77,30 @@ function getMatchingFirstDetectedAt(
 
 function sourcePriority(sourceType: string | undefined): number {
   switch (sourceType) {
-    case undefined:
+    case undefined: {
       return -1;
-    case 'networkRequest':
+    }
+    case 'networkRequest': {
       return 0;
-    case 'pageUrl':
+    }
+    case 'pageUrl': {
       return 1;
-    case 'linkHref':
+    }
+    case 'linkHref': {
       return 2;
-    case 'formAction':
+    }
+    case 'formAction': {
       return 3;
-    case 'iframeSrc':
+    }
+    case 'iframeSrc': {
       return 4;
-    case 'scriptSrc':
+    }
+    case 'scriptSrc': {
       return 5;
-    default:
+    }
+    default: {
       return -1;
+    }
   }
 }
 
@@ -160,7 +168,7 @@ function findEntryStatus(
   let matchingIndex: number | null = null;
   let firstDetectedAt: number | null = null;
 
-  for (const [i, existing] of history.entries()) {
+  for (const [index, existing] of history.entries()) {
     if (existing === undefined) {
       continue;
     }
@@ -169,7 +177,7 @@ function findEntryStatus(
       existing.url === normalizedEntry.url &&
       existing.timestamp >= mergeThreshold
     ) {
-      return { kind: 'merge', index: i };
+      return { kind: 'merge', index: index };
     }
 
     if (matchingIndex !== null) {
@@ -184,7 +192,7 @@ function findEntryStatus(
       continue;
     }
 
-    matchingIndex = i;
+    matchingIndex = index;
     firstDetectedAt = matchedFirstDetectedAt;
   }
 

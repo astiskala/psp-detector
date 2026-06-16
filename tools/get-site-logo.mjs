@@ -49,8 +49,8 @@ const ARGS = process.argv.slice(2);
 // Note: Bulk mode no longer alters logging; keeping single flag here for potential future use
 // (previous BULK_MODE used to gate verbosity). Removing to satisfy lint.
 const VERBOSE = ARGS.includes('--verbose') || process.env.LOGO_VERBOSE === '1';
-const vlog = (...args) => {
-  if (VERBOSE) console.log('[v]', ...args);
+const vlog = (...arguments_) => {
+  if (VERBOSE) console.log('[v]', ...arguments_);
 };
 
 const filterAcceptable = (items, isAcceptable) =>
@@ -110,9 +110,9 @@ function stripTrailingSlashes(input) {
   return out;
 }
 
-function pickOutputPath(domainArg, outArg) {
-  const cleaned = stripTrailingSlashes(stripHttpScheme(domainArg));
-  const base = outArg || `${cleaned || 'logo'}.png`;
+function pickOutputPath(domainArgument, outArgument) {
+  const cleaned = stripTrailingSlashes(stripHttpScheme(domainArgument));
+  const base = outArgument || `${cleaned || 'logo'}.png`;
   return path.resolve(process.cwd(), base);
 }
 
@@ -129,15 +129,15 @@ async function fetchText(url, { timeout = TIMEOUT_MS } = {}) {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
   try {
-    const res = await fetch(url, {
+    const response = await fetch(url, {
       headers: { 'User-Agent': UA },
       signal: controller.signal,
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const text = await res.text();
-    return { ok: true, text, status: res.status, url: res.url };
-  } catch (e) {
-    return { ok: false, error: e, url };
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const text = await response.text();
+    return { ok: true, text, status: response.status, url: response.url };
+  } catch (error) {
+    return { ok: false, error, url };
   } finally {
     clearTimeout(id);
   }
@@ -147,29 +147,29 @@ async function fetchBuffer(url, { timeout = TIMEOUT_MS } = {}) {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
   try {
-    const res = await fetch(url, {
+    const response = await fetch(url, {
       headers: { 'User-Agent': UA },
       signal: controller.signal,
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const buf = Buffer.from(await res.arrayBuffer());
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const buf = Buffer.from(await response.arrayBuffer());
     return {
       ok: true,
       buffer: buf,
-      status: res.status,
-      url: res.url,
-      headers: res.headers,
+      status: response.status,
+      url: response.url,
+      headers: response.headers,
     };
-  } catch (e) {
-    return { ok: false, error: e, url };
+  } catch (error) {
+    return { ok: false, error, url };
   } finally {
     clearTimeout(id);
   }
 }
 
-function parseSizes(sizesAttr) {
-  if (!sizesAttr) return [];
-  return sizesAttr
+function parseSizes(sizesAttribute) {
+  if (!sizesAttribute) return [];
+  return sizesAttribute
     .split(/\s+/)
     .map((s) => s.trim())
     .filter(Boolean)
@@ -181,8 +181,8 @@ function parseSizes(sizesAttr) {
     .filter((size) => size !== null);
 }
 
-function uniq(arr) {
-  return [...new Map(arr.map((a) => [a.url, a])).values()];
+function uniq(array) {
+  return new Map(array.map((a) => [a.url, a])).values().toArray();
 }
 
 function isSquareish(w, h, tolerance = 0.05) {
@@ -194,19 +194,19 @@ function isSquareish(w, h, tolerance = 0.05) {
 function inferSizesFromUrl(rawUrl) {
   try {
     const u = new URL(rawUrl);
-    const params = u.searchParams;
+    const parameters = u.searchParams;
     const sizes = [];
 
     // Google favicon style ?sz=128
-    const sz = params.get('sz');
+    const sz = parameters.get('sz');
     if (sz && /^\d{2,4}$/.test(sz)) {
       const n = Number.parseInt(sz, 10);
       if (n > 0) sizes.push({ w: n, h: n });
     }
 
     // Generic ?w=..&h=..
-    const qw = params.get('w');
-    const qh = params.get('h');
+    const qw = parameters.get('w');
+    const qh = parameters.get('h');
     if (qw && qh && /^\d{2,4}$/.test(qw) && /^\d{2,4}$/.test(qh)) {
       sizes.push({ w: Number.parseInt(qw, 10), h: Number.parseInt(qh, 10) });
     }
@@ -398,11 +398,11 @@ function collectFromDom($, baseUrl) {
   // <link rel="...">
   $(
     'link[rel*="icon"], link[rel="mask-icon"], link[rel="apple-touch-icon"], link[rel="apple-touch-icon-precomposed"]',
-  ).each((_, el) => {
-    const rel = ($(el).attr('rel') || '').toLowerCase();
-    const href = $(el).attr('href');
+  ).each((_, element) => {
+    const rel = ($(element).attr('rel') || '').toLowerCase();
+    const href = $(element).attr('href');
     if (!href) return;
-    const sizes = parseSizes($(el).attr('sizes'));
+    const sizes = parseSizes($(element).attr('sizes'));
     const abs = toAbsolute(href, baseUrl);
     if (!abs) return;
     let source = 'icon';
@@ -481,27 +481,27 @@ async function probeCandidate(c) {
   // If this is a manifest link, expand it to icons
   if (c.source === 'manifest-link') {
     const icons = await tryManifestIcons(c.url, c.url);
-    return icons.map((i) => ({ ...i }));
+    return icons.map((index) => ({ ...index }));
   }
 
   return [c];
 }
 
 async function fetchAndMeasure(cand) {
-  const res = await fetchBuffer(cand.url);
-  if (!res.ok) return null;
+  const response = await fetchBuffer(cand.url);
+  if (!response.ok) return null;
 
   // Skip obvious non-images before calling sharp to avoid native crashes
-  const contentType = res.headers?.get
-    ? res.headers.get('content-type') || ''
+  const contentType = response.headers?.get
+    ? response.headers.get('content-type') || ''
     : '';
-  const sniff = sniffImageFormat(res.buffer, contentType, cand.url);
+  const sniff = sniffImageFormat(response.buffer, contentType, cand.url);
   if (sniff === 'unknown') {
     vlog(`sniff drop (${cand.source || 'n/a'}): ${cand.url} ct=${contentType}`);
     return null;
   }
 
-  const meta = await getImageMeta(res.buffer);
+  const meta = await getImageMeta(response.buffer);
   if (!meta) return null;
 
   // Some paths may be JSON (manifest) or HTML — filter out non-image content
@@ -514,7 +514,7 @@ async function fetchAndMeasure(cand) {
 
   const enriched = {
     ...cand,
-    buffer: res.buffer,
+    buffer: response.buffer,
     width: meta.width || 0,
     height: meta.height || 0,
     format: meta.format || '',
@@ -527,39 +527,39 @@ async function fetchAndMeasure(cand) {
 }
 
 async function withLimit(concurrency, items, worker) {
-  const ret = [];
-  let i = 0;
+  const returnValue = [];
+  let index = 0;
   const running = new Set();
 
-  async function runOne(idx) {
-    const p = (async () => worker(items[idx]))().then(
-      (r) => ({ i: idx, r }),
-      (e) => ({ i: idx, r: null, e }),
+  async function runOne(index_) {
+    const p = (async () => worker(items[index_]))().then(
+      (r) => ({ i: index_, r }),
+      (error) => ({ i: index_, r: null, error }),
     );
     running.add(p);
     const { r } = await p;
     running.delete(p);
-    ret[idx] = r;
+    returnValue[index_] = r;
   }
 
-  while (i < items.length || running.size) {
-    while (i < items.length && running.size < concurrency) {
-      runOne(i++);
+  while (index < items.length || running.size) {
+    while (index < items.length && running.size < concurrency) {
+      runOne(index++);
     }
 
     if (running.size) await Promise.race(running);
   }
 
-  return ret;
+  return returnValue;
 }
 
-async function processLogoForPSP(psp, assetsDir) {
+async function processLogoForPSP(psp, assetsDirectory) {
   if (!psp.url || !psp.image) {
     console.log(`⚠️  Skipping ${psp.name}: missing url or image field`);
     return { psp: psp.name, status: 'skipped', reason: 'missing url or image' };
   }
 
-  const outputPath = path.join(assetsDir, `${psp.image}.png`);
+  const outputPath = path.join(assetsDirectory, `${psp.image}.png`);
 
   try {
     console.log(`🔍 Processing ${psp.name} (${psp.url})...`);
@@ -695,27 +695,31 @@ function isValidUrlCandidate(c) {
   }
 }
 
+function collectCommonPathCandidateForBase(base, p, commonCands) {
+  const abs = toAbsolute(p, base);
+  if (!abs) return;
+  const cand = {
+    url: abs,
+    source:
+      p.endsWith('.json') || p.endsWith('manifest')
+        ? 'manifest-link'
+        : 'guess-path',
+  };
+  if (
+    cand.source === 'manifest-link' ||
+    !candidateBelowMinByDeclaration(cand)
+  ) {
+    commonCands.push(cand);
+  } else {
+    vlog(`prefilter(common-bulk): drop < ${MIN_SIZE}px ${abs}`);
+  }
+}
+
 function collectCommonPathCandidates(bases) {
   const commonCands = [];
   for (const base of bases) {
     for (const p of COMMON_ICON_PATHS) {
-      const abs = toAbsolute(p, base);
-      if (!abs) continue;
-      const cand = {
-        url: abs,
-        source:
-          p.endsWith('.json') || p.endsWith('manifest')
-            ? 'manifest-link'
-            : 'guess-path',
-      };
-      if (
-        cand.source === 'manifest-link' ||
-        !candidateBelowMinByDeclaration(cand)
-      ) {
-        commonCands.push(cand);
-      } else {
-        vlog(`prefilter(common-bulk): drop < ${MIN_SIZE}px ${abs}`);
-      }
+      collectCommonPathCandidateForBase(base, p, commonCands);
     }
   }
 
@@ -746,7 +750,7 @@ function isAcceptableIconCandidate(m) {
 async function writeBestMeasured(pspName, measured, outputPath) {
   if (!measured || measured.length === 0) return null;
 
-  const best = measured.sort(
+  const best = measured.toSorted(
     (a, b) => Math.min(a.width, a.height) - Math.min(b.width, b.height),
   )[0];
 
@@ -865,7 +869,7 @@ function computeWriteOut128Stats(data, info) {
   const w = info.width;
   const h = info.height;
   const cornerSize = Math.max(6, Math.round(Math.min(w, h) * 0.12));
-  const len = w * h;
+  const length_ = w * h;
 
   const state = {
     lumSum: 0,
@@ -883,18 +887,18 @@ function computeWriteOut128Stats(data, info) {
     innerStrict: 0,
   };
 
-  for (let i = 0; i < len; i++) {
-    const idx = i * channels;
-    const r = data[idx + 0];
-    const g = data[idx + 1];
-    const b = data[idx + 2];
-    const a = channels > 3 ? data[idx + 3] : 255;
-    const x = i % w;
-    const yIdx = Math.trunc(i / w);
+  for (let index = 0; index < length_; index++) {
+    const index_ = index * channels;
+    const r = data[index_ + 0];
+    const g = data[index_ + 1];
+    const b = data[index_ + 2];
+    const a = channels > 3 ? data[index_ + 3] : 255;
+    const x = index % w;
+    const yIndex = Math.trunc(index / w);
 
     updateTransparencyCounters(state, a);
-    updateLumaAndBounds(state, r, g, b, a, x, yIdx);
-    updateStrictTransparency(state, a, x, yIdx, cornerSize, w, h);
+    updateLumaAndBounds(state, r, g, b, a, x, yIndex);
+    updateStrictTransparency(state, a, x, yIndex, cornerSize, w, h);
   }
 
   return {
@@ -902,7 +906,7 @@ function computeWriteOut128Stats(data, info) {
     w,
     h,
     cornerSize,
-    len,
+    len: length_,
     ...state,
   };
 }
@@ -911,7 +915,7 @@ function updateTransparencyCounters(state, a) {
   if (a < 250) state.transparentCount++;
 }
 
-function updateLumaAndBounds(state, r, g, b, a, x, yIdx) {
+function updateLumaAndBounds(state, r, g, b, a, x, yIndex) {
   if (a <= 10) return;
 
   const al = a / 255;
@@ -921,30 +925,30 @@ function updateLumaAndBounds(state, r, g, b, a, x, yIdx) {
 
   if (x < state.minX) state.minX = x;
   if (x > state.maxX) state.maxX = x;
-  if (yIdx < state.minY) state.minY = yIdx;
-  if (yIdx > state.maxY) state.maxY = yIdx;
+  if (yIndex < state.minY) state.minY = yIndex;
+  if (yIndex > state.maxY) state.maxY = yIndex;
 }
 
-function updateStrictTransparency(state, a, x, yIdx, cornerSize, w, h) {
+function updateStrictTransparency(state, a, x, yIndex, cornerSize, w, h) {
   if (a >= 200) return;
 
   state.transStrictTotal++;
 
-  const inTL = x < cornerSize && yIdx < cornerSize;
-  const inTR = x >= w - cornerSize && yIdx < cornerSize;
-  const inBL = x < cornerSize && yIdx >= h - cornerSize;
-  const inBR = x >= w - cornerSize && yIdx >= h - cornerSize;
+  const inTL = x < cornerSize && yIndex < cornerSize;
+  const inTR = x >= w - cornerSize && yIndex < cornerSize;
+  const inBL = x < cornerSize && yIndex >= h - cornerSize;
+  const inBR = x >= w - cornerSize && yIndex >= h - cornerSize;
 
   if (inTL) state.transTL++;
   else if (inTR) state.transTR++;
   else if (inBL) state.transBL++;
   else if (inBR) state.transBR++;
-  else updateInnerStrict(state, x, yIdx, cornerSize, w, h);
+  else updateInnerStrict(state, x, yIndex, cornerSize, w, h);
 }
 
-function updateInnerStrict(state, x, yIdx, cornerSize, w, h) {
-  const inTop = yIdx < cornerSize;
-  const inBottom = yIdx >= h - cornerSize;
+function updateInnerStrict(state, x, yIndex, cornerSize, w, h) {
+  const inTop = yIndex < cornerSize;
+  const inBottom = yIndex >= h - cornerSize;
   const inLeft = x < cornerSize;
   const inRight = x >= w - cornerSize;
   if (!(inTop || inBottom || inLeft || inRight)) state.innerStrict++;
@@ -1008,11 +1012,8 @@ async function writeOut128ToFile(output, inputBuffer, outputPath) {
   }
 }
 
-async function processBulk(
-  pspsJsonPath = './public/psps.json',
-  startFrom = undefined,
-) {
-  const assetsDir = path.resolve('./assets/images');
+async function processBulk(pspsJsonPath = './public/psps.json', startFrom) {
+  const assetsDirectory = path.resolve('./assets/images');
 
   try {
     // Read PSPs data
@@ -1026,7 +1027,7 @@ async function processBulk(
         : [];
 
     // Combine PSPs + Orchestrators and run in alphabetical order by name
-    const providers = [...psps, ...orchestrators].sort((a, b) => {
+    const providers = [...psps, ...orchestrators].toSorted((a, b) => {
       const an = (a?.name || '').toLowerCase();
       const bn = (b?.name || '').toLowerCase();
       return an.localeCompare(bn);
@@ -1047,7 +1048,7 @@ async function processBulk(
       );
     }
 
-    console.log(`📁 Output directory: ${assetsDir}`);
+    console.log(`📁 Output directory: ${assetsDirectory}`);
     if (VERBOSE) {
       console.log(
         `🔧 Settings: concurrency=1, timeout=${TIMEOUT_MS}ms, MIN_SIZE=${MIN_SIZE}, UA=${UA.split(' ').slice(-2).join(' ')}`,
@@ -1059,14 +1060,14 @@ async function processBulk(
     console.log('');
 
     // Process providers with limited concurrency to be respectful to websites
-    const indexed = providersToProcess.map((psp, i) => ({
+    const indexed = providersToProcess.map((psp, index) => ({
       psp,
-      i: startIndex + i,
+      i: startIndex + index,
     }));
     const total = providers.length;
     const results = await withLimit(1, indexed, async ({ psp, i }) => {
       console.log(`▶️  [${i + 1}/${total}] ${psp.name}`);
-      const result = await processLogoForPSP(psp, assetsDir);
+      const result = await processLogoForPSP(psp, assetsDirectory);
       if (result?.status !== 'success') {
         vlog(
           `${psp.name}: status=${result?.status}, reason=${result?.reason || 'n/a'}`,
@@ -1113,26 +1114,26 @@ function resolveStartIndex(providers, startFrom) {
   if (startFrom && typeof startFrom === 'string') {
     const s = startFrom.trim();
     if (/^\d+$/.test(s)) {
-      const idx = Math.max(
+      const index = Math.max(
         0,
         Math.min(providers.length - 1, Number.parseInt(s, 10) - 1),
       );
-      startIndex = idx;
-      startHint = `index ${idx + 1}`;
+      startIndex = index;
+      startHint = `index ${index + 1}`;
     } else {
       const needle = s.toLowerCase();
-      let idx = providers.findIndex(
+      let index = providers.findIndex(
         (p) => (p?.name || '').toLowerCase() === needle,
       );
-      if (idx < 0) {
-        idx = providers.findIndex((p) =>
+      if (index < 0) {
+        index = providers.findIndex((p) =>
           (p?.name || '').toLowerCase().startsWith(needle),
         );
       }
 
-      if (idx >= 0) {
-        startIndex = idx;
-        startHint = `name "${providers[idx].name}"`;
+      if (index >= 0) {
+        startIndex = index;
+        startHint = `name "${providers[index].name}"`;
       } else {
         console.warn(
           `⚠️  --start '${startFrom}' not found; starting from the beginning.`,
@@ -1145,9 +1146,9 @@ function resolveStartIndex(providers, startFrom) {
 }
 
 async function main() {
-  const args = process.argv.slice(2);
+  const arguments_ = process.argv.slice(2);
 
-  const mode = parseCliMode(args);
+  const mode = parseCliMode(arguments_);
   if (mode.kind === 'bulk') {
     await processBulk(mode.pspsArg, mode.startFrom);
     return;
@@ -1156,33 +1157,33 @@ async function main() {
   await runSingleSiteMode(mode);
 }
 
-function parseCliMode(args) {
-  if (args.includes('--bulk')) {
-    const bulkIndex = args.indexOf('--bulk');
-    const after = args.slice(bulkIndex + 1);
-    const pspsArg =
+function parseCliMode(arguments_) {
+  if (arguments_.includes('--bulk')) {
+    const bulkIndex = arguments_.indexOf('--bulk');
+    const after = arguments_.slice(bulkIndex + 1);
+    const pspsArgument =
       after.find((a) => !a.startsWith('--')) || './public/psps.json';
 
-    const startIdx = args.indexOf('--start');
-    let val;
-    if (startIdx !== -1) {
-      val = args[startIdx + 1];
+    const startIndex = arguments_.indexOf('--start');
+    let value;
+    if (startIndex !== -1) {
+      value = arguments_[startIndex + 1];
     }
-    const startFrom = val && !val.startsWith('--') ? val : undefined;
+    const startFrom = value && !value.startsWith('--') ? value : undefined;
 
-    return { kind: 'bulk', pspsArg, startFrom };
+    return { kind: 'bulk', pspsArg: pspsArgument, startFrom };
   }
 
-  const positional = args.filter((a) => !a.startsWith('--'));
-  const domainArg = positional[0];
-  const outArg = positional[1];
-  return { kind: 'single', domainArg, outArg };
+  const positional = arguments_.filter((a) => !a.startsWith('--'));
+  const domainArgument = positional[0];
+  const outArgument = positional[1];
+  return { kind: 'single', domainArg: domainArgument, outArg: outArgument };
 }
 
 async function runSingleSiteMode(mode) {
-  const domainArg = mode.domainArg;
-  const outArg = mode.outArg;
-  if (!domainArg) {
+  const domainArgument = mode.domainArg;
+  const outArgument = mode.outArg;
+  if (!domainArgument) {
     console.error(
       'Usage: node get-site-logo.mjs <domain-or-url> [output.png] [--verbose]',
     );
@@ -1192,26 +1193,25 @@ async function runSingleSiteMode(mode) {
     process.exit(1);
   }
 
-  const outPath = pickOutputPath(domainArg, outArg);
-  const domain = extractDomain(domainArg);
-  const bases = domainToBases(domainArg);
-  const isAcceptable = (m) => isAcceptableIconCandidate(m);
+  const outPath = pickOutputPath(domainArgument, outArgument);
+  const domain = extractDomain(domainArgument);
+  const bases = domainToBases(domainArgument);
 
   const metaResult = await tryWriteSingleFromMetadata(
     bases,
     outPath,
-    isAcceptable,
+    isAcceptableIconCandidate,
   );
   if (metaResult) return;
 
   const commonResult = await tryWriteSingleFromCommonPaths(
     bases,
     outPath,
-    isAcceptable,
+    isAcceptableIconCandidate,
   );
   if (commonResult) return;
 
-  await writeSingleFromThirdParty(domain, outPath, isAcceptable);
+  await writeSingleFromThirdParty(domain, outPath, isAcceptableIconCandidate);
 }
 
 async function tryWriteSingleFromMetadata(bases, outPath, isAcceptable) {
@@ -1226,29 +1226,28 @@ async function tryWriteSingleFromMetadata(bases, outPath, isAcceptable) {
   return await writeSingleChoiceOrNull(measuredAccepted, outPath);
 }
 
+function collectSingleCommonPathCandidate(base, p, common) {
+  const abs = toAbsolute(p, base);
+  if (!abs) return;
+  const cand = {
+    url: abs,
+    source:
+      p.endsWith('.json') || p.endsWith('manifest')
+        ? 'manifest-link'
+        : 'guess-path',
+  };
+  if (cand.source === 'manifest-link' || candidateMeetsMinByDeclaration(cand)) {
+    common.push(cand);
+  } else if (VERBOSE) {
+    console.log(`[v] prefilter(common-single): drop < ${MIN_SIZE}px ${abs}`);
+  }
+}
+
 async function tryWriteSingleFromCommonPaths(bases, outPath, isAcceptable) {
   const common = [];
   for (const base of bases) {
     for (const p of COMMON_ICON_PATHS) {
-      const abs = toAbsolute(p, base);
-      if (!abs) continue;
-      const cand = {
-        url: abs,
-        source:
-          p.endsWith('.json') || p.endsWith('manifest')
-            ? 'manifest-link'
-            : 'guess-path',
-      };
-      if (
-        cand.source === 'manifest-link' ||
-        candidateMeetsMinByDeclaration(cand)
-      ) {
-        common.push(cand);
-      } else if (VERBOSE) {
-        console.log(
-          `[v] prefilter(common-single): drop < ${MIN_SIZE}px ${abs}`,
-        );
-      }
+      collectSingleCommonPathCandidate(base, p, common);
     }
   }
 
@@ -1302,14 +1301,14 @@ async function writeSingleChoiceOrNull(measured, outPath) {
 
 function pickBestMeasured(measured) {
   if (!measured || measured.length === 0) return null;
-  return measured.sort(
+  return measured.toSorted(
     (a, b) => Math.min(a.width, a.height) - Math.min(b.width, b.height),
   )[0];
 }
 
 try {
   await main();
-} catch (e) {
-  console.error(e);
+} catch (error) {
+  console.error(error);
   process.exit(10);
 }

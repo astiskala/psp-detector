@@ -1,4 +1,4 @@
-import { logger } from '../lib/utils';
+import { logger } from '../lib/utilities';
 
 /**
  * Watches for payment-relevant DOM changes and batches them before triggering
@@ -135,11 +135,13 @@ export class DOMObserverService {
 
     switch (target.tagName) {
       case 'SCRIPT':
-      case 'IFRAME':
+      case 'IFRAME': {
         return attributeName === 'src';
-      case 'FORM':
+      }
+      case 'FORM': {
         return attributeName === 'action';
-      case 'LINK':
+      }
+      case 'LINK': {
         if (
           attributeName !== 'href' &&
           attributeName !== 'rel' &&
@@ -149,8 +151,10 @@ export class DOMObserverService {
         }
 
         return this.isRelevantLinkElement(target as HTMLLinkElement);
-      default:
+      }
+      default: {
         return false;
+      }
     }
   }
 

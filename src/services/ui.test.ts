@@ -6,15 +6,15 @@ import {
 } from '../test-helpers/utilities';
 
 function requireElement(id: string): HTMLElement {
-  const el = document.getElementById(id);
-  if (!el) throw new Error(`${id} not found`);
-  return el;
+  const element = document.querySelector<HTMLElement>(`#${id}`);
+  if (!element) throw new Error(`${id} not found`);
+  return element;
 }
 
 function requireQuery(selector: string): HTMLElement {
-  const el = document.querySelector<HTMLElement>(selector);
-  if (!el) throw new Error(`${selector} not found`);
-  return el;
+  const element = document.querySelector<HTMLElement>(selector);
+  if (!element) throw new Error(`${selector} not found`);
+  return element;
 }
 
 function requirePSPName(name: string): PSPName {
@@ -81,7 +81,7 @@ describe('UIService', () => {
     ];
 
     requiredElementIds.forEach((id) => {
-      const element = document.getElementById(id);
+      const element = document.querySelector<HTMLElement>(`#${id}`);
       if (!element) {
         throw new Error(`Element ${id} not found`);
       }

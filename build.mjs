@@ -10,8 +10,8 @@ function readJsonSync(filePath) {
 }
 
 /** Writes JSON with stable formatting so generated metadata stays diffable. */
-function writeJsonSync(filePath, obj) {
-  writeFileSync(filePath, `${JSON.stringify(obj, null, 2)}\n`);
+function writeJsonSync(filePath, object) {
+  writeFileSync(filePath, `${JSON.stringify(object, null, 2)}\n`);
 }
 
 const __filename = import.meta.filename;
@@ -53,11 +53,11 @@ const sharedConfig = {
  * Rebuilds the distributable PSP logo set from the source 128px PNG assets.
  */
 async function generatePspImages() {
-  const srcDir = path.join(__dirname, 'assets', 'images');
-  const distDir = path.join(__dirname, 'dist', 'images');
-  await fs.mkdir(distDir, { recursive: true });
+  const sourceDirectory = path.join(__dirname, 'assets', 'images');
+  const distributionDirectory = path.join(__dirname, 'dist', 'images');
+  await fs.mkdir(distributionDirectory, { recursive: true });
 
-  const files = await fs.readdir(srcDir);
+  const files = await fs.readdir(sourceDirectory);
   const pspPngs = files.filter(
     (f) => f.endsWith('.png') && !/_48\.png$|_128\.png$/.test(f),
   );
@@ -65,19 +65,19 @@ async function generatePspImages() {
   console.log(`Found ${pspPngs.length} PSP images in source.`);
 
   // cleanup old
-  for (const f of await fs.readdir(distDir)) {
+  for (const f of await fs.readdir(distributionDirectory)) {
     if (/_48\.png$|_128\.png$/.test(f)) {
-      await fs.rm(path.join(distDir, f), { force: true });
+      await fs.rm(path.join(distributionDirectory, f), { force: true });
     }
   }
 
   // regenerate
   for (const file of pspPngs) {
     const base = file.replace(/\.png$/, '');
-    const srcPath = path.join(srcDir, file);
+    const sourcePath = path.join(sourceDirectory, file);
     for (const size of [128, 48]) {
-      const outPath = path.join(distDir, `${base}_${size}.png`);
-      await sharp(srcPath)
+      const outPath = path.join(distributionDirectory, `${base}_${size}.png`);
+      await sharp(sourcePath)
         .resize(size, size, { fit: 'contain' })
         .png({
           compressionLevel: 9,
@@ -107,30 +107,33 @@ async function buildFiles() {
     const version = `3.${year}.${mmdd}.${hhmm}`;
 
     // 2) bump package.json in-place
-    const pkgPath = path.join(__dirname, 'package.json');
-    const pkg = readJsonSync(pkgPath);
-    pkg.version = version;
-    writeJsonSync(pkgPath, pkg);
+    const packagePath = path.join(__dirname, 'package.json');
+    const package_ = readJsonSync(packagePath);
+    package_.version = version;
+    writeJsonSync(packagePath, package_);
 
     // 3) prepare dist/
-    const distDir = path.join(__dirname, 'dist');
-    await fs.rm(distDir, { recursive: true, force: true });
-    await fs.mkdir(distDir, { recursive: true });
+    const distributionDirectory = path.join(__dirname, 'dist');
+    await fs.rm(distributionDirectory, { recursive: true, force: true });
+    await fs.mkdir(distributionDirectory, { recursive: true });
 
     // 4) copy all public/ → dist/
-    const publicDir = path.join(__dirname, 'public');
+    const publicDirectory = path.join(__dirname, 'public');
     try {
-      await fs.access(publicDir);
-      await fs.cp(publicDir, distDir, { recursive: true });
+      await fs.access(publicDirectory);
+      await fs.cp(publicDirectory, distributionDirectory, { recursive: true });
       console.log('Copied public/ → dist/');
     } catch {
       // public/ does not exist — skip copy
     }
 
     // 5) inject and write manifest.json
-    const manifestSrc = path.join(__dirname, 'assets', 'manifest.json');
-    const manifestDst = path.join(distDir, 'manifest.json');
-    const manifest = readJsonSync(manifestSrc);
+    const manifestSource = path.join(__dirname, 'assets', 'manifest.json');
+    const manifestDestination = path.join(
+      distributionDirectory,
+      'manifest.json',
+    );
+    const manifest = readJsonSync(manifestSource);
     manifest.version = version;
 
     // adjust service_worker and content_scripts paths if needed:
@@ -147,7 +150,7 @@ async function buildFiles() {
       });
     }
 
-    writeJsonSync(manifestDst, manifest);
+    writeJsonSync(manifestDestination, manifest);
     console.log(`Wrote dist/manifest.json @ version ${version}`);
 
     // 6) bundle JS

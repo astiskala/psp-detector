@@ -2,15 +2,15 @@ import type { PSPConfig } from './types';
 import { TypeConverters } from './types';
 import type { HistoryEntry } from './types/history';
 import { clearHistory, readHistory } from './lib/history';
-import { logger } from './lib/utils';
+import { logger } from './lib/utilities';
 
 jest.mock('./lib/history', () => ({
   clearHistory: jest.fn(),
   readHistory: jest.fn(),
 }));
 
-jest.mock('./lib/utils', () => {
-  const actual = jest.requireActual('./lib/utils');
+jest.mock('./lib/utilities', () => {
+  const actual = jest.requireActual('./lib/utilities');
   return {
     ...actual,
     logger: {
@@ -132,7 +132,7 @@ function createHistoryEntries(): HistoryEntry[] {
           sourceType: 'networkRequest',
         },
         {
-          name: '   ',
+          name: ' '.repeat(3),
           method: 'matchString',
           value: 'unknown-provider',
           sourceType: 'pageUrl',
@@ -161,7 +161,7 @@ async function flushAsync(waitMs = 0): Promise<void> {
 }
 
 function getRequiredElementById<T extends HTMLElement>(id: string): T {
-  const element = document.getElementById(id);
+  const element = document.querySelector<T>(`#${id}`);
   if (element === null) {
     throw new Error(`Missing #${id} element`);
   }
@@ -215,13 +215,13 @@ function setupSuccessMocks(): OptionsPageSuccessMocks {
 
   const createObjectURL = jest.fn(() => 'blob:test-download');
   const revokeObjectURL = jest.fn();
-  Object.defineProperty(globalThis.URL, 'createObjectURL', {
+  Object.defineProperty(URL, 'createObjectURL', {
     value: createObjectURL,
     configurable: true,
     writable: true,
   });
 
-  Object.defineProperty(globalThis.URL, 'revokeObjectURL', {
+  Object.defineProperty(URL, 'revokeObjectURL', {
     value: revokeObjectURL,
     configurable: true,
     writable: true,

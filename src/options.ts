@@ -1,7 +1,7 @@
 import type { PSPConfig } from './types';
 import type { HistoryEntry } from './types/history';
 import { clearHistory, readHistory } from './lib/history';
-import { createSafeUrl, getAllProviders, logger } from './lib/utils';
+import { createSafeUrl, getAllProviders, logger } from './lib/utilities';
 import {
   buildCSV,
   filterEntries,
@@ -22,19 +22,13 @@ let providerIconByName = new Map<string, string>();
 let providerUrlByName = new Map<string, string>();
 let providerSummaryByName = new Map<string, string>();
 
-type IdleScheduler = (
-  callback: () => void,
-  options?: { timeout?: number },
-) => number;
-
 function scheduleIdle(callback: () => void): void {
-  const requestIdle = (
-    globalThis as unknown as {
-      requestIdleCallback?: IdleScheduler;
-    }
-  ).requestIdleCallback;
-  if (typeof requestIdle === 'function') {
-    requestIdle(callback, { timeout: 200 });
+  // globalThis. is necessary here — requestIdleCallback may not exist in all environments,
+  // and a bare identifier would throw ReferenceError rather than returning undefined.
+  // eslint-disable-next-line unicorn/no-unnecessary-global-this
+  if (typeof globalThis.requestIdleCallback === 'function') {
+    // eslint-disable-next-line unicorn/no-unnecessary-global-this
+    globalThis.requestIdleCallback(callback, { timeout: 200 });
     return;
   }
 
@@ -42,7 +36,7 @@ function scheduleIdle(callback: () => void): void {
 }
 
 function setText(id: string, text: string): void {
-  const element = document.getElementById(id);
+  const element = document.querySelector(`#${id}`);
   if (element) element.textContent = text;
 }
 
@@ -68,7 +62,7 @@ function renderStats(history: HistoryEntry[]): void {
   setText('stats', formatHistorySummary(stats));
 }
 
-function readCssVar(name: string, fallback: string): string {
+function readCssVariable(name: string, fallback: string): string {
   const value = getComputedStyle(document.documentElement)
     .getPropertyValue(name)
     .trim();
@@ -80,20 +74,18 @@ function buildLegend(
   slices: DistributionSlice[],
   colors: string[],
 ): void {
-  const legend = document.getElementById(legendId);
+  const legend = document.querySelector<HTMLElement>(`#${legendId}`);
   if (!legend) {
     return;
   }
 
-  while (legend.firstChild) {
-    legend.firstChild.remove();
-  }
+  legend.replaceChildren();
 
   if (slices.length === 0) {
     const empty = document.createElement('li');
     empty.className = 'chart-legend-item';
     empty.textContent = 'No data available yet.';
-    legend.appendChild(empty);
+    legend.append(empty);
     return;
   }
 
@@ -108,9 +100,9 @@ function buildLegend(
     const label = document.createElement('span');
     label.textContent = `${slice.label}: ${slice.percent.toFixed(1)}% (${slice.count})`;
 
-    item.appendChild(swatch);
-    item.appendChild(label);
-    legend.appendChild(item);
+    item.append(swatch);
+    item.append(label);
+    legend.append(item);
   }
 }
 
@@ -124,20 +116,20 @@ interface PieChartContext {
 }
 
 function getPieChartContext(canvasId: string): PieChartContext | null {
-  const canvas = document.getElementById(canvasId) as HTMLCanvasElement | null;
+  const canvas = document.querySelector<HTMLCanvasElement>(`#${canvasId}`);
   if (!canvas) {
     return null;
   }
 
-  const ctx = canvas.getContext('2d');
-  if (!ctx) {
+  const context = canvas.getContext('2d');
+  if (!context) {
     return null;
   }
 
   const width = canvas.width;
   const height = canvas.height;
   return {
-    ctx,
+    ctx: context,
     width,
     height,
     centerX: width / 2,
@@ -151,9 +143,9 @@ function drawEmptyPieChart(
   legendId: string,
   slices: DistributionSlice[],
 ): void {
-  const background = readCssVar('--surface', '#f9fafb');
-  const border = readCssVar('--border', '#e5e7eb');
-  const text = readCssVar('--text-secondary', '#6b7280');
+  const background = readCssVariable('--surface', '#f9fafb');
+  const border = readCssVariable('--border', '#e5e7eb');
+  const text = readCssVariable('--text-secondary', '#6b7280');
 
   chart.ctx.fillStyle = background;
   chart.ctx.strokeStyle = border;
@@ -208,7 +200,7 @@ function drawPieChartCenterHole(chart: PieChartContext): void {
     Math.PI * 2,
   );
 
-  chart.ctx.fillStyle = readCssVar('--bg', '#ffffff');
+  chart.ctx.fillStyle = readCssVariable('--bg', '#ffffff');
   chart.ctx.fill();
 }
 
@@ -259,10 +251,10 @@ function appendCodeList(cell: HTMLTableCellElement, values: string[]): void {
   for (const [index, value] of values.entries()) {
     const code = document.createElement('code');
     code.textContent = value;
-    cell.appendChild(code);
+    cell.append(code);
 
     if (index < values.length - 1) {
-      cell.appendChild(document.createElement('br'));
+      cell.append(document.createElement('br'));
     }
   }
 }
@@ -298,7 +290,7 @@ function getHistoryEntryHostname(entry: HistoryEntry): string {
   }
 
   try {
-    return new globalThis.URL(entry.url).hostname || domain;
+    return new URL(entry.url).hostname || domain;
   } catch {
     return domain;
   }
@@ -321,14 +313,14 @@ function buildDomainFaviconUrl(entry: HistoryEntry): string | null {
 }
 
 function createTableIcon(
-  src: string,
+  source: string,
   alt: string,
   className: string,
 ): HTMLImageElement {
   const icon = document.createElement('img');
   icon.className = className;
   icon.alt = alt;
-  icon.src = src;
+  icon.src = source;
   icon.width = HISTORY_TABLE_ICON_SIZE;
   icon.height = HISTORY_TABLE_ICON_SIZE;
   icon.decoding = 'async';
@@ -351,7 +343,7 @@ function getMerchantHostname(entry: HistoryEntry): string | null {
   }
 
   try {
-    return new globalThis.URL(origin).hostname || null;
+    return new URL(origin).hostname || null;
   } catch {
     return null;
   }
@@ -377,7 +369,7 @@ function appendDomainCellContent(
     img.decoding = 'async';
     img.loading = 'lazy';
     img.addEventListener('error', () => img.remove(), { once: true });
-    wrap.appendChild(img);
+    wrap.append(img);
   }
 
   const labels = document.createElement('div');
@@ -386,7 +378,7 @@ function appendDomainCellContent(
   const text = document.createElement('span');
   text.className = 'cell-label';
   text.textContent = entry.domain;
-  labels.appendChild(text);
+  labels.append(text);
 
   const merchantHostname = getMerchantHostname(entry);
   if (merchantHostname !== null && merchantHostname !== entry.domain) {
@@ -394,11 +386,11 @@ function appendDomainCellContent(
     merchant.className = 'cell-sublabel merchant-origin';
     merchant.textContent = `via ${merchantHostname}`;
     merchant.title = `Redirected from ${entry.merchantOrigin}`;
-    labels.appendChild(merchant);
+    labels.append(merchant);
   }
 
-  wrap.appendChild(labels);
-  cell.appendChild(wrap);
+  wrap.append(labels);
+  cell.append(wrap);
 }
 
 function createPspTextElement(
@@ -455,18 +447,18 @@ function appendPspCellContent(
     );
 
     const key = normalizeProviderName(psp.name);
-    const textEl = createPspTextElement(
+    const textElement = createPspTextElement(
       psp.name,
       providerUrlByName.get(key),
       providerSummaryByName.get(key),
     );
 
-    item.appendChild(icon);
-    item.appendChild(textEl);
-    list.appendChild(item);
+    item.append(icon);
+    item.append(textElement);
+    list.append(item);
   }
 
-  cell.appendChild(list);
+  cell.append(list);
 }
 
 function isPspConfig(value: unknown): value is PSPConfig {
@@ -512,8 +504,8 @@ async function loadProviderIcons(): Promise<void> {
 }
 
 function populatePspFilter(history: HistoryEntry[]): void {
-  const select = document.getElementById(
-    'pspFilter',
+  const select = document.querySelector(
+    '#pspFilter',
   ) as HTMLSelectElement | null;
   if (!select) return;
 
@@ -528,18 +520,16 @@ function populatePspFilter(history: HistoryEntry[]): void {
     const option = document.createElement('option');
     option.value = name;
     option.textContent = name;
-    select.appendChild(option);
+    select.append(option);
   }
 }
 
 function renderTable(entries: HistoryEntry[]): void {
-  const body = document.getElementById('historyBody');
-  const emptyState = document.getElementById('emptyState');
+  const body = document.querySelector('#historyBody');
+  const emptyState = document.querySelector<HTMLElement>('#emptyState');
   if (!body || !emptyState) return;
 
-  while (body.firstChild) {
-    body.firstChild.remove();
-  }
+  body.replaceChildren();
 
   if (entries.length === 0) {
     emptyState.hidden = false;
@@ -578,31 +568,31 @@ function renderTable(entries: HistoryEntry[]): void {
       entry.psps.map((psp) => `${psp.method}: ${psp.value}`),
     );
 
-    row.appendChild(dateCell);
-    row.appendChild(domainCell);
-    row.appendChild(pspsCell);
-    row.appendChild(typeCell);
-    row.appendChild(sourceCell);
-    row.appendChild(signalCell);
-    body.appendChild(row);
+    row.append(dateCell);
+    row.append(domainCell);
+    row.append(pspsCell);
+    row.append(typeCell);
+    row.append(sourceCell);
+    row.append(signalCell);
+    body.append(row);
   }
 }
 
-interface HistoryRef {
+interface HistoryReference {
   getHistory: () => HistoryEntry[];
   setHistory: (h: HistoryEntry[]) => void;
 }
 
-function bindControls(historyRef: HistoryRef): void {
-  const search = document.getElementById('search') as HTMLInputElement | null;
-  const pspFilter = document.getElementById(
-    'pspFilter',
+function bindControls(historyReference: HistoryReference): void {
+  const search = document.querySelector('#search') as HTMLInputElement | null;
+  const pspFilter = document.querySelector(
+    '#pspFilter',
   ) as HTMLSelectElement | null;
   let searchRefreshTimer: ReturnType<typeof setTimeout> | null = null;
 
   const getFilteredEntries = (): HistoryEntry[] =>
     filterEntries(
-      historyRef.getHistory(),
+      historyReference.getHistory(),
       search?.value ?? '',
       pspFilter?.value ?? '',
     );
@@ -632,7 +622,7 @@ function bindControls(historyRef: HistoryRef): void {
 
   pspFilter?.addEventListener('change', () => refresh(true));
 
-  document.getElementById('exportBtn')?.addEventListener('click', () => {
+  document.querySelector('#exportBtn')?.addEventListener('click', () => {
     const filtered = getFilteredEntries();
     const csv = buildCSV(filtered);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -644,22 +634,22 @@ function bindControls(historyRef: HistoryRef): void {
     URL.revokeObjectURL(url);
   });
 
-  document.getElementById('clearBtn')?.addEventListener('click', () => {
+  document.querySelector('#clearBtn')?.addEventListener('click', () => {
     if (!confirm('Clear all PSP detection history? This cannot be undone.')) {
       return;
     }
 
     clearHistory()
       .then(() => {
-        historyRef.setHistory([]);
+        historyReference.setHistory([]);
         // Reset the dropdown and search to match the now-empty history so
         // the user isn't filtering against PSP names that no longer exist.
-        const searchInput = document.getElementById(
-          'search',
+        const searchInput = document.querySelector(
+          '#search',
         ) as HTMLInputElement | null;
         if (searchInput) searchInput.value = '';
-        const pspFilterSelect = document.getElementById(
-          'pspFilter',
+        const pspFilterSelect = document.querySelector(
+          '#pspFilter',
         ) as HTMLSelectElement | null;
         if (pspFilterSelect) pspFilterSelect.value = '';
         populatePspFilter([]);

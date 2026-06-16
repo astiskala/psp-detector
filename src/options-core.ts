@@ -23,16 +23,16 @@ export function formatDate(timestamp: number): string {
   });
 }
 
+function escapeCSV(value: string): string {
+  if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+    return `"${value.replaceAll('"', '""')}"`;
+  }
+
+  return value;
+}
+
 /** Serializes history entries into an RFC 4180-compatible CSV download. */
 export function buildCSV(entries: HistoryEntry[]): string {
-  const escape = (value: string): string => {
-    if (value.includes(',') || value.includes('"') || value.includes('\n')) {
-      return `"${value.replaceAll('"', '""')}"`;
-    }
-
-    return value;
-  };
-
   const header =
     'Date,Domain,Merchant Origin,URL,PSP Names,Types,Detection Sources,Detection Signals';
   if (entries.length === 0) return header;
@@ -43,14 +43,14 @@ export function buildCSV(entries: HistoryEntry[]): string {
     const sources = entry.psps.map((p) => p.sourceType).join('; ');
     const values = entry.psps.map((p) => p.value).join('; ');
     return [
-      escape(new Date(entry.timestamp).toISOString()),
-      escape(entry.domain),
-      escape(entry.merchantOrigin ?? ''),
-      escape(entry.url),
-      escape(names),
-      escape(types),
-      escape(sources),
-      escape(values),
+      escapeCSV(new Date(entry.timestamp).toISOString()),
+      escapeCSV(entry.domain),
+      escapeCSV(entry.merchantOrigin ?? ''),
+      escapeCSV(entry.url),
+      escapeCSV(names),
+      escapeCSV(types),
+      escapeCSV(sources),
+      escapeCSV(values),
     ].join(',');
   });
 
@@ -128,7 +128,7 @@ export function formatHistorySummary(stats: HistoryStats): string {
 export function getUniquePspNames(history: HistoryEntry[]): string[] {
   return [
     ...new Set(history.flatMap((entry) => entry.psps.map((psp) => psp.name))),
-  ].sort((a, b) => a.localeCompare(b));
+  ].toSorted((a, b) => a.localeCompare(b));
 }
 
 function buildDistribution(
@@ -144,13 +144,15 @@ function buildDistribution(
     }
   }
 
-  const total = [...counts.values()].reduce((sum, count) => sum + count, 0);
+  const total = counts.values().reduce((sum, count) => sum + count, 0);
   if (total === 0) {
     return [];
   }
 
-  return [...counts.entries()]
-    .sort((a, b) => b[1] - a[1])
+  return counts
+    .entries()
+    .toArray()
+    .toSorted((a, b) => b[1] - a[1])
     .map(([label, count]) => ({
       label,
       count,

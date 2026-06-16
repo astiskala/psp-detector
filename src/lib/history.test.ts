@@ -73,12 +73,12 @@ describe('writeHistoryEntry', () => {
   it('caps at HISTORY_MAX_ENTRIES and drops oldest', async () => {
     storedData[STORAGE_KEYS.PSP_HISTORY] = Array.from(
       { length: HISTORY_MAX_ENTRIES },
-      (_, i) =>
+      (_, index) =>
         makeEntry({
-          id: `old_${i}`,
-          timestamp: i,
-          domain: `site-${i}.example.com`,
-          url: `https://site-${i}.example.com/checkout`,
+          id: `old_${index}`,
+          timestamp: index,
+          domain: `site-${index}.example.com`,
+          url: `https://site-${index}.example.com/checkout`,
         }),
     );
 
@@ -93,16 +93,16 @@ describe('writeHistoryEntry', () => {
   it('retries with eviction if first write fails', async () => {
     storedData[STORAGE_KEYS.PSP_HISTORY] = Array.from(
       { length: HISTORY_MAX_ENTRIES },
-      (_, i) =>
+      (_, index) =>
         makeEntry({
-          id: `old_${i}`,
-          timestamp: i,
-          domain: `site-${i}.example.com`,
-          url: `https://site-${i}.example.com/checkout`,
+          id: `old_${index}`,
+          timestamp: index,
+          domain: `site-${index}.example.com`,
+          url: `https://site-${index}.example.com/checkout`,
         }),
     );
 
-    const setMock = globalThis.chrome.storage.local.set as unknown as jest.Mock;
+    const setMock = chrome.storage.local.set as unknown as jest.Mock;
     setMock.mockImplementationOnce(async () => {
       throw new Error('Quota exceeded');
     });
@@ -126,7 +126,7 @@ describe('writeHistoryEntry', () => {
   });
 
   it('does not throw if retry also fails', async () => {
-    const setMock = globalThis.chrome.storage.local.set as unknown as jest.Mock;
+    const setMock = chrome.storage.local.set as unknown as jest.Mock;
     setMock.mockRejectedValue(new Error('Quota exceeded'));
 
     await expect(
@@ -140,13 +140,12 @@ describe('writeHistoryEntry', () => {
     // containing only their own entry. The serialization chain in
     // writeHistoryEntry must order them, producing a final history with
     // BOTH entries.
-    const realSet = globalThis.chrome.storage.local.set as unknown as jest.Mock;
+    const realSet = chrome.storage.local.set as unknown as jest.Mock;
     const slowSet = jest.fn(async (data: Record<string, unknown>) => {
       await new Promise((resolve) => setTimeout(resolve, 10));
       Object.assign(storedData, data);
     });
-    (globalThis.chrome.storage.local as unknown as { set: jest.Mock }).set =
-      slowSet;
+    (chrome.storage.local as unknown as { set: jest.Mock }).set = slowSet;
 
     try {
       await Promise.all([
@@ -189,8 +188,7 @@ describe('writeHistoryEntry', () => {
       expect(ids).toContain('concurrent-a');
       expect(ids).toContain('concurrent-b');
     } finally {
-      (globalThis.chrome.storage.local as unknown as { set: jest.Mock }).set =
-        realSet;
+      (chrome.storage.local as unknown as { set: jest.Mock }).set = realSet;
     }
   });
 
@@ -200,16 +198,16 @@ describe('writeHistoryEntry', () => {
     // path (not just a single retry).
     storedData[STORAGE_KEYS.PSP_HISTORY] = Array.from(
       { length: HISTORY_MAX_ENTRIES },
-      (_, i) =>
+      (_, index) =>
         makeEntry({
-          id: `old_${i}`,
-          timestamp: i,
-          domain: `site-${i}.example.com`,
-          url: `https://site-${i}.example.com/checkout`,
+          id: `old_${index}`,
+          timestamp: index,
+          domain: `site-${index}.example.com`,
+          url: `https://site-${index}.example.com/checkout`,
         }),
     );
 
-    const setMock = globalThis.chrome.storage.local.set as unknown as jest.Mock;
+    const setMock = chrome.storage.local.set as unknown as jest.Mock;
     let failsRemaining = 3;
     setMock.mockImplementation(async (data: Record<string, unknown>) => {
       if (failsRemaining > 0) {
@@ -238,16 +236,16 @@ describe('writeHistoryEntry', () => {
   it('stops halving at retain=0 and persists only the new entry', async () => {
     storedData[STORAGE_KEYS.PSP_HISTORY] = Array.from(
       { length: HISTORY_MAX_ENTRIES },
-      (_, i) =>
+      (_, index) =>
         makeEntry({
-          id: `old_${i}`,
-          timestamp: i,
-          domain: `site-${i}.example.com`,
-          url: `https://site-${i}.example.com/checkout`,
+          id: `old_${index}`,
+          timestamp: index,
+          domain: `site-${index}.example.com`,
+          url: `https://site-${index}.example.com/checkout`,
         }),
     );
 
-    const setMock = globalThis.chrome.storage.local.set as unknown as jest.Mock;
+    const setMock = chrome.storage.local.set as unknown as jest.Mock;
     const acceptedCalls: { entryCount: number }[] = [];
     setMock.mockImplementation(async (data: Record<string, unknown>) => {
       const entries = data[STORAGE_KEYS.PSP_HISTORY] as HistoryEntry[];

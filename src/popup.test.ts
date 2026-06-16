@@ -6,7 +6,7 @@ import {
   type PSPConfig,
 } from './types';
 import { STORAGE_KEYS } from './lib/storage-keys';
-import * as utils from './lib/utils';
+import * as utilities from './lib/utilities';
 
 interface ChromeMocks {
   contains: jest.Mock<Promise<boolean>, [chrome.permissions.Permissions]>;
@@ -165,13 +165,13 @@ describe('PopupManager', () => {
 
     await popup.initialize();
 
-    expect(document.getElementById('permission-state')?.style.display).toBe(
-      'block',
-    );
+    expect(
+      document.querySelector<HTMLElement>('#permission-state')?.style.display,
+    ).toBe('block');
 
-    expect(document.getElementById('loading-state')?.style.display).toBe(
-      'none',
-    );
+    expect(
+      document.querySelector<HTMLElement>('#loading-state')?.style.display,
+    ).toBe('none');
 
     expect(chromeMocks.sendMessage).toHaveBeenCalledTimes(1);
     expect(chromeMocks.sendMessage.mock.calls[0]?.[0]).toEqual({
@@ -190,13 +190,13 @@ describe('PopupManager', () => {
 
     await popup.initialize();
 
-    expect(document.getElementById('permission-state')?.style.display).toBe(
-      'block',
-    );
+    expect(
+      document.querySelector<HTMLElement>('#permission-state')?.style.display,
+    ).toBe('block');
 
-    expect(document.getElementById('loading-state')?.style.display).toBe(
-      'none',
-    );
+    expect(
+      document.querySelector<HTMLElement>('#loading-state')?.style.display,
+    ).toBe('none');
 
     expect(chromeMocks.sendMessage).toHaveBeenCalledTimes(1);
     expect(chromeMocks.sendMessage.mock.calls[0]?.[0]).toEqual({
@@ -227,7 +227,7 @@ describe('PopupManager', () => {
 
     await popup.initialize();
     (
-      document.getElementById('grant-permission-btn') as HTMLButtonElement
+      document.querySelector('#grant-permission-btn') as HTMLButtonElement
     ).click();
     await flushAsyncTasks();
     await flushAsyncTasks();
@@ -237,9 +237,9 @@ describe('PopupManager', () => {
       permissions: ['webRequest'],
     });
 
-    expect(document.getElementById('permission-state')?.style.display).toBe(
-      'none',
-    );
+    expect(
+      document.querySelector<HTMLElement>('#permission-state')?.style.display,
+    ).toBe('none');
 
     expect(chromeMocks.contains.mock.calls.length).toBeGreaterThanOrEqual(4);
     expect(chromeMocks.sendMessage).toHaveBeenCalledTimes(3);
@@ -267,7 +267,7 @@ describe('PopupManager', () => {
 
     await popup.initialize();
 
-    expect(document.getElementById('psp-name')?.textContent).toBe(
+    expect(document.querySelector('#psp-name')?.textContent).toBe(
       'PSP detection disabled',
     );
   });
@@ -278,7 +278,7 @@ describe('PopupManager', () => {
 
     await popup.initialize();
 
-    expect(document.getElementById('psp-name')?.textContent).toBe(
+    expect(document.querySelector('#psp-name')?.textContent).toBe(
       'No PSP detected',
     );
   });
@@ -326,12 +326,14 @@ describe('PopupManager', () => {
       },
     ]);
 
-    const fetchSpy = jest.spyOn(utils, 'fetchWithTimeout').mockResolvedValue({
-      ok: true,
-      status: 200,
-      statusText: 'OK',
-      json: async () => config,
-    } as unknown as Response);
+    const fetchSpy = jest
+      .spyOn(utilities, 'fetchWithTimeout')
+      .mockResolvedValue({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        json: async () => config,
+      } as unknown as Response);
     const popup = new PopupManager();
 
     await popup.initialize();
@@ -357,7 +359,7 @@ describe('PopupManager', () => {
       },
     ]);
 
-    jest.spyOn(utils, 'fetchWithTimeout').mockResolvedValue({
+    jest.spyOn(utilities, 'fetchWithTimeout').mockResolvedValue({
       ok: true,
       status: 200,
       statusText: 'OK',
@@ -368,20 +370,22 @@ describe('PopupManager', () => {
 
     await popup.initialize();
 
-    expect(document.getElementById('psp-name')?.textContent).toBe('Error');
+    expect(document.querySelector('#psp-name')?.textContent).toBe('Error');
   });
 
   it('falls back to no-PSP state when background response is malformed', async () => {
     jest
-      .spyOn(utils.errorUtils, 'withRetry')
-      .mockImplementation(<T>(fn: () => Promise<T>): (() => Promise<T>) => fn);
+      .spyOn(utilities.errorUtilities, 'withRetry')
+      .mockImplementation(
+        <T>(function_: () => Promise<T>): (() => Promise<T>) => function_,
+      );
 
     mockSendMessageResponses(chromeMocks.sendMessage, [{ malformed: true }]);
     const popup = new PopupManager();
 
     await popup.initialize();
 
-    expect(document.getElementById('psp-name')?.textContent).toBe(
+    expect(document.querySelector('#psp-name')?.textContent).toBe(
       'No PSP detected',
     );
   });
@@ -398,12 +402,14 @@ describe('PopupManager', () => {
     ]);
 
     const config = createStripeConfig();
-    const fetchSpy = jest.spyOn(utils, 'fetchWithTimeout').mockResolvedValue({
-      ok: true,
-      status: 200,
-      statusText: 'OK',
-      json: async () => config,
-    } as unknown as Response);
+    const fetchSpy = jest
+      .spyOn(utilities, 'fetchWithTimeout')
+      .mockResolvedValue({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        json: async () => config,
+      } as unknown as Response);
 
     const popup = new PopupManager();
     await popup.initialize();
@@ -422,7 +428,7 @@ describe('PopupManager', () => {
     const popup = new PopupManager();
     popup.bindHistoryAction();
 
-    (document.getElementById('history-link') as HTMLButtonElement).click();
+    (document.querySelector('#history-link') as HTMLButtonElement).click();
     await flushAsyncTasks();
 
     expect(chromeMocks.openOptionsPage).toHaveBeenCalledTimes(1);
@@ -435,10 +441,10 @@ describe('PopupManager', () => {
     await import('./popup');
     document.dispatchEvent(new Event('DOMContentLoaded'));
     await flushAsyncTasks();
-    globalThis.dispatchEvent(new Event('beforeunload'));
+    dispatchEvent(new Event('beforeunload'));
 
-    expect(document.getElementById('permission-state')?.style.display).toBe(
-      'block',
-    );
+    expect(
+      document.querySelector<HTMLElement>('#permission-state')?.style.display,
+    ).toBe('block');
   });
 });

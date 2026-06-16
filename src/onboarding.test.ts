@@ -109,10 +109,10 @@ describe('onboarding page', () => {
     document.dispatchEvent(new Event('DOMContentLoaded'));
     await flushAsyncTasks();
 
-    const status = document.getElementById(PERMISSION_STATUS_ID);
-    const button = document.getElementById(
-      GRANT_HOST_ACCESS_BUTTON_ID,
-    ) as HTMLButtonElement | null;
+    const status = document.querySelector(`#${PERMISSION_STATUS_ID}`);
+    const button = document.querySelector<HTMLButtonElement>(
+      `#${GRANT_HOST_ACCESS_BUTTON_ID}`,
+    );
 
     expect(status?.textContent).toContain(NOT_ENABLED_TEXT);
     expect(button?.disabled).toBe(false);
@@ -124,10 +124,10 @@ describe('onboarding page', () => {
     document.dispatchEvent(new Event('DOMContentLoaded'));
     await flushAsyncTasks();
 
-    const status = document.getElementById(PERMISSION_STATUS_ID);
-    const button = document.getElementById(
-      GRANT_HOST_ACCESS_BUTTON_ID,
-    ) as HTMLButtonElement | null;
+    const status = document.querySelector(`#${PERMISSION_STATUS_ID}`);
+    const button = document.querySelector<HTMLButtonElement>(
+      `#${GRANT_HOST_ACCESS_BUTTON_ID}`,
+    );
 
     expect(status?.textContent).toContain(NOT_ENABLED_TEXT);
     expect(button?.disabled).toBe(false);
@@ -142,9 +142,9 @@ describe('onboarding page', () => {
     document.dispatchEvent(new Event('DOMContentLoaded'));
     await flushAsyncTasks();
 
-    const grantButton = document.getElementById(
-      GRANT_HOST_ACCESS_BUTTON_ID,
-    ) as HTMLButtonElement | null;
+    const grantButton = document.querySelector<HTMLButtonElement>(
+      `#${GRANT_HOST_ACCESS_BUTTON_ID}`,
+    );
     if (grantButton === null) {
       throw new Error(`Expected ${GRANT_HOST_ACCESS_BUTTON_ID} button`);
     }
@@ -153,10 +153,10 @@ describe('onboarding page', () => {
     grantButton.click();
     await flushAsyncTasks();
 
-    const status = document.getElementById(PERMISSION_STATUS_ID);
-    const button = document.getElementById(
-      GRANT_HOST_ACCESS_BUTTON_ID,
-    ) as HTMLButtonElement | null;
+    const status = document.querySelector(`#${PERMISSION_STATUS_ID}`);
+    const button = document.querySelector<HTMLButtonElement>(
+      `#${GRANT_HOST_ACCESS_BUTTON_ID}`,
+    );
 
     expect(chromeMocks.request).toHaveBeenCalledWith({
       origins: ['https://*/*'],
@@ -177,9 +177,9 @@ describe('onboarding page', () => {
     document.dispatchEvent(new Event('DOMContentLoaded'));
     await flushAsyncTasks();
 
-    const grantButton = document.getElementById(
-      GRANT_HOST_ACCESS_BUTTON_ID,
-    ) as HTMLButtonElement | null;
+    const grantButton = document.querySelector<HTMLButtonElement>(
+      `#${GRANT_HOST_ACCESS_BUTTON_ID}`,
+    );
     if (grantButton === null) {
       throw new Error(`Expected ${GRANT_HOST_ACCESS_BUTTON_ID} button`);
     }
@@ -187,7 +187,7 @@ describe('onboarding page', () => {
     grantButton.click();
     await flushAsyncTasks();
 
-    const status = document.getElementById(PERMISSION_STATUS_ID);
+    const status = document.querySelector(`#${PERMISSION_STATUS_ID}`);
     expect(status?.textContent).toContain('not granted');
     expect(grantButton.disabled).toBe(false);
   });
@@ -205,9 +205,9 @@ describe('onboarding page', () => {
     document.dispatchEvent(new Event('DOMContentLoaded'));
     await flushAsyncTasks();
 
-    const grantButton = document.getElementById(
-      GRANT_HOST_ACCESS_BUTTON_ID,
-    ) as HTMLButtonElement | null;
+    const grantButton = document.querySelector<HTMLButtonElement>(
+      `#${GRANT_HOST_ACCESS_BUTTON_ID}`,
+    );
     if (grantButton === null) {
       throw new Error(`Expected ${GRANT_HOST_ACCESS_BUTTON_ID} button`);
     }
@@ -215,7 +215,7 @@ describe('onboarding page', () => {
     grantButton.click();
     await flushAsyncTasks();
 
-    const status = document.getElementById(PERMISSION_STATUS_ID);
+    const status = document.querySelector(`#${PERMISSION_STATUS_ID}`);
     expect(status?.textContent).toContain('failed');
     expect(grantButton.disabled).toBe(false);
   });
@@ -226,9 +226,7 @@ describe('onboarding page', () => {
     // disabled state before it resolves. Use mockImplementation (not -Once)
     // so the held-promise behavior wins over the default impl regardless of
     // call ordering.
-    let resolvePermission: (granted: boolean) => void = () => {
-      /* assigned below */
-    };
+    let resolvePermission!: (granted: boolean) => void;
     mocks.request.mockImplementation(
       () =>
         new Promise<boolean>((resolve) => {
@@ -240,9 +238,9 @@ describe('onboarding page', () => {
     document.dispatchEvent(new Event('DOMContentLoaded'));
     await flushAsyncTasks();
 
-    const grantButton = document.getElementById(
-      GRANT_HOST_ACCESS_BUTTON_ID,
-    ) as HTMLButtonElement | null;
+    const grantButton = document.querySelector<HTMLButtonElement>(
+      `#${GRANT_HOST_ACCESS_BUTTON_ID}`,
+    );
     if (grantButton === null) {
       throw new Error(`Expected ${GRANT_HOST_ACCESS_BUTTON_ID} button`);
     }

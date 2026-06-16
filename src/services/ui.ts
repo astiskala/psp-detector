@@ -1,5 +1,5 @@
 import type { PSP, PSPConfig, StoredTabPsp } from '../types';
-import { createSafeUrl, logger } from '../lib/utils';
+import { createSafeUrl, logger } from '../lib/utilities';
 
 type UIState = 'error' | 'no-psp' | 'disabled' | 'success';
 
@@ -21,7 +21,7 @@ export class UIService {
   private initializeDOMElements(): void {
     const elementIds = ['name', 'description', 'notice', 'url', 'image'];
     elementIds.forEach((id) => {
-      const element = document.getElementById(`psp-${id}`);
+      const element = document.querySelector<HTMLElement>(`#psp-${id}`);
       if (!element) {
         throw new Error(`Element psp-${id} not found`);
       }
@@ -29,7 +29,8 @@ export class UIService {
       this.elements[id] = element;
     });
 
-    const subtitleElement = document.getElementById('psp-subtitle');
+    const subtitleElement =
+      document.querySelector<HTMLElement>('#psp-subtitle');
     if (subtitleElement) {
       this.elements['subtitle'] = subtitleElement;
     }
@@ -73,10 +74,10 @@ export class UIService {
     for (const storedPsp of psps) {
       const { psp, notice } = this.findPspWithContext(storedPsp.psp, config);
       const card = this.buildPspCard(storedPsp, psp, notice);
-      list.appendChild(card);
+      list.append(card);
     }
 
-    description.appendChild(list);
+    description.append(list);
     const noun = psps.length === 1 ? 'PSP' : 'PSPs';
     this.updateTextContent('name', `${psps.length} ${noun} detected`);
     this.updateTextContent('subtitle', 'Detected on current tab');
@@ -203,10 +204,12 @@ export class UIService {
   private updateImage(image: string, alt: string): void {
     const imgElement = this.elements['image'];
     if (imgElement && imgElement instanceof HTMLImageElement) {
-      const fallbackImageSrc = chrome.runtime.getURL('images/default_128.png');
+      const fallbackImageSource = chrome.runtime.getURL(
+        'images/default_128.png',
+      );
       imgElement.onerror = (): void => {
-        if (imgElement.src !== fallbackImageSrc) {
-          imgElement.src = fallbackImageSrc;
+        if (imgElement.src !== fallbackImageSource) {
+          imgElement.src = fallbackImageSource;
           return;
         }
 
@@ -318,10 +321,12 @@ export class UIService {
 
     if (typeof config?.image === 'string' && config.image.length > 0) {
       const img = document.createElement('img');
-      const fallbackImageSrc = chrome.runtime.getURL('images/default_48.png');
+      const fallbackImageSource = chrome.runtime.getURL(
+        'images/default_48.png',
+      );
       img.onerror = (): void => {
-        if (img.src !== fallbackImageSrc) {
-          img.src = fallbackImageSrc;
+        if (img.src !== fallbackImageSource) {
+          img.src = fallbackImageSource;
           return;
         }
 
@@ -331,13 +336,13 @@ export class UIService {
       img.src = chrome.runtime.getURL(`images/${config.image}_48.png`);
       img.alt = stored.psp;
       img.className = 'psp-card-logo';
-      card.appendChild(img);
+      card.append(img);
     }
 
     const name = document.createElement('p');
     name.className = 'psp-card-name';
     name.textContent = stored.psp;
-    card.appendChild(name);
+    card.append(name);
 
     if (stored.detectionInfo) {
       const evidence = document.createElement('div');
@@ -353,16 +358,16 @@ export class UIService {
         value,
         'match-value',
       );
-      evidence.appendChild(sourceRow);
-      evidence.appendChild(signalRow);
-      card.appendChild(evidence);
+      evidence.append(sourceRow);
+      evidence.append(signalRow);
+      card.append(evidence);
     }
 
     if (typeof contextNotice === 'string' && contextNotice.length > 0) {
       const notice = document.createElement('div');
       notice.className = 'psp-card-notice';
       notice.textContent = contextNotice;
-      card.appendChild(notice);
+      card.append(notice);
     }
 
     return card;
@@ -385,8 +390,8 @@ export class UIService {
     value.textContent = valueText;
     value.title = valueText;
 
-    row.appendChild(label);
-    row.appendChild(value);
+    row.append(label);
+    row.append(value);
     return row;
   }
 }

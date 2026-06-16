@@ -3,8 +3,11 @@ import * as path from 'node:path';
 import type { PSPConfig } from '../types';
 
 const configPath = path.resolve(__dirname, '../../public/psps.json');
-const srcImagesDir = path.resolve(__dirname, '../../assets/images');
-const distImagesDir = path.resolve(__dirname, '../../dist/images');
+const sourceImagesDirectory = path.resolve(__dirname, '../../assets/images');
+const distributionImagesDirectory = path.resolve(
+  __dirname,
+  '../../dist/images',
+);
 
 describe('PSP image assets', () => {
   let config: PSPConfig;
@@ -51,7 +54,7 @@ describe('PSP image assets', () => {
   it('should have an image (pspname.png) for every PSP in source', () => {
     const missing: string[] = [];
     for (const psp of config.psps) {
-      const imgPath = path.join(srcImagesDir, `${psp.image}.png`);
+      const imgPath = path.join(sourceImagesDirectory, `${psp.image}.png`);
       if (!fs.existsSync(imgPath)) {
         missing.push(`Missing source image for PSP: ${psp.name} (${imgPath})`);
       }
@@ -68,7 +71,10 @@ describe('PSP image assets', () => {
     const missing: string[] = [];
     for (const psp of config.psps) {
       for (const size of [48, 128]) {
-        const imgPath = path.join(distImagesDir, `${psp.image}_${size}.png`);
+        const imgPath = path.join(
+          distributionImagesDirectory,
+          `${psp.image}_${size}.png`,
+        );
         if (!fs.existsSync(imgPath)) {
           missing.push(`Missing dist image for PSP: ${psp.name} (${imgPath})`);
         }
