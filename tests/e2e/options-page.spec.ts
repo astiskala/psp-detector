@@ -197,7 +197,7 @@ test('options page exports CSV', async ({ page }) => {
 
   const content = fs.readFileSync(filePath, 'utf8');
   expect(content).toContain(
-    'Date,Domain,URL,PSP Names,Types,Detection Sources,Detection Signals',
+    'Date,Domain,Merchant Origin,URL,PSP Names,Types,Detection Sources,Detection Signals',
   );
 
   expect(content).toContain('checkout.example.com');

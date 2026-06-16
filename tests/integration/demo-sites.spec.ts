@@ -15,34 +15,63 @@ interface SiteCase {
   url: string;
   expected: string;
 }
-const SITES: SiteCase[] = [
-  { url: 'https://www.mystoredemo.io', expected: 'Adyen' },
-  { url: 'https://checkout.bluesnapdemo.com', expected: 'BlueSnap' },
-  { url: 'https://flow-demo.sandbox.checkout.com', expected: 'Checkout.com' },
-  { url: 'https://cbcheckoutapp.herokuapp.com', expected: 'Chargebee' },
-  { url: 'https://fs-react-devrels.vercel.app', expected: 'FastSpring' },
-  {
-    url: 'https://demo.globalpay.com/merchants/dropin-ui',
-    expected: 'Global Payments',
-  },
-  { url: 'https://demos.nuvei.com/intdemo-ecom/checkout/', expected: 'Nuvei' },
-  {
-    url: 'https://pay.skrill.com/assets/skrill-demo/ecommerce.html',
-    expected: 'Skrill',
-  },
-  { url: 'https://dev.shift4.com/examples/checkout', expected: 'Shift4' },
-  { url: 'https://checkout.stripe.dev/checkout', expected: 'Stripe' },
-  {
-    url: 'https://square.github.io/web-payments-showcase/',
-    expected: 'Square',
-  },
-  { url: 'https://widget.payu.in/demo', expected: 'PayU' },
-  {
-    url: 'https://demo.unzer.com/demo/resources/paypage_manual.html',
-    expected: 'Unzer',
-  },
-  { url: 'https://test.saferpay.com/DemoShop', expected: 'Worldline' },
-];
+
+const ADYEN_SITE: SiteCase = {
+  url: 'https://www.mystoredemo.io',
+  expected: 'Adyen',
+};
+const BLUESNAP_SITE: SiteCase = {
+  url: 'https://checkout.bluesnapdemo.com',
+  expected: 'BlueSnap',
+};
+const CHECKOUT_SITE: SiteCase = {
+  url: 'https://flow-demo.sandbox.checkout.com',
+  expected: 'Checkout.com',
+};
+const CHARGEBEE_SITE: SiteCase = {
+  url: 'https://cbcheckoutapp.herokuapp.com',
+  expected: 'Chargebee',
+};
+const FASTSPRING_SITE: SiteCase = {
+  url: 'https://fs-react-devrels.vercel.app',
+  expected: 'FastSpring',
+};
+const GLOBAL_PAYMENTS_SITE: SiteCase = {
+  url: 'https://demo.globalpay.com/merchants/dropin-ui',
+  expected: 'Global Payments',
+};
+const NUVEI_SITE: SiteCase = {
+  url: 'https://demos.nuvei.com/intdemo-ecom/checkout/',
+  expected: 'Nuvei',
+};
+const SKRILL_SITE: SiteCase = {
+  url: 'https://pay.skrill.com/assets/skrill-demo/ecommerce.html',
+  expected: 'Skrill',
+};
+const SHIFT4_SITE: SiteCase = {
+  url: 'https://dev.shift4.com/examples/checkout',
+  expected: 'Shift4',
+};
+const STRIPE_SITE: SiteCase = {
+  url: 'https://checkout.stripe.dev/checkout',
+  expected: 'Stripe',
+};
+const SQUARE_SITE: SiteCase = {
+  url: 'https://square.github.io/web-payments-showcase/',
+  expected: 'Square',
+};
+const PAYU_SITE: SiteCase = {
+  url: 'https://widget.payu.in/demo',
+  expected: 'PayU',
+};
+const UNZER_SITE: SiteCase = {
+  url: 'https://demo.unzer.com/demo/resources/paypage_manual.html',
+  expected: 'Unzer',
+};
+const WORLDLINE_SITE: SiteCase = {
+  url: 'https://test.saferpay.com/DemoShop',
+  expected: 'Worldline',
+};
 
 function loadConfig(): PSPConfig {
   type RawEntry = Record<string, unknown>;
@@ -107,7 +136,12 @@ function loadConfig(): PSPConfig {
   };
 }
 
-const config = loadConfig();
+let cachedConfig: PSPConfig | undefined;
+
+function getConfig(): PSPConfig {
+  cachedConfig ??= loadConfig();
+  return cachedConfig;
+}
 
 // Helper: detect a single site; throws with diagnostics on mismatch.
 async function detectAndAssert(page: Page, site: SiteCase): Promise<void> {
@@ -129,7 +163,7 @@ async function detectAndAssert(page: Page, site: SiteCase): Promise<void> {
   const surface = [page.url(), html, ...requests].join('\n');
 
   const detector = new PSPDetectorService();
-  detector.initialize(config);
+  detector.initialize(getConfig());
   detector.setExemptDomains([]);
   const result = detector.detectPSP(site.url, surface);
   const matchedNames = PSPDetectionResult.isDetected(result)
@@ -173,8 +207,60 @@ async function detectAndAssert(page: Page, site: SiteCase): Promise<void> {
 }
 
 // One test per site so failures clearly identify the PSP.
-for (const site of SITES) {
-  test(`${site.expected} demo detects ${site.expected}`, async ({ page }) => {
-    await detectAndAssert(page, site);
+test.describe('demo-site coverage', () => {
+  test('Adyen demo detects Adyen', async ({ page }) => {
+    await detectAndAssert(page, ADYEN_SITE);
   });
-}
+
+  test('BlueSnap demo detects BlueSnap', async ({ page }) => {
+    await detectAndAssert(page, BLUESNAP_SITE);
+  });
+
+  test('Checkout.com demo detects Checkout.com', async ({ page }) => {
+    await detectAndAssert(page, CHECKOUT_SITE);
+  });
+
+  test('Chargebee demo detects Chargebee', async ({ page }) => {
+    await detectAndAssert(page, CHARGEBEE_SITE);
+  });
+
+  test('FastSpring demo detects FastSpring', async ({ page }) => {
+    await detectAndAssert(page, FASTSPRING_SITE);
+  });
+
+  test('Global Payments demo detects Global Payments', async ({ page }) => {
+    await detectAndAssert(page, GLOBAL_PAYMENTS_SITE);
+  });
+
+  test('Nuvei demo detects Nuvei', async ({ page }) => {
+    await detectAndAssert(page, NUVEI_SITE);
+  });
+
+  test('Skrill demo detects Skrill', async ({ page }) => {
+    await detectAndAssert(page, SKRILL_SITE);
+  });
+
+  test('Shift4 demo detects Shift4', async ({ page }) => {
+    await detectAndAssert(page, SHIFT4_SITE);
+  });
+
+  test('Stripe demo detects Stripe', async ({ page }) => {
+    await detectAndAssert(page, STRIPE_SITE);
+  });
+
+  test('Square demo detects Square', async ({ page }) => {
+    await detectAndAssert(page, SQUARE_SITE);
+  });
+
+  test('PayU demo detects PayU', async ({ page }) => {
+    await detectAndAssert(page, PAYU_SITE);
+  });
+
+  test('Unzer demo detects Unzer', async ({ page }) => {
+    await detectAndAssert(page, UNZER_SITE);
+  });
+
+  test('Worldline demo detects Worldline', async ({ page }) => {
+    await detectAndAssert(page, WORLDLINE_SITE);
+  });
+});

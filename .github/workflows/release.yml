@@ -43,13 +43,13 @@ jobs:
         run: pnpm run validate
 
       - name: Install Playwright browsers
-        run: pnpm exec playwright install --with-deps chromium
+        run: ./node_modules/.bin/playwright install --with-deps chromium
 
       - name: Run integration tests (Playwright)
-        run: pnpm exec playwright test tests/integration --project=chromium --reporter=line
+        run: ./node_modules/.bin/playwright test --config=playwright.config.ts --project=integration-chromium --reporter=line
 
       - name: Run E2E tests (Playwright)
-        run: pnpm exec playwright test --config=playwright.e2e.config.ts --project=chromium --reporter=line
+        run: ./node_modules/.bin/playwright test --config=playwright.config.ts --project=e2e-chromium --reporter=line
 
       - name: Get version from manifest
         id: manifest

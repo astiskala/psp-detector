@@ -863,15 +863,25 @@ class BackgroundService {
     tabId: number;
     pspName: NonNullable<PSPDetectionData['psp']>;
   } | null {
-    // Always derive tabId from sender.tab.id so a content script can't claim
-    // to be a different tab and poison another tab's PSP cache.
-    const senderTabId = sender.tab?.id;
-    if (typeof senderTabId !== 'number') {
-      logger.warn('Background: Detection message has no sender tab id');
-      return null;
-    }
+    // Content scripts must always be bound to sender.tab.id. Extension pages
+    // are privileged and may target a specific tab explicitly.
+    const senderUrl = sender.url ?? sender.tab?.url ?? '';
+    const senderIsExtensionPage = senderUrl.startsWith(
+      chrome.runtime.getURL(''),
+    );
+    const requestedTabId =
+      typeof data.tabId === 'number'
+        ? TypeConverters.toTabId(data.tabId)
+        : null;
+    const senderTabId =
+      typeof sender.tab?.id === 'number'
+        ? TypeConverters.toTabId(sender.tab.id)
+        : null;
+    const tabId =
+      senderIsExtensionPage && requestedTabId !== null
+        ? requestedTabId
+        : senderTabId;
 
-    const tabId = TypeConverters.toTabId(senderTabId);
     if (tabId === null || tabId === undefined) {
       logger.warn('Background: Invalid tab ID in detection payload');
       return null;
@@ -925,6 +935,7 @@ class BackgroundService {
       matchedProviders.add(pspName);
       this.networkMatchedProvidersByTab.set(tabId, matchedProviders);
       this.markTabPspCacheDirty();
+      await this.flushTabPspCache();
       return true;
     }
 
@@ -942,6 +953,7 @@ class BackgroundService {
     matchedProviders.add(pspName);
     this.networkMatchedProvidersByTab.set(tabId, matchedProviders);
     this.markTabPspCacheDirty();
+    await this.flushTabPspCache();
     return true;
   }
 
@@ -1474,14 +1486,16 @@ class BackgroundService {
 
     this.webRequestListenerRegistered = true;
     onBeforeRequest.addListener(
-      (details): undefined => {
+      (details): chrome.webRequest.BlockingResponse | undefined => {
         this.handleNetworkRequest(
           details as chrome.webRequest.WebRequestDetails,
         ).catch((error) => {
           logger.warn('webRequest handler error:', error);
         });
 
-        return;
+        const noResponse: chrome.webRequest.BlockingResponse | undefined =
+          undefined;
+        return noResponse;
       },
       {
         urls: ['https://*/*'],

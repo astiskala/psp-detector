@@ -1015,7 +1015,7 @@ async function writeOut128ToFile(output, inputBuffer, outputPath) {
   }
 }
 
-async function processBulk(pspsJsonPath = './public/psps.json', startFrom) {
+async function processBulk(startFrom, pspsJsonPath = './public/psps.json') {
   const assetsDirectory = path.resolve('./assets/images');
 
   try {
@@ -1153,7 +1153,7 @@ async function main() {
 
   const mode = parseCliMode(arguments_);
   if (mode.kind === 'bulk') {
-    await processBulk(mode.pspsArg, mode.startFrom);
+    await processBulk(mode.startFrom, mode.pspsArg);
     return;
   }
 

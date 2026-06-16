@@ -1,6 +1,11 @@
 import { PSPDetectorService } from './psp-detector';
 import type { PSPConfig, PSPDetectionResult } from '../types';
 import { TypeConverters } from '../types';
+import type {
+  PSPName,
+  RegexPattern,
+  URL as BrandedURL,
+} from '../types/branded';
 import {
   TEST_PSP_CONFIGS,
   TEST_URLS,
@@ -20,6 +25,29 @@ const STRIPE_MATCH = 'js.stripe.com';
 const STRIPE_CHECKOUT_MATCH = 'checkout.stripe.com';
 const STRIPE_SCRIPT_TAG = '<script src="https://js.stripe.com/v3/"></script>';
 const STRIPE_SUMMARY = 'Stripe summary';
+
+function requirePresent<T>(value: T | null, label: string): T {
+  if (value === null) {
+    throw new Error(`Expected valid ${label}`);
+  }
+
+  return value;
+}
+
+function pspName(name: string): PSPName {
+  return requirePresent(TypeConverters.toPSPName(name), `PSP name: ${name}`);
+}
+
+function pspUrl(url: string): BrandedURL {
+  return requirePresent(TypeConverters.toURL(url), `URL: ${url}`);
+}
+
+function regexPattern(pattern: string): RegexPattern {
+  return requirePresent(
+    TypeConverters.toRegexPattern(pattern),
+    `regex pattern: ${pattern}`,
+  );
+}
 
 describe('PSPDetectorService', () => {
   let service: PSPDetectorService;
@@ -68,16 +96,12 @@ describe('PSPDetectorService', () => {
   });
 
   it('should get PSP by PSPName', () => {
-    expect(
-      getPSPByPSPName(service, TypeConverters.toPSPName(STRIPE_NAME)!),
-    ).toMatchObject({
+    expect(getPSPByPSPName(service, pspName(STRIPE_NAME))).toMatchObject({
       name: STRIPE_NAME,
       regex: String.raw`stripe\.com`,
     });
 
-    expect(
-      getPSPByPSPName(service, TypeConverters.toPSPName('Unknown')!),
-    ).toBeNull();
+    expect(getPSPByPSPName(service, pspName('Unknown'))).toBeNull();
   });
 
   it('should return exempt result for exempt domains', () => {
@@ -108,16 +132,16 @@ describe('PSPDetectorService', () => {
     const configWithMatchStrings: PSPConfig = {
       psps: [
         {
-          name: TypeConverters.toPSPName(STRIPE_NAME)!,
+          name: pspName(STRIPE_NAME),
           matchStrings: [STRIPE_CHECKOUT_MATCH, STRIPE_MATCH],
-          url: TypeConverters.toURL(STRIPE_URL)!,
+          url: pspUrl(STRIPE_URL),
           image: 'stripe',
           summary: STRIPE_SUMMARY,
         },
         {
-          name: TypeConverters.toPSPName('Adyen')!,
+          name: pspName('Adyen'),
           matchStrings: ['checkoutshopper-live.adyen.com', 'cdn.adyen.com'],
-          url: TypeConverters.toURL('https://adyen.com')!,
+          url: pspUrl('https://adyen.com'),
           image: 'adyen',
           summary: 'Adyen summary',
         },
@@ -163,16 +187,16 @@ describe('PSPDetectorService', () => {
     const configWithInvalidRegex: PSPConfig = {
       psps: [
         {
-          name: TypeConverters.toPSPName('ValidPSP')!,
-          regex: TypeConverters.toRegexPattern(String.raw`valid\.pattern`)!,
-          url: TypeConverters.toURL('https://valid.com')!,
+          name: pspName('ValidPSP'),
+          regex: regexPattern(String.raw`valid\.pattern`),
+          url: pspUrl('https://valid.com'),
           image: 'valid',
           summary: 'Valid PSP',
         },
         {
-          name: TypeConverters.toPSPName('InvalidPSP')!,
-          regex: TypeConverters.toRegexPattern('[invalid')!,
-          url: TypeConverters.toURL('https://invalid.com')!,
+          name: pspName('InvalidPSP'),
+          regex: '[invalid' as RegexPattern,
+          url: pspUrl('https://invalid.com'),
           image: 'invalid',
           summary: 'Invalid PSP',
         },
@@ -199,8 +223,8 @@ describe('PSPDetectorService', () => {
   });
 
   it('should test isURLExempt method', () => {
-    const url1 = TypeConverters.toURL('https://example.com/path')!;
-    const url2 = TypeConverters.toURL('https://safe.com/path')!;
+    const url1 = pspUrl('https://example.com/path');
+    const url2 = pspUrl('https://safe.com/path');
 
     expect(isURLExempt(service, url1)).toBe(true); // example.com is exempt
     expect(isURLExempt(service, url2)).toBe(false); // safe.com is not exempt
@@ -210,8 +234,8 @@ describe('PSPDetectorService', () => {
     // Test the method's error handling with an invalid URL string
     // Since isURLExempt uses globalThis.URL internally,
     // invalid URLs should be caught
-    const validUrl1 = TypeConverters.toURL('https://example.com/path')!;
-    const validUrl2 = TypeConverters.toURL('https://safe.com/path')!;
+    const validUrl1 = pspUrl('https://example.com/path');
+    const validUrl2 = pspUrl('https://safe.com/path');
 
     expect(isURLExempt(service, validUrl1)).toBe(true); // example.com is exempt
     expect(isURLExempt(service, validUrl2)).toBe(false); // safe.com not exempt
@@ -238,9 +262,9 @@ describe('PSPDetectorService', () => {
     // Test with very large config to ensure timing works
     const largeConfig: PSPConfig = {
       psps: Array.from({ length: 100 }, (_, index) => ({
-        name: TypeConverters.toPSPName(`PSP${index}`)!,
-        regex: TypeConverters.toRegexPattern(String.raw`psp${index}\.com`)!,
-        url: TypeConverters.toURL(`https://psp${index}.com`)!,
+        name: pspName(`PSP${index}`),
+        regex: regexPattern(String.raw`psp${index}\.com`),
+        url: pspUrl(`https://psp${index}.com`),
         image: `psp${index}`,
         summary: `PSP ${index} summary`,
       })),
@@ -264,9 +288,9 @@ describe('PSPDetectorService', () => {
     const configWithMatchStrings: PSPConfig = {
       psps: [
         {
-          name: TypeConverters.toPSPName(STRIPE_NAME)!,
+          name: pspName(STRIPE_NAME),
           matchStrings: [STRIPE_MATCH, STRIPE_CHECKOUT_MATCH],
-          url: TypeConverters.toURL(STRIPE_URL)!,
+          url: pspUrl(STRIPE_URL),
           image: 'stripe',
           summary: STRIPE_SUMMARY,
         },
@@ -317,9 +341,9 @@ describe('PSPDetectorService', () => {
     const globalPaymentsConfig: PSPConfig = {
       psps: [
         {
-          name: TypeConverters.toPSPName('Global Payments')!,
+          name: pspName('Global Payments'),
           matchStrings: ['js-cert.globalpay.com'],
-          url: TypeConverters.toURL('https://www.globalpayments.com')!,
+          url: pspUrl('https://www.globalpayments.com'),
           image: 'globalpayments',
           summary: 'Global Payments summary',
         },
@@ -487,9 +511,9 @@ describe('PSPDetectorService', () => {
     const cfg: PSPConfig = {
       psps: [
         {
-          name: TypeConverters.toPSPName('Marker')!,
+          name: pspName('Marker'),
           matchStrings: [tailKeyword],
-          url: TypeConverters.toURL('https://marker.example')!,
+          url: pspUrl('https://marker.example'),
           image: 'marker',
           summary: 'marker summary',
         },
@@ -516,9 +540,9 @@ describe('PSPDetectorService', () => {
     const cfg: PSPConfig = {
       psps: [
         {
-          name: TypeConverters.toPSPName('Marker')!,
+          name: pspName('Marker'),
           matchStrings: ['z'.repeat(40)],
-          url: TypeConverters.toURL('https://marker.example')!,
+          url: pspUrl('https://marker.example'),
           image: 'marker',
           summary: 'marker summary',
         },
