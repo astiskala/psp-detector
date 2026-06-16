@@ -1,8 +1,8 @@
 import type { PSPName, URL } from './branded';
 
 /**
- * Records which page surface produced the detection signal so downstream UI
- * and history views can explain why a provider matched.
+Records which page surface produced the detection signal so downstream UI
+and history views can explain why a provider matched.
  */
 export type SourceType =
   | 'scriptSrc'
@@ -23,8 +23,8 @@ export interface PSPMatch {
 }
 
 /**
- * Structured result returned by the detector so callers can distinguish a real
- * match from exempt, empty, and operational-error states.
+Structured result returned by the detector so callers can distinguish a real
+match from exempt, empty, and operational-error states.
  */
 export type PSPDetectionResult =
   | {

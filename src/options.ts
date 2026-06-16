@@ -290,7 +290,8 @@ function getHistoryEntryHostname(entry: HistoryEntry): string {
   }
 
   try {
-    return new URL(entry.url).hostname || domain;
+    const parsedUrl = new URL(entry.url);
+    return parsedUrl.hostname || domain;
   } catch {
     return domain;
   }
@@ -343,7 +344,8 @@ function getMerchantHostname(entry: HistoryEntry): string | null {
   }
 
   try {
-    return new URL(origin).hostname || null;
+    const parsedOrigin = new URL(origin);
+    return parsedOrigin.hostname || null;
   } catch {
     return null;
   }
@@ -629,7 +631,8 @@ function bindControls(historyReference: HistoryReference): void {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
-    anchor.download = `psp-history-${new Date().toISOString().split('T')[0]}.csv`;
+    const now = new Date();
+    anchor.download = `psp-history-${now.toISOString().split('T', 1)[0]}.csv`;
     anchor.click();
     URL.revokeObjectURL(url);
   });

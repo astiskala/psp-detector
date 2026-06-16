@@ -1,6 +1,6 @@
 /**
- * MV3 background service that owns shared extension state, tab-level detection
- * caches, and messaging between the popup and content scripts.
+MV3 background service that owns shared extension state, tab-level detection
+caches, and messaging between the popup and content scripts.
  */
 import {
   MessageAction,
@@ -276,7 +276,7 @@ class BackgroundService {
 
   private cloneTabPspCache(): Record<number, StoredTabPsp[]> {
     const cloned: Record<number, StoredTabPsp[]> = {};
-    for (const [tabId, entries] of this.tabPspCache.entries()) {
+    for (const [tabId, entries] of this.tabPspCache) {
       cloned[tabId] = [...entries];
     }
 
@@ -388,8 +388,8 @@ class BackgroundService {
   }
 
   /**
-   * Loads the shipped exempt-domain list, normalizes it, and mirrors it into
-   * storage for later reads.
+  Loads the shipped exempt-domain list, normalizes it, and mirrors it into
+  storage for later reads.
    */
   async loadExemptDomains(): Promise<void> {
     try {
@@ -462,7 +462,8 @@ class BackgroundService {
     }
 
     try {
-      const hostname = new URL(url).hostname.toLowerCase();
+      const parsed = new URL(url);
+      const hostname = parsed.hostname.toLowerCase();
       return exemptDomains.some(
         (domain) => hostname === domain || hostname.endsWith(`.${domain}`),
       );
@@ -472,7 +473,7 @@ class BackgroundService {
   }
 
   /**
-   * Filters browser-internal URLs that cannot host injected content scripts.
+  Filters browser-internal URLs that cannot host injected content scripts.
    */
   private isSpecialUrl(url: string): boolean {
     if (!url) {
@@ -607,8 +608,8 @@ class BackgroundService {
   }
 
   /**
-   * Serves the provider dataset to content scripts, preferring cached config
-   * and falling back to the bundled JSON file.
+  Serves the provider dataset to content scripts, preferring cached config
+  and falling back to the bundled JSON file.
    */
   async handleGetPspConfig(
     sendResponse: (response?: PSPConfigResponse | null) => void,
@@ -634,8 +635,7 @@ class BackgroundService {
 
       if (!response.ok) {
         throw new Error(
-          `Failed to fetch PSP config: ${response.status} ` +
-            `${response.statusText}`,
+          `Failed to fetch PSP config: ${response.status} ${response.statusText}`,
         );
       }
 
@@ -756,7 +756,7 @@ class BackgroundService {
   }
 
   /**
-   * Returns the cached provider dataset and refreshes the in-memory indexes.
+  Returns the cached provider dataset and refreshes the in-memory indexes.
    */
   private async getCachedPspConfig(): Promise<PSPConfig | null> {
     try {
@@ -804,8 +804,8 @@ class BackgroundService {
   }
 
   /**
-   * Records a content-script detection, updates per-tab state, and writes
-   * history if the signal is new or stronger than the existing one.
+  Records a content-script detection, updates per-tab state, and writes
+  history if the signal is new or stronger than the existing one.
    */
   async handleDetectPsp(
     data: PSPDetectionData,
@@ -1017,10 +1017,10 @@ class BackgroundService {
   }
 
   /**
-   * Keeps the merchant origin only when it refers to a different host than the
-   * detection page. Returns null when the origin is empty, malformed, or
-   * matches the detection domain (in which case the content script already ran
-   * on the merchant itself, so the field would add nothing).
+  Keeps the merchant origin only when it refers to a different host than the
+  detection page. Returns null when the origin is empty, malformed, or
+  matches the detection domain (in which case the content script already ran
+  on the merchant itself, so the field would add nothing).
    */
   private resolveMerchantOrigin(
     merchantOrigin: string | undefined,
@@ -1043,8 +1043,8 @@ class BackgroundService {
   }
 
   /**
-   * Handle get PSP request
-   * @private
+  Handle get PSP request
+  @private
    */
   async handleGetPsp(
     sender: chrome.runtime.MessageSender,
@@ -1088,9 +1088,9 @@ class BackgroundService {
   }
 
   /**
-   * Handle check tab state request - used to determine if background has
-   * state for current tab
-   * @private
+  Handle check tab state request - used to determine if background has
+  state for current tab
+  @private
    */
   async handleCheckTabState(
     sender: chrome.runtime.MessageSender,
@@ -1112,8 +1112,8 @@ class BackgroundService {
   }
 
   /**
-   * Handle tab activation
-   * @private
+  Handle tab activation
+  @private
    */
   async handleTabActivation(activeInfo: { tabId: number }): Promise<void> {
     const tabId = TypeConverters.toTabId(activeInfo.tabId);
@@ -1199,7 +1199,8 @@ class BackgroundService {
 
   private getDomainFromSender(sender: chrome.runtime.MessageSender): string {
     try {
-      return new URL(sender.tab?.url ?? '').hostname;
+      const parsed = new URL(sender.tab?.url ?? '');
+      return parsed.hostname;
     } catch {
       return sender.tab?.url ?? 'unknown';
     }
@@ -1220,8 +1221,8 @@ class BackgroundService {
   }
 
   /**
-   * Open onboarding instructions page after installation.
-   * @private
+  Open onboarding instructions page after installation.
+  @private
    */
   private async openOnboardingPage(): Promise<void> {
     try {
@@ -1234,8 +1235,8 @@ class BackgroundService {
   }
 
   /**
-   * Force a re-detection attempt on the active tab.
-   * @private
+  Force a re-detection attempt on the active tab.
+  @private
    */
   private async handleRedetectCurrentTab(
     sendResponse: (response?: { success: boolean; reason?: string }) => void,
@@ -1361,7 +1362,7 @@ class BackgroundService {
   private extractMatcherToken(matchString: string): string | null {
     const hostCandidate = matchString
       .replace(/^https?:\/\//u, '')
-      .split('/')[0]
+      .split('/', 1)[0]
       ?.replace(/^\*\./u, '')
       .replaceAll(':', '')
       .replaceAll('*', '')
@@ -1393,7 +1394,8 @@ class BackgroundService {
 
   private extractRequestTokens(requestUrl: string): string[] {
     try {
-      const host = new URL(requestUrl).hostname.toLowerCase();
+      const parsed = new URL(requestUrl);
+      const host = parsed.hostname.toLowerCase();
       const hostParts = host.split('.').filter((part) => part.length > 0);
       if (hostParts.length === 0) {
         return [];
@@ -1553,8 +1555,8 @@ class BackgroundService {
   }
 
   /**
-   * Handle tab updates
-   * @private
+  Handle tab updates
+  @private
    */
   async handleTabUpdate(
     tabId: number,
@@ -1586,8 +1588,8 @@ class BackgroundService {
   }
 
   /**
-   * Update extension icon
-   * @private
+  Update extension icon
+  @private
    */
   private setIconWithErrorHandling(
     path: chrome.action.TabIconDetails['path'],
@@ -1605,8 +1607,8 @@ class BackgroundService {
   }
 
   /**
-   * Update extension icon
-   * @private
+  Update extension icon
+  @private
    */
   private updateIconForStoredPsps(psps: StoredTabPsp[]): void {
     const detectedPsps = this.sortStoredTabPsps(
@@ -1622,8 +1624,8 @@ class BackgroundService {
   }
 
   /**
-   * Update extension icon
-   * @private
+  Update extension icon
+  @private
    */
   private updateIcon(psp: string, extraCount = 0): void {
     logger.debug(`Background: Attempting to update icon for PSP: ${psp}`);
@@ -1686,8 +1688,8 @@ class BackgroundService {
   }
 
   /**
-   * Show exempt domain icon with warning badge
-   * @private
+  Show exempt domain icon with warning badge
+  @private
    */
   showExemptDomainIcon(): void {
     // Set default icon
@@ -1705,8 +1707,8 @@ class BackgroundService {
   }
 
   /**
-   * Reset extension icon to default
-   * @private
+  Reset extension icon to default
+  @private
    */
   resetIcon(): void {
     this.setIconWithErrorHandling(
@@ -1722,8 +1724,8 @@ class BackgroundService {
   }
 
   /**
-   * Get PSP information from config - simplified for sync usage
-   * @private
+  Get PSP information from config - simplified for sync usage
+  @private
    */
   getPspInfo(psp: string): PSP | null {
     logger.debug('Getting PSP info for:', psp);
@@ -1760,8 +1762,8 @@ class BackgroundService {
   }
 
   /**
-   * Inject content script into tab
-   * @private
+  Inject content script into tab
+  @private
    */
   async injectContentScript(tabId: number): Promise<void> {
     // Check optional host permission before attempting injection.

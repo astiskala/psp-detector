@@ -76,6 +76,9 @@ const testTypeScriptRuleOverrides = {
   // setHTML() is not available in jsdom — tests use innerHTML for fixture setup
   'unicorn/prefer-dom-node-html-methods': 'off',
   'unicorn/no-unsafe-dom-html': 'off',
+  // TypeScript narrowing (e.g. `typeof query === 'string'`) satisfies safety but
+  // the rule doesn't follow narrowed union types — suppress in tests only
+  'unicorn/no-unsafe-property-key': 'off',
 };
 
 export default [
@@ -109,46 +112,35 @@ export default [
       'unicorn/comment-content': 'off',
       'unicorn/no-array-reduce': 'off',
       'unicorn/no-for-each': 'off',
-      'unicorn/no-for-loop': 'off',
       'unicorn/consistent-class-member-order': 'off',
       'unicorn/no-computed-property-existence-check': 'off',
-      'unicorn/no-error-property-assignment': 'off',
       'unicorn/consistent-destructuring': 'off',
       'unicorn/consistent-function-style': 'off',
-      'unicorn/consistent-json-file-read': 'off',
-      'unicorn/no-negated-array-predicate': 'off',
+      // no-asterisk-prefix-in-documentation-comments conflicts with jsdoc/check-alignment:
+      // one rule removes the ' * ' prefix, the other requires it
       'unicorn/no-asterisk-prefix-in-documentation-comments': 'off',
-      'unicorn/no-unsafe-property-key': 'off',
+      // no-negated-array-predicate requires Array.excludes() which is not yet standard
+      'unicorn/no-negated-array-predicate': 'off',
+      // no-global-object-property-assignment: tests must assign globalThis.fetch / .chrome / .window
       'unicorn/no-global-object-property-assignment': 'off',
+      // no-keyword-prefix: flags 'className' (standard DOM API name) and similar legitimate identifiers
+      'unicorn/no-keyword-prefix': 'off',
       'unicorn/explicit-length-check': 'off',
       'unicorn/import-style': 'off',
+      // max-nested-calls / try-complexity overlap with SonarQube cognitive-complexity
       'unicorn/max-nested-calls': 'off',
-      'unicorn/numeric-separators-style': 'off',
-      'unicorn/no-incorrect-query-selector': 'off',
-      'unicorn/no-keyword-prefix': 'off',
-      'unicorn/prefer-global-number-constants': 'off',
+      'unicorn/try-complexity': 'off',
       'unicorn/no-null': 'off',
-      'unicorn/no-unreadable-new-expression': 'off',
-      'unicorn/no-useless-template-literals': 'off',
       'unicorn/prefer-abbreviations': 'off',
-      'unicorn/prefer-add-event-listener': 'off',
-      'unicorn/prefer-direct-iteration': 'off',
       'unicorn/prefer-dispose': 'off',
       'unicorn/prefer-path2d': 'off',
-      'unicorn/prefer-https': 'off',
+      // prefer-module: zero TS violations; kept off globally to avoid breaking .cjs tools
       'unicorn/prefer-module': 'off',
+      // prefer-number-coercion: Number() is more readable than unary + in a typed codebase
       'unicorn/prefer-number-coercion': 'off',
-      'unicorn/prefer-object-define-properties': 'off',
       'unicorn/prefer-await': 'off',
-      'unicorn/prefer-url-href': 'off',
-      'unicorn/switch-case-break-position': 'off',
-      'unicorn/prefer-scoped-selector': 'off',
-      'unicorn/no-useless-else': 'off',
-      'unicorn/prefer-split-limit': 'off',
-      'unicorn/prefer-spread': 'off',
       'unicorn/prefer-temporal': 'off',
       'unicorn/prefer-type-literal-last': 'off',
-      'unicorn/try-complexity': 'off',
       // MV3 service worker and content script restriction (no top-level await)
       'unicorn/prefer-top-level-await': 'off',
       // catch-error-name conflicts with existing convention (error is fine)

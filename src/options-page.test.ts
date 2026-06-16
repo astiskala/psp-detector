@@ -102,7 +102,8 @@ function createProviderConfig(): PSPConfig {
 }
 
 function createHistoryEntries(): HistoryEntry[] {
-  const timestamp = new Date('2026-02-22T18:00:00Z').getTime();
+  const parsedDate = new Date('2026-02-22T18:00:00Z');
+  const timestamp = parsedDate.getTime();
   return [
     {
       id: 'entry-1',
@@ -215,16 +216,17 @@ function setupSuccessMocks(): OptionsPageSuccessMocks {
 
   const createObjectURL = jest.fn(() => 'blob:test-download');
   const revokeObjectURL = jest.fn();
-  Object.defineProperty(URL, 'createObjectURL', {
-    value: createObjectURL,
-    configurable: true,
-    writable: true,
-  });
-
-  Object.defineProperty(URL, 'revokeObjectURL', {
-    value: revokeObjectURL,
-    configurable: true,
-    writable: true,
+  Object.defineProperties(URL, {
+    createObjectURL: {
+      value: createObjectURL,
+      configurable: true,
+      writable: true,
+    },
+    revokeObjectURL: {
+      value: revokeObjectURL,
+      configurable: true,
+      writable: true,
+    },
   });
 
   const anchorClickSpy = jest
@@ -279,7 +281,7 @@ describe('options page wiring', () => {
 
     const historyBody =
       getRequiredElementById<HTMLTableSectionElement>('historyBody');
-    expect(historyBody.querySelectorAll('tr').length).toBe(3);
+    expect(historyBody.querySelectorAll(':scope tr').length).toBe(3);
 
     const firstDomainIcon =
       getRequiredElement<HTMLImageElement>('.domain-icon');
@@ -295,7 +297,7 @@ describe('options page wiring', () => {
     search.value = 'does-not-exist';
     search.dispatchEvent(new Event('input'));
     await flushAsync(160);
-    expect(historyBody.querySelectorAll('tr').length).toBe(0);
+    expect(historyBody.querySelectorAll(':scope tr').length).toBe(0);
 
     const emptyState = getRequiredElementById<HTMLElement>('emptyState');
     expect(emptyState.hidden).toBe(false);
@@ -307,7 +309,7 @@ describe('options page wiring', () => {
     pspFilter.value = 'Stripe';
     pspFilter.dispatchEvent(new Event('change'));
     await flushAsync();
-    expect(historyBody.querySelectorAll('tr').length).toBe(1);
+    expect(historyBody.querySelectorAll(':scope tr').length).toBe(1);
   });
 
   it('exports history and applies clear confirmation behavior', async () => {
@@ -339,7 +341,7 @@ describe('options page wiring', () => {
     getRequiredElementById<HTMLButtonElement>('clearBtn').click();
     await flushAsync();
     expect(clearHistoryMock).toHaveBeenCalledTimes(1);
-    expect(historyBody.querySelectorAll('tr').length).toBe(0);
+    expect(historyBody.querySelectorAll(':scope tr').length).toBe(0);
 
     confirmSpy.mockReturnValueOnce(true);
     clearHistoryMock.mockRejectedValueOnce(new Error('Clear failed'));

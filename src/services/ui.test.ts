@@ -128,13 +128,13 @@ describe('UIService', () => {
     );
 
     expect(elements['notice']?.style.display).toBe('none');
-    expect(elements['url']?.querySelector('a')?.textContent).toBe(
+    expect(elements['url']?.querySelector(':scope a')?.textContent).toBe(
       'Suggest Improvement',
     );
 
-    expect(elements['url']?.querySelector('a')?.href).toBe(
-      'mailto:psp-detector@adamstiskala.com',
-    );
+    expect(
+      elements['url']?.querySelector<HTMLAnchorElement>(':scope a')?.href,
+    ).toBe('mailto:psp-detector@adamstiskala.com');
 
     expect((elements['image'] as HTMLImageElement)?.alt).toBe(
       'PSP detection disabled logo',
@@ -175,7 +175,7 @@ describe('UIService', () => {
 
     expect(elements['name']?.textContent).toBe('1 PSP detected');
     expect(document.querySelectorAll('.psp-card')).toHaveLength(1);
-    expect(document.querySelectorAll('.evidence-label')[0]?.textContent).toBe(
+    expect(document.querySelector('.evidence-label')?.textContent).toBe(
       'Detection Source:',
     );
 

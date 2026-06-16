@@ -208,8 +208,7 @@ describe('utils', () => {
         return new Promise((_resolve, reject) => {
           const signal = init?.signal;
           signal?.addEventListener('abort', () => {
-            const abortError = new Error('Aborted');
-            abortError.name = 'AbortError';
+            const abortError = new DOMException('Aborted', 'AbortError');
             reject(abortError);
           });
         });

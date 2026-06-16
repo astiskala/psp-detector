@@ -3,8 +3,8 @@ import type { PSP, PSPConfig } from '../types/psp';
 const ALLOWED_URL_PROTOCOLS = new Set(['http:', 'https:', 'mailto:']);
 
 /**
- * Normalizes a user-facing URL for DOM usage and blocks protocols that would
- * be unsafe in popup links.
+Normalizes a user-facing URL for DOM usage and blocks protocols that would
+be unsafe in popup links.
  */
 export function createSafeUrl(url: string): string {
   try {
@@ -15,7 +15,7 @@ export function createSafeUrl(url: string): string {
       return '#';
     }
 
-    return parsed.toString();
+    return parsed.href;
   } catch (error) {
     logger.error('Invalid URL:', error);
     return '#';
@@ -23,8 +23,8 @@ export function createSafeUrl(url: string): string {
 }
 
 /**
- * Compiles a case-insensitive regex and converts invalid patterns into a
- * logged `null` result so bad data never breaks detection startup.
+Compiles a case-insensitive regex and converts invalid patterns into a
+logged `null` result so bad data never breaks detection startup.
  */
 export function safeCompileRegex(pattern: string): RegExp | null {
   try {
@@ -36,9 +36,9 @@ export function safeCompileRegex(pattern: string): RegExp | null {
 }
 
 /**
- * Normalize, lowercase, and deduplicate a string array while preserving the
- * first occurrence order.
- * @param values - String values to normalize.
+Normalize, lowercase, and deduplicate a string array while preserving the
+first occurrence order.
+@param values - String values to normalize.
  */
 export function normalizeStringArray(values: string[]): string[] {
   const seen = new Set<string>();
@@ -55,8 +55,8 @@ export function normalizeStringArray(values: string[]): string[] {
 }
 
 /**
- * Wraps `fetch` with a local timeout while still honoring an optional caller
- * abort signal.
+Wraps `fetch` with a local timeout while still honoring an optional caller
+abort signal.
  */
 export async function fetchWithTimeout(
   url: string,
@@ -134,8 +134,8 @@ export const logger = {
 };
 
 /**
- * Debounces noisy mutation-driven callbacks while optionally allowing a
- * leading-edge invocation.
+Debounces noisy mutation-driven callbacks while optionally allowing a
+leading-edge invocation.
  */
 export function debouncedMutation<
   T extends (...arguments_: unknown[]) => unknown,
@@ -161,8 +161,8 @@ export function debouncedMutation<
 }
 
 /**
- * Flattens the configured PSP, orchestrator, and TSP groups into a single
- * precedence-ordered provider list.
+Flattens the configured PSP, orchestrator, and TSP groups into a single
+precedence-ordered provider list.
  */
 export function getAllProviders(pspConfig: PSPConfig): PSP[] {
   const psps = pspConfig.psps ?? [];
@@ -172,8 +172,8 @@ export function getAllProviders(pspConfig: PSPConfig): PSP[] {
 }
 
 /**
- * Times an async operation using the shared logger so slow extension flows can
- * be profiled in debug mode without affecting production logs.
+Times an async operation using the shared logger so slow extension flows can
+be profiled in debug mode without affecting production logs.
  */
 export async function measureAsync<T>(
   function_: () => Promise<T>,
@@ -189,8 +189,8 @@ export async function measureAsync<T>(
 
 export const errorUtilities = {
   /**
-   * Executes an async operation and returns a caller-provided fallback after
-   * logging the failure context.
+  Executes an async operation and returns a caller-provided fallback after
+  logging the failure context.
    */
   safeExecuteAsync: async <T>(
     function_: () => Promise<T>,
@@ -206,8 +206,8 @@ export const errorUtilities = {
   },
 
   /**
-   * Wraps an async operation with bounded retries for transient extension or
-   * network failures.
+  Wraps an async operation with bounded retries for transient extension or
+  network failures.
    */
   withRetry: <T>(
     function_: () => Promise<T>,

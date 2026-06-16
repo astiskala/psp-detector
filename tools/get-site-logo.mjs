@@ -1,28 +1,28 @@
 #!/usr/bin/env node
 /**
- * get-site-logo.mjs
- *
- * Usage:
- *   node get-site-logo.mjs example.com ./output.png
- *   node get-site-logo.mjs --bulk [psps.json] [--start <name|index>]
- *
- * Requires:
- *   npm i sharp cheerio
- *
- * - Targets square icons >= 128x128 from: <link rel="icon">, <link
- *   rel="shortcut icon">, apple-touch icons, PWA manifest icons, common icon
- *   paths (android-chrome-512x512.png, etc.), and OG image metadata.
- * - Also tries third-party favicon APIs: Google and DuckDuckGo.
- * - No heuristic scoring or scanning of all <img> elements/social links—only
- *   metadata and common paths.
- * - Requires icons to be square (or within 5% aspect tolerance) and at least
- *   128x128. No bitmap upscaling.
- * - Outputs a lossless PNG (compressionLevel=9) at exactly 128x128 (downscale
- *   only; never enlarge bitmaps).
- * - Node 18+ recommended (for global fetch).
- * - Bulk mode processes all PSPs and Orchestrators from psps.json and updates
- *   images in assets/images/
- */
+get-site-logo.mjs
+
+Usage:
+  node get-site-logo.mjs example.com ./output.png
+  node get-site-logo.mjs --bulk [psps.json] [--start <name|index>]
+
+Requires:
+  pnpm add sharp cheerio
+
+- Targets square icons >= 128x128 from: <link rel="icon">, <link
+  rel="shortcut icon">, apple-touch icons, PWA manifest icons, common icon
+  paths (android-chrome-512x512.png, etc.), and OG image metadata.
+- Also tries third-party favicon APIs: Google and DuckDuckGo.
+- No heuristic scoring or scanning of all <img> elements/social links—only
+  metadata and common paths.
+- Requires icons to be square (or within 5% aspect tolerance) and at least
+  128x128. No bitmap upscaling.
+- Outputs a lossless PNG (compressionLevel=9) at exactly 128x128 (downscale
+  only; never enlarge bitmaps).
+- Node 18+ recommended (for global fetch).
+- Bulk mode processes all PSPs and Orchestrators from psps.json and updates
+  images in assets/images/
+*/
 
 import { readFile } from 'node:fs/promises';
 import { URL } from 'node:url';
@@ -39,7 +39,7 @@ sharp.concurrency(1);
 
 const UA =
   'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118 Safari/537.36';
-const TIMEOUT_MS = 12000;
+const TIMEOUT_MS = 12_000;
 const MEASURE_CONCURRENCY = 1; // extra-safe for sharp/libvips stability
 const MIN_SIZE = 128;
 
@@ -92,7 +92,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 function toAbsolute(href, base) {
   try {
-    return new URL(href, base).toString();
+    const parsed = new URL(href, base);
+    return parsed.href;
   } catch {
     return null;
   }
@@ -182,7 +183,8 @@ function parseSizes(sizesAttribute) {
 }
 
 function uniq(array) {
-  return new Map(array.map((a) => [a.url, a])).values().toArray();
+  const map = new Map(array.map((a) => [a.url, a]));
+  return map.values().toArray();
 }
 
 function isSquareish(w, h, tolerance = 0.05) {
@@ -246,13 +248,14 @@ function candidateMeetsMinByDeclaration(cand) {
 function extractDomain(input) {
   try {
     const url = input.startsWith('http') ? input : `https://${input}`;
-    const host = new URL(url).hostname;
+    const parsedUrl = new URL(url);
+    const host = parsedUrl.hostname;
     return host.replace(/^www\./, '');
   } catch {
     return (input || '')
       .replace(/^https?:\/\//, '')
       .replace(/^www\./, '')
-      .split('/')[0];
+      .split('/', 1)[0];
   }
 }
 

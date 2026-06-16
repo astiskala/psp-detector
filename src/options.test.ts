@@ -11,11 +11,12 @@ import {
 } from './options-core';
 import type { HistoryEntry } from './types/history';
 
+const entryDate = new Date('2026-02-22T10:30:00Z');
 const entry: HistoryEntry = {
   id: 'tab1_1000',
   domain: 'example.com',
   url: 'https://example.com/checkout',
-  timestamp: new Date('2026-02-22T10:30:00Z').getTime(),
+  timestamp: entryDate.getTime(),
   psps: [
     {
       name: 'Stripe',
@@ -77,8 +78,8 @@ describe('buildCSV', () => {
 
   it('leaves merchant origin blank when absent', () => {
     const csv = buildCSV([entry]);
-    const headers = csv.split('\r\n')[0]!.split(',');
-    const row = csv.split('\r\n')[1]!.split(',');
+    const headers = csv.split('\r\n', 1)[0]!.split(',');
+    const row = csv.split('\r\n', 2)[1]!.split(',');
     const merchantIndex = headers.indexOf('Merchant Origin');
     expect(merchantIndex).toBeGreaterThanOrEqual(0);
     expect(row[merchantIndex]).toBe('');

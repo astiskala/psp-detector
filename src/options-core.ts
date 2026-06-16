@@ -14,7 +14,8 @@ export interface DistributionSlice {
 
 /** Formats stored timestamps for the options-page history table. */
 export function formatDate(timestamp: number): string {
-  return new Date(timestamp).toLocaleString(undefined, {
+  const date = new Date(timestamp);
+  return date.toLocaleString(undefined, {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
@@ -42,8 +43,9 @@ export function buildCSV(entries: HistoryEntry[]): string {
     const types = entry.psps.map((p) => p.type ?? 'PSP').join('; ');
     const sources = entry.psps.map((p) => p.sourceType).join('; ');
     const values = entry.psps.map((p) => p.value).join('; ');
+    const entryDate = new Date(entry.timestamp);
     return [
-      escapeCSV(new Date(entry.timestamp).toISOString()),
+      escapeCSV(entryDate.toISOString()),
       escapeCSV(entry.domain),
       escapeCSV(entry.merchantOrigin ?? ''),
       escapeCSV(entry.url),
@@ -58,8 +60,8 @@ export function buildCSV(entries: HistoryEntry[]): string {
 }
 
 /**
- * Applies the options-page search query and exact PSP filter against domains,
- * provider names, source types, and detection signals.
+Applies the options-page search query and exact PSP filter against domains,
+provider names, source types, and detection signals.
  */
 export function filterEntries(
   entries: HistoryEntry[],
@@ -91,7 +93,8 @@ export function filterEntries(
 
 /** Aggregates the summary metrics shown above the history table. */
 export function getHistoryStats(history: HistoryEntry[]): HistoryStats {
-  const uniqueDomains = new Set(history.map((entry) => entry.domain)).size;
+  const domainSet = new Set(history.map((entry) => entry.domain));
+  const uniqueDomains = domainSet.size;
   const pspCounts = new Map<string, number>();
   let topPsp: string | null = null;
   let topCount = 0;

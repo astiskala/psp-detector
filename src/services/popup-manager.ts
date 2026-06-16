@@ -1,6 +1,6 @@
-/**
- * Coordinates popup startup: permission checks, cached config loading, and UI
- * rendering from background-service state.
+/*
+Coordinates popup startup: permission checks, cached config loading, and UI
+rendering from background-service state.
  */
 import { MessageAction, PSP_DETECTION_EXEMPT } from '../types';
 import type { PSPConfig, PSPResponse } from '../types';
@@ -13,9 +13,7 @@ import {
 } from '../lib/utilities';
 import { STORAGE_KEYS } from '../lib/storage-keys';
 
-/**
- *
- */
+/** Manages popup lifecycle: permission checks, config loading, and UI rendering. */
 export class PopupManager {
   private readonly ui: UIService;
   private isInitialized = false;
@@ -25,9 +23,9 @@ export class PopupManager {
     this.ui = new UIService();
   }
 
-  /**
-   * Checks the optional host and `webRequest` permissions that unlock fuller
-   * detection coverage.
+  /*
+  Checks the optional host and `webRequest` permissions that unlock fuller
+  detection coverage.
    */
   private async checkDetectionPermissions(): Promise<{
     hasHostPermission: boolean;
@@ -103,9 +101,9 @@ export class PopupManager {
       ?.style.setProperty('display', display);
   }
 
-  /**
-   * Boots the popup, rendering exempt, empty, or detected states from the
-   * background service.
+  /*
+  Boots the popup, rendering exempt, empty, or detected states from the
+  background service.
    */
   public async initialize(): Promise<void> {
     if (this.isInitialized) {
@@ -152,8 +150,8 @@ export class PopupManager {
     }
   }
 
-  /**
-   * Retries transient background failures before falling back to an empty list.
+  /*
+  Retries transient background failures before falling back to an empty list.
    */
   private async getDetectedPSPsWithRetry(): Promise<PSPResponse['psps']> {
     const retryFunction = errorUtilities.withRetry(
@@ -179,8 +177,8 @@ export class PopupManager {
     }
   }
 
-  /**
-   * Reads the current tab's detected-provider list from the background page.
+  /*
+  Reads the current tab's detected-provider list from the background page.
    */
   private async getDetectedPSPs(): Promise<PSPResponse['psps']> {
     const response = await this.sendMessage<unknown>({
@@ -219,8 +217,8 @@ export class PopupManager {
     return config;
   }
 
-  /**
-   * Fetches and validates the bundled provider dataset from extension assets.
+  /*
+  Fetches and validates the bundled provider dataset from extension assets.
    */
   private async getPSPConfig(): Promise<PSPConfig> {
     try {
@@ -231,8 +229,7 @@ export class PopupManager {
 
       if (!response.ok) {
         throw new Error(
-          `Failed to fetch PSP config: ${response.status} ` +
-            `${response.statusText}`,
+          `Failed to fetch PSP config: ${response.status} ${response.statusText}`,
         );
       }
 
@@ -292,8 +289,8 @@ export class PopupManager {
     }
   }
 
-  /**
-   * Wraps `chrome.runtime.sendMessage` in a typed promise for popup callers.
+  /*
+  Wraps `chrome.runtime.sendMessage` in a typed promise for popup callers.
    */
   private sendMessage<T>(message: { action: MessageAction }): Promise<T> {
     return new Promise((resolve, reject) => {

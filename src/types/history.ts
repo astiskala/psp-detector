@@ -20,11 +20,11 @@ export interface HistoryEntry {
   readonly timestamp: number;
   readonly psps: readonly HistoryPSPMatch[];
   /**
-   * Origin (e.g. `https://merchant.com`) of the page that initiated the
-   * navigation to this detection. Populated from `document.referrer` when the
-   * content script runs on a redirect target (hosted checkout page) so the UI
-   * can show which merchant pointed the user at this PSP. Absent when no
-   * referrer is available or when it matches the detection page's domain.
+  Origin (e.g. `https://merchant.com`) of the page that initiated the
+  navigation to this detection. Populated from `document.referrer` when the
+  content script runs on a redirect target (hosted checkout page) so the UI
+  can show which merchant pointed the user at this PSP. Absent when no
+  referrer is available or when it matches the detection page's domain.
    */
   readonly merchantOrigin?: string;
 }

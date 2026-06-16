@@ -143,20 +143,20 @@ function mergeHistoryPsps(
   return hasChanges ? mergedPsps : null;
 }
 
-/**
- * Determine how a new entry relates to existing history.
- *
- * Invariant: `history` MUST be sorted newest-first. The invariant is
- * maintained by the caller (`writeHistoryEntry`), which always prepends new
- * entries rather than appending them.
- *
- * Returns:
- *   { kind: 'merge', index }  — same URL within HISTORY_ENTRY_MERGE_WINDOW_MS
- *   { kind: 'debounce' }      — same domain + PSP + source/signal and either
- *                               within HISTORY_ENTRY_DEBOUNCE_MS of the first
- *                               detection, or no other detection happened
- *                               since that prior detection
- *   { kind: 'none' }          — outside all windows, write a new entry
+/*
+Determine how a new entry relates to existing history.
+
+Invariant: `history` MUST be sorted newest-first. The invariant is
+maintained by the caller (`writeHistoryEntry`), which always prepends new
+entries rather than appending them.
+
+Returns:
+  { kind: 'merge', index }  — same URL within HISTORY_ENTRY_MERGE_WINDOW_MS
+  { kind: 'debounce' }      — same domain + PSP + source/signal and either
+                              within HISTORY_ENTRY_DEBOUNCE_MS of the first
+                              detection, or no other detection happened
+                              since that prior detection
+  { kind: 'none' }          — outside all windows, write a new entry
  */
 function findEntryStatus(
   entry: HistoryEntry,
@@ -224,10 +224,7 @@ export async function readHistory(): Promise<HistoryEntry[]> {
 // read-modify-write the same starting history and clobber each other.
 let historyWriteChain: Promise<void> = Promise.resolve();
 
-/**
- * Writes a detection to history while preserving newest-first ordering,
- * merging near-duplicate page events, and debouncing repeated scans.
- */
+/** Writes a detection to history, merging near-duplicate page events and debouncing repeated scans. Preserves newest-first ordering. */
 export async function writeHistoryEntry(entry: HistoryEntry): Promise<void> {
   const next = historyWriteChain.then(() => writeHistoryEntryUnsafe(entry));
   historyWriteChain = next.catch(() => {
@@ -323,9 +320,7 @@ async function evictAndWrite(normalizedEntry: HistoryEntry): Promise<void> {
   }
 }
 
-/**
- * Remove all persisted history entries.
- */
+/** Remove all persisted history entries. */
 export async function clearHistory(): Promise<void> {
   await chrome.storage.local.set({ [STORAGE_KEYS.PSP_HISTORY]: [] });
 }

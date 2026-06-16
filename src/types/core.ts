@@ -2,8 +2,8 @@
 export const PSP_DETECTION_EXEMPT = '__PSP_DETECTION_EXEMPT__';
 
 /**
- * Message names exchanged between the popup, background service, and content
- * scripts.
+Message names exchanged between the popup, background service, and content
+scripts.
  */
 export enum MessageAction {
   GET_PSP_CONFIG = 'getPspConfig',

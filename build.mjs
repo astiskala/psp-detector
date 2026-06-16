@@ -50,8 +50,8 @@ const sharedConfig = {
 };
 
 /**
- * Rebuilds the distributable PSP logo set from the source 128px PNG assets.
- */
+Rebuilds the distributable PSP logo set from the source 128px PNG assets.
+*/
 async function generatePspImages() {
   const sourceDirectory = path.join(__dirname, 'assets', 'images');
   const distributionDirectory = path.join(__dirname, 'dist', 'images');
@@ -94,9 +94,9 @@ async function generatePspImages() {
 }
 
 /**
- * Produces a fresh `dist/` bundle, updates the generated version number, and
- * regenerates extension assets.
- */
+Produces a fresh `dist/` bundle, updates the generated version number, and
+regenerates extension assets.
+*/
 async function buildFiles() {
   try {
     // 1) compute version

@@ -1,6 +1,6 @@
 /**
- * Content-script runtime that gathers page signals, runs provider detection,
- * and reports results back to the background service.
+Content-script runtime that gathers page signals, runs provider detection,
+and reports results back to the background service.
  */
 import { PSPDetectorService } from './services/psp-detector';
 import { DOMObserverService } from './services/dom-observer';
@@ -88,8 +88,8 @@ class ContentScript {
   }
 
   /**
-   * Loads detector inputs, starts DOM observation, and schedules the initial
-   * scan without blocking page startup.
+  Loads detector inputs, starts DOM observation, and schedules the initial
+  scan without blocking page startup.
    */
   public async initialize(): Promise<void> {
     logger.info('Initializing content script');
@@ -175,8 +175,8 @@ class ContentScript {
   }
 
   /**
-   * Collects the current page evidence set and runs a detection pass unless
-   * cooldown or prior matches make it unnecessary.
+  Collects the current page evidence set and runs a detection pass unless
+  cooldown or prior matches make it unnecessary.
    */
   private async detectPSP(mutations?: MutationRecord[]): Promise<void> {
     const now = Date.now();
@@ -252,8 +252,8 @@ class ContentScript {
   }
 
   /**
-   * Extracts only the DOM signals that can realistically identify a PSP
-   * instead of rescanning the full page HTML on every mutation.
+  Extracts only the DOM signals that can realistically identify a PSP
+  instead of rescanning the full page HTML on every mutation.
    */
   private collectScanSources(mutations?: MutationRecord[]): ScanSources {
     const scriptSrcs: string[] = [];
@@ -320,7 +320,9 @@ class ContentScript {
     const scanElementTree = (root: Element): void => {
       addElementSources(root);
       root
-        .querySelectorAll('script[src], iframe[src], form[action], link[href]')
+        .querySelectorAll(
+          ':scope script[src], :scope iframe[src], :scope form[action], :scope link[href]',
+        )
         .forEach(addElementSources);
     };
 
@@ -446,11 +448,11 @@ class ContentScript {
   }
 
   /**
-   * Returns the origin of `document.referrer` when it points at a different
-   * host than the current page. Used to record the merchant that redirected
-   * the user to a hosted-checkout PSP page; returns null when the referrer is
-   * empty, malformed, or same-origin (in which case the detection page already
-   * IS the merchant).
+  Returns the origin of `document.referrer` when it points at a different
+  host than the current page. Used to record the merchant that redirected
+  the user to a hosted-checkout PSP page; returns null when the referrer is
+  empty, malformed, or same-origin (in which case the detection page already
+  IS the merchant).
    */
   private getMerchantOriginFromReferrer(): string | null {
     const referrer = document.referrer;
@@ -526,8 +528,8 @@ class ContentScript {
   }
 
   /**
-   * Sends a runtime message with retries for MV3 service-worker restarts, which
-   * are common during idle teardown.
+  Sends a runtime message with retries for MV3 service-worker restarts, which
+  are common during idle teardown.
    */
   private async sendMessage<T>(
     message: ChromeMessage,
@@ -589,7 +591,7 @@ class ContentScript {
   }
 
   /**
-   * Releases observer state when the page unloads or the script is replaced.
+  Releases observer state when the page unloads or the script is replaced.
    */
   public cleanup(): void {
     this.domObserver.cleanup();
@@ -597,8 +599,8 @@ class ContentScript {
   }
 
   /**
-   * Reads same-origin iframe sources in a bounded, deduplicated way so nested
-   * checkout widgets can contribute signals without exploding scan cost.
+  Reads same-origin iframe sources in a bounded, deduplicated way so nested
+  checkout widgets can contribute signals without exploding scan cost.
    */
   private async getIframeContent(
     iframeCandidates: HTMLIFrameElement[],
@@ -703,7 +705,7 @@ class ContentScript {
   /** Pulls nested script, iframe, and form URLs out of an accessible iframe. */
   private extractNestedSources(document_: Document, content: string[]): void {
     // Get nested iframe sources
-    document_.querySelectorAll('iframe[src]').forEach((nestedIframe) => {
+    document_.querySelectorAll(':scope iframe[src]').forEach((nestedIframe) => {
       const nestedSource = (nestedIframe as HTMLIFrameElement).src;
       if (nestedSource && !this.processedIframes.has(nestedSource)) {
         content.push(nestedSource);
@@ -712,7 +714,7 @@ class ContentScript {
     });
 
     // Get script sources from iframe
-    document_.querySelectorAll('script[src]').forEach((script) => {
+    document_.querySelectorAll(':scope script[src]').forEach((script) => {
       const scriptSource = (script as HTMLScriptElement).src;
       if (scriptSource) {
         content.push(scriptSource);
@@ -720,7 +722,7 @@ class ContentScript {
     });
 
     // Get form actions from iframe
-    document_.querySelectorAll('form[action]').forEach((form) => {
+    document_.querySelectorAll(':scope form[action]').forEach((form) => {
       const action = (form as HTMLFormElement).action;
       if (action) {
         content.push(action);
@@ -729,11 +731,12 @@ class ContentScript {
   }
 
   /**
-   * Restricts iframe scraping to same-origin documents to avoid access errors.
+  Restricts iframe scraping to same-origin documents to avoid access errors.
    */
   private canAccessIframe(source: string): boolean {
     try {
-      const sourceOrigin = new URL(source, document.baseURI).origin;
+      const parsed = new URL(source, document.baseURI);
+      const sourceOrigin = parsed.origin;
       return sourceOrigin === location.origin;
     } catch {
       return false;

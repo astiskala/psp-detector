@@ -71,6 +71,7 @@ export const TEST_PSP_CONFIGS = {
 export const TEST_URLS = {
   VALID: {
     HTTPS: 'https://example.com',
+    // eslint-disable-next-line unicorn/prefer-https -- intentional HTTP URL for negative tests
     HTTP: 'http://example.com',
     WITH_PATH: 'https://example.com/checkout',
     WITH_QUERY: 'https://example.com?param=value',

@@ -4,7 +4,7 @@ import { createSafeUrl, logger } from '../lib/utilities';
 type UIState = 'error' | 'no-psp' | 'disabled' | 'success';
 
 /**
- * Owns popup DOM updates so detection and rendering concerns stay separated.
+Owns popup DOM updates so detection and rendering concerns stay separated.
  */
 export class UIService {
   private elements: Record<string, HTMLElement>;
@@ -15,8 +15,8 @@ export class UIService {
   }
 
   /**
-   * Resolves the popup elements once and fails fast when required markup is
-   * missing.
+  Resolves the popup elements once and fails fast when required markup is
+  missing.
    */
   private initializeDOMElements(): void {
     const elementIds = ['name', 'description', 'notice', 'url', 'image'];
@@ -117,7 +117,7 @@ export class UIService {
   }
 
   /**
-   * Renders the exempt-domain state when detection is intentionally disabled.
+  Renders the exempt-domain state when detection is intentionally disabled.
    */
   public showPSPDetectionDisabled(): void {
     this.transitionToContent();
@@ -198,8 +198,8 @@ export class UIService {
   }
 
   /**
-   * Swaps the provider image while falling back to the bundled default art if
-   * a logo asset is missing.
+  Swaps the provider image while falling back to the bundled default art if
+  a logo asset is missing.
    */
   private updateImage(image: string, alt: string): void {
     const imgElement = this.elements['image'];
@@ -207,14 +207,18 @@ export class UIService {
       const fallbackImageSource = chrome.runtime.getURL(
         'images/default_128.png',
       );
-      imgElement.onerror = (): void => {
-        if (imgElement.src !== fallbackImageSource) {
-          imgElement.src = fallbackImageSource;
-          return;
-        }
+      imgElement.addEventListener(
+        'error',
+        (): void => {
+          if (imgElement.src !== fallbackImageSource) {
+            imgElement.src = fallbackImageSource;
+            return;
+          }
 
-        this.showStatusIcon('🏦');
-      };
+          this.showStatusIcon('🏦');
+        },
+        { once: true },
+      );
 
       imgElement.src = chrome.runtime.getURL(`images/${image}_128.png`);
       imgElement.alt = `${alt} logo`;
@@ -324,14 +328,18 @@ export class UIService {
       const fallbackImageSource = chrome.runtime.getURL(
         'images/default_48.png',
       );
-      img.onerror = (): void => {
-        if (img.src !== fallbackImageSource) {
-          img.src = fallbackImageSource;
-          return;
-        }
+      img.addEventListener(
+        'error',
+        (): void => {
+          if (img.src !== fallbackImageSource) {
+            img.src = fallbackImageSource;
+            return;
+          }
 
-        img.remove();
-      };
+          img.remove();
+        },
+        { once: true },
+      );
 
       img.src = chrome.runtime.getURL(`images/${config.image}_48.png`);
       img.alt = stored.psp;

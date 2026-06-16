@@ -8,24 +8,24 @@ import {
 } from '../lib/utilities';
 
 /**
- * Runs the two-phase provider scan against the current page URL and collected
- * payment-related signals. Provider ordering is preserved so `psps.json`
- * precedence stays deterministic.
+Runs the two-phase provider scan against the current page URL and collected
+payment-related signals. Provider ordering is preserved so `psps.json`
+precedence stays deterministic.
  */
 export class PSPDetectorService {
   private pspConfig: PSPConfig | null = null;
   private exemptDomains: string[] = [];
 
   /**
-   * Flattened provider list cached once so every detection uses the same order.
+  Flattened provider list cached once so every detection uses the same order.
    */
   private providerCache: ReturnType<typeof getAllProviders> | null = null;
 
   private readonly maxContentSize = 1024 * 1024; // 1MB limit
 
   /**
-   * Loads provider configuration and precompiles regex matchers ahead of the
-   * first detection pass.
+  Loads provider configuration and precompiles regex matchers ahead of the
+  first detection pass.
    */
   public initialize(config: PSPConfig): void {
     this.pspConfig = config;
@@ -36,17 +36,17 @@ export class PSPDetectorService {
   }
 
   /**
-   * Replaces the exempt-domain list after normalizing case, whitespace, and
-   * duplicates so host comparisons stay consistent.
+  Replaces the exempt-domain list after normalizing case, whitespace, and
+  duplicates so host comparisons stay consistent.
    */
   public setExemptDomains(domains: string[]): void {
     this.exemptDomains = normalizeStringArray(domains);
   }
 
   /**
-   * Returns a structured detection result for the current page. Normal
-   * detection failures are reported via `PSPDetectionResult` rather than
-   * throwing.
+  Returns a structured detection result for the current page. Normal
+  detection failures are reported via `PSPDetectionResult` rather than
+  throwing.
    */
   public detectPSP(url: string, content: string): PSPDetectionResult {
     const initializedError = this.ensureInitialized();
@@ -162,7 +162,8 @@ export class PSPDetectorService {
     if (this.exemptDomains.length === 0) return null;
 
     try {
-      const host = new URL(urlToCheck).hostname.toLowerCase();
+      const parsedUrl = new URL(urlToCheck);
+      const host = parsedUrl.hostname.toLowerCase();
       if (this.isHostExempt(host)) {
         logger.debug('URL is exempt from PSP detection:', urlToCheck);
         return PSPDetectionResult.exempt(
@@ -270,8 +271,8 @@ export class PSPDetectorService {
   }
 
   /**
-   * Compiles provider regexes once during initialization so runtime detection
-   * only executes prevalidated patterns.
+  Compiles provider regexes once during initialization so runtime detection
+  only executes prevalidated patterns.
    */
   private precompileRegexPatterns(): void {
     if (!this.pspConfig) return;
@@ -287,16 +288,16 @@ export class PSPDetectorService {
   }
 
   /**
-   * Indicates whether provider configuration has been loaded and is ready for
-   * detection.
+  Indicates whether provider configuration has been loaded and is ready for
+  detection.
    */
   public isInitialized(): boolean {
     return !!this.pspConfig;
   }
 
   /**
-   * Determine if a hostname matches an exempt domain. Matches if:
-   *  - host === domain OR host endsWith(`.${domain}`)
+  Determine if a hostname matches an exempt domain. Matches if:
+   - host === domain OR host endsWith(`.${domain}`)
    */
   private isHostExempt(host: string): boolean {
     return this.exemptDomains.some(

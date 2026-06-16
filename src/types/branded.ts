@@ -1,5 +1,5 @@
 /**
- * Compile-time brands used to distinguish semantically different primitives.
+Compile-time brands used to distinguish semantically different primitives.
  */
 export type PSPName = string & { readonly __brand: 'PSPName' };
 export type TabId = number & { readonly __brand: 'TabId' };
@@ -9,8 +9,8 @@ export type RegexPattern = string & { readonly __brand: 'RegexPattern' };
 /** Runtime validators for constructing branded values from untrusted inputs. */
 export const TypeConverters = {
   /**
-   * Accepts only non-empty provider names so empty detection results never get
-   * branded as valid PSP identifiers.
+  Accepts only non-empty provider names so empty detection results never get
+  branded as valid PSP identifiers.
    */
   toPSPName: (name: string): PSPName | null => {
     if (!name || name.trim().length === 0) {
@@ -21,7 +21,7 @@ export const TypeConverters = {
   },
 
   /**
-   * Accepts only non-negative integer tab ids returned by the browser APIs.
+  Accepts only non-negative integer tab ids returned by the browser APIs.
    */
   toTabId: (id: number): TabId | null => {
     if (!Number.isSafeInteger(id) || id < 0) {
@@ -32,7 +32,7 @@ export const TypeConverters = {
   },
 
   /**
-   * Brands only syntactically valid absolute URLs.
+  Brands only syntactically valid absolute URLs.
    */
   toURL: (url: string): URL | null => {
     try {
@@ -44,7 +44,7 @@ export const TypeConverters = {
   },
 
   /**
-   * Brands only regex strings that the JS runtime can compile successfully.
+  Brands only regex strings that the JS runtime can compile successfully.
    */
   toRegexPattern: (pattern: string): RegexPattern | null => {
     try {

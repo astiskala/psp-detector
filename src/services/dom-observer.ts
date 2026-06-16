@@ -1,8 +1,8 @@
 import { logger } from '../lib/utilities';
 
 /**
- * Watches for payment-relevant DOM changes and batches them before triggering
- * a new detection pass.
+Watches for payment-relevant DOM changes and batches them before triggering
+a new detection pass.
  */
 export class DOMObserverService {
   private observer: MutationObserver | null = null;
@@ -13,10 +13,10 @@ export class DOMObserverService {
     null;
 
   /**
-   * Creates the underlying `MutationObserver` and debounces callback delivery
-   * so dynamic checkout pages do not trigger detection on every small change.
-   * All relevant mutations accumulated during the debounce window are passed
-   * together so no individual mutation is silently dropped.
+  Creates the underlying `MutationObserver` and debounces callback delivery
+  so dynamic checkout pages do not trigger detection on every small change.
+  All relevant mutations accumulated during the debounce window are passed
+  together so no individual mutation is silently dropped.
    */
   public initialize(
     callback: (mutations?: MutationRecord[]) => void,
@@ -67,8 +67,8 @@ export class DOMObserverService {
   }
 
   /**
-   * Filters new nodes down to elements that can carry provider-identifying
-   * URLs such as scripts, iframes, forms, and relevant resource hints.
+  Filters new nodes down to elements that can carry provider-identifying
+  URLs such as scripts, iframes, forms, and relevant resource hints.
    */
   private isRelevantNode(nodeList: NodeList): boolean {
     for (const node of nodeList) {

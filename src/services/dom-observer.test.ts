@@ -199,7 +199,8 @@ describe('DOMObserverService', () => {
     service.startObserving();
 
     // Due to debouncing, multiple rapid calls should result in fewer executions
-    return new Promise((resolve) => setTimeout(resolve, 50)).then(() => {
+    const delay = new Promise((resolve) => setTimeout(resolve, 50));
+    return delay.then(() => {
       // The mock observer fires once when startObserving is called
       expect(callCount).toBeLessThanOrEqual(1);
     });

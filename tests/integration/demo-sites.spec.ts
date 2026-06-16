@@ -130,19 +130,20 @@ async function detectAndAssert(page: Page, site: SiteCase): Promise<void> {
     : [];
   if (!matchedNames.includes(site.expected)) {
     // Provide concise diagnostics
-    const hostSet = Array.from(
-      new Set(
+    const hostSet = [
+      ...new Set(
         requests
           .map((u) => {
             try {
-              return new URL(u).host;
+              const parsed = new URL(u);
+              return parsed.host;
             } catch {
               return '';
             }
           })
           .filter(Boolean),
       ),
-    ).slice(0, 15);
+    ].slice(0, 15);
     const snippet = html.slice(0, 5000); // cap output size
     const diag = {
       expected: site.expected,
