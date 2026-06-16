@@ -63,18 +63,21 @@ function loadConfig(): PSPConfig {
   const convert = (p?: RawEntry): PSP | null => {
     if (!p) return null;
     const name =
-      typeof p.name === 'string' ? TypeConverters.toPSPName(p.name) : null;
-    const url = typeof p.url === 'string' ? TypeConverters.toURL(p.url) : null;
+      typeof p['name'] === 'string'
+        ? TypeConverters.toPSPName(p['name'])
+        : null;
+    const url =
+      typeof p['url'] === 'string' ? TypeConverters.toURL(p['url']) : null;
     if (!name || !url) return null;
     return {
       name,
-      matchStrings: Array.isArray(p.matchStrings)
-        ? (p.matchStrings as string[])
+      matchStrings: Array.isArray(p['matchStrings'])
+        ? (p['matchStrings'] as string[])
         : undefined,
-      regex: typeof p.regex === 'string' ? p.regex : undefined,
+      regex: typeof p['regex'] === 'string' ? p['regex'] : undefined,
       url,
-      image: typeof p.image === 'string' ? p.image : '',
-      summary: typeof p.summary === 'string' ? p.summary : '',
+      image: typeof p['image'] === 'string' ? p['image'] : '',
+      summary: typeof p['summary'] === 'string' ? p['summary'] : '',
     } as PSP;
   };
 
@@ -86,17 +89,21 @@ function loadConfig(): PSPConfig {
 
     return {
       notice: group?.notice ?? '',
-      list: providers.map((provider) => convert(provider)).filter(Boolean),
+      list: providers
+        .map((provider) => convert(provider))
+        .filter((p): p is PSP => p !== null),
     };
   };
 
   const psps = (raw.psps ?? [])
     .map((provider) => convert(provider))
-    .filter(Boolean);
+    .filter((p): p is PSP => p !== null);
+  const orchestrators = buildGroup(raw.orchestrators);
+  const tsps = buildGroup(raw.tsps);
   return {
     psps,
-    orchestrators: buildGroup(raw.orchestrators),
-    tsps: buildGroup(raw.tsps),
+    ...(orchestrators !== undefined && { orchestrators }),
+    ...(tsps !== undefined && { tsps }),
   };
 }
 

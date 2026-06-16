@@ -7,7 +7,6 @@
     "moduleResolution": "bundler",
     "rootDir": "./src",
     "outDir": "./dist",
-    "baseUrl": ".",
 
     // Library and Runtime
     "lib": ["ESNext", "DOM", "DOM.Iterable", "WebWorker"],
@@ -18,15 +17,12 @@
     "allowArbitraryExtensions": false,
     "noResolve": false,
 
-    "ignoreDeprecations": "6.0",
-
     // Emit
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
     "removeComments": false,
     "importHelpers": true,
-    "downlevelIteration": true,
 
     // JavaScript Support
     "allowJs": false,
@@ -65,12 +61,7 @@
     "noPropertyAccessFromIndexSignature": true,
 
     // Completeness
-    "skipLibCheck": true,
-
-    // Path mapping
-    "paths": {
-      "@/*": ["src/*"]
-    }
+    "skipLibCheck": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "build", "**/*.test.ts", "**/*.spec.ts"],

@@ -4,7 +4,9 @@
     // Overrides for testing
     "target": "esnext",
     "module": "CommonJS",
+    // ts-jest 29 requires CommonJS moduleResolution; suppress TS6 deprecation warning until ts-jest 30 is available
     "moduleResolution": "node",
+    "ignoreDeprecations": "6.0",
     "rootDir": ".",
     "isolatedModules": false,
     "verbatimModuleSyntax": false,
