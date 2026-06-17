@@ -16,6 +16,9 @@ on:
       - 'eslint.config.mjs'
       - '.github/workflows/**'
 
+permissions:
+  contents: read
+
 jobs:
   pr-validate:
     runs-on: ubuntu-latest
