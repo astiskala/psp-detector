@@ -8,6 +8,8 @@ import {
   measureAsync,
   errorUtilities,
   getAllProviders,
+  normalizeProviderName,
+  buildProviderSlug,
 } from './utilities';
 import { TypeConverters } from '../types';
 import type { PSPConfig } from '../types';
@@ -310,6 +312,25 @@ describe('utils', () => {
 
       await expect(retry()).rejects.toBeInstanceOf(Error);
       expect(function_).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('provider name utilities', () => {
+    it('normalizeProviderName trims surrounding space and lowercases', () => {
+      expect(normalizeProviderName('  Stripe  ')).toBe('stripe');
+      expect(normalizeProviderName('PayPal')).toBe('paypal');
+    });
+
+    it('buildProviderSlug strips a trailing .com and non-alphanumerics', () => {
+      expect(buildProviderSlug('Stripe.com')).toBe('stripe');
+      expect(buildProviderSlug('Checkout.com')).toBe('checkout');
+      expect(buildProviderSlug('  Adyen  ')).toBe('adyen');
+      expect(buildProviderSlug('2C2P')).toBe('2c2p');
+      expect(buildProviderSlug('Bank of America')).toBe('bankofamerica');
+    });
+
+    it('buildProviderSlug only strips .com as a suffix, not mid-name', () => {
+      expect(buildProviderSlug('example.com.tr')).toBe('examplecomtr');
     });
   });
 

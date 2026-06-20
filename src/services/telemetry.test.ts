@@ -201,6 +201,22 @@ describe('param sanitisation', () => {
     expect((value as string).length).toBeLessThanOrEqual(100);
   });
 
+  it('caps the number of caller params forwarded per event', async () => {
+    const filler = 'cap';
+    const manyParameters: Record<string, string> = {};
+    for (let index = 0; index < 40; index++) {
+      manyParameters[`param_${index}`] = filler;
+    }
+
+    await trackEvent(TELEMETRY_EVENTS.SCAN_ERROR, manyParameters);
+
+    const parameters = lastFetchBody().events[0]?.params ?? {};
+    const callerParameters = Object.keys(parameters).filter((name) =>
+      name.startsWith('param_'),
+    );
+    expect(callerParameters).toHaveLength(25);
+  });
+
   it('normalises param names to GA-safe identifiers', async () => {
     await trackEvent(TELEMETRY_EVENTS.SCAN_ERROR, {
       'Weird Name!': 'value',
@@ -233,6 +249,11 @@ describe('toEvidenceHostname', () => {
     expect(toEvidenceHostname('')).toBeUndefined();
     expect(toEvidenceHostname(' '.repeat(3))).toBeUndefined();
     expect(toEvidenceHostname(undefined)).toBeUndefined();
+  });
+
+  it('drops a malformed URL that cannot be parsed', () => {
+    // A scheme with no host is a parse error, exercising the catch path.
+    expect(toEvidenceHostname('http://')).toBeUndefined();
   });
 });
 
@@ -293,6 +314,51 @@ describe('client id and session id', () => {
     expect(lastFetchBody().client_id).toBe(firstId);
   });
 
+  it('derives a client id from getRandomValues when randomUUID is unavailable', async () => {
+    const originalCrypto = globalThis.crypto;
+    const getRandomValues = jest.fn((array: Uint8Array) => {
+      for (let index = 0; index < array.length; index++) {
+        array[index] = index;
+      }
+
+      return array;
+    });
+    Object.defineProperty(globalThis, 'crypto', {
+      value: { getRandomValues },
+      configurable: true,
+    });
+
+    try {
+      await trackEvent(TELEMETRY_EVENTS.POPUP_OPENED);
+      const clientId = lastFetchBody().client_id;
+      expect(clientId).toMatch(/^[0-9a-f]{32}\.\d+$/u);
+      expect(getRandomValues).toHaveBeenCalled();
+    } finally {
+      Object.defineProperty(globalThis, 'crypto', {
+        value: originalCrypto,
+        configurable: true,
+      });
+    }
+  });
+
+  it('falls back to a timestamp client id when crypto is unavailable', async () => {
+    const originalCrypto = globalThis.crypto;
+    Object.defineProperty(globalThis, 'crypto', {
+      value: undefined,
+      configurable: true,
+    });
+
+    try {
+      await trackEvent(TELEMETRY_EVENTS.POPUP_OPENED);
+      expect(lastFetchBody().client_id.startsWith('t_')).toBe(true);
+    } finally {
+      Object.defineProperty(globalThis, 'crypto', {
+        value: originalCrypto,
+        configurable: true,
+      });
+    }
+  });
+
   it('stores the session id in session storage and reuses it within the window', async () => {
     await trackEvent(TELEMETRY_EVENTS.POPUP_OPENED);
     const firstSession = lastFetchBody().events[0]?.params?.['session_id'];
@@ -339,5 +405,32 @@ describe('telemetry setting', () => {
     await setTelemetryEnabled(false);
     expect(localArea.store.get(STORAGE_KEYS.TELEMETRY_ENABLED)).toBe(false);
     await expect(isTelemetryEnabled()).resolves.toBe(false);
+  });
+
+  it('treats a storage read failure as telemetry disabled', async () => {
+    localArea.get.mockRejectedValueOnce(new Error('storage unavailable'));
+    await expect(isTelemetryEnabled()).resolves.toBe(false);
+  });
+});
+
+describe('resilience to session storage failures', () => {
+  it('uses a fresh session id when reading session storage fails', async () => {
+    sessionArea.get.mockRejectedValueOnce(new Error('session read failed'));
+
+    await trackEvent(TELEMETRY_EVENTS.POPUP_OPENED);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const sessionId = lastFetchBody().events[0]?.params?.['session_id'];
+    expect(typeof sessionId).toBe('string');
+    expect((sessionId as string).length).toBeGreaterThan(0);
+  });
+
+  it('still sends the event when persisting the session fails', async () => {
+    sessionArea.set.mockRejectedValueOnce(new Error('session write failed'));
+
+    await expect(
+      trackEvent(TELEMETRY_EVENTS.POPUP_OPENED),
+    ).resolves.toBeUndefined();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
