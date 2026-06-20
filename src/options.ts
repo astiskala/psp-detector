@@ -1,7 +1,13 @@
 import type { PSPConfig } from './types';
 import type { HistoryEntry } from './types/history';
 import { clearHistory, readHistory } from './lib/history';
-import { createSafeUrl, getAllProviders, logger } from './lib/utilities';
+import {
+  buildProviderSlug,
+  createSafeUrl,
+  getAllProviders,
+  logger,
+  normalizeProviderName,
+} from './lib/utilities';
 import {
   buildCSV,
   bucketRowCount,
@@ -264,16 +270,6 @@ function appendCodeList(cell: HTMLTableCellElement, values: string[]): void {
       cell.append(document.createElement('br'));
     }
   }
-}
-
-function normalizeProviderName(name: string): string {
-  return name.trim().toLowerCase();
-}
-
-function buildProviderSlug(name: string): string {
-  return normalizeProviderName(name)
-    .replace(/\.com$/u, '')
-    .replaceAll(/[^a-z0-9]/gu, '');
 }
 
 function getProviderIconPath(pspName: string): string {

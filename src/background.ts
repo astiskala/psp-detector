@@ -23,6 +23,7 @@ import {
   getAllProviders,
   normalizeStringArray,
   fetchWithTimeout,
+  buildProviderSlug,
 } from './lib/utilities';
 import { STORAGE_KEYS } from './lib/storage-keys';
 import { writeHistoryEntry } from './lib/history';
@@ -553,8 +554,7 @@ class BackgroundService {
     detectionInfo: PSPDetectionData['detectionInfo'] | undefined,
   ): void {
     const info = this.getPspInfo(pspName);
-    const slug =
-      info?.image ?? pspName.toLowerCase().replaceAll(/[^a-z0-9]/gu, '');
+    const slug = info?.image ?? buildProviderSlug(pspName);
     void trackEvent(TELEMETRY_EVENTS.PSP_DETECTED, {
       provider_slug: slug,
       provider_name: pspName,

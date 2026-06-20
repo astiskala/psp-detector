@@ -160,6 +160,21 @@ export function debouncedMutation<
   };
 }
 
+/** Normalizes a provider name for case-insensitive keying and lookup. */
+export function normalizeProviderName(name: string): string {
+  return name.trim().toLowerCase();
+}
+
+/**
+Reduces a provider name to a stable alphanumeric slug used for icon paths and
+telemetry identifiers, so the same provider maps to one slug everywhere.
+ */
+export function buildProviderSlug(name: string): string {
+  return normalizeProviderName(name)
+    .replace(/\.com$/u, '')
+    .replaceAll(/[^a-z0-9]/gu, '');
+}
+
 /**
 Flattens the configured PSP, orchestrator, and TSP groups into a single
 precedence-ordered provider list.
