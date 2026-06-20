@@ -28,15 +28,68 @@ module.exports = {
 
   // Coverage configuration
   collectCoverage: false,
-  collectCoverageFrom: ['src/**/*.ts', '!src/**/*.test.ts'],
+  collectCoverageFrom: [
+    'src/**/*.ts',
+    '!src/**/*.test.ts',
+    // Test infrastructure, not production code under test.
+    '!src/test-helpers/**',
+    // Pure type declarations (interfaces only) — no runtime to cover.
+    '!src/types/psp.ts',
+  ],
 
-  // Note: src/options.ts is excluded from unit test coverage thresholds because
-  // it contains only DOM wiring code (no pure logic). It is covered by the
-  // Playwright integration tests in tests/integration/options-page.spec.ts.
+  // Coverage floors lock in current coverage so it cannot silently regress.
+  //
+  // Jest subtracts any file with its own path-specific threshold from the
+  // `global` pool. `global` is therefore the floor for the remaining DOM and
+  // async entry/service modules, whose behaviour is mostly exercised by the
+  // Playwright e2e/integration suites, so they sit near 79% lines and 61%
+  // branches. The modules listed below are held to a much higher individual bar.
+  //
+  // Per-file `functions` floors keep extra slack: function coverage is
+  // count-coarse, so one uncovered function in a small file shifts it by points.
   coverageThreshold: {
-    './src/lib/history.ts': { lines: 80, functions: 80, branches: 70 },
-    './src/options-core.ts': { lines: 80, functions: 80, branches: 70 },
-    './src/services/psp-detector.ts': { lines: 80, functions: 80 },
+    global: {
+      statements: 77,
+      branches: 59,
+      functions: 88,
+      lines: 77,
+    },
+    './src/lib/history.ts': {
+      statements: 88,
+      branches: 80,
+      functions: 90,
+      lines: 88,
+    },
+    './src/lib/utilities.ts': {
+      statements: 95,
+      branches: 85,
+      functions: 90,
+      lines: 95,
+    },
+    './src/options-core.ts': {
+      statements: 96,
+      branches: 92,
+      functions: 95,
+      lines: 96,
+    },
+    './src/options.ts': {
+      statements: 91,
+      branches: 73,
+      functions: 95,
+      lines: 91,
+    },
+    './src/services/psp-detector.ts': {
+      statements: 88,
+      branches: 82,
+      functions: 92,
+      lines: 88,
+    },
+    './src/services/telemetry.ts': {
+      statements: 90,
+      branches: 82,
+      functions: 92,
+      lines: 90,
+    },
   },
 
   // Coverage reporter configuration

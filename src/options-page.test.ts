@@ -3,11 +3,41 @@ import { TypeConverters } from './types';
 import type { HistoryEntry } from './types/history';
 import { clearHistory, readHistory } from './lib/history';
 import { logger } from './lib/utilities';
+import {
+  trackEvent,
+  isTelemetryEnabled,
+  setTelemetryEnabled,
+  TELEMETRY_EVENTS,
+} from './services/telemetry';
 
 jest.mock('./lib/history', () => ({
   clearHistory: jest.fn(),
   readHistory: jest.fn(),
 }));
+
+jest.mock('./services/telemetry', () => {
+  const actual = jest.requireActual('./services/telemetry');
+  return {
+    ...actual,
+    trackEvent: jest.fn(),
+    isTelemetryEnabled: jest.fn().mockResolvedValue(true),
+    setTelemetryEnabled: jest.fn().mockResolvedValue(undefined),
+  };
+});
+
+// jsdom (26.x) ships the <dialog> element but not showModal()/close(). Install a
+// minimal polyfill on the element instance (closing over it, so no prototype
+// mutation) so the open/close wiring can be exercised under unit tests.
+function installDialogPolyfill(dialog: HTMLDialogElement): void {
+  dialog.showModal = (): void => {
+    dialog.open = true;
+  };
+
+  dialog.close = (): void => {
+    dialog.open = false;
+    dialog.dispatchEvent(new Event('close'));
+  };
+}
 
 jest.mock('./lib/utilities', () => {
   const actual = jest.requireActual('./lib/utilities');
@@ -29,12 +59,23 @@ interface LoggerMock {
 function setupOptionsDOM(): void {
   document.body.innerHTML = `
     <div id="stats"></div>
+    <button id="exportBtn" type="button">Export</button>
+    <button id="settingsBtn" type="button">Settings</button>
+    <dialog id="settingsDialog">
+      <button id="settingsCloseBtn" type="button" aria-label="Close settings">
+        &times;
+      </button>
+      <label><input type="checkbox" id="telemetryToggle" /> Analytics</label>
+      <button id="clearBtn" type="button">Clear History</button>
+      <ul class="settings-links">
+        <li><a id="suggestLink" href="mailto:psp-detector@adamstiskala.com">Suggest</a></li>
+        <li><a id="privacyLink" href="https://astiskala.github.io/psp-detector/privacy-policy.html" target="_blank" rel="noopener">Privacy</a></li>
+      </ul>
+    </dialog>
     <input id="search" />
     <select id="pspFilter">
       <option value="">All PSPs</option>
     </select>
-    <button id="exportBtn" type="button">Export</button>
-    <button id="clearBtn" type="button">Clear</button>
     <table><tbody id="historyBody"></tbody></table>
     <div id="emptyState" hidden>No history</div>
     <canvas id="pspChart" width="240" height="240"></canvas>
@@ -258,11 +299,17 @@ describe('options page wiring', () => {
   beforeEach(() => {
     jest.restoreAllMocks();
     setupOptionsDOM();
+    installDialogPolyfill(
+      getRequiredElementById<HTMLDialogElement>('settingsDialog'),
+    );
     setupCanvasContextMock();
     setupChromeRuntimeMock();
 
     jest.mocked(readHistory).mockReset();
     jest.mocked(clearHistory).mockReset();
+    jest.mocked(trackEvent).mockReset();
+    jest.mocked(isTelemetryEnabled).mockReset().mockResolvedValue(true);
+    jest.mocked(setTelemetryEnabled).mockReset().mockResolvedValue(undefined);
 
     const loggerMock = getLoggerMock();
     loggerMock.warn.mockReset();
@@ -373,6 +420,130 @@ describe('options page wiring', () => {
     expect(loggerMock.error).toHaveBeenCalledWith(
       'Failed to initialize options page',
       expect.any(Error),
+    );
+  });
+
+  it('opens the settings dialog and reports the open', async () => {
+    setupSuccessMocks();
+    await initializeOptionsPage();
+
+    const dialog = getRequiredElementById<HTMLDialogElement>('settingsDialog');
+    expect(dialog.open).toBe(false);
+
+    getRequiredElementById<HTMLButtonElement>('settingsBtn').click();
+
+    expect(dialog.open).toBe(true);
+    expect(jest.mocked(trackEvent)).toHaveBeenCalledWith(
+      TELEMETRY_EVENTS.SETTINGS_OPENED,
+    );
+  });
+
+  it('closes the settings dialog via the close button', async () => {
+    setupSuccessMocks();
+    await initializeOptionsPage();
+
+    const dialog = getRequiredElementById<HTMLDialogElement>('settingsDialog');
+    getRequiredElementById<HTMLButtonElement>('settingsBtn').click();
+    expect(dialog.open).toBe(true);
+
+    getRequiredElementById<HTMLButtonElement>('settingsCloseBtn').click();
+    expect(dialog.open).toBe(false);
+  });
+
+  it('closes the settings dialog when the backdrop is clicked', async () => {
+    setupSuccessMocks();
+    await initializeOptionsPage();
+
+    const dialog = getRequiredElementById<HTMLDialogElement>('settingsDialog');
+    getRequiredElementById<HTMLButtonElement>('settingsBtn').click();
+    expect(dialog.open).toBe(true);
+
+    // A click whose target is the dialog itself represents the backdrop.
+    dialog.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(dialog.open).toBe(false);
+  });
+
+  it('keeps the dialog open when its content is clicked', async () => {
+    setupSuccessMocks();
+    await initializeOptionsPage();
+
+    const dialog = getRequiredElementById<HTMLDialogElement>('settingsDialog');
+    getRequiredElementById<HTMLButtonElement>('settingsBtn').click();
+
+    // A click bubbling up from a child keeps target !== dialog, so it stays open.
+    getRequiredElementById<HTMLInputElement>('telemetryToggle').dispatchEvent(
+      new MouseEvent('click', { bubbles: true }),
+    );
+    expect(dialog.open).toBe(true);
+  });
+
+  it('reflects the stored analytics setting on load', async () => {
+    setupSuccessMocks();
+    jest.mocked(isTelemetryEnabled).mockResolvedValue(false);
+    await initializeOptionsPage();
+
+    expect(
+      getRequiredElementById<HTMLInputElement>('telemetryToggle').checked,
+    ).toBe(false);
+  });
+
+  it('persists and reports turning analytics off then on', async () => {
+    setupSuccessMocks();
+    await initializeOptionsPage();
+
+    const toggle = getRequiredElementById<HTMLInputElement>('telemetryToggle');
+    expect(toggle.checked).toBe(true);
+
+    toggle.checked = false;
+    toggle.dispatchEvent(new Event('change'));
+    await flushAsync();
+    expect(jest.mocked(setTelemetryEnabled)).toHaveBeenLastCalledWith(false);
+    expect(jest.mocked(trackEvent)).toHaveBeenCalledWith(
+      TELEMETRY_EVENTS.TELEMETRY_CHANGED,
+      { enabled: false },
+    );
+
+    toggle.checked = true;
+    toggle.dispatchEvent(new Event('change'));
+    await flushAsync();
+    expect(jest.mocked(setTelemetryEnabled)).toHaveBeenLastCalledWith(true);
+    expect(jest.mocked(trackEvent)).toHaveBeenCalledWith(
+      TELEMETRY_EVENTS.TELEMETRY_CHANGED,
+      { enabled: true },
+    );
+  });
+
+  it('logs an error when persisting the analytics setting fails', async () => {
+    const { loggerMock } = setupSuccessMocks();
+    await initializeOptionsPage();
+
+    jest
+      .mocked(setTelemetryEnabled)
+      .mockRejectedValueOnce(new Error('storage failed'));
+
+    const toggle = getRequiredElementById<HTMLInputElement>('telemetryToggle');
+    toggle.checked = false;
+    toggle.dispatchEvent(new Event('change'));
+    await flushAsync();
+
+    expect(loggerMock.error).toHaveBeenCalledWith(
+      'Failed to update telemetry setting',
+      expect.any(Error),
+    );
+  });
+
+  it('exposes the privacy policy and feedback links', async () => {
+    setupSuccessMocks();
+    await initializeOptionsPage();
+
+    const privacy = getRequiredElementById<HTMLAnchorElement>('privacyLink');
+    expect(privacy.getAttribute('href')).toContain('privacy-policy');
+    expect(privacy.target).toBe('_blank');
+    expect(privacy.rel).toContain('noopener');
+
+    const suggest = getRequiredElementById<HTMLAnchorElement>('suggestLink');
+    expect(suggest.getAttribute('href')).toBe(
+      'mailto:psp-detector@adamstiskala.com',
     );
   });
 });

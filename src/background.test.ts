@@ -236,7 +236,7 @@ function setupChromeMocks(options: ChromeMockOptions = {}): ChromeMockContext {
     .mockImplementation(async (keys: string | string[]) => {
       const normalizedKeys = Array.isArray(keys) ? keys : [keys];
       for (const key of normalizedKeys) {
-        delete localStore[key];
+        Reflect.deleteProperty(localStore, key);
       }
     });
 
@@ -987,5 +987,125 @@ describe('background service onboarding and re-detect flow', () => {
     const entries = getLatestHistoryEntries(mocks.localSet);
     expect(entries).toBeDefined();
     expect(entries?.[0]).not.toHaveProperty('merchantOrigin');
+  });
+});
+
+describe('telemetry privacy boundary', () => {
+  const GA_HOST = 'google-analytics.com';
+  const MERCHANT_HOST = 'secret-merchant-shop.example';
+  const MERCHANT_URL = `https://${MERCHANT_HOST}/checkout/pay?token=abc#frag`;
+
+  interface GaEvent {
+    name: string;
+    params: Record<string, unknown>;
+  }
+
+  beforeEach(() => {
+    jest.resetModules();
+    jest.clearAllMocks();
+    process.env['GA_MEASUREMENT_ID'] = 'G-PRIVACY';
+    process.env['GA_API_SECRET'] = 'priv-secret';
+  });
+
+  afterEach(() => {
+    delete process.env['GA_MEASUREMENT_ID'];
+    delete process.env['GA_API_SECRET'];
+  });
+
+  function gaCalls(): { url: string; body: string }[] {
+    const fetchMock = globalThis.fetch as unknown as jest.Mock;
+    return fetchMock.mock.calls
+      .filter((call) => String(call[0]).includes(GA_HOST))
+      .map((call) => ({
+        url: String(call[0]),
+        // The telemetry client always sends a JSON string body.
+        body: (call[1] as undefined | { body?: string })?.body ?? '',
+      }));
+  }
+
+  function findGaEvent(eventName: string): GaEvent | undefined {
+    for (const call of gaCalls()) {
+      const payload = JSON.parse(call.body) as { events?: GaEvent[] };
+      const event = payload.events?.find((item) => item.name === eventName);
+      if (event !== undefined) {
+        return event;
+      }
+    }
+
+    return undefined;
+  }
+
+  it('psp_detected sends provider info and evidence hostname only', async () => {
+    const mocks = setupChromeMocks({ activeTabUrl: MERCHANT_URL });
+    await import('./background');
+    await flushAsyncTasks();
+
+    const messageListener = getRegisteredMessageListener(mocks);
+    // Load the provider config first so provider_slug/type come from psps.json.
+    messageListener(
+      { action: MessageAction.GET_PSP_CONFIG },
+      { tab: { id: 12, url: MERCHANT_URL } as chrome.tabs.Tab },
+      jest.fn(),
+    );
+    await flushAsyncTasks();
+    await flushAsyncTasks();
+
+    messageListener(
+      {
+        action: MessageAction.DETECT_PSP,
+        data: {
+          psp: 'Stripe',
+          tabId: 12,
+          detectionInfo: {
+            method: 'matchString',
+            value: STRIPE_MATCH_STRING,
+            sourceType: 'scriptSrc',
+          },
+        },
+      },
+      { tab: { id: 12, url: MERCHANT_URL } as chrome.tabs.Tab },
+      jest.fn(),
+    );
+    await flushAsyncTasks();
+
+    const event = findGaEvent('psp_detected');
+    expect(event).toBeDefined();
+    expect(event?.params['provider_name']).toBe('Stripe');
+    expect(event?.params['provider_slug']).toBe('stripe');
+    expect(event?.params['provider_type']).toBe('PSP');
+    expect(event?.params['evidence_domain']).toBe(STRIPE_MATCH_STRING);
+    expect(event?.params['match_type']).toBe('matchString');
+
+    for (const call of gaCalls()) {
+      const raw = `${call.url} ${call.body}`;
+      expect(raw).not.toContain(MERCHANT_HOST);
+      expect(raw).not.toContain('/checkout');
+    }
+  });
+
+  it('scan_skipped reports the reason but never the exempt domain', async () => {
+    const mocks = setupChromeMocks({
+      activeTabUrl: CHECKOUT_EXAMPLE_URL,
+      exemptDomains: ['example.com'],
+    });
+    await import('./background');
+    await flushAsyncTasks();
+
+    const messageListener = getRegisteredMessageListener(mocks);
+    messageListener(
+      { action: MessageAction.REDETECT_CURRENT_TAB },
+      {},
+      jest.fn(),
+    );
+    await flushAsyncTasks();
+
+    const event = findGaEvent('scan_skipped');
+    expect(event).toBeDefined();
+    expect(event?.params['skip_reason']).toBe('exempt_domain');
+    expect(event?.params['entry_point']).toBe('redetect');
+
+    for (const call of gaCalls()) {
+      expect(`${call.url} ${call.body}`).not.toContain('example.com');
+    }
   });
 });

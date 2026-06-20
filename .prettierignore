@@ -1,4 +1,9 @@
 dist/
-node_modules/
 build/
+coverage/
+test-results/
+hint-report/
+node_modules/
 *.min.js
+*.tsbuildinfo
+pnpm-lock.yaml

@@ -6,6 +6,9 @@ interface DetectionPermissionState {
   hasWebRequestPermission: boolean;
 }
 
+// The type parameter is an ergonomic, caller-supplied cast for the element
+// subtype (querySelector cannot verify the concrete element type at runtime).
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters -- typed DOM accessor
 function getElementByIdOrThrow<T extends HTMLElement>(id: string): T {
   const element = document.querySelector<T>(`#${id}`);
   if (!element) {

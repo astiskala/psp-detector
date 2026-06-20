@@ -14,6 +14,22 @@ const unicornAllRules = Object.fromEntries(
   ]),
 );
 
+// Merge the rule maps from the type-aware typescript-eslint presets. These are
+// layered onto the TypeScript blocks (which carry full type information via
+// `projectService` / `project`) rather than spread globally, so plain JS tooling
+// files are never asked for type information they don't have.
+const typeCheckedRules = Object.assign(
+  {},
+  ...[
+    ...tseslint.configs.strictTypeChecked,
+    ...tseslint.configs.stylisticTypeChecked,
+  ].map((config) => config.rules ?? {}),
+);
+
+// Full SonarJS recommended rule set (269 rules) for deep bug/maintainability
+// coverage, complementing the SonarCloud server-side analysis.
+const sonarjsRecommendedRules = sonarjs.configs.recommended.rules ?? {};
+
 const strictTypeScriptRules = {
   '@typescript-eslint/consistent-type-imports': [
     'error',
@@ -30,11 +46,50 @@ const strictTypeScriptRules = {
     'error',
     { ignoreArrowShorthand: true },
   ],
+  // --- Type-aware preset tuning for this codebase's deliberate patterns ---
+  // Interpolating primitives into log lines and runtime messages is safe; the
+  // genuine "[object Object]" hazard is still caught by no-base-to-string below.
+  '@typescript-eslint/restrict-template-expressions': [
+    'error',
+    {
+      allowNumber: true,
+      allowBoolean: true,
+      allowNever: true,
+      allowRegExp: true,
+    },
+  ],
+  // no-unnecessary-condition fights this extension's defensive runtime guards:
+  // chrome.* namespaces are typed as always-present but are `undefined` at
+  // runtime without the matching permission (e.g. chrome.webRequest), branded
+  // types are compared against string sentinels, and `while (true)` loops are
+  // idiomatic. Keeping these checks is safer than satisfying the type-only view;
+  // SonarCloud still reports genuinely dead branches server-side.
+  '@typescript-eslint/no-unnecessary-condition': 'off',
+  // Counterpart to the above — fires on intentional branded-type/sentinel
+  // comparisons (PSPName/TabId vs string | undefined).
+  'sonarjs/different-types-comparison': 'off',
+  // Async functions are passed to DOM/chrome event listeners by design — those
+  // handlers own their try/catch, and chrome lifecycle listeners (onInstalled)
+  // deliberately return a promise to keep the MV3 worker alive. The codebase has
+  // no async array-callbacks (forEach/map/…), so disabling only the `arguments`
+  // check loses no real coverage; conditional/spread misuse stays caught.
+  '@typescript-eslint/no-misused-promises': [
+    'error',
+    { checksVoidReturn: { arguments: false } },
+  ],
+  // Redundant with the mandatory @typescript-eslint/explicit-function-return-type
+  // and wrong for intentional union returns (sanitizers/parsers/normalizers that
+  // legitimately return `string | number | boolean`). TypeScript governs return
+  // shape here; this stylistic constraint does not.
+  'sonarjs/function-return-type': 'off',
+
   complexity: ['error', { max: 15 }],
-  'max-depth': ['error', { max: 4 }],
+  'max-depth': ['error', { max: 3 }],
   'max-statements': ['error', { max: 30 }],
   'no-console': 'error',
-  'no-void': ['error', { allowAsStatement: false }],
+  // `void` is permitted only as a statement — the idiomatic, explicit marker for
+  // a deliberately unawaited promise (pairs with @typescript-eslint/no-floating-promises).
+  'no-void': ['error', { allowAsStatement: true }],
   'prefer-template': 'error',
 
   // SonarQube-style quality rules for maintainability and bug risk.
@@ -86,12 +141,52 @@ const testTypeScriptRuleOverrides = {
   'unicorn/no-unnecessary-global-this': 'off',
   // Tests run under CommonJS/Jest where __dirname / require() are available
   'unicorn/prefer-module': 'off',
+
+  // Type-aware relaxations for tests. Mocks (chrome.*, fetch, MutationObserver)
+  // and Jest matchers legitimately produce `any`-typed and unbound-method values
+  // that the strict type-checked preset would otherwise flag throughout fixtures.
+  '@typescript-eslint/no-unsafe-assignment': 'off',
+  '@typescript-eslint/no-unsafe-member-access': 'off',
+  '@typescript-eslint/no-unsafe-call': 'off',
+  '@typescript-eslint/no-unsafe-argument': 'off',
+  '@typescript-eslint/no-unsafe-return': 'off',
+  '@typescript-eslint/unbound-method': 'off',
+  // Asserting against interpolated mock values is common and safe in test output.
+  '@typescript-eslint/restrict-template-expressions': 'off',
+  // Mock implementations satisfy Promise-returning API signatures (fetch, chrome)
+  // without ever awaiting — the async keyword documents the contract.
+  '@typescript-eslint/require-await': 'off',
+  // build-artifacts tests parse our own emitted bundles with `new vm.Script(...)`
+  // to assert they are valid classic scripts — trusted input, marked NOSONAR.
+  'sonarjs/code-eval': 'off',
+  // Mock signatures mirror chrome/jest callback contracts whose return positions
+  // legitimately use `void` in unions and generic type arguments.
+  '@typescript-eslint/no-invalid-void-type': 'off',
+  // Typed DOM-accessor fixtures use caller-supplied element-type casts.
+  '@typescript-eslint/no-unnecessary-type-parameters': 'off',
 };
 
 export default [
-  // Ignore patterns
+  // Fail on stale `eslint-disable` directives so suppressions can't outlive the
+  // problems they silenced.
   {
-    ignores: ['dist/**', 'node_modules/**', 'build/**'],
+    linterOptions: {
+      reportUnusedDisableDirectives: 'error',
+    },
+  },
+
+  // Ignore patterns — generated build/test artifacts must never be linted.
+  {
+    ignores: [
+      'dist/**',
+      'node_modules/**',
+      'build/**',
+      'coverage/**',
+      'test-results/**',
+      'hint-report/**',
+      '.playwright-mcp/**',
+      '*.tsbuildinfo',
+    ],
   },
 
   // Base configurations including gts rules
@@ -199,7 +294,13 @@ export default [
       jsdoc,
       sonarjs,
     },
-    rules: strictTypeScriptRules,
+    // Layering order: generic SonarJS recommended → type-aware strict/stylistic
+    // presets → the repo's curated rules (final authority, may tighten options).
+    rules: {
+      ...sonarjsRecommendedRules,
+      ...typeCheckedRules,
+      ...strictTypeScriptRules,
+    },
   },
 
   // Test TypeScript files (same strict baseline with explicit exceptions)
@@ -220,6 +321,8 @@ export default [
       sonarjs,
     },
     rules: {
+      ...sonarjsRecommendedRules,
+      ...typeCheckedRules,
       ...strictTypeScriptRules,
       ...testTypeScriptRuleOverrides,
     },

@@ -60,6 +60,35 @@ export function buildCSV(entries: HistoryEntry[]): string {
 }
 
 /**
+Buckets a history row count into a coarse range. Used for telemetry so the
+number of exported rows is reported as a band rather than an exact figure,
+and never alongside the history contents themselves.
+ */
+export function bucketRowCount(count: number): string {
+  if (!Number.isFinite(count) || count <= 0) {
+    return '0';
+  }
+
+  if (count <= 10) {
+    return '1-10';
+  }
+
+  if (count <= 50) {
+    return '11-50';
+  }
+
+  if (count <= 100) {
+    return '51-100';
+  }
+
+  if (count <= 500) {
+    return '101-500';
+  }
+
+  return '500+';
+}
+
+/**
 Applies the options-page search query and exact PSP filter against domains,
 provider names, source types, and detection signals.
  */

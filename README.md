@@ -205,6 +205,60 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Sabre SynXis
 - SiteMinder
 
+## Privacy & Telemetry
+
+PSP Detector includes optional, privacy-preserving usage analytics sent via the
+[GA4 Measurement Protocol](https://developers.google.com/analytics/devguides/collection/protocol/ga4).
+There is no custom backend and no remote analytics JavaScript (e.g. `gtag.js`)
+is loaded. Telemetry is sent only from the extension's own contexts
+(service worker, popup, options page) — never from the content script running on
+merchant pages.
+
+### What is collected
+
+Aggregate feature usage and detection outcomes only:
+
+- Lifecycle/feature events: install/update, popup opened, scans requested,
+  scans skipped, history opened/exported, settings opened, telemetry toggled.
+- For detections: the PSP/provider **name**, **slug**, **type**
+  (PSP/Orchestrator/TSP), the **match type** (`matchString`/`regex`), and a
+  PSP-owned **evidence hostname** (e.g. `checkoutshopper-live.adyen.com`).
+- A random `client_id` (stored in `chrome.storage.local`) and a short-lived
+  `session_id` (stored in `chrome.storage.session`, 30-minute inactivity
+  expiry), the extension version, and `engagement_time_msec`.
+- For exports: the format (`csv`) and a coarse **row-count bucket** (e.g.
+  `11-50`) — never the exported rows.
+
+### What is NOT collected
+
+The merchant page domain, full URLs, page titles, HTML content, raw network
+request URLs, checkout paths, query strings, fragments, form data, payment
+data, request payloads, and stack traces are **never** sent. Evidence values
+are reduced to a bare hostname before sending, and only PSP-owned hostnames are
+included.
+
+### Configuring GA credentials (build time)
+
+Credentials are injected at build time and embedded in the packaged extension
+(acceptable here because there is no backend). Set them as environment
+variables for the build:
+
+```bash
+GA_MEASUREMENT_ID="G-XXXXXXX" GA_API_SECRET="your_api_secret" pnpm run build
+```
+
+If either variable is missing — as in local/dev builds and CI — telemetry is a
+safe no-op and **no** network requests are made. Do not commit real
+credentials to source.
+
+### Disabling telemetry
+
+Telemetry is enabled by default for the safe aggregate data described above.
+Users can turn it off any time from the extension's **Options → Settings →
+"Share anonymous usage analytics"** toggle (stored in `chrome.storage.local`).
+Local/dev builds without GA credentials never send telemetry regardless of the
+setting.
+
 ## Development
 
 ### Setup

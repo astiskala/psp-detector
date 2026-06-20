@@ -4,7 +4,10 @@
     "src/background.ts",
     "src/content.ts",
     "src/popup.ts",
-    "src/options.ts"
+    "src/options.ts",
+    "src/onboarding.ts"
   ],
-  "project": ["src/**/*.ts"]
+  "project": ["src/**/*.ts"],
+  "includeEntryExports": true,
+  "ignoreExportsUsedInFile": false
 }

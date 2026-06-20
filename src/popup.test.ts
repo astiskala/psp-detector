@@ -226,9 +226,7 @@ describe('PopupManager', () => {
     const popup = new PopupManager();
 
     await popup.initialize();
-    (
-      document.querySelector('#grant-permission-btn') as HTMLButtonElement
-    ).click();
+    document.querySelector<HTMLElement>('#grant-permission-btn')!.click();
     await flushAsyncTasks();
     await flushAsyncTasks();
 
@@ -428,7 +426,7 @@ describe('PopupManager', () => {
     const popup = new PopupManager();
     popup.bindHistoryAction();
 
-    (document.querySelector('#history-link') as HTMLButtonElement).click();
+    document.querySelector<HTMLElement>('#history-link')!.click();
     await flushAsyncTasks();
 
     expect(chromeMocks.openOptionsPage).toHaveBeenCalledTimes(1);

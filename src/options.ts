@@ -4,6 +4,7 @@ import { clearHistory, readHistory } from './lib/history';
 import { createSafeUrl, getAllProviders, logger } from './lib/utilities';
 import {
   buildCSV,
+  bucketRowCount,
   filterEntries,
   formatDate,
   formatHistorySummary,
@@ -14,6 +15,12 @@ import {
   getUniquePspNames,
   type DistributionSlice,
 } from './options-core';
+import {
+  trackEvent,
+  isTelemetryEnabled,
+  setTelemetryEnabled,
+  TELEMETRY_EVENTS,
+} from './services/telemetry';
 
 const DEFAULT_PSP_ICON_PATH = 'images/default_48.png';
 const HISTORY_TABLE_ICON_SIZE = 16;
@@ -631,6 +638,12 @@ function bindControls(historyReference: HistoryReference): void {
     anchor.download = `psp-history-${now.toISOString().split('T', 1)[0]}.csv`;
     anchor.click();
     URL.revokeObjectURL(url);
+    // Report only the export format and a coarse row-count bucket — never the
+    // exported rows or any domain.
+    void trackEvent(TELEMETRY_EVENTS.HISTORY_EXPORTED, {
+      format: 'csv',
+      row_count_bucket: bucketRowCount(filtered.length),
+    });
   });
 
   document.querySelector('#clearBtn')?.addEventListener('click', async () => {
@@ -658,7 +671,82 @@ function bindControls(historyReference: HistoryReference): void {
   });
 }
 
+/**
+Opens and closes the settings dialog, reporting each open. The dialog closes
+via the close button, a backdrop click, or the native Escape handling that the
+`<dialog>` element provides for free.
+ */
+function bindSettingsDialog(): void {
+  const dialog = document.querySelector<HTMLDialogElement>('#settingsDialog');
+  if (dialog === null) {
+    return;
+  }
+
+  const openButton = document.querySelector<HTMLButtonElement>('#settingsBtn');
+  const closeButton =
+    document.querySelector<HTMLButtonElement>('#settingsCloseBtn');
+
+  openButton?.addEventListener('click', () => {
+    dialog.showModal();
+    void trackEvent(TELEMETRY_EVENTS.SETTINGS_OPENED);
+  });
+
+  closeButton?.addEventListener('click', () => {
+    dialog.close();
+  });
+
+  // A click whose target is the dialog itself (rather than its content) is a
+  // click on the backdrop — close the dialog, matching the Escape behaviour.
+  dialog.addEventListener('click', (event) => {
+    if (event.target === dialog) {
+      dialog.close();
+    }
+  });
+}
+
+/**
+Wires the telemetry opt-out control inside the settings dialog: reflects the
+stored setting and persists changes.
+ */
+async function bindTelemetryControl(): Promise<void> {
+  const toggle = document.querySelector<HTMLInputElement>('#telemetryToggle');
+  if (toggle === null) {
+    return;
+  }
+
+  toggle.checked = await isTelemetryEnabled();
+  toggle.addEventListener('change', async () => {
+    const enabled = toggle.checked;
+    try {
+      if (enabled) {
+        await setTelemetryEnabled(true);
+        void trackEvent(TELEMETRY_EVENTS.TELEMETRY_CHANGED, {
+          enabled: true,
+        });
+      } else {
+        // Fire the opt-out event best-effort while telemetry is still
+        // enabled, but never block persisting the disable on the network —
+        // otherwise a slow request or a closed tab could leave the setting
+        // un-persisted and silently revert the user's choice on reopen.
+        void trackEvent(TELEMETRY_EVENTS.TELEMETRY_CHANGED, {
+          enabled: false,
+        });
+        await setTelemetryEnabled(false);
+      }
+    } catch (error) {
+      logger.error('Failed to update telemetry setting', error);
+    }
+  });
+}
+
+/** Wires the settings dialog and the telemetry control it contains. */
+async function bindSettings(): Promise<void> {
+  bindSettingsDialog();
+  await bindTelemetryControl();
+}
+
 async function init(): Promise<void> {
+  void trackEvent(TELEMETRY_EVENTS.HISTORY_OPENED);
   await loadProviderIcons();
   let allHistory = await readHistory();
   renderStats(allHistory);
@@ -671,6 +759,7 @@ async function init(): Promise<void> {
       allHistory = h;
     },
   });
+  await bindSettings();
 }
 
 document.addEventListener('DOMContentLoaded', async () => {

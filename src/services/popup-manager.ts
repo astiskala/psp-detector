@@ -12,6 +12,11 @@ import {
   fetchWithTimeout,
 } from '../lib/utilities';
 import { STORAGE_KEYS } from '../lib/storage-keys';
+import {
+  trackEvent,
+  TELEMETRY_EVENTS,
+  TELEMETRY_ENTRY_POINTS,
+} from './telemetry';
 
 /** Manages popup lifecycle: permission checks, config loading, and UI rendering. */
 export class PopupManager {
@@ -126,6 +131,9 @@ export class PopupManager {
 
         if (detectedPsps.length === 0) {
           this.ui.showNoPSPDetected();
+          void trackEvent(TELEMETRY_EVENTS.PSP_NOT_DETECTED, {
+            entry_point: TELEMETRY_ENTRY_POINTS.POPUP,
+          });
           if (hasPermission) {
             this.hidePermissionPanel();
           }
@@ -168,6 +176,9 @@ export class PopupManager {
 
   private async requestCurrentTabRedetect(): Promise<void> {
     try {
+      // The scan_requested event is emitted by the background's
+      // REDETECT_CURRENT_TAB handler (entry_point 'redetect'); emitting it here
+      // too would double-count this single user action.
       await this.sendMessage<{ success: boolean }>({
         action: MessageAction.REDETECT_CURRENT_TAB,
       });
@@ -232,7 +243,7 @@ export class PopupManager {
         );
       }
 
-      const config = await response.json();
+      const config: unknown = await response.json();
 
       // Validate config structure
       if (!this.isPspConfig(config)) {

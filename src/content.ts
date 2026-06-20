@@ -91,6 +91,9 @@ class ContentScript {
   Loads detector inputs, starts DOM observation, and schedules the initial
   scan without blocking page startup.
    */
+  // Async lifecycle entry point: callers await it for sequencing, but the actual
+  // setup is intentionally deferred to scheduleIdle so it never blocks page load.
+  // eslint-disable-next-line @typescript-eslint/require-await -- deferred-work entry point
   public async initialize(): Promise<void> {
     logger.info('Initializing content script');
 
@@ -115,7 +118,7 @@ class ContentScript {
         // Schedule initial detection
         scheduleIdle(() => {
           // eslint-disable-next-line unicorn/prefer-await -- fire-and-forget in sync event listener
-          this.detectPSP().catch((error) => {
+          this.detectPSP().catch((error: unknown) => {
             logger.error('Initial PSP detection failed:', error);
           });
         });
@@ -133,7 +136,7 @@ class ContentScript {
 
     scheduleIdle(() => {
       // eslint-disable-next-line unicorn/prefer-await -- fire-and-forget in sync event listener
-      setup().catch((error) => {
+      setup().catch((error: unknown) => {
         logger.error('Content script setup failed:', error);
       });
     });
@@ -545,27 +548,25 @@ class ContentScript {
         const errorMessage =
           error instanceof Error ? error.message : String(error);
 
-        // Handle service worker restart scenarios
-        if (isServiceWorkerRestartError(errorMessage)) {
-          if (isLastAttempt) {
-            logger.warn(
-              'Failed to communicate with service worker after retries',
-            );
-            throw new Error('Service worker communication failed', {
-              cause: error,
-            });
-          }
-
-          // Wait briefly before retry to allow service worker to restart
-          await new Promise((waitResolve) =>
-            setTimeout(waitResolve, 100 * attempt),
-          );
-
-          continue;
+        // For non-restart errors, don't retry.
+        if (!isServiceWorkerRestartError(errorMessage)) {
+          throw error;
         }
 
-        // For other errors, don't retry
-        throw error;
+        if (isLastAttempt) {
+          logger.warn(
+            'Failed to communicate with service worker after retries',
+          );
+          throw new Error('Service worker communication failed', {
+            cause: error,
+          });
+        }
+
+        // Wait briefly before retry to allow the service worker to restart;
+        // the loop then continues to the next attempt.
+        await new Promise((waitResolve) =>
+          setTimeout(waitResolve, 100 * attempt),
+        );
       }
     }
 
@@ -768,10 +769,15 @@ const checkBackgroundState = async (): Promise<boolean> => {
     }
 
     // Try to ping the background script to see if it has detection state
-    const response = await chrome.runtime.sendMessage({
+    const response: unknown = await chrome.runtime.sendMessage({
       action: MessageAction.CHECK_TAB_STATE,
     });
-    return response?.hasState === true;
+    return (
+      typeof response === 'object' &&
+      response !== null &&
+      'hasState' in response &&
+      response.hasState === true
+    );
   } catch (error) {
     logger.debug('Background state check failed', error);
 
@@ -878,7 +884,7 @@ const bootstrap = async (): Promise<void> => {
 };
 
 // eslint-disable-next-line unicorn/prefer-await -- no top-level await in content scripts
-bootstrap().catch((error) => {
+bootstrap().catch((error: unknown) => {
   // NOSONAR
   if (isExtensionContextInvalidated(error)) {
     logger.warn('Extension context invalidated during bootstrap');

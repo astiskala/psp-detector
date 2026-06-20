@@ -26,6 +26,12 @@ import {
 } from './lib/utilities';
 import { STORAGE_KEYS } from './lib/storage-keys';
 import { writeHistoryEntry } from './lib/history';
+import {
+  trackEvent,
+  toEvidenceHostname,
+  TELEMETRY_EVENTS,
+  TELEMETRY_ENTRY_POINTS,
+} from './services/telemetry';
 import type { HistoryEntry, ProviderType } from './types/history';
 
 const BADGE_COLOR = '#6B7280';
@@ -96,7 +102,7 @@ class BackgroundService {
     }
 
     try {
-      await this.setupEventListeners();
+      this.setupEventListeners();
       await this.restoreState();
       await this.loadExemptDomains();
       await this.preloadPspConfig();
@@ -109,12 +115,12 @@ class BackgroundService {
   }
 
   /** Registers runtime, tab, and lifecycle listeners for the worker. */
-  private async setupEventListeners(): Promise<void> {
+  private setupEventListeners(): void {
     // Handle extension startup
     chrome.runtime.onStartup.addListener(() => {
       logger.info('Extension startup detected');
       // eslint-disable-next-line unicorn/prefer-await -- fire-and-forget in sync event listener
-      this.initializeServiceWorker().catch((error) => {
+      this.initializeServiceWorker().catch((error: unknown) => {
         logger.error('Failed to initialize service worker on startup:', error);
       });
     });
@@ -127,8 +133,10 @@ class BackgroundService {
       try {
         if (details.reason === 'install') {
           await this.handleFirstInstall();
+          void trackEvent(TELEMETRY_EVENTS.EXTENSION_INSTALLED);
         } else if (details.reason === 'update') {
           await this.handleUpdate(details.previousVersion);
+          void trackEvent(TELEMETRY_EVENTS.EXTENSION_UPDATED);
         }
       } catch (error) {
         logger.error('onInstalled handler failed:', error);
@@ -139,19 +147,19 @@ class BackgroundService {
     chrome.runtime.onSuspend.addListener(() => {
       logger.info('Service worker suspending');
       // eslint-disable-next-line unicorn/prefer-await -- fire-and-forget in sync event listener
-      this.persistState().catch((error) =>
+      this.persistState().catch((error: unknown) =>
         logger.error('Failed to persist state on suspend:', error),
       );
 
       // eslint-disable-next-line unicorn/prefer-await -- fire-and-forget in sync event listener
-      this.flushTabPspCache().catch((error) =>
+      this.flushTabPspCache().catch((error: unknown) =>
         logger.error('Failed to flush tab PSP cache on suspend:', error),
       );
     });
 
     // Message handling
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-      this.handleMessage(message as ChromeMessage, sender, sendResponse);
+      void this.handleMessage(message as ChromeMessage, sender, sendResponse);
       return true; // Keep message channel open for async response
     });
 
@@ -161,7 +169,7 @@ class BackgroundService {
     });
 
     chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-      this.handleTabUpdate(tabId, changeInfo, tab);
+      void this.handleTabUpdate(tabId, changeInfo, tab);
     });
 
     // Tab removal cleanup
@@ -299,7 +307,7 @@ class BackgroundService {
     // flushTabPspCache collapses bursts to at most one in-flight set() plus
     // one queued follow-up.
     // eslint-disable-next-line unicorn/prefer-await -- fire-and-forget in sync event listener
-    this.flushTabPspCache().catch((error) =>
+    this.flushTabPspCache().catch((error: unknown) =>
       logger.error('Failed to flush tab PSP cache:', error),
     );
   }
@@ -521,6 +529,52 @@ class BackgroundService {
     this.showExemptDomainIcon();
   }
 
+  /** Reports a scan attempt. Fire-and-forget; never affects behaviour. */
+  private emitScanRequested(entryPoint: string): void {
+    void trackEvent(TELEMETRY_EVENTS.SCAN_REQUESTED, {
+      entry_point: entryPoint,
+    });
+  }
+
+  /** Reports a skipped scan (exempt/restricted URL) without any domain. */
+  private emitScanSkipped(isExempt: boolean, entryPoint: string): void {
+    void trackEvent(TELEMETRY_EVENTS.SCAN_SKIPPED, {
+      skip_reason: isExempt ? 'exempt_domain' : 'special_url',
+      entry_point: entryPoint,
+    });
+  }
+
+  /**
+  Reports a detection using only PSP/provider info and a PSP-owned evidence
+  hostname. The merchant domain, full URL, and detection page are never sent.
+   */
+  private emitPspDetected(
+    pspName: string,
+    detectionInfo: PSPDetectionData['detectionInfo'] | undefined,
+  ): void {
+    const info = this.getPspInfo(pspName);
+    const slug =
+      info?.image ?? pspName.toLowerCase().replaceAll(/[^a-z0-9]/gu, '');
+    void trackEvent(TELEMETRY_EVENTS.PSP_DETECTED, {
+      provider_slug: slug,
+      provider_name: pspName,
+      provider_type: this.getProviderType(pspName),
+      evidence_domain:
+        detectionInfo === undefined
+          ? undefined
+          : toEvidenceHostname(detectionInfo.value),
+      match_type: detectionInfo?.method,
+    });
+  }
+
+  /** Reports a scan error using a coded reason only — never an error message. */
+  private emitScanError(errorCode: string, component: string): void {
+    void trackEvent(TELEMETRY_EVENTS.SCAN_ERROR, {
+      error_code: errorCode,
+      component,
+    });
+  }
+
   /** Routes messages from popup/content scripts to the relevant handler. */
   async handleMessage(
     message: ChromeMessage,
@@ -717,7 +771,7 @@ class BackgroundService {
   }
 
   private isValidProviderGroup(
-    group: Partial<PSPConfig>['orchestrators'] | Partial<PSPConfig>['tsps'],
+    group: Partial<PSPConfig>['orchestrators'],
   ): boolean {
     if (
       typeof group !== 'object' ||
@@ -855,6 +909,7 @@ class BackgroundService {
       }
 
       this.syncCurrentTabDetection(tabId, currentTabId);
+      this.emitPspDetected(pspName, data.detectionInfo);
 
       await this.recordDetectionHistory(
         tabId,
@@ -865,6 +920,7 @@ class BackgroundService {
       );
     } catch (error) {
       logger.error('Background: Error processing PSP detection:', error);
+      this.emitScanError('detection_failed', 'background_detect');
       this.resetIcon();
     }
   }
@@ -1209,10 +1265,12 @@ class BackgroundService {
 
     const isExempt = await this.isUrlExempt(tab.url);
     if (isExempt || this.isSpecialUrl(tab.url)) {
+      this.emitScanSkipped(isExempt, TELEMETRY_ENTRY_POINTS.TAB_ACTIVATION);
       this.setExemptTabState(tabId);
       return;
     }
 
+    this.emitScanRequested(TELEMETRY_ENTRY_POINTS.TAB_ACTIVATION);
     await this.injectContentScript(rawTabId);
   }
 
@@ -1282,6 +1340,29 @@ class BackgroundService {
   }
 
   /**
+  Marks an exempt or restricted tab and reports the skip. Returns true when
+  the tab was handled so the caller can stop before injecting a content
+  script.
+   */
+  private async handleRedetectExemptTab(
+    tabId: number,
+    tabUrl: string,
+  ): Promise<boolean> {
+    if (tabUrl.length === 0) {
+      return false;
+    }
+
+    const isExempt = await this.isUrlExempt(tabUrl);
+    if (!isExempt && !this.isSpecialUrl(tabUrl)) {
+      return false;
+    }
+
+    this.emitScanSkipped(isExempt, TELEMETRY_ENTRY_POINTS.REDETECT);
+    this.setExemptTabState(tabId);
+    return true;
+  }
+
+  /**
   Force a re-detection attempt on the active tab.
   @private
    */
@@ -1306,21 +1387,17 @@ class BackgroundService {
         return;
       }
 
-      const tabUrl = activeTab.url ?? '';
-      if (tabUrl.length > 0) {
-        const isExempt = await this.isUrlExempt(tabUrl);
-        if (isExempt || this.isSpecialUrl(tabUrl)) {
-          this.setExemptTabState(tabId);
-          sendResponse({
-            success: true,
-            reason: 'Tab is exempt or restricted',
-          });
-          return;
-        }
+      if (await this.handleRedetectExemptTab(tabId, activeTab.url ?? '')) {
+        sendResponse({
+          success: true,
+          reason: 'Tab is exempt or restricted',
+        });
+        return;
       }
 
       this.cleanupTabData(tabId);
       await this.setCurrentTabId(tabId);
+      this.emitScanRequested(TELEMETRY_ENTRY_POINTS.REDETECT);
       await this.injectContentScript(activeTab.id);
       sendResponse({ success: true });
     } catch (error) {
@@ -1526,7 +1603,7 @@ class BackgroundService {
           details as chrome.webRequest.WebRequestDetails,
         );
         // eslint-disable-next-line unicorn/prefer-await -- fire-and-forget in sync event listener
-        networkRequest.catch((error) => {
+        networkRequest.catch((error: unknown) => {
           logger.warn('webRequest handler error:', error);
         });
 
@@ -1627,12 +1704,14 @@ class BackgroundService {
     ) {
       const isExempt = await this.isUrlExempt(tab.url);
       if (isExempt || this.isSpecialUrl(tab.url)) {
+        this.emitScanSkipped(isExempt, TELEMETRY_ENTRY_POINTS.TAB_UPDATE);
         const currentTabId = await this.getCurrentTabId();
         if (brandedTabId !== undefined && brandedTabId === currentTabId) {
           this.setExemptTabState(brandedTabId);
         }
       } else {
         // For regular websites, inject content script for detection
+        this.emitScanRequested(TELEMETRY_ENTRY_POINTS.TAB_UPDATE);
         await this.injectContentScript(tabId);
       }
     }
@@ -1706,10 +1785,10 @@ class BackgroundService {
     }
 
     const badgeText = extraCount > 0 ? `+${extraCount}` : '';
-    chrome.action.setBadgeText({ text: badgeText });
+    void chrome.action.setBadgeText({ text: badgeText });
 
     // Neutral grey
-    chrome.action.setBadgeBackgroundColor({ color: BADGE_COLOR });
+    void chrome.action.setBadgeBackgroundColor({ color: BADGE_COLOR });
   }
 
   private sortStoredTabPsps(entries: StoredTabPsp[]): StoredTabPsp[] {
@@ -1750,10 +1829,10 @@ class BackgroundService {
     );
 
     // Add warning badge
-    chrome.action.setBadgeText({ text: '🚫' });
+    void chrome.action.setBadgeText({ text: '🚫' });
 
     // Neutral grey
-    chrome.action.setBadgeBackgroundColor({ color: BADGE_COLOR });
+    void chrome.action.setBadgeBackgroundColor({ color: BADGE_COLOR });
     logger.debug('Showing exempt domain icon with warning badge');
   }
 
@@ -1768,10 +1847,10 @@ class BackgroundService {
     );
 
     // Add searching badge
-    chrome.action.setBadgeText({ text: '🔍' });
+    void chrome.action.setBadgeText({ text: '🔍' });
 
     // Neutral grey
-    chrome.action.setBadgeBackgroundColor({ color: BADGE_COLOR });
+    void chrome.action.setBadgeBackgroundColor({ color: BADGE_COLOR });
   }
 
   /**
@@ -1885,6 +1964,7 @@ class BackgroundService {
 
       // Log other errors as warnings since they might be actionable
       logger.warn(`Failed to inject content script into tab ${tabId}:`, error);
+      this.emitScanError('injection_failed', 'content_injection');
     }
   }
 }
@@ -1893,7 +1973,7 @@ class BackgroundService {
 const backgroundService = new BackgroundService();
 
 // eslint-disable-next-line unicorn/prefer-await -- no top-level await in MV3 service workers
-backgroundService.initialize().catch((error) => {
+backgroundService.initialize().catch((error: unknown) => {
   // NOSONAR
   logger.error('Failed to initialize background service:', error);
 });

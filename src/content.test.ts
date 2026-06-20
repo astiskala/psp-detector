@@ -11,7 +11,9 @@ const domObserverStopObservingMock = jest.fn();
 const domObserverCleanupMock = jest.fn();
 
 interface RuntimeMessage {
-  action: MessageAction | string;
+  // MessageAction is a union of string literals, so `| string` would subsume it;
+  // a mock message may carry any action string.
+  action: string;
 }
 
 type MutationCallbackArgument = (mutations?: MutationRecord[]) => Promise<void>;

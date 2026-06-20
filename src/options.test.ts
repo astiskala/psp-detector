@@ -1,6 +1,7 @@
 import {
   formatDate,
   buildCSV,
+  bucketRowCount,
   filterEntries,
   getProviderTypeDistribution,
   getPspDistribution,
@@ -266,5 +267,25 @@ describe('distribution helpers', () => {
     expect(getPspDistribution([])).toEqual([]);
     expect(getSourceTypeDistribution([])).toEqual([]);
     expect(getProviderTypeDistribution([])).toEqual([]);
+  });
+});
+
+describe('bucketRowCount', () => {
+  it('buckets counts into coarse ranges instead of exact values', () => {
+    expect(bucketRowCount(0)).toBe('0');
+    expect(bucketRowCount(1)).toBe('1-10');
+    expect(bucketRowCount(10)).toBe('1-10');
+    expect(bucketRowCount(11)).toBe('11-50');
+    expect(bucketRowCount(50)).toBe('11-50');
+    expect(bucketRowCount(51)).toBe('51-100');
+    expect(bucketRowCount(100)).toBe('51-100');
+    expect(bucketRowCount(101)).toBe('101-500');
+    expect(bucketRowCount(500)).toBe('101-500');
+    expect(bucketRowCount(501)).toBe('500+');
+  });
+
+  it('clamps invalid input to the zero bucket', () => {
+    expect(bucketRowCount(-5)).toBe('0');
+    expect(bucketRowCount(NaN)).toBe('0');
   });
 });

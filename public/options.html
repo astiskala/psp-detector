@@ -20,6 +20,96 @@
         flex-wrap: wrap;
       }
 
+      .settings-dialog {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--card-shadow);
+        color: var(--text);
+        max-width: 440px;
+        padding: 20px;
+        width: calc(100% - 32px);
+      }
+
+      .settings-dialog::backdrop {
+        background: rgba(0, 0, 0, 0.5);
+      }
+
+      .settings-dialog-header {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 4px;
+      }
+
+      .settings-dialog-title {
+        font-size: 18px;
+        margin: 0;
+      }
+
+      .settings-dialog-close {
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        cursor: pointer;
+        font-size: 24px;
+        line-height: 1;
+        padding: 4px 8px;
+      }
+
+      .settings-dialog-close:hover {
+        color: var(--text);
+      }
+
+      .settings-section {
+        border-top: 1px solid var(--border);
+        padding: 14px 0;
+      }
+
+      .settings-section:last-child {
+        padding-bottom: 0;
+      }
+
+      .settings-section-title {
+        color: var(--text-secondary);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        margin: 0 0 8px;
+        text-transform: uppercase;
+      }
+
+      .settings-links {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .settings-links a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+
+      .settings-links a:hover {
+        text-decoration: underline;
+      }
+
+      .settings-toggle {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+      }
+
+      .settings-hint {
+        color: var(--text-secondary);
+        font-size: 12px;
+        margin: 8px 0 0;
+        max-width: 60ch;
+      }
+
       .field-control {
         background: var(--surface);
         border: 1px solid var(--border);
@@ -229,9 +319,80 @@
       </div>
       <div class="header-actions">
         <button class="btn btn-secondary" id="exportBtn">Export CSV</button>
-        <button class="btn btn-danger" id="clearBtn">Clear History</button>
+        <button class="btn btn-secondary" id="settingsBtn">Settings</button>
       </div>
     </header>
+
+    <dialog
+      id="settingsDialog"
+      class="settings-dialog"
+      aria-labelledby="settingsTitle"
+    >
+      <div class="settings-dialog-header">
+        <h2 id="settingsTitle" class="settings-dialog-title">Settings</h2>
+        <button
+          type="button"
+          class="settings-dialog-close"
+          id="settingsCloseBtn"
+          aria-label="Close settings"
+        >
+          &times;
+        </button>
+      </div>
+
+      <section class="settings-section">
+        <label class="settings-toggle">
+          <input type="checkbox" id="telemetryToggle" />
+          <span>Share anonymous usage analytics</span>
+        </label>
+        <p class="settings-hint">
+          Helps improve PSP Detector by sending aggregate feature usage and
+          detected PSP names only. No page URLs, domains, page titles, page
+          content, network request URLs, or payment data are ever sent. You can
+          turn this off at any time.
+        </p>
+      </section>
+
+      <section class="settings-section">
+        <h3 class="settings-section-title">History</h3>
+        <button class="btn btn-danger" id="clearBtn">Clear History</button>
+      </section>
+
+      <section class="settings-section">
+        <h3 class="settings-section-title">About</h3>
+        <ul class="settings-links">
+          <li>
+            <a href="mailto:psp-detector@adamstiskala.com"
+              >Suggest improvements</a
+            >
+          </li>
+          <li>
+            <a
+              href="https://chromewebstore.google.com/detail/psp-detector/iblfofcbjioicompkmafdehbdakdbjle/reviews"
+              target="_blank"
+              rel="noopener"
+              >Rate this extension</a
+            >
+          </li>
+          <li>
+            <a
+              href="https://astiskala.github.io/psp-detector/privacy-policy.html"
+              target="_blank"
+              rel="noopener"
+              >Privacy policy</a
+            >
+          </li>
+          <li>
+            <a
+              href="https://github.com/astiskala/psp-detector"
+              target="_blank"
+              rel="noopener"
+              >View on GitHub</a
+            >
+          </li>
+        </ul>
+      </section>
+    </dialog>
 
     <main class="page-content">
       <div class="controls">

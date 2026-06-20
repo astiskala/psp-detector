@@ -39,6 +39,30 @@
       webpage to determine the PSP in use.
     </p>
 
+    <h2>2a. Anonymous Usage Analytics</h2>
+    <p>
+      To understand which features are used and to improve detection coverage,
+      the Extension may send privacy-preserving, aggregate usage analytics via
+      the Google Analytics 4 Measurement Protocol. This is optional and can be
+      turned off at any time from the Extension's Options page (Settings →
+      "Share anonymous usage analytics").
+    </p>
+    <p>
+      <strong>What may be sent:</strong> anonymous feature-usage events (such as
+      opening the popup, requesting or skipping a scan, opening or exporting
+      history, and changing settings); for detections, the detected payment
+      provider's name, type, and a provider-owned evidence hostname (for example
+      <code>checkoutshopper-live.adyen.com</code>); a randomly generated
+      identifier, a short-lived session identifier, and the Extension version.
+      Exports report only the file format and a coarse row-count range.
+    </p>
+    <p>
+      <strong>What is never sent:</strong> the websites or merchant domains you
+      visit, full URLs, page titles, page content (HTML), raw network request
+      URLs, checkout paths, query strings, form data, payment information, or
+      error stack traces. No browsing history is transmitted.
+    </p>
+
     <h2>3. Permissions</h2>
     <ul>
       <li>

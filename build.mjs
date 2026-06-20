@@ -40,6 +40,17 @@ const sharedConfig = {
     'process.env.NODE_ENV': process.env.DEBUG
       ? '"development"'
       : '"production"',
+    // GA4 Measurement Protocol credentials are injected at build time. When
+    // unset (local/dev builds) these resolve to empty strings and telemetry
+    // safely no-ops. NOTE: the API secret is embedded in the packaged
+    // extension — acceptable here because the design intentionally has no
+    // backend.
+    'process.env.GA_MEASUREMENT_ID': JSON.stringify(
+      process.env.GA_MEASUREMENT_ID ?? '',
+    ),
+    'process.env.GA_API_SECRET': JSON.stringify(
+      process.env.GA_API_SECRET ?? '',
+    ),
   },
 
   // TypeScript-specific optimizations

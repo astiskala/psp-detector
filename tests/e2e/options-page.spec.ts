@@ -209,7 +209,69 @@ test('options page clear history empties table', async ({ page }) => {
   await page.goto(optionsUrl, { waitUntil: 'load' });
 
   await expect(page.locator(HISTORY_ROWS_SELECTOR)).toHaveCount(1);
+  // Clear History now lives inside the Settings dialog.
+  await page.click('#settingsBtn');
   await page.click('#clearBtn');
   await expect(page.locator(HISTORY_ROWS_SELECTOR)).toHaveCount(0);
   await expect(page.locator('#emptyState')).toBeVisible();
+});
+
+test('settings dialog opens, lists links, and closes', async ({ page }) => {
+  await seedChromeStorage(page, historyEntries);
+  await page.goto(optionsUrl, { waitUntil: 'load' });
+
+  const dialog = page.locator('#settingsDialog');
+  await expect(dialog).toBeHidden();
+
+  await page.click('#settingsBtn');
+  await expect(dialog).toBeVisible();
+
+  // Suggest improvements reuses the popup's mailto; the other links are present.
+  await expect(
+    dialog.locator('a[href^="mailto:psp-detector@adamstiskala.com"]'),
+  ).toBeVisible();
+  await expect(dialog.locator('a[href*="privacy-policy.html"]')).toBeVisible();
+  await expect(
+    dialog.locator('a[href="https://github.com/astiskala/psp-detector"]'),
+  ).toBeVisible();
+
+  // Escape closes the native dialog.
+  await page.keyboard.press('Escape');
+  await expect(dialog).toBeHidden();
+});
+
+// GA Measurement Protocol requests cannot be asserted end-to-end here because
+// the CI build ships without GA credentials (build-time injected), so telemetry
+// intentionally no-ops. The payload shape and privacy boundary are covered by
+// the unit tests in src/services/telemetry.test.ts. This E2E covers the visible
+// opt-out control on the real built page and its persistence.
+test('options page telemetry toggle is visible and persists opting out', async ({
+  page,
+}) => {
+  const gaRequests: string[] = [];
+  await page.route('**://www.google-analytics.com/**', async (route) => {
+    gaRequests.push(route.request().url());
+    await route.fulfill({ status: 204, body: '' });
+  });
+
+  await seedChromeStorage(page, historyEntries);
+  await page.goto(optionsUrl, { waitUntil: 'load' });
+
+  await page.click('#settingsBtn');
+  const toggle = page.locator('#telemetryToggle');
+  await expect(toggle).toBeChecked();
+
+  await toggle.uncheck();
+
+  await expect
+    .poll(async () =>
+      page.evaluate(async () => {
+        const result = await chrome.storage.local.get('telemetryEnabled');
+        return (result as Record<string, unknown>)['telemetryEnabled'];
+      }),
+    )
+    .toBe(false);
+
+  // No GA credentials are bundled in the test build, so nothing is ever sent.
+  expect(gaRequests).toEqual([]);
 });
