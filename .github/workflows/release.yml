@@ -54,6 +54,17 @@ jobs:
       - name: Run E2E tests (Playwright)
         run: ./node_modules/.bin/playwright test --config=playwright.config.ts --project=e2e-chromium --reporter=line
 
+      # Rebuild dist/ with the GA4 telemetry credentials baked in. This runs
+      # only here — after every test phase — so the credential-free build is
+      # what lint/unit/integration/e2e tests exercise (the extension fires no
+      # real telemetry during CI). Only the artifact that gets zipped and
+      # released below carries the credentials.
+      - name: Build with telemetry credentials
+        run: pnpm run build
+        env:
+          GA_MEASUREMENT_ID: ${{ secrets.GA_MEASUREMENT_ID }}
+          GA_API_SECRET: ${{ secrets.GA_API_SECRET }}
+
       - name: Get version from manifest
         id: manifest
         run: |
