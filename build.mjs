@@ -76,7 +76,8 @@ async function generatePspImages() {
   console.log(`Found ${pspPngs.length} PSP images in source.`);
 
   // cleanup old
-  for (const f of await fs.readdir(distributionDirectory)) {
+  const existingDistributionFiles = await fs.readdir(distributionDirectory);
+  for (const f of existingDistributionFiles) {
     if (/_48\.png$|_128\.png$/.test(f)) {
       await fs.rm(path.join(distributionDirectory, f), { force: true });
     }

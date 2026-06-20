@@ -278,11 +278,13 @@ export class PSPDetectorService {
     if (!this.pspConfig) return;
 
     for (const psp of getAllProviders(this.pspConfig)) {
-      if (psp.regex) {
-        const compiled = safeCompileRegex(psp.regex);
-        if (compiled) {
-          psp.compiledRegex = compiled;
-        }
+      if (!psp.regex) {
+        continue;
+      }
+
+      const compiled = safeCompileRegex(psp.regex);
+      if (compiled) {
+        psp.compiledRegex = compiled;
       }
     }
   }

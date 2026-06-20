@@ -64,7 +64,7 @@ describe('PSP image assets', () => {
       console.error(`\n${missing.join('\n')}`);
     }
 
-    expect(missing.length).toBe(0);
+    expect(missing).toHaveLength(0);
   });
 
   it('should have 48px and 128px images for every PSP in dist after build', () => {
@@ -85,7 +85,7 @@ describe('PSP image assets', () => {
       console.error(`\n${missing.join('\n')}`);
     }
 
-    expect(missing.length).toBe(0);
+    expect(missing).toHaveLength(0);
   });
 
   it('should have valid regex for every PSP with regex pattern and not match every website', () => {

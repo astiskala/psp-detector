@@ -763,11 +763,9 @@ class BackgroundService {
     }
 
     // Validate tsps if present
-    if (config.tsps !== undefined && !this.isValidProviderGroup(config.tsps)) {
-      return false;
-    }
-
-    return true;
+    return !(
+      config.tsps !== undefined && !this.isValidProviderGroup(config.tsps)
+    );
   }
 
   private isValidProviderGroup(
@@ -1144,7 +1142,7 @@ class BackgroundService {
       (id): id is number => id !== null && id !== undefined,
     );
 
-    let resolvedTabId: number | undefined = undefined;
+    let resolvedTabId: number | undefined;
     let psps: StoredTabPsp[] = [];
     for (const tabId of preferredTabIds) {
       const entries = this.tabPspCache.get(tabId) ?? [];
@@ -1488,8 +1486,7 @@ class BackgroundService {
       .replace(/^https?:\/\//u, '')
       .split('/', 1)[0]
       ?.replace(/^\*\./u, '')
-      .replaceAll(':', '')
-      .replaceAll('*', '')
+      .replaceAll(/[:*]/g, '')
       .toLowerCase();
 
     if (hostCandidate === undefined || hostCandidate.length === 0) {

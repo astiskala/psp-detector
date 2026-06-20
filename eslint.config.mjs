@@ -169,6 +169,14 @@ const testTypeScriptRuleOverrides = {
   '@typescript-eslint/no-invalid-void-type': 'off',
   // Typed DOM-accessor fixtures use caller-supplied element-type casts.
   '@typescript-eslint/no-unnecessary-type-parameters': 'off',
+  // Playwright integration/e2e specs drive the browser and assert through
+  // navigation, visibility, and network expectations the rule cannot see, so
+  // it misfires on legitimate end-to-end flows.
+  'sonarjs/assertions-in-tests': 'off',
+  // The explicit `new Promise((resolve) => …)` resolver-extraction pattern is
+  // intentional in fixtures and avoids depending on Promise.withResolvers in
+  // the jsdom test target.
+  'unicorn/prefer-promise-with-resolvers': 'off',
 };
 
 export default [
@@ -232,8 +240,19 @@ export default [
       'unicorn/prefer-dispose': 'off',
       'unicorn/prefer-path2d': 'off',
       'unicorn/prefer-temporal': 'off',
-      // rel is a legitimate HTML attribute name, not an abbreviation
-      'unicorn/prevent-abbreviations': ['error', { allowList: { rel: true } }],
+      // consistent-boolean-name (new in unicorn 68) mandates an is/has/can/…
+      // prefix on every boolean. This codebase uses clear unprefixed names
+      // (enabled, granted, immediate, deferCharts) including on public function
+      // params; adopting the convention is broad churn with no clarity gain.
+      'unicorn/consistent-boolean-name': 'off',
+      // no-top-level-assignment-in-function (new in unicorn 68) fights two
+      // deliberate patterns here: lazily-initialised module singletons (provider
+      // lookup maps, the serialised history-write chain) and the standard Jest
+      // idiom of declaring `let mock` at module scope and assigning it in setup.
+      'unicorn/no-top-level-assignment-in-function': 'off',
+      // rel is a legitimate HTML attribute name, not an abbreviation.
+      // `prevent-abbreviations` was renamed to `name-replacements` in unicorn 68.
+      'unicorn/name-replacements': ['error', { allowList: { rel: true } }],
     },
   },
 
@@ -280,6 +299,9 @@ export default [
       'no-undef': 'off',
       // Node.js tools use CommonJS/require — prefer-module would flag all require() calls
       'unicorn/prefer-module': 'off',
+      // CLI tool scripts legitimately terminate with an explicit exit status.
+      'unicorn/no-process-exit': 'off',
+      'no-process-exit': 'off',
     },
   },
 

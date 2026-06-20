@@ -153,10 +153,10 @@ async function fetchBuffer(url, { timeout = TIMEOUT_MS } = {}) {
       signal: controller.signal,
     });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const buf = Buffer.from(await response.arrayBuffer());
+    const buffer = Buffer.from(await response.arrayBuffer());
     return {
       ok: true,
-      buffer: buf,
+      buffer: buffer,
       status: response.status,
       url: response.url,
       headers: response.headers,
@@ -693,12 +693,7 @@ async function expandAndUniqCandidates(candidates) {
 }
 
 function isValidUrlCandidate(c) {
-  try {
-    new URL(c.url);
-    return true;
-  } catch {
-    return false;
-  }
+  return URL.canParse(c.url);
 }
 
 function collectCommonPathCandidateForBase(base, p, commonCands) {

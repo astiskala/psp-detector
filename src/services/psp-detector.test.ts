@@ -508,7 +508,7 @@ describe('PSPDetectorService', () => {
     // The prefix has '\n\n' which we replicate, but those land near pos 0.
     const content = `${filler}\n${tail}`;
 
-    const cfg: PSPConfig = {
+    const config: PSPConfig = {
       psps: [
         {
           name: pspName('Marker'),
@@ -520,7 +520,7 @@ describe('PSPDetectorService', () => {
       ],
     };
     const localService = new PSPDetectorService();
-    localService.initialize(cfg);
+    localService.initialize(config);
     localService.setExemptDomains([]);
 
     const oversized = localService.detectPSP(url, content);
@@ -537,7 +537,7 @@ describe('PSPDetectorService', () => {
     // return the full input). We assert the detection still produces a
     // result without throwing.
     const limit = 1024 * 1024;
-    const cfg: PSPConfig = {
+    const config: PSPConfig = {
       psps: [
         {
           name: pspName('Marker'),
@@ -549,7 +549,7 @@ describe('PSPDetectorService', () => {
       ],
     };
     const localService = new PSPDetectorService();
-    localService.initialize(cfg);
+    localService.initialize(config);
     localService.setExemptDomains([]);
 
     const noNewlines = 'a'.repeat(limit + 1000);

@@ -71,26 +71,28 @@ export class DOMObserverService {
    */
   private isRelevantNode(nodeList: NodeList): boolean {
     for (const node of nodeList) {
-      if (node.nodeType === Node.ELEMENT_NODE) {
-        const element = node as Element;
-        const isRelevantLink =
-          element.tagName === 'LINK' &&
-          this.isRelevantLinkElement(element as HTMLLinkElement);
+      if (node.nodeType !== Node.ELEMENT_NODE) {
+        continue;
+      }
 
-        // Check for payment-related elements
-        if (
-          element.tagName === 'SCRIPT' ||
-          element.tagName === 'IFRAME' ||
-          element.tagName === 'FORM' ||
-          isRelevantLink ||
-          element.querySelector?.(
-            'script, iframe, form, link[rel="preconnect"], ' +
-              'link[rel="dns-prefetch"], link[rel="preload"], ' +
-              'link[rel="modulepreload"]',
-          )
-        ) {
-          return true;
-        }
+      const element = node as Element;
+      const isRelevantLink =
+        element.tagName === 'LINK' &&
+        this.isRelevantLinkElement(element as HTMLLinkElement);
+
+      // Check for payment-related elements
+      if (
+        element.tagName === 'SCRIPT' ||
+        element.tagName === 'IFRAME' ||
+        element.tagName === 'FORM' ||
+        isRelevantLink ||
+        element.querySelector?.(
+          'script, iframe, form, link[rel="preconnect"], ' +
+            'link[rel="dns-prefetch"], link[rel="preload"], ' +
+            'link[rel="modulepreload"]',
+        )
+      ) {
+        return true;
       }
     }
 
@@ -111,14 +113,9 @@ export class DOMObserverService {
       return true;
     }
 
-    if (
-      (rel.has('preload') || rel.has('modulepreload')) &&
-      link.as === 'script'
-    ) {
-      return true;
-    }
-
-    return false;
+    return (
+      (rel.has('preload') || rel.has('modulepreload')) && link.as === 'script'
+    );
   }
 
   private isRelevantAttributeMutation(mutation: MutationRecord): boolean {

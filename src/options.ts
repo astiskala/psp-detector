@@ -500,7 +500,7 @@ async function loadProviderIcons(): Promise<void> {
     for (const provider of getAllProviders(json)) {
       const key = normalizeProviderName(provider.name);
       providerIconByName.set(key, `images/${provider.image}_48.png`);
-      providerUrlByName.set(key, String(provider.url));
+      providerUrlByName.set(key, provider.url);
       providerSummaryByName.set(key, provider.summary);
     }
   } catch (error) {

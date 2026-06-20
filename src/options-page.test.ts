@@ -328,7 +328,7 @@ describe('options page wiring', () => {
 
     const historyBody =
       getRequiredElementById<HTMLTableSectionElement>('historyBody');
-    expect(historyBody.querySelectorAll(':scope tr').length).toBe(3);
+    expect(historyBody.querySelectorAll(':scope tr')).toHaveLength(3);
 
     const firstDomainIcon =
       getRequiredElement<HTMLImageElement>('.domain-icon');
@@ -344,7 +344,7 @@ describe('options page wiring', () => {
     search.value = 'does-not-exist';
     search.dispatchEvent(new Event('input'));
     await flushAsync(160);
-    expect(historyBody.querySelectorAll(':scope tr').length).toBe(0);
+    expect(historyBody.querySelectorAll(':scope tr')).toHaveLength(0);
 
     const emptyState = getRequiredElementById<HTMLElement>('emptyState');
     expect(emptyState.hidden).toBe(false);
@@ -356,7 +356,7 @@ describe('options page wiring', () => {
     pspFilter.value = 'Stripe';
     pspFilter.dispatchEvent(new Event('change'));
     await flushAsync();
-    expect(historyBody.querySelectorAll(':scope tr').length).toBe(1);
+    expect(historyBody.querySelectorAll(':scope tr')).toHaveLength(1);
   });
 
   it('exports history and applies clear confirmation behavior', async () => {
@@ -388,7 +388,7 @@ describe('options page wiring', () => {
     getRequiredElementById<HTMLButtonElement>('clearBtn').click();
     await flushAsync();
     expect(clearHistoryMock).toHaveBeenCalledTimes(1);
-    expect(historyBody.querySelectorAll(':scope tr').length).toBe(0);
+    expect(historyBody.querySelectorAll(':scope tr')).toHaveLength(0);
 
     confirmSpy.mockReturnValueOnce(true);
     clearHistoryMock.mockRejectedValueOnce(new Error('Clear failed'));

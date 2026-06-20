@@ -585,14 +585,16 @@ describe('background service onboarding and re-detect flow', () => {
       }),
     });
 
-    const setCallsBeforeSuspend = mocks.sessionSet.mock.calls.length;
+    const sessionSetCallsBeforeSuspend = mocks.sessionSet.mock.calls.length;
 
     onSuspendListener();
     await flushAsyncTasks();
 
     // onSuspend keeps acting as a safety net but is a no-op here because the
     // cache is already clean.
-    expect(mocks.sessionSet.mock.calls.length).toBe(setCallsBeforeSuspend);
+    expect(mocks.sessionSet.mock.calls).toHaveLength(
+      sessionSetCallsBeforeSuspend,
+    );
   });
 
   it('registers webRequest listener with narrowed request types', async () => {

@@ -82,10 +82,12 @@ describe('PSP Data Validation', () => {
       const allProviders = getAllProviders(pspConfig);
 
       for (const provider of allProviders) {
-        if (provider.regex && typeof provider.regex === 'string') {
-          const compiled = new RegExp(provider.regex, 'i');
-          expect(compiled).toBeInstanceOf(RegExp);
+        if (!(provider.regex && typeof provider.regex === 'string')) {
+          continue;
         }
+
+        const compiled = new RegExp(provider.regex, 'i');
+        expect(compiled).toBeInstanceOf(RegExp);
       }
     });
 

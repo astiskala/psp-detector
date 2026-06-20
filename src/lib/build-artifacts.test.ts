@@ -57,7 +57,7 @@ describe('build artifacts', () => {
   it('popup includes a history-link action', () => {
     const popupHtml = path.join(__dirname, '..', '..', 'public', 'popup.html');
     const html = fs.readFileSync(popupHtml, 'utf8');
-    expect(html.includes('id="history-link"')).toBe(true);
+    expect(html).toContain('id="history-link"');
   });
 
   it('onboarding page includes permission instructions', () => {
@@ -69,8 +69,8 @@ describe('build artifacts', () => {
       'onboarding.html',
     );
     const html = fs.readFileSync(onboardingHtml, 'utf8');
-    expect(html.includes('id="grant-host-access"')).toBe(true);
-    expect(html.includes('Grant required permissions')).toBe(true);
+    expect(html).toContain('id="grant-host-access"');
+    expect(html).toContain('Grant required permissions');
   });
 
   it('extension pages reference the shared stylesheet', () => {
@@ -79,7 +79,7 @@ describe('build artifacts', () => {
     for (const page of pages) {
       const htmlPath = path.join(__dirname, '..', '..', 'public', page);
       const html = fs.readFileSync(htmlPath, 'utf8');
-      expect(html.includes('href="common.css"')).toBe(true);
+      expect(html).toContain('href="common.css"');
     }
   });
 });

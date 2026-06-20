@@ -388,14 +388,10 @@ class ContentScript {
       return true;
     }
 
-    if (
+    return (
       (relSet.has('preload') || relSet.has('modulepreload')) &&
       link.as.toLowerCase() === 'script'
-    ) {
-      return true;
-    }
-
-    return false;
+    );
   }
 
   private determineSourceType(value: string, sources: ScanSources): SourceType {
