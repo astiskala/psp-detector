@@ -42,6 +42,11 @@ const strictTypeScriptRules = {
   '@typescript-eslint/prefer-nullish-coalescing': 'error',
   '@typescript-eslint/prefer-optional-chain': 'error',
   '@typescript-eslint/no-meaningless-void-operator': 'error',
+  // Lock class fields that are only assigned in the constructor as `readonly`,
+  // and flag the remaining type-safety gaps the strict preset leaves open.
+  '@typescript-eslint/prefer-readonly': 'error',
+  '@typescript-eslint/no-unnecessary-parameter-property-assignment': 'error',
+  '@typescript-eslint/no-unsafe-unary-minus': 'error',
   '@typescript-eslint/no-confusing-void-expression': [
     'error',
     { ignoreArrowShorthand: true },

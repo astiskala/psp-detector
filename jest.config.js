@@ -85,10 +85,10 @@ module.exports = {
       lines: 88,
     },
     './src/services/telemetry.ts': {
-      statements: 90,
-      branches: 82,
-      functions: 92,
-      lines: 90,
+      statements: 98,
+      branches: 92,
+      functions: 95,
+      lines: 98,
     },
   },
 
