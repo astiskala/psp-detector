@@ -37,7 +37,7 @@
     "@playwright/test": "^1.61.0",
     "@types/chrome": "^0.2.0",
     "@types/jest": "^30.0.0",
-    "@types/node": "^26.0.0",
+    "@types/node": "^26.0.1",
     "cheerio": "^1.2.0",
     "dependency-cruiser": "^17.4.3",
     "esbuild": "^0.28.1",
