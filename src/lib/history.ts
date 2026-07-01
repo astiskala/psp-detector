@@ -7,9 +7,7 @@ export const HISTORY_ENTRY_DEBOUNCE_MS = 15 * 60_000;
 export const HISTORY_ENTRY_MERGE_WINDOW_MS = 30_000;
 
 type EntryStatus =
-  | { kind: 'merge'; index: number }
-  | { kind: 'debounce' }
-  | { kind: 'none' };
+  { kind: 'merge'; index: number } | { kind: 'debounce' } | { kind: 'none' };
 
 function normalizeDomain(domain: string): string {
   return domain.trim().toLowerCase();

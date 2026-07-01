@@ -261,8 +261,7 @@ describe('content bootstrap', () => {
     await flushAsyncTasks();
 
     const mutationCallback = domObserverInitializeMock.mock.calls[0]?.[0] as
-      | MutationCallbackArgument
-      | undefined;
+      MutationCallbackArgument | undefined;
     expect(mutationCallback).toBeDefined();
 
     detectPSPMock.mockClear();
