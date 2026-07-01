@@ -23,7 +23,7 @@
 
   <body>
     <h1>Privacy Policy for PSP Detector</h1>
-    <p>Last updated: 28 September 2024</p>
+    <p>Last updated: 1 July 2026</p>
 
     <h2>1. Introduction</h2>
     <p>
@@ -34,9 +34,9 @@
 
     <h2>2. Information We Collect</h2>
     <p>
-      The Extension does not collect, store, or transmit any personal data or
-      sensitive information. It operates by reading static metadata from the
-      webpage to determine the PSP in use.
+      The Extension is designed to minimise data collection. It primarily
+      operates by reading static metadata from the webpage to determine the PSP
+      in use.
     </p>
 
     <h2>2a. Anonymous Usage Analytics</h2>
@@ -55,6 +55,16 @@
       <code>checkoutshopper-live.adyen.com</code>); a randomly generated
       identifier, a short-lived session identifier, and the Extension version.
       Exports report only the file format and a coarse row-count range.
+    </p>
+    <p>
+      <strong>Coarse environment information:</strong> to understand where and
+      on what platforms the Extension is used, each event also includes a
+      coarse, country-level location, your timezone, operating system, and
+      browser interface language. The country is resolved via Cloudflare trace
+      (<code>www.cloudflare.com/cdn-cgi/trace</code>) and only the two-letter
+      country code is attached to telemetry events. Raw IP values are not stored
+      by the Extension, and no city-level or precise location is determined or
+      sent.
     </p>
     <p>
       <strong>What is never sent:</strong> the websites or merchant domains you
@@ -84,7 +94,9 @@
     <p>
       All information processed by the Extension is temporary and solely used to
       identify and display the relevant PSP information, including its logo and
-      a short description. No data is stored or shared with third parties.
+      a short description. Anonymous telemetry events are sent to Google
+      Analytics, and country code resolution requests are sent to Cloudflare as
+      described above.
     </p>
 
     <h2>5. Security</h2>

@@ -214,6 +214,10 @@ is loaded. Telemetry is sent only from the extension's own contexts
 (service worker, popup, options page) — never from the content script running on
 merchant pages.
 
+For the full event catalog, the GA4 custom dimensions that make event
+parameters reportable, and the usage dashboard, see
+[docs/analytics.md](docs/analytics.md).
+
 ### What is collected
 
 Aggregate feature usage and detection outcomes only:
@@ -228,6 +232,10 @@ Aggregate feature usage and detection outcomes only:
   expiry), the extension version, and `engagement_time_msec`.
 - For exports: the format (`csv`) and a coarse **row-count bucket** (e.g.
   `11-50`) — never the exported rows.
+- Coarse environment context on every event: **country** (`user_country`,
+  ISO-2), **timezone** (`user_timezone`), **OS** (`user_os`), and **UI
+  language** (`ui_language`). Country is resolved via Cloudflare trace and only
+  the two-letter country code is retained/sent; raw IP is never stored.
 
 ### What is NOT collected
 
