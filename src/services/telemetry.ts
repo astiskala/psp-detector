@@ -1,21 +1,22 @@
 /**
-Privacy-preserving telemetry service built on the GA4 Measurement Protocol.
- 
-It reports aggregate feature usage and detection outcomes without ever
-transmitting merchant browsing data: no page URLs, domains, titles, HTML,
-network request URLs, or payment data are sent. Only the small, explicitly
-constructed parameter sets passed by callers are forwarded, after
-sanitisation, and PSP-owned evidence is reduced to a hostname.
- 
-GA credentials are injected at build time (see `build.mjs`). When they are
-absent — local/dev builds — telemetry is a safe no-op. Every code path here
-swallows its own failures so telemetry can never affect extension behaviour.
+ * Privacy-preserving telemetry service built on the GA4 Measurement Protocol.
+ *
+ * It reports aggregate feature usage and detection outcomes without ever
+ * transmitting merchant browsing data: no page URLs, domains, titles, HTML,
+ * network request URLs, or payment data are sent. Only the small, explicitly
+ * constructed parameter sets passed by callers are forwarded, after
+ * sanitisation, and PSP-owned evidence is reduced to a hostname.
+ *
+ * GA credentials are injected at build time (see `build.mjs`). When they are
+ * absent — local/dev builds — telemetry is a safe no-op. Every code path here
+ * swallows its own failures so telemetry can never affect extension behaviour.
  */
 import { logger } from '../lib/utilities';
 import { STORAGE_KEYS } from '../lib/storage-keys';
 
 const GA_COLLECT_ENDPOINT = 'https://www.google-analytics.com/mp/collect';
 const GA_DEBUG_ENDPOINT = 'https://www.google-analytics.com/debug/mp/collect';
+const CLOUDFLARE_TRACE_ENDPOINT = 'https://www.cloudflare.com/cdn-cgi/trace';
 
 /** Session is considered expired after this much inactivity (30 minutes). */
 const SESSION_EXPIRY_MS = 30 * 60_000;
@@ -72,6 +73,8 @@ interface TelemetrySession {
   id: string;
   lastActivity: number;
 }
+
+const TELEMETRY_COUNTRY_CODE_KEY = STORAGE_KEYS.TELEMETRY_COUNTRY_CODE;
 
 /**
 Reads GA credentials. esbuild replaces these `process.env` reads with string
@@ -295,6 +298,120 @@ export function toEvidenceHostname(
   }
 }
 
+/** Returns the IANA timezone (e.g. `Asia/Singapore`) if the runtime exposes it. */
+function getTimezone(): string | undefined {
+  try {
+    const formatter = new Intl.DateTimeFormat();
+    return formatter.resolvedOptions().timeZone;
+  } catch {
+    return undefined;
+  }
+}
+
+/** Returns the browser UI language (e.g. `en-GB`), falling back to navigator. */
+function getUiLanguage(): string | undefined {
+  try {
+    return chrome.i18n.getUILanguage();
+  } catch {
+    // chrome.i18n is unavailable outside the extension runtime; fall back.
+  }
+
+  try {
+    return navigator.language;
+  } catch {
+    return undefined;
+  }
+}
+
+/** Returns the OS platform (`mac`/`win`/`linux`/…) if the runtime exposes it. */
+async function getOsPlatform(): Promise<string | undefined> {
+  try {
+    const info = await chrome.runtime.getPlatformInfo();
+    return info.os;
+  } catch {
+    return undefined;
+  }
+}
+
+function isIsoCountryCode(value: unknown): value is string {
+  return typeof value === 'string' && /^[A-Z]{2}$/u.test(value);
+}
+
+/** Parses the country code from Cloudflare's trace response (`loc=US`). */
+function parseCountryFromCloudflareTrace(payload: string): string | undefined {
+  const match = /^loc=([A-Z]{2})$/mu.exec(payload);
+  return match?.[1];
+}
+
+/**
+Returns an ISO-2 country code from Cloudflare trace and caches only that code
+in session storage. Raw IP values in the trace payload are never persisted.
+ */
+async function getCountryCode(): Promise<string | undefined> {
+  try {
+    const cached = await chrome.storage.session.get(TELEMETRY_COUNTRY_CODE_KEY);
+    const value = cached[TELEMETRY_COUNTRY_CODE_KEY];
+    if (isIsoCountryCode(value)) {
+      return value;
+    }
+  } catch {
+    // Best-effort cache read.
+  }
+
+  let countryCode: string | undefined;
+  try {
+    const response = await fetch(CLOUDFLARE_TRACE_ENDPOINT, {
+      method: 'GET',
+      cache: 'no-store',
+    });
+    if (response.ok) {
+      countryCode = parseCountryFromCloudflareTrace(await response.text());
+    }
+  } catch {
+    // Best-effort country lookup.
+  }
+
+  if (countryCode !== undefined) {
+    try {
+      await chrome.storage.session.set({
+        [TELEMETRY_COUNTRY_CODE_KEY]: countryCode,
+      });
+    } catch {
+      // Best-effort cache write.
+    }
+  }
+
+  return countryCode;
+}
+
+/**
+Gathers privacy-preserving user context attached to every event: country,
+timezone, OS platform, and UI language. Only values that are actually
+resolved are returned, so absent signals are never sent.
+ */
+async function getUserContext(): Promise<Record<string, string>> {
+  const country = await getCountryCode();
+  const timezone = getTimezone();
+  const os = await getOsPlatform();
+  const language = getUiLanguage();
+
+  const context: Record<string, string> = {};
+  if (country !== undefined) {
+    context['user_country'] = country;
+  }
+  if (timezone !== undefined) {
+    context['user_timezone'] = timezone;
+  }
+  if (os !== undefined) {
+    context['user_os'] = os;
+  }
+  if (language !== undefined) {
+    context['ui_language'] = language;
+  }
+
+  return context;
+}
+
 async function sendEvent(
   name: TelemetryEventName,
   parameters: TelemetryParameters,
@@ -308,13 +425,15 @@ async function sendEvent(
     return;
   }
 
-  const [clientId, sessionId] = await Promise.all([
+  const [clientId, sessionId, userContext] = await Promise.all([
     getClientId(),
     getSessionId(),
+    getUserContext(),
   ]);
 
   const eventParameters = {
     ...sanitizeParameters(parameters),
+    ...userContext,
     event_source: EVENT_SOURCE,
     extension_version: getExtensionVersion(),
     session_id: sessionId,
@@ -337,11 +456,11 @@ async function sendEvent(
 }
 
 /**
-Sends a telemetry event via the GA4 Measurement Protocol.
- 
-Fire-and-forget by design: it never throws and never blocks extension
-behaviour. Unknown event names, missing GA credentials, and a disabled
-telemetry setting all result in no network request.
+ * Sends a telemetry event via the GA4 Measurement Protocol.
+ *
+ * Fire-and-forget by design: it never throws and never blocks extension
+ * behaviour. Unknown event names, missing GA credentials, and a disabled
+ * telemetry setting all result in no network request.
  */
 export async function trackEvent(
   name: string,

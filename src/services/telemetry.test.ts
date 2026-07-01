@@ -10,6 +10,7 @@ import { STORAGE_KEYS } from '../lib/storage-keys';
 const GA_MEASUREMENT_ID = 'G-TEST123';
 const GA_API_SECRET = 'secret-abc';
 const COLLECT_URL = 'https://www.google-analytics.com/mp/collect';
+const CLOUDFLARE_TRACE_URL = 'https://www.cloudflare.com/cdn-cgi/trace';
 const PROVIDER_SLUG = 'provider_slug';
 const EVIDENCE_DOMAIN = 'evidence_domain';
 const ADYEN_EVIDENCE_HOST = 'checkoutshopper-live.adyen.com';
@@ -56,6 +57,10 @@ function setupChromeMock(): void {
   globalThis.chrome = {
     runtime: {
       getManifest: jest.fn(() => ({ version: '3.2026.1.1' })),
+      getPlatformInfo: jest.fn(() => Promise.resolve({ os: 'mac' })),
+    },
+    i18n: {
+      getUILanguage: jest.fn(() => 'en-GB'),
     },
     storage: {
       local: localArea,
@@ -65,10 +70,11 @@ function setupChromeMock(): void {
 }
 
 function lastFetchBody(): GaPayload {
-  const calls = fetchMock.mock.calls;
-  const lastCall = calls.at(-1);
+  const lastCall = fetchMock.mock.calls.findLast((call) =>
+    String(call[0]).startsWith(COLLECT_URL),
+  );
   if (lastCall === undefined) {
-    throw new Error('Expected fetch to have been called');
+    throw new Error('Expected GA collect fetch to have been called');
   }
 
   const init = lastCall[1] as { body?: string };
@@ -76,9 +82,11 @@ function lastFetchBody(): GaPayload {
 }
 
 function lastFetchUrl(): string {
-  const lastCall = fetchMock.mock.calls.at(-1);
+  const lastCall = fetchMock.mock.calls.findLast((call) =>
+    String(call[0]).startsWith(COLLECT_URL),
+  );
   if (lastCall === undefined) {
-    throw new Error('Expected fetch to have been called');
+    throw new Error('Expected GA collect fetch to have been called');
   }
 
   return String(lastCall[0]);
@@ -88,9 +96,68 @@ function lastFetchRaw(): string {
   return `${lastFetchUrl()} ${JSON.stringify(lastFetchBody())}`;
 }
 
+function requestUrl(input: RequestInfo | URL): string {
+  if (typeof input === 'string') {
+    return input;
+  }
+
+  if (input instanceof URL) {
+    return input.href;
+  }
+
+  return input.url;
+}
+
+function mockTimezone(timeZone: string | undefined): void {
+  jest.spyOn(Intl, 'DateTimeFormat').mockImplementation(
+    () =>
+      ({
+        resolvedOptions: (): Intl.ResolvedDateTimeFormatOptions => {
+          if (timeZone === undefined) {
+            throw new Error('timezone unavailable');
+          }
+
+          return { timeZone } as Intl.ResolvedDateTimeFormatOptions;
+        },
+      }) as unknown as Intl.DateTimeFormat,
+  );
+}
+
+async function withNavigatorLanguage(
+  getter: () => string,
+  run: () => Promise<void>,
+): Promise<void> {
+  const original = Object.getOwnPropertyDescriptor(
+    globalThis.navigator,
+    'language',
+  );
+  Object.defineProperty(globalThis.navigator, 'language', {
+    configurable: true,
+    get: getter,
+  });
+
+  try {
+    await run();
+  } finally {
+    if (original !== undefined) {
+      Object.defineProperty(globalThis.navigator, 'language', original);
+    }
+  }
+}
+
 beforeEach(() => {
   setupChromeMock();
-  fetchMock = jest.fn(() => Promise.resolve({ ok: true } as Response));
+  fetchMock = jest.fn((input: RequestInfo | URL) => {
+    const url = requestUrl(input);
+    if (url === CLOUDFLARE_TRACE_URL) {
+      return Promise.resolve({
+        ok: true,
+        text: async () => 'loc=SG\n',
+      } as unknown as Response);
+    }
+
+    return Promise.resolve({ ok: true } as Response);
+  });
   globalThis.fetch = fetchMock;
   process.env['GA_MEASUREMENT_ID'] = GA_MEASUREMENT_ID;
   process.env['GA_API_SECRET'] = GA_API_SECRET;
@@ -99,6 +166,7 @@ beforeEach(() => {
 afterEach(() => {
   delete process.env['GA_MEASUREMENT_ID'];
   delete process.env['GA_API_SECRET'];
+  jest.restoreAllMocks();
 });
 
 describe('trackEvent gating', () => {
@@ -128,7 +196,10 @@ describe('trackEvent gating', () => {
 
   it('sends when telemetry setting is unset (default enabled)', async () => {
     await trackEvent(TELEMETRY_EVENTS.POPUP_OPENED);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const collectCalls = fetchMock.mock.calls.filter((call) =>
+      String(call[0]).startsWith(COLLECT_URL),
+    );
+    expect(collectCalls).toHaveLength(1);
   });
 });
 
@@ -141,7 +212,9 @@ describe('trackEvent payload', () => {
     expect(url).toContain(`measurement_id=${GA_MEASUREMENT_ID}`);
     expect(url).toContain(`api_secret=${GA_API_SECRET}`);
 
-    const lastCall = fetchMock.mock.calls.at(-1);
+    const lastCall = fetchMock.mock.calls.findLast((call) =>
+      String(call[0]).startsWith(COLLECT_URL),
+    );
     expect((lastCall?.[1] as RequestInit).method).toBe('POST');
 
     const payload = lastFetchBody();
@@ -419,7 +492,10 @@ describe('resilience to session storage failures', () => {
 
     await trackEvent(TELEMETRY_EVENTS.POPUP_OPENED);
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const collectCalls = fetchMock.mock.calls.filter((call) =>
+      String(call[0]).startsWith(COLLECT_URL),
+    );
+    expect(collectCalls).toHaveLength(1);
     const sessionId = lastFetchBody().events[0]?.params?.['session_id'];
     expect(typeof sessionId).toBe('string');
     expect((sessionId as string).length).toBeGreaterThan(0);
@@ -431,6 +507,112 @@ describe('resilience to session storage failures', () => {
     await expect(
       trackEvent(TELEMETRY_EVENTS.POPUP_OPENED),
     ).resolves.toBeUndefined();
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const collectCalls = fetchMock.mock.calls.filter((call) =>
+      String(call[0]).startsWith(COLLECT_URL),
+    );
+    expect(collectCalls).toHaveLength(1);
+  });
+});
+
+describe('user context', () => {
+  it('attaches resolved timezone, os, and ui language context', async () => {
+    mockTimezone('Asia/Singapore');
+
+    await trackEvent(TELEMETRY_EVENTS.POPUP_OPENED);
+
+    const parameters = lastFetchBody().events[0]?.params ?? {};
+    expect(parameters['user_country']).toBe('SG');
+    expect(parameters['user_timezone']).toBe('Asia/Singapore');
+    expect(parameters['user_os']).toBe('mac');
+    expect(parameters['ui_language']).toBe('en-GB');
+  });
+
+  it('still logs timezone values that are directly available', async () => {
+    mockTimezone('Etc/UTC');
+
+    await trackEvent(TELEMETRY_EVENTS.POPUP_OPENED);
+
+    const parameters = lastFetchBody().events[0]?.params ?? {};
+    expect(parameters['user_country']).toBe('SG');
+    expect(parameters['user_timezone']).toBe('Etc/UTC');
+  });
+
+  it('omits country when the lookup response has no valid country code', async () => {
+    fetchMock.mockImplementation((input: RequestInfo | URL) => {
+      const url = requestUrl(input);
+      if (url === CLOUDFLARE_TRACE_URL) {
+        return Promise.resolve({
+          ok: true,
+          text: async () => 'loc=ZZZ\n',
+        } as unknown as Response);
+      }
+
+      return Promise.resolve({ ok: true } as Response);
+    });
+
+    await trackEvent(TELEMETRY_EVENTS.POPUP_OPENED);
+
+    const parameters = lastFetchBody().events[0]?.params ?? {};
+    expect('user_country' in parameters).toBe(false);
+  });
+
+  it('falls back to navigator.language when chrome.i18n is unavailable', async () => {
+    mockTimezone('America/New_York');
+    (chrome as unknown as { i18n?: unknown }).i18n = undefined;
+
+    await withNavigatorLanguage(
+      () => 'fr-FR',
+      async () => {
+        await trackEvent(TELEMETRY_EVENTS.POPUP_OPENED);
+      },
+    );
+
+    const parameters = lastFetchBody().events[0]?.params ?? {};
+    expect(parameters['user_country']).toBe('SG');
+    expect(parameters['ui_language']).toBe('fr-FR');
+  });
+
+  it('omits every user-context signal when none can be resolved', async () => {
+    mockTimezone(undefined);
+    (chrome.runtime.getPlatformInfo as jest.Mock).mockRejectedValueOnce(
+      new Error('platform unavailable'),
+    );
+    fetchMock.mockImplementation((input: RequestInfo | URL) => {
+      const url = requestUrl(input);
+      if (url === CLOUDFLARE_TRACE_URL) {
+        return Promise.reject(new Error('country unavailable'));
+      }
+
+      return Promise.resolve({ ok: true } as Response);
+    });
+    (chrome as unknown as { i18n?: unknown }).i18n = undefined;
+
+    await withNavigatorLanguage(
+      () => {
+        throw new Error('language unavailable');
+      },
+      async () => {
+        await trackEvent(TELEMETRY_EVENTS.POPUP_OPENED);
+      },
+    );
+
+    const parameters = lastFetchBody().events[0]?.params ?? {};
+    expect('user_country' in parameters).toBe(false);
+    expect('user_timezone' in parameters).toBe(false);
+    expect('user_os' in parameters).toBe(false);
+    expect('ui_language' in parameters).toBe(false);
+  });
+
+  it('caches only country code and avoids repeated lookup calls in a session', async () => {
+    await trackEvent(TELEMETRY_EVENTS.POPUP_OPENED);
+    await trackEvent(TELEMETRY_EVENTS.SCAN_REQUESTED, { entry_point: 'popup' });
+
+    const countryLookupCalls = fetchMock.mock.calls.filter(
+      (call) => String(call[0]) === CLOUDFLARE_TRACE_URL,
+    );
+    expect(countryLookupCalls).toHaveLength(1);
+    expect(sessionArea.store.get(STORAGE_KEYS.TELEMETRY_COUNTRY_CODE)).toBe(
+      'SG',
+    );
   });
 });

@@ -8,4 +8,5 @@ export const STORAGE_KEYS = {
   TELEMETRY_ENABLED: 'telemetryEnabled',
   TELEMETRY_CLIENT_ID: 'telemetryClientId',
   TELEMETRY_SESSION: 'telemetrySession',
+  TELEMETRY_COUNTRY_CODE: 'telemetryCountryCode',
 } as const;
