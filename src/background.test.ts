@@ -1015,7 +1015,9 @@ describe('telemetry privacy boundary', () => {
       .filter((call) => {
         try {
           const url = new URL(String(call[0]));
-          return url.hostname === GA_HOST || url.hostname.endsWith(`.${GA_HOST}`);
+          return (
+            url.hostname === GA_HOST || url.hostname.endsWith(`.${GA_HOST}`)
+          );
         } catch {
           return false;
         }
