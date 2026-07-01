@@ -368,8 +368,7 @@ function getRegisteredWebRequestListener(
   mocks: ChromeMockContext,
 ): (details: chrome.webRequest.WebRequestDetails) => void {
   const networkListener = mocks.webRequestAddListener.mock.calls[0]?.[0] as
-    | ((details: chrome.webRequest.WebRequestDetails) => void)
-    | undefined;
+    ((details: chrome.webRequest.WebRequestDetails) => void) | undefined;
   if (networkListener === undefined) {
     throw new Error(WEBREQUEST_LISTENER_ERROR);
   }
@@ -391,8 +390,7 @@ async function getDetectedPspsForTab(
   await flushAsyncTasks();
 
   const payload = sendResponse.mock.calls.at(-1)?.[0] as
-    | undefined
-    | { psps?: unknown };
+    undefined | { psps?: unknown };
   return payload?.psps ?? [];
 }
 
@@ -604,8 +602,7 @@ describe('background service onboarding and re-detect flow', () => {
 
     expect(mocks.webRequestAddListener).toHaveBeenCalledTimes(1);
     const requestFilter = mocks.webRequestAddListener.mock.calls[0]?.[1] as
-      | Record<string, unknown>
-      | undefined;
+      Record<string, unknown> | undefined;
     expect(requestFilter).toEqual({
       urls: ['https://*/*'],
       types: ['script', 'xmlhttprequest', 'sub_frame'],
@@ -676,8 +673,7 @@ describe('background service onboarding and re-detect flow', () => {
     expect(mocks.sessionSet).toHaveBeenCalled();
     const persisted = mocks.sessionSet.mock.calls.at(-1)?.[0];
     const tabPsps = persisted?.[STORAGE_KEYS.TAB_PSPS] as
-      | Record<string, { psp: string }[]>
-      | undefined;
+      Record<string, { psp: string }[]> | undefined;
     const tabEntries = tabPsps?.['91'] ?? [];
     expect(tabEntries).toHaveLength(1);
     expect(tabEntries[0]).toMatchObject({ psp: 'Stripe' });
@@ -717,8 +713,7 @@ describe('background service onboarding and re-detect flow', () => {
     await flushAsyncTasks();
 
     const networkListener = mocks.webRequestAddListener.mock.calls[0]?.[0] as
-      | ((details: chrome.webRequest.WebRequestDetails) => void)
-      | undefined;
+      ((details: chrome.webRequest.WebRequestDetails) => void) | undefined;
     if (networkListener === undefined) {
       throw new Error(WEBREQUEST_LISTENER_ERROR);
     }

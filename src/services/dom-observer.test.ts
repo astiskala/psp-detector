@@ -41,8 +41,7 @@ describe('DOMObserverService', () => {
     await waitFor(TEST_TIMEOUTS.DOM_MUTATION_DELAY);
 
     const firstCallArguments = callback.mock.calls[0] as
-      | [MutationRecord[] | undefined]
-      | undefined;
+      [MutationRecord[] | undefined] | undefined;
     expect(firstCallArguments?.[0]).toBeDefined();
     expect(Array.isArray(firstCallArguments?.[0])).toBe(true);
   });
@@ -104,8 +103,7 @@ describe('DOMObserverService', () => {
 
       expect(callback).toHaveBeenCalled();
       const firstCallArguments = callback.mock.calls[0] as
-        | [MutationRecord[] | undefined]
-        | undefined;
+        [MutationRecord[] | undefined] | undefined;
       expect(firstCallArguments?.[0]?.[0]?.type).toBe('attributes');
     } finally {
       globalThis.MutationObserver = originalMutationObserver;
