@@ -1012,7 +1012,14 @@ describe('telemetry privacy boundary', () => {
   function gaCalls(): { url: string; body: string }[] {
     const fetchMock = globalThis.fetch as unknown as jest.Mock;
     return fetchMock.mock.calls
-      .filter((call) => String(call[0]).includes(GA_HOST))
+      .filter((call) => {
+        try {
+          const url = new URL(String(call[0]));
+          return url.hostname === GA_HOST || url.hostname.endsWith(`.${GA_HOST}`);
+        } catch {
+          return false;
+        }
+      })
       .map((call) => ({
         url: String(call[0]),
         // The telemetry client always sends a JSON string body.
