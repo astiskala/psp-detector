@@ -39,7 +39,7 @@
     "@types/jest": "^30.0.0",
     "@types/node": "^26.0.1",
     "cheerio": "^1.2.0",
-    "dependency-cruiser": "^17.4.3",
+    "dependency-cruiser": "^18.0.0",
     "esbuild": "^0.28.1",
     "eslint": "^10.5.0",
     "eslint-config-prettier": "^10.1.8",
