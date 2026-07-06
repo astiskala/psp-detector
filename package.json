@@ -43,7 +43,7 @@
     "esbuild": "^0.28.1",
     "eslint": "^10.6.0",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-jsdoc": "^63.0.10",
+    "eslint-plugin-jsdoc": "^63.0.12",
     "eslint-plugin-sonarjs": "^4.1.0",
     "eslint-plugin-unicorn": "^68.0.0",
     "globals": "^17.7.0",
