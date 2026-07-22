@@ -143,7 +143,7 @@ describe('UIService', () => {
 
   it('should handle missing DOM elements gracefully', () => {
     // Remove all elements to simulate missing DOM
-    document.body.innerHTML = '';
+    document.body.replaceChildren();
 
     expect(() => new UIService()).toThrow('Element psp-name not found');
   });

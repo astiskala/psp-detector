@@ -418,7 +418,6 @@ class BackgroundService {
       const response = await fetch(
         chrome.runtime.getURL('exempt-domains.json'),
         {
-          method: 'GET',
           headers: {
             'Content-Type': 'application/json',
           },
@@ -763,9 +762,7 @@ class BackgroundService {
     }
 
     // Validate tsps if present
-    return !(
-      config.tsps !== undefined && !this.isValidProviderGroup(config.tsps)
-    );
+    return config.tsps === undefined || this.isValidProviderGroup(config.tsps);
   }
 
   private isValidProviderGroup(

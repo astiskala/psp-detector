@@ -1,6 +1,6 @@
 {
   "name": "psp-detector",
-  "version": "3.2026.701.1327",
+  "version": "3.2026.722.1033",
   "description": "Chrome extension to detect Payment Service Providers on web pages",
   "private": true,
   "scripts": {
@@ -45,7 +45,7 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-jsdoc": "^63.0.12",
     "eslint-plugin-sonarjs": "^4.1.0",
-    "eslint-plugin-unicorn": "^68.0.0",
+    "eslint-plugin-unicorn": "^71.0.0",
     "globals": "^17.7.0",
     "gts": "^7.0.0",
     "husky": "^9.1.7",

@@ -361,7 +361,6 @@ async function getCountryCode(): Promise<string | undefined> {
   let countryCode: string | undefined;
   try {
     const response = await fetch(CLOUDFLARE_TRACE_ENDPOINT, {
-      method: 'GET',
       cache: 'no-store',
     });
     if (response.ok) {
