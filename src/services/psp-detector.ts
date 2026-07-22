@@ -101,7 +101,7 @@ export class PSPDetectorService {
     } catch (error) {
       logger.error('Error during PSP detection:', error);
       return PSPDetectionResult.error(
-        error instanceof Error ? error : new Error('Unknown detection error'),
+        Error.isError(error) ? error : new Error('Unknown detection error'),
         'detection_process',
       );
     }

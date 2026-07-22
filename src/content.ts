@@ -24,7 +24,7 @@ const SERVICE_WORKER_RESTART_ERRORS = [
 ];
 
 const isExtensionContextInvalidated = (error: unknown): boolean =>
-  error instanceof Error &&
+  Error.isError(error) &&
   error.message.includes(EXTENSION_CONTEXT_INVALIDATED_MESSAGE);
 
 const isServiceWorkerRestartError = (message: string): boolean =>
@@ -541,8 +541,9 @@ class ContentScript {
         return await this.sendMessageOnce(message);
       } catch (error) {
         const isLastAttempt = attempt === retries;
-        const errorMessage =
-          error instanceof Error ? error.message : String(error);
+        const errorMessage = Error.isError(error)
+          ? error.message
+          : String(error);
 
         // For non-restart errors, don't retry.
         if (!isServiceWorkerRestartError(errorMessage)) {

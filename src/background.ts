@@ -418,7 +418,6 @@ class BackgroundService {
       const response = await fetch(
         chrome.runtime.getURL('exempt-domains.json'),
         {
-          method: 'GET',
           headers: {
             'Content-Type': 'application/json',
           },
@@ -726,7 +725,7 @@ class BackgroundService {
       await this.setCachedPspConfig(validConfig);
       sendResponse({ config: validConfig });
     } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
+      if (Error.isError(error) && error.name === 'AbortError') {
         logger.error('PSP config fetch timed out');
       } else {
         logger.error('Failed to load PSP config:', error);
@@ -763,9 +762,7 @@ class BackgroundService {
     }
 
     // Validate tsps if present
-    return !(
-      config.tsps !== undefined && !this.isValidProviderGroup(config.tsps)
-    );
+    return config.tsps === undefined || this.isValidProviderGroup(config.tsps);
   }
 
   private isValidProviderGroup(
@@ -1925,7 +1922,7 @@ class BackgroundService {
       });
     } catch (error) {
       // Handle specific common error cases more gracefully
-      if (error instanceof Error) {
+      if (Error.isError(error)) {
         if (
           error.message.includes('error page') ||
           error.message.includes('Frame with ID 0 is showing error page')
