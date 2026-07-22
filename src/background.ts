@@ -725,7 +725,7 @@ class BackgroundService {
       await this.setCachedPspConfig(validConfig);
       sendResponse({ config: validConfig });
     } catch (error) {
-      if (Error.isError(error) && error.name === 'AbortError') {
+      if (error instanceof Error && error.name === 'AbortError') {
         logger.error('PSP config fetch timed out');
       } else {
         logger.error('Failed to load PSP config:', error);
@@ -1922,7 +1922,7 @@ class BackgroundService {
       });
     } catch (error) {
       // Handle specific common error cases more gracefully
-      if (Error.isError(error)) {
+      if (error instanceof Error) {
         if (
           error.message.includes('error page') ||
           error.message.includes('Frame with ID 0 is showing error page')

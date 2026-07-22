@@ -250,6 +250,9 @@ export default [
       // lookup maps, the serialised history-write chain) and the standard Jest
       // idiom of declaring `let mock` at module scope and assigning it in setup.
       'unicorn/no-top-level-assignment-in-function': 'off',
+      // prefer-error-is-error (new in unicorn 71) requires Error.isError() which
+      // is only available in Node.js ≥ 24; this project targets Node.js 22.
+      'unicorn/prefer-error-is-error': 'off',
       // rel is a legitimate HTML attribute name, not an abbreviation.
       // `prevent-abbreviations` was renamed to `name-replacements` in unicorn 68.
       'unicorn/name-replacements': ['error', { allowList: { rel: true } }],

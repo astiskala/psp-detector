@@ -252,7 +252,7 @@ export class PopupManager {
 
       return config;
     } catch (error) {
-      if (Error.isError(error) && error.name === 'AbortError') {
+      if (error instanceof Error && error.name === 'AbortError') {
         throw new Error('PSP config fetch timed out', { cause: error });
       }
 
@@ -317,7 +317,7 @@ export class PopupManager {
           }
         });
       } catch (error) {
-        reject(Error.isError(error) ? error : new Error(String(error)));
+        reject(error instanceof Error ? error : new Error(String(error)));
       }
     });
   }

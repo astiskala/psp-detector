@@ -237,7 +237,7 @@ export const errorUtilities = {
         try {
           return await function_();
         } catch (error) {
-          lastError = Error.isError(error) ? error : new Error(String(error));
+          lastError = error instanceof Error ? error : new Error(String(error));
 
           if (attempt === attempts) {
             throw lastError;
