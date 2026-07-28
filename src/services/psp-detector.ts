@@ -227,9 +227,9 @@ export class PSPDetectorService {
     for (const psp of providers) {
       const matchStrings = psp.matchStrings;
       if (
-        matched.has(psp.name) ||
         matchStrings === undefined ||
-        matchStrings.length === 0
+        matchStrings.length === 0 ||
+        matched.has(psp.name)
       ) {
         continue;
       }
