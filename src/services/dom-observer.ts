@@ -82,10 +82,10 @@ export class DOMObserverService {
 
       // Check for payment-related elements
       if (
+        isRelevantLink ||
         element.tagName === 'SCRIPT' ||
         element.tagName === 'IFRAME' ||
         element.tagName === 'FORM' ||
-        isRelevantLink ||
         element.querySelector?.(
           'script, iframe, form, link[rel="preconnect"], ' +
             'link[rel="dns-prefetch"], link[rel="preload"], ' +
