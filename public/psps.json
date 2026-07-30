@@ -1282,6 +1282,90 @@
       "image": "fawry",
       "summary": "Fawry is Egypt's leading digital payments network, enabling businesses to accept online and cash-based payments through a wide network of retail points and a hosted payment plugin.",
       "url": "https://www.fawry.com"
+    },
+    {
+      "name": "OnePay",
+      "matchStrings": [
+        "onepay.vn/paygate/",
+        "mtf.onepay.vn/paygate/",
+        "onepay.vn/vpcpay/",
+        "mtf.onepay.vn/vpcpay/",
+        "onepay.vn/onecomm-pay/",
+        "mtf.onepay.vn/onecomm-pay/"
+      ],
+      "image": "onepay",
+      "summary": "OnePay is a Vietnamese payment gateway providing hosted redirect checkout and domestic, international, ATM, QR, and mobile-wallet payment integrations.",
+      "url": "https://onepay.vn"
+    },
+    {
+      "name": "Payoo",
+      "matchStrings": [
+        "payoo.vn/v2/paynow/",
+        "newsandbox.payoo.com.vn/v2/paynow/",
+        "payoo.vn/v2/checkout",
+        "newsandbox.payoo.com.vn/v2/checkout"
+      ],
+      "image": "payoo",
+      "summary": "Payoo is a Vietnamese payment gateway supporting domestic and international cards, internet and mobile banking, e-wallets, QR payments, installments, and pay-at-store checkout.",
+      "url": "https://payoo.vn"
+    },
+    {
+      "name": "NganLuong",
+      "matchStrings": ["checkout.nganluong.vn/"],
+      "image": "nganluong",
+      "summary": "NganLuong is a Vietnamese online payment gateway supporting international and domestic cards, internet banking, QR payments, e-wallets, bank transfers, and hosted checkout integrations.",
+      "url": "https://www.nganluong.vn"
+    },
+    {
+      "name": "BaoKim",
+      "matchStrings": ["payment-page.baokim.vn/payment/", "payment.baokim.vn/"],
+      "image": "baokim",
+      "summary": "BaoKim is a Vietnamese payment gateway supporting international and domestic cards, QR payments, bank transfers, payment links, installments, APIs, and hosted checkout.",
+      "url": "https://www.baokim.vn"
+    },
+    {
+      "name": "VNPAY",
+      "matchStrings": [
+        "pay.vnpay.vn/vpcpay.html",
+        "sandbox.vnpayment.vn/paymentv2/vpcpay.html",
+        "pay.vnpayment.vn/vpcpay.html"
+      ],
+      "image": "vnpay",
+      "summary": "VNPAY is a Vietnamese payment gateway supporting domestic cards, international cards, bank accounts, QR payments, e-wallets, and installment payments through hosted and API integrations.",
+      "url": "https://vnpay.vn"
+    },
+    {
+      "name": "Billplz",
+      "matchStrings": [
+        "billplz.com/bills/",
+        "billplz-sandbox.com/bills/",
+        "billplz.com/api/",
+        "billplz-sandbox.com/api/"
+      ],
+      "image": "billplz",
+      "summary": "Billplz is a Malaysian payment gateway supporting FPX online banking, Visa and Mastercard cards, e-wallets, instalments, hosted bill pages, and API integrations.",
+      "url": "https://www.billplz.com"
+    },
+    {
+      "name": "Paydibs",
+      "matchStrings": [
+        "v3api.paydibs.com/PPG/trigger",
+        "stgapi.paydibs.com/PPG/trigger"
+      ],
+      "image": "paydibs",
+      "summary": "Paydibs is a Malaysian payment gateway supporting cards, FPX online banking, e-wallets, QR payments, BNPL, international methods, hosted checkout, and API integrations.",
+      "url": "https://paydibs.com"
+    },
+    {
+      "name": "Tazapay",
+      "matchStrings": [
+        "checkout.tazapay.com/",
+        "service.tazapay.com/v3/checkout",
+        "service-sandbox.tazapay.com/v3/checkout"
+      ],
+      "image": "tazapay",
+      "summary": "Tazapay is a cross-border payment gateway supporting cards, bank transfers, local payment methods, hosted checkout, payment links, and API integrations.",
+      "url": "https://tazapay.com"
     }
   ],
   "orchestrators": {

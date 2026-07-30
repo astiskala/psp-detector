@@ -25,6 +25,7 @@ const STRIPE_MATCH = 'js.stripe.com';
 const STRIPE_CHECKOUT_MATCH = 'checkout.stripe.com';
 const STRIPE_SCRIPT_TAG = '<script src="https://js.stripe.com/v3/"></script>';
 const STRIPE_SUMMARY = 'Stripe summary';
+const MERCHANT_CHECKOUT_URL = 'https://merchant.example/checkout';
 
 function requirePresent<T>(value: T | undefined, label: string): T {
   if (value === undefined) {
@@ -362,6 +363,290 @@ describe('PSPDetectorService', () => {
     if (result.type === 'detected') {
       expect(result.psps[0]?.psp).toBe('Global Payments');
     }
+  });
+
+  describe('Vietnamese PSP integrations', () => {
+    it.each([
+      'https://onepay.vn/paygate/vpcpay.op',
+      'https://mtf.onepay.vn/paygate/vpcpay.op',
+      'https://onepay.vn/vpcpay/vpcpay.op',
+      'https://mtf.onepay.vn/vpcpay/vpcpay.op',
+      'https://onepay.vn/onecomm-pay/vpc.op',
+      'https://mtf.onepay.vn/onecomm-pay/vpc.op',
+    ])('detects OnePay from %s', (integrationUrl) => {
+      const onePayConfig: PSPConfig = {
+        psps: [
+          {
+            name: pspName('OnePay'),
+            matchStrings: [
+              'onepay.vn/paygate/',
+              'mtf.onepay.vn/paygate/',
+              'onepay.vn/vpcpay/',
+              'mtf.onepay.vn/vpcpay/',
+              'onepay.vn/onecomm-pay/',
+              'mtf.onepay.vn/onecomm-pay/',
+            ],
+            url: pspUrl('https://onepay.vn'),
+            image: 'onepay',
+            summary: 'OnePay summary',
+          },
+        ],
+      };
+
+      const onePayDetector = new PSPDetectorService();
+      onePayDetector.initialize(onePayConfig);
+      onePayDetector.setExemptDomains([]);
+
+      const result = onePayDetector.detectPSP(
+        MERCHANT_CHECKOUT_URL,
+        integrationUrl,
+      );
+      expect(result.type).toBe('detected');
+      if (result.type === 'detected') {
+        expect(result.psps[0]?.psp).toBe('OnePay');
+      }
+    });
+
+    it.each([
+      'https://payoo.vn/v2/paynow/detail?_token=test',
+      'https://newsandbox.payoo.com.vn/v2/paynow/detail?_token=test',
+      'https://payoo.vn/v2/paynow/order/create',
+      'https://newsandbox.payoo.com.vn/v2/paynow/order/create',
+      'https://payoo.vn/v2/checkout',
+      'https://newsandbox.payoo.com.vn/v2/checkout',
+    ])('detects Payoo from %s', (integrationUrl) => {
+      const payooConfig: PSPConfig = {
+        psps: [
+          {
+            name: pspName('Payoo'),
+            matchStrings: [
+              'payoo.vn/v2/paynow/',
+              'newsandbox.payoo.com.vn/v2/paynow/',
+              'payoo.vn/v2/checkout',
+              'newsandbox.payoo.com.vn/v2/checkout',
+            ],
+            url: pspUrl('https://payoo.vn'),
+            image: 'payoo',
+            summary: 'Payoo summary',
+          },
+        ],
+      };
+
+      const payooDetector = new PSPDetectorService();
+      payooDetector.initialize(payooConfig);
+      payooDetector.setExemptDomains([]);
+
+      const result = payooDetector.detectPSP(
+        MERCHANT_CHECKOUT_URL,
+        integrationUrl,
+      );
+      expect(result.type).toBe('detected');
+      if (result.type === 'detected') {
+        expect(result.psps[0]?.psp).toBe('Payoo');
+      }
+    });
+
+    it('detects NganLuong from hosted checkout', () => {
+      const nganLuongConfig: PSPConfig = {
+        psps: [
+          {
+            name: pspName('NganLuong'),
+            matchStrings: ['checkout.nganluong.vn/'],
+            url: pspUrl('https://www.nganluong.vn'),
+            image: 'nganluong',
+            summary: 'NganLuong summary',
+          },
+        ],
+      };
+
+      const nganLuongDetector = new PSPDetectorService();
+      nganLuongDetector.initialize(nganLuongConfig);
+      nganLuongDetector.setExemptDomains([]);
+
+      const result = nganLuongDetector.detectPSP(
+        MERCHANT_CHECKOUT_URL,
+        'https://checkout.nganluong.vn/checkout?token=test',
+      );
+      expect(result.type).toBe('detected');
+      if (result.type === 'detected') {
+        expect(result.psps[0]?.psp).toBe('NganLuong');
+      }
+    });
+
+    it.each([
+      'https://payment-page.baokim.vn/payment/?oid=test',
+      'https://payment.baokim.vn/payment/customize_payment/order',
+    ])('detects BaoKim from %s', (integrationUrl) => {
+      const baoKimConfig: PSPConfig = {
+        psps: [
+          {
+            name: pspName('BaoKim'),
+            matchStrings: [
+              'payment-page.baokim.vn/payment/',
+              'payment.baokim.vn/',
+            ],
+            url: pspUrl('https://www.baokim.vn'),
+            image: 'baokim',
+            summary: 'BaoKim summary',
+          },
+        ],
+      };
+
+      const baoKimDetector = new PSPDetectorService();
+      baoKimDetector.initialize(baoKimConfig);
+      baoKimDetector.setExemptDomains([]);
+
+      const result = baoKimDetector.detectPSP(
+        MERCHANT_CHECKOUT_URL,
+        integrationUrl,
+      );
+      expect(result.type).toBe('detected');
+      if (result.type === 'detected') {
+        expect(result.psps[0]?.psp).toBe('BaoKim');
+      }
+    });
+
+    it.each([
+      'https://pay.vnpay.vn/vpcpay.html?vnp_Command=pay',
+      'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?vnp_Command=pay',
+      'https://pay.vnpayment.vn/vpcpay.html?vnp_Command=pay',
+    ])('detects VNPAY from %s', (integrationUrl) => {
+      const vnpayConfig: PSPConfig = {
+        psps: [
+          {
+            name: pspName('VNPAY'),
+            matchStrings: [
+              'pay.vnpay.vn/vpcpay.html',
+              'sandbox.vnpayment.vn/paymentv2/vpcpay.html',
+              'pay.vnpayment.vn/vpcpay.html',
+            ],
+            url: pspUrl('https://vnpay.vn'),
+            image: 'vnpay',
+            summary: 'VNPAY summary',
+          },
+        ],
+      };
+
+      const vnpayDetector = new PSPDetectorService();
+      vnpayDetector.initialize(vnpayConfig);
+      vnpayDetector.setExemptDomains([]);
+
+      const result = vnpayDetector.detectPSP(
+        MERCHANT_CHECKOUT_URL,
+        integrationUrl,
+      );
+      expect(result.type).toBe('detected');
+      if (result.type === 'detected') {
+        expect(result.psps[0]?.psp).toBe('VNPAY');
+      }
+    });
+  });
+
+  describe('Additional PSP integrations', () => {
+    it.each([
+      'https://billplz.com/bills/8X0Iyzaw',
+      'https://billplz-sandbox.com/bills/8X0Iyzaw',
+      'https://billplz.com/api/v3/bills',
+      'https://billplz-sandbox.com/api/v3/bills',
+    ])('detects Billplz from %s', (integrationUrl) => {
+      const billplzConfig: PSPConfig = {
+        psps: [
+          {
+            name: pspName('Billplz'),
+            matchStrings: [
+              'billplz.com/bills/',
+              'billplz-sandbox.com/bills/',
+              'billplz.com/api/',
+              'billplz-sandbox.com/api/',
+            ],
+            url: pspUrl('https://www.billplz.com'),
+            image: 'billplz',
+            summary: 'Billplz summary',
+          },
+        ],
+      };
+
+      const billplzDetector = new PSPDetectorService();
+      billplzDetector.initialize(billplzConfig);
+      billplzDetector.setExemptDomains([]);
+
+      const result = billplzDetector.detectPSP(
+        MERCHANT_CHECKOUT_URL,
+        integrationUrl,
+      );
+      expect(result.type).toBe('detected');
+      if (result.type === 'detected') {
+        expect(result.psps[0]?.psp).toBe('Billplz');
+      }
+    });
+
+    it.each([
+      'https://v3api.paydibs.com/PPG/trigger',
+      'https://stgapi.paydibs.com/PPG/trigger',
+    ])('detects Paydibs from %s', (integrationUrl) => {
+      const paydibsConfig: PSPConfig = {
+        psps: [
+          {
+            name: pspName('Paydibs'),
+            matchStrings: [
+              'v3api.paydibs.com/PPG/trigger',
+              'stgapi.paydibs.com/PPG/trigger',
+            ],
+            url: pspUrl('https://paydibs.com'),
+            image: 'paydibs',
+            summary: 'Paydibs summary',
+          },
+        ],
+      };
+
+      const paydibsDetector = new PSPDetectorService();
+      paydibsDetector.initialize(paydibsConfig);
+      paydibsDetector.setExemptDomains([]);
+
+      const result = paydibsDetector.detectPSP(
+        MERCHANT_CHECKOUT_URL,
+        integrationUrl,
+      );
+      expect(result.type).toBe('detected');
+      if (result.type === 'detected') {
+        expect(result.psps[0]?.psp).toBe('Paydibs');
+      }
+    });
+
+    it.each([
+      'https://checkout.tazapay.com/transaction=chk_test',
+      'https://service.tazapay.com/v3/checkout',
+      'https://service-sandbox.tazapay.com/v3/checkout',
+    ])('detects Tazapay from %s', (integrationUrl) => {
+      const tazapayConfig: PSPConfig = {
+        psps: [
+          {
+            name: pspName('Tazapay'),
+            matchStrings: [
+              'checkout.tazapay.com/',
+              'service.tazapay.com/v3/checkout',
+              'service-sandbox.tazapay.com/v3/checkout',
+            ],
+            url: pspUrl('https://tazapay.com'),
+            image: 'tazapay',
+            summary: 'Tazapay summary',
+          },
+        ],
+      };
+
+      const tazapayDetector = new PSPDetectorService();
+      tazapayDetector.initialize(tazapayConfig);
+      tazapayDetector.setExemptDomains([]);
+
+      const result = tazapayDetector.detectPSP(
+        MERCHANT_CHECKOUT_URL,
+        integrationUrl,
+      );
+      expect(result.type).toBe('detected');
+      if (result.type === 'detected') {
+        expect(result.psps[0]?.psp).toBe('Tazapay');
+      }
+    });
   });
 
   it('returns all matching PSPs when multiple providers match', () => {

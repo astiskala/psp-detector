@@ -1,13 +1,13 @@
 {
   "name": "psp-detector",
-  "version": "3.2026.722.1033",
+  "version": "3.2026.730.1915",
   "description": "Chrome extension to detect Payment Service Providers on web pages",
   "private": true,
   "scripts": {
     "build:debug": "DEBUG=true node build.mjs",
     "build": "node build.mjs",
     "check": "gts check",
-    "ci": "pnpm run lint && pnpm run lint:scripts && pnpm run lint:web && pnpm run lint:deps && pnpm run typecheck && pnpm run deadcode && pnpm run test",
+    "ci": "pnpm run validate",
     "clean": "gts clean",
     "deadcode": "pnpm run knip:prod && node tools/check-unused-public-methods.mjs",
     "fix": "gts fix",
@@ -27,7 +27,7 @@
     "test:watch": "jest --watch",
     "test": "pnpm run build && jest",
     "typecheck": "tsc --noEmit",
-    "validate": "pnpm run format:check && pnpm run lint && pnpm run lint:scripts && pnpm run typecheck && pnpm run knip && pnpm run deadcode && pnpm run lint:deps && pnpm run build && pnpm run test && pnpm run lint:web",
+    "validate": "pnpm run format:check && pnpm run lint && pnpm run lint:scripts && pnpm run typecheck && pnpm run knip && pnpm run deadcode && pnpm run lint:deps && pnpm run build && jest --coverage && pnpm run lint:web",
     "prepare": "husky"
   },
   "devDependencies": {

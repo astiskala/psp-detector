@@ -33,7 +33,9 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - AsiaPay
 - Authorize.net
 - Barclaycard ePDQ
+- BaoKim
 - BillDesk
+- Billplz
 - BlueSnap
 - Buckaroo
 - Cardknox
@@ -98,18 +100,21 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - NETbilling
 - Network International
 - Nexi Group (Nets)
+- NganLuong
 - NHN KCP
 - NICE Payments
 - NMI
 - NTT DATA
 - Nuvei
 - Oceanpayment
+- OnePay
 - Openpay
 - Opn Payments
 - Paddle
 - PagBrasil
 - PagSeguro
 - Pay.
+- Paydibs
 - PayGent
 - PayJunction
 - PayKings
@@ -117,6 +122,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Paymentwall
 - PayMob
 - Payoneer
+- Payoo
 - PayPal
 - PayPal Enterprise Payments
 - PayPlug
@@ -152,6 +158,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - SumUp
 - Swedbank Pay
 - Tap Payments
+- Tazapay
 - Telr
 - Tilled
 - Toss Payments
@@ -159,6 +166,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Trust Payments
 - Tyro
 - Unzer
+- VNPAY
 - WePay
 - Windcave
 - Worldline
@@ -319,12 +327,13 @@ ESLint includes SonarJS quality rules plus unicorn and JSDoc enforcement for pub
 
 ```bash
 pnpm run typecheck     # TypeScript type checking
-pnpm run ci            # Core CI script (lint + typecheck + unit tests + web/dependency checks)
-pnpm run validate      # Local validation (fix + lint + typecheck + knip + dep checks + build + unit tests + web lint)
+pnpm run ci            # Full local CI gate (same checks as validate)
+pnpm run validate      # Formatting, lint, typecheck, unused-code, dependency, build, coverage, and web checks
 ```
 
-`pnpm run validate` does not include Playwright. The GitHub Actions workflows run
-`pnpm run validate` first, then run integration and E2E tests separately.
+`pnpm run validate` enforces the configured Jest coverage floors, but does not
+include Playwright. The GitHub Actions workflows run it first, then run
+integration and E2E tests separately.
 
 ### Versioning
 
