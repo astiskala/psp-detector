@@ -143,9 +143,17 @@ function getConfig(): PSPConfig {
   return cachedConfig;
 }
 
+function getExpectedMatchStrings(site: SiteCase): string[] {
+  return (
+    getConfig().psps.find((provider) => provider.name === site.expected)
+      ?.matchStrings ?? []
+  );
+}
+
 // Helper: detect a single site; throws with diagnostics on mismatch.
 async function detectAndAssert(page: Page, site: SiteCase): Promise<void> {
   const requests: string[] = [];
+  const expectedMatchStrings = getExpectedMatchStrings(site);
   const listener = (r: { url: () => string }): void => {
     try {
       requests.push(r.url());
@@ -155,8 +163,34 @@ async function detectAndAssert(page: Page, site: SiteCase): Promise<void> {
   };
 
   page.on('request', listener);
+  const requestSignal = page.waitForRequest(
+    (request) =>
+      expectedMatchStrings.some((matchString) =>
+        request.url().includes(matchString),
+      ),
+    { timeout: 10_000 },
+  );
   await page.goto(site.url, { waitUntil: 'domcontentloaded' });
-  await page.waitForTimeout(1000);
+  const pageSignal = page.waitForFunction(
+    (matchStrings) => {
+      const resourceUrls = performance
+        .getEntriesByType('resource')
+        .map((entry) => entry.name);
+      const html = document.documentElement.innerHTML;
+      return matchStrings.some(
+        (matchString) =>
+          html.includes(matchString) ||
+          resourceUrls.some((url) => url.includes(matchString)),
+      );
+    },
+    expectedMatchStrings,
+    { timeout: 10_000 },
+  );
+  try {
+    await Promise.any([requestSignal, pageSignal]);
+  } catch {
+    // Keep the detailed detection diagnostics below when the signal is absent.
+  }
   page.off('request', listener);
 
   const html = await page.content();
