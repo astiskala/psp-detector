@@ -251,7 +251,7 @@ function setupChromeMocks(options: ChromeMockOptions = {}): ChromeMockContext {
     .mockImplementation(async (items: Record<string, unknown>) => {
       Object.assign(sessionStore, items);
     });
-  const actionSetIcon = jest.fn();
+  const actionSetIcon = jest.fn().mockResolvedValue(undefined);
   const actionSetTitle = jest.fn();
   const actionSetBadgeText = jest.fn();
   const actionSetBadgeBackgroundColor = jest.fn();

@@ -1749,16 +1749,12 @@ class BackgroundService {
   @private
    */
   private setIconWithErrorHandling(
-    path: chrome.action.TabIconDetails['path'],
+    path: NonNullable<chrome.action.TabIconDetails['path']>,
     errorMessage: string,
     onError?: () => void,
   ): void {
-    chrome.action.setIcon({ path }, () => {
-      if (!chrome.runtime.lastError) {
-        return;
-      }
-
-      logger.error(errorMessage, chrome.runtime.lastError.message);
+    void chrome.action.setIcon({ path }).catch((error: unknown) => {
+      logger.error(errorMessage, error);
       onError?.();
     });
   }
