@@ -57,10 +57,11 @@ const filterAcceptable = (items, isAcceptable) =>
   items.filter((item) => isAcceptable(item));
 
 // Third-party favicon endpoints
-const GOOGLE_FAVICON = (domain) =>
-  `https://s2.googleusercontent.com/s2/favicons?domain=${encodeURIComponent(
+const GOOGLE_FAVICON = (domain) => {
+  return `https://s2.googleusercontent.com/s2/favicons?domain=${encodeURIComponent(
     domain,
   )}&sz=128`;
+};
 const DUCK_FAVICON = (domain) =>
   `https://icons.duckduckgo.com/ip3/${encodeURIComponent(domain)}.ico`;
 
@@ -1058,10 +1059,12 @@ async function runBulkProcess(assetsDirectory, startFrom, pspsJsonPath) {
   console.log('');
 
   // Process providers with limited concurrency to be respectful to websites
-  const indexed = providersToProcess.map((psp, index) => ({
-    psp,
-    i: startIndex + index,
-  }));
+  const indexed = providersToProcess.map((psp, index) => {
+    return {
+      psp,
+      i: startIndex + index,
+    };
+  });
   const total = providers.length;
   const results = await withLimit(1, indexed, async ({ psp, i }) => {
     console.log(`▶️  [${i + 1}/${total}] ${psp.name}`);
@@ -1184,7 +1187,6 @@ function parseCliMode(arguments_) {
 
 async function runSingleSiteMode(mode) {
   const domainArgument = mode.domainArg;
-  const outArgument = mode.outArg;
   if (!domainArgument) {
     console.error(
       'Usage: node get-site-logo.mjs <domain-or-url> [output.png] [--verbose]',
@@ -1195,6 +1197,7 @@ async function runSingleSiteMode(mode) {
     process.exit(1);
   }
 
+  const outArgument = mode.outArg;
   const outPath = pickOutputPath(domainArgument, outArgument);
   const domain = extractDomain(domainArgument);
   const bases = domainToBases(domainArgument);

@@ -227,12 +227,11 @@ describe('onboarding page', () => {
     // so the held-promise behavior wins over the default impl regardless of
     // call ordering.
     let resolvePermission!: (granted: boolean) => void;
-    mocks.request.mockImplementation(
-      () =>
-        new Promise<boolean>((resolve) => {
-          resolvePermission = resolve;
-        }),
-    );
+    mocks.request.mockImplementation(() => {
+      return new Promise<boolean>((resolve) => {
+        resolvePermission = resolve;
+      });
+    });
 
     await import('./onboarding');
     document.dispatchEvent(new Event('DOMContentLoaded'));

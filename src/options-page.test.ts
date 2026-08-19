@@ -10,10 +10,12 @@ import {
   TELEMETRY_EVENTS,
 } from './services/telemetry';
 
-jest.mock('./lib/history', () => ({
-  clearHistory: jest.fn(),
-  readHistory: jest.fn(),
-}));
+jest.mock('./lib/history', () => {
+  return {
+    clearHistory: jest.fn(),
+    readHistory: jest.fn(),
+  };
+});
 
 jest.mock('./services/telemetry', () => {
   const actual = jest.requireActual('./services/telemetry');

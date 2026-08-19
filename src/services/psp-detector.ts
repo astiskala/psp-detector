@@ -30,7 +30,9 @@ export class PSPDetectorService {
   public initialize(config: PSPConfig): void {
     this.pspConfig = config;
 
-    /* Flatten providers once and reuse – order preserved */
+    /*
+    Flatten providers once and reuse – order preserved
+    */
     this.providerCache = getAllProviders(config);
     this.precompileRegexPatterns();
   }

@@ -1,4 +1,6 @@
-/** Sentinel value stored when a tab is exempt from detection entirely. */
+/**
+Sentinel value stored when a tab is exempt from detection entirely.
+ */
 export const PSP_DETECTION_EXEMPT = '__PSP_DETECTION_EXEMPT__';
 
 /**
@@ -17,5 +19,7 @@ export const MessageAction = {
   REDETECT_CURRENT_TAB: 'redetectCurrentTab',
 } as const;
 
-/** Union of the message-name string literals declared in {@link MessageAction}. */
+/**
+Union of the message-name string literals declared in {@link MessageAction}.
+ */
 export type MessageAction = (typeof MessageAction)[keyof typeof MessageAction];

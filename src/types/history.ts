@@ -2,7 +2,9 @@ import type { SourceType } from './detection';
 
 export type ProviderType = 'PSP' | 'Orchestrator' | 'TSP';
 
-/** A provider match persisted as part of the options-page history log. */
+/**
+A provider match persisted as part of the options-page history log.
+ */
 export interface HistoryPSPMatch {
   readonly name: string;
   readonly type?: ProviderType;
@@ -12,7 +14,9 @@ export interface HistoryPSPMatch {
   readonly firstDetectedAt?: number;
 }
 
-/** One stored page-level detection record in newest-first history order. */
+/**
+One stored page-level detection record in newest-first history order.
+ */
 export interface HistoryEntry {
   readonly id: string;
   readonly domain: string;
@@ -29,5 +33,7 @@ export interface HistoryEntry {
   readonly merchantOrigin?: string;
 }
 
-/** Hard cap used to stay within extension storage limits. */
+/**
+Hard cap used to stay within extension storage limits.
+ */
 export const HISTORY_MAX_ENTRIES = 1000;

@@ -96,7 +96,9 @@ class BackgroundService {
     await this.initializeServiceWorker();
   }
 
-  /** Performs one-time startup work each time the MV3 worker wakes up. */
+  /**
+  Performs one-time startup work each time the MV3 worker wakes up.
+   */
   private async initializeServiceWorker(): Promise<void> {
     if (this.isInitialized) {
       return;
@@ -115,7 +117,9 @@ class BackgroundService {
     }
   }
 
-  /** Registers runtime, tab, and lifecycle listeners for the worker. */
+  /**
+  Registers runtime, tab, and lifecycle listeners for the worker.
+   */
   private setupEventListeners(): void {
     // Handle extension startup
     chrome.runtime.onStartup.addListener(() => {
@@ -179,7 +183,9 @@ class BackgroundService {
     });
   }
 
-  /** Seeds default storage and onboarding state on first install. */
+  /**
+  Seeds default storage and onboarding state on first install.
+   */
   private async handleFirstInstall(): Promise<void> {
     logger.info('Performing first-time setup');
 
@@ -198,7 +204,9 @@ class BackgroundService {
     await this.openOnboardingPage();
   }
 
-  /** Clears stale caches after an extension update. */
+  /**
+  Clears stale caches after an extension update.
+   */
   private async handleUpdate(previousVersion?: string): Promise<void> {
     logger.info(`Updated from version ${previousVersion}`);
 
@@ -220,7 +228,9 @@ class BackgroundService {
     }
   }
 
-  /** Rehydrates cached config, exempt domains, and per-tab detection state. */
+  /**
+  Rehydrates cached config, exempt domains, and per-tab detection state.
+   */
   private async restoreState(): Promise<void> {
     try {
       const defaultCachedPspConfig: PSPConfig | undefined = undefined;
@@ -277,14 +287,15 @@ class BackgroundService {
       // Drop malformed records before they reach sortStoredTabPsps, which
       // calls entry.psp.toLowerCase() and would crash on missing/non-string
       // psp fields (e.g. after a schema drift across upgrades).
-      const valid = entries.filter(
-        (entry): entry is StoredTabPsp =>
+      const valid = entries.filter((entry): entry is StoredTabPsp => {
+        return (
           typeof entry === 'object' &&
           entry !== null &&
           'psp' in entry &&
           typeof entry.psp === 'string' &&
-          entry.psp.length > 0,
-      );
+          entry.psp.length > 0
+        );
+      });
       if (valid.length === 0) continue;
 
       this.tabPspCache.set(tabId, this.sortStoredTabPsps(valid));
@@ -346,7 +357,9 @@ class BackgroundService {
     return this.tabPspFlushInFlight;
   }
 
-  /** Reads a local-storage value without letting storage failures escape. */
+  /**
+  Reads a local-storage value without letting storage failures escape.
+   */
   private async getLocalStorage<T>(key: string, fallback: T): Promise<T> {
     try {
       // Query by bare key rather than an object of defaults: Chrome drops
@@ -471,7 +484,9 @@ class BackgroundService {
     }
   }
 
-  /** Tests whether a URL falls under the normalized exempt-domain list. */
+  /**
+  Tests whether a URL falls under the normalized exempt-domain list.
+   */
   private async isUrlExempt(url: string): Promise<boolean> {
     if (!url) {
       return false;
@@ -529,14 +544,18 @@ class BackgroundService {
     this.showExemptDomainIcon();
   }
 
-  /** Reports a scan attempt. Fire-and-forget; never affects behaviour. */
+  /**
+  Reports a scan attempt. Fire-and-forget; never affects behaviour.
+   */
   private emitScanRequested(entryPoint: string): void {
     void trackEvent(TELEMETRY_EVENTS.SCAN_REQUESTED, {
       entry_point: entryPoint,
     });
   }
 
-  /** Reports a skipped scan (exempt/restricted URL) without any domain. */
+  /**
+  Reports a skipped scan (exempt/restricted URL) without any domain.
+   */
   private emitScanSkipped(isExempt: boolean, entryPoint: string): void {
     void trackEvent(TELEMETRY_EVENTS.SCAN_SKIPPED, {
       skip_reason: isExempt ? 'exempt_domain' : 'special_url',
@@ -566,7 +585,9 @@ class BackgroundService {
     });
   }
 
-  /** Reports a scan error using a coded reason only — never an error message. */
+  /**
+  Reports a scan error using a coded reason only — never an error message.
+   */
   private emitScanError(errorCode: string, component: string): void {
     void trackEvent(TELEMETRY_EVENTS.SCAN_ERROR, {
       error_code: errorCode,
@@ -574,7 +595,9 @@ class BackgroundService {
     });
   }
 
-  /** Routes messages from popup/content scripts to the relevant handler. */
+  /**
+  Routes messages from popup/content scripts to the relevant handler.
+   */
   async handleMessage(
     message: ChromeMessage,
     sender: chrome.runtime.MessageSender,
@@ -594,7 +617,9 @@ class BackgroundService {
     }
   }
 
-  /** Dispatches a validated message to its action-specific handler. */
+  /**
+  Dispatches a validated message to its action-specific handler.
+   */
   private async dispatchMessage(
     message: ChromeMessage,
     sender: chrome.runtime.MessageSender,
@@ -656,7 +681,9 @@ class BackgroundService {
     }
   }
 
-  /** Guards the subset of message payloads used for detection reporting. */
+  /**
+  Guards the subset of message payloads used for detection reporting.
+   */
   private isValidPspDetectionData(data: unknown): data is PSPDetectionData {
     if (typeof data !== 'object' || data === null) {
       return false;
@@ -735,7 +762,9 @@ class BackgroundService {
     }
   }
 
-  /** Validates the shape of `psps.json` before it is cached or returned. */
+  /**
+  Validates the shape of `psps.json` before it is cached or returned.
+   */
   private isValidPspConfig(data: unknown): data is PSPConfig {
     if (typeof data !== 'object' || data === null) {
       return false;
@@ -845,7 +874,9 @@ class BackgroundService {
     }
   }
 
-  /** Persists provider config and rebuilds the derived matcher indexes. */
+  /**
+  Persists provider config and rebuilds the derived matcher indexes.
+   */
   private async setCachedPspConfig(config: PSPConfig): Promise<void> {
     try {
       // Store in chrome.storage for persistence
@@ -1228,7 +1259,9 @@ class BackgroundService {
     await this.handleActivatedTab(tabId, activeInfo.tabId, tab, detectedPsp);
   }
 
-  /** True when the URL belongs to one of this extension's own pages. */
+  /**
+  True when the URL belongs to one of this extension's own pages.
+   */
   private isOwnExtensionPage(url: string): boolean {
     return url.startsWith(chrome.runtime.getURL(''));
   }

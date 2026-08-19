@@ -8,10 +8,12 @@ import prettierConfig from 'eslint-config-prettier';
 
 const unicornAllPreset = unicorn.configs.all;
 const unicornAllRules = Object.fromEntries(
-  Object.entries(unicornAllPreset.rules).map(([ruleName, setting]) => [
-    ruleName,
-    Array.isArray(setting) ? ['error', ...setting.slice(1)] : 'error',
-  ]),
+  Object.entries(unicornAllPreset.rules).map(([ruleName, setting]) => {
+    return [
+      ruleName,
+      Array.isArray(setting) ? ['error', ...setting.slice(1)] : 'error',
+    ];
+  }),
 );
 
 // Merge the rule maps from the type-aware typescript-eslint presets. These are
@@ -284,6 +286,14 @@ export default [
       'prefer-const': 'error',
       '@typescript-eslint/no-var-requires': 'error',
       curly: ['error', 'multi-line'],
+    },
+  },
+
+  // The public type API deliberately provides a stable import boundary.
+  {
+    files: ['src/types/index.ts'],
+    rules: {
+      'unicorn/no-barrel-files': 'off',
     },
   },
 

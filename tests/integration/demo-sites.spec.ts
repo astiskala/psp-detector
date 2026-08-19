@@ -158,16 +158,19 @@ async function detectAndAssert(page: Page, site: SiteCase): Promise<void> {
     try {
       requests.push(r.url());
     } catch {
-      /* ignore */
+      /*
+      ignore
+      */
     }
   };
 
   page.on('request', listener);
   const requestSignal = page.waitForRequest(
-    (request) =>
-      expectedMatchStrings.some((matchString) =>
+    (request) => {
+      return expectedMatchStrings.some((matchString) =>
         request.url().includes(matchString),
-      ),
+      );
+    },
     { timeout: 10_000 },
   );
   await page.goto(site.url, { waitUntil: 'domcontentloaded' });
@@ -177,11 +180,12 @@ async function detectAndAssert(page: Page, site: SiteCase): Promise<void> {
         .getEntriesByType('resource')
         .map((entry) => entry.name);
       const html = document.documentElement.innerHTML;
-      return matchStrings.some(
-        (matchString) =>
+      return matchStrings.some((matchString) => {
+        return (
           html.includes(matchString) ||
-          resourceUrls.some((url) => url.includes(matchString)),
-      );
+          resourceUrls.some((url) => url.includes(matchString))
+        );
+      });
     },
     expectedMatchStrings,
     { timeout: 10_000 },

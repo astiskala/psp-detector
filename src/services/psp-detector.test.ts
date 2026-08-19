@@ -262,13 +262,15 @@ describe('PSPDetectorService', () => {
   it('should handle performance timing edge cases', () => {
     // Test with very large config to ensure timing works
     const largeConfig: PSPConfig = {
-      psps: Array.from({ length: 100 }, (_, index) => ({
-        name: pspName(`PSP${index}`),
-        regex: regexPattern(String.raw`psp${index}\.com`),
-        url: pspUrl(`https://psp${index}.com`),
-        image: `psp${index}`,
-        summary: `PSP ${index} summary`,
-      })),
+      psps: Array.from({ length: 100 }, (_, index) => {
+        return {
+          name: pspName(`PSP${index}`),
+          regex: regexPattern(String.raw`psp${index}\.com`),
+          url: pspUrl(`https://psp${index}.com`),
+          image: `psp${index}`,
+          summary: `PSP ${index} summary`,
+        };
+      }),
     };
 
     const largePspService = new PSPDetectorService();

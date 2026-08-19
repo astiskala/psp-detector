@@ -18,7 +18,9 @@ import {
   TELEMETRY_ENTRY_POINTS,
 } from './telemetry';
 
-/** Manages popup lifecycle: permission checks, config loading, and UI rendering. */
+/**
+Manages popup lifecycle: permission checks, config loading, and UI rendering.
+ */
 export class PopupManager {
   private readonly ui: UIService;
   private isInitialized = false;
@@ -61,7 +63,9 @@ export class PopupManager {
     }
   }
 
-  /** Shows the permission CTA and binds the grant flow once. */
+  /**
+  Shows the permission CTA and binds the grant flow once.
+   */
   private showPermissionRequest(): void {
     this.setElementDisplay('loading-state', 'none');
     this.setElementDisplay('permission-state', 'block');
@@ -207,7 +211,9 @@ export class PopupManager {
     return typedResponse.psps;
   }
 
-  /** Uses local storage as a popup-local cache before fetching `psps.json`. */
+  /**
+  Uses local storage as a popup-local cache before fetching `psps.json`.
+   */
   private async getPSPConfigWithCache(): Promise<PSPConfig> {
     // Try to get from extension storage cache first
     const cacheKey = STORAGE_KEYS.POPUP_PSP_CONFIG_CACHE;
@@ -282,7 +288,9 @@ export class PopupManager {
     }
   }
 
-  /** Performs a lightweight shape check before trusting cached popup config. */
+  /**
+  Performs a lightweight shape check before trusting cached popup config.
+   */
   private isPspConfig(value: unknown): value is PSPConfig {
     if (typeof value !== 'object' || value === null) {
       return false;

@@ -6,7 +6,9 @@ export type TabId = number & { readonly __brand: 'TabId' };
 export type URL = string & { readonly __brand: 'URL' };
 export type RegexPattern = string & { readonly __brand: 'RegexPattern' };
 
-/** Runtime validators for constructing branded values from untrusted inputs. */
+/**
+Runtime validators for constructing branded values from untrusted inputs.
+ */
 export const TypeConverters = {
   /**
   Accepts only non-empty provider names so empty detection results never get

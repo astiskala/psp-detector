@@ -33,14 +33,15 @@ export class DOMObserverService {
         if (!this.isObserving || !this.debounceCallback) return;
 
         try {
-          const relevantMutations = mutations.filter(
-            (mutation) =>
+          const relevantMutations = mutations.filter((mutation) => {
+            return (
               (mutation.type === 'childList' &&
                 mutation.addedNodes.length > 0 &&
                 this.isRelevantNode(mutation.addedNodes)) ||
               (mutation.type === 'attributes' &&
-                this.isRelevantAttributeMutation(mutation)),
-          );
+                this.isRelevantAttributeMutation(mutation))
+            );
+          });
 
           if (relevantMutations.length === 0) return;
 
@@ -154,7 +155,9 @@ export class DOMObserverService {
     }
   }
 
-  /** Starts observing once `document.body` exists. */
+  /**
+  Starts observing once `document.body` exists.
+   */
   public startObserving(): void {
     if (!this.observer || this.isObserving) return;
     const start = (): void => {
@@ -186,7 +189,9 @@ export class DOMObserverService {
     start();
   }
 
-  /** Stops mutation delivery without destroying the observer instance. */
+  /**
+  Stops mutation delivery without destroying the observer instance.
+   */
   public stopObserving(): void {
     if (!this.observer || !this.isObserving) return;
     try {
@@ -204,7 +209,9 @@ export class DOMObserverService {
     }
   }
 
-  /** Fully releases the observer and its callback references. */
+  /**
+  Fully releases the observer and its callback references.
+   */
   public cleanup(): void {
     this.stopObserving();
     this.observer = undefined;

@@ -18,7 +18,9 @@ const GA_COLLECT_ENDPOINT = 'https://www.google-analytics.com/mp/collect';
 const GA_DEBUG_ENDPOINT = 'https://www.google-analytics.com/debug/mp/collect';
 const CLOUDFLARE_TRACE_ENDPOINT = 'https://www.cloudflare.com/cdn-cgi/trace';
 
-/** Session is considered expired after this much inactivity (30 minutes). */
+/**
+Session is considered expired after this much inactivity (30 minutes).
+ */
 const SESSION_EXPIRY_MS = 30 * 60_000;
 const MAX_PARAM_STRING_LENGTH = 100;
 const MAX_PARAM_NAME_LENGTH = 40;
@@ -46,7 +48,9 @@ export const TELEMETRY_EVENTS = {
   TELEMETRY_CHANGED: 'telemetry_changed',
 } as const;
 
-/** Centralised `entry_point` dimension values shared across call sites. */
+/**
+Centralised `entry_point` dimension values shared across call sites.
+ */
 export const TELEMETRY_ENTRY_POINTS = {
   TAB_UPDATE: 'tab_update',
   TAB_ACTIVATION: 'tab_activation',
@@ -95,7 +99,9 @@ function isDebugBuild(): boolean {
   return process.env['NODE_ENV'] === 'development';
 }
 
-/** Returns whether the user has telemetry enabled. Defaults to enabled. */
+/**
+Returns whether the user has telemetry enabled. Defaults to enabled.
+ */
 export async function isTelemetryEnabled(): Promise<boolean> {
   try {
     const result = await chrome.storage.local.get(
@@ -109,7 +115,9 @@ export async function isTelemetryEnabled(): Promise<boolean> {
   }
 }
 
-/** Persists the user's telemetry preference. */
+/**
+Persists the user's telemetry preference.
+ */
 export async function setTelemetryEnabled(enabled: boolean): Promise<void> {
   await chrome.storage.local.set({
     [STORAGE_KEYS.TELEMETRY_ENABLED]: enabled,
@@ -206,7 +214,9 @@ function getExtensionVersion(): string {
   }
 }
 
-/** Coerces a param name into a GA-safe identifier (`[a-z][a-z0-9_]*`). */
+/**
+Coerces a param name into a GA-safe identifier (`[a-z][a-z0-9_]*`).
+ */
 function normalizeParameterName(name: string): string {
   let normalized = name
     .trim()
@@ -219,7 +229,9 @@ function normalizeParameterName(name: string): string {
   return normalized.slice(0, MAX_PARAM_NAME_LENGTH);
 }
 
-/** Allows only strings, numbers, and booleans; truncates long strings. */
+/**
+Allows only strings, numbers, and booleans; truncates long strings.
+ */
 function sanitizeParameterValue(
   value: unknown,
 ): TelemetryParameterValue | undefined {
@@ -298,7 +310,9 @@ export function toEvidenceHostname(
   }
 }
 
-/** Returns the IANA timezone (e.g. `Asia/Singapore`) if the runtime exposes it. */
+/**
+Returns the IANA timezone (e.g. `Asia/Singapore`) if the runtime exposes it.
+ */
 function getTimezone(): string | undefined {
   try {
     const formatter = new Intl.DateTimeFormat();
@@ -308,7 +322,9 @@ function getTimezone(): string | undefined {
   }
 }
 
-/** Returns the browser UI language (e.g. `en-GB`), falling back to navigator. */
+/**
+Returns the browser UI language (e.g. `en-GB`), falling back to navigator.
+ */
 function getUiLanguage(): string | undefined {
   try {
     return chrome.i18n.getUILanguage();
@@ -323,7 +339,9 @@ function getUiLanguage(): string | undefined {
   }
 }
 
-/** Returns the OS platform (`mac`/`win`/`linux`/…) if the runtime exposes it. */
+/**
+Returns the OS platform (`mac`/`win`/`linux`/…) if the runtime exposes it.
+ */
 async function getOsPlatform(): Promise<string | undefined> {
   try {
     const info = await chrome.runtime.getPlatformInfo();
@@ -337,7 +355,9 @@ function isIsoCountryCode(value: unknown): value is string {
   return typeof value === 'string' && /^[A-Z]{2}$/u.test(value);
 }
 
-/** Parses the country code from Cloudflare's trace response (`loc=US`). */
+/**
+Parses the country code from Cloudflare's trace response (`loc=US`).
+ */
 function parseCountryFromCloudflareTrace(payload: string): string | undefined {
   const match = /^loc=([A-Z]{2})$/mu.exec(payload);
   return match?.[1];

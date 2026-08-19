@@ -1,4 +1,6 @@
-/** Default toolbar icons used before a provider-specific logo is available. */
+/**
+Default toolbar icons used before a provider-specific logo is available.
+ */
 export const DEFAULT_ICONS = {
   48: 'images/default_48.png',
   128: 'images/default_128.png',

@@ -591,12 +591,13 @@ function bindControls(historyReference: HistoryReference): void {
   const pspFilter = document.querySelector<HTMLSelectElement>('#pspFilter');
   let searchRefreshTimer: ReturnType<typeof setTimeout> | undefined;
 
-  const getFilteredEntries = (): HistoryEntry[] =>
-    filterEntries(
+  const getFilteredEntries = (): HistoryEntry[] => {
+    return filterEntries(
       historyReference.getHistory(),
       search?.value ?? '',
       pspFilter?.value ?? '',
     );
+  };
 
   const refresh = (deferCharts: boolean): void => {
     const filtered = getFilteredEntries();
@@ -735,7 +736,9 @@ async function bindTelemetryControl(): Promise<void> {
   });
 }
 
-/** Wires the settings dialog and the telemetry control it contains. */
+/**
+Wires the settings dialog and the telemetry control it contains.
+ */
 async function bindSettings(): Promise<void> {
   bindSettingsDialog();
   await bindTelemetryControl();

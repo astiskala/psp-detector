@@ -23,9 +23,12 @@ const SERVICE_WORKER_RESTART_ERRORS = [
   'service worker was stopped',
 ];
 
-const isExtensionContextInvalidated = (error: unknown): boolean =>
-  error instanceof Error &&
-  error.message.includes(EXTENSION_CONTEXT_INVALIDATED_MESSAGE);
+const isExtensionContextInvalidated = (error: unknown): boolean => {
+  return (
+    error instanceof Error &&
+    error.message.includes(EXTENSION_CONTEXT_INVALIDATED_MESSAGE)
+  );
+};
 
 const isServiceWorkerRestartError = (message: string): boolean =>
   SERVICE_WORKER_RESTART_ERRORS.some((fragment) => message.includes(fragment));
@@ -78,7 +81,9 @@ class ContentScript {
     this.domObserver = new DOMObserverService();
   }
 
-  /** Clears per-page detection state when SPA navigation moves to a new URL. */
+  /**
+  Clears per-page detection state when SPA navigation moves to a new URL.
+   */
   public resetForNewPage(): void {
     this.pspDetected = false;
     this.reportedPSPs.clear();
@@ -402,7 +407,9 @@ class ContentScript {
     return 'pageUrl';
   }
 
-  /** Finalizes exempt detection flows and stops further observation. */
+  /**
+  Finalizes exempt detection flows and stops further observation.
+   */
   private async handlePSPDetection(result: PSPDetectionResult): Promise<void> {
     try {
       const tabId = await this.getActiveTabId();
@@ -625,26 +632,28 @@ class ContentScript {
       }
     }
 
-    const tasks = uniqueIframes.map((iframe) => async (): Promise<void> => {
-      const source = iframe.src;
-      if (
-        !source ||
-        this.processedIframes.has(source) ||
-        !this.canAccessIframe(source)
-      ) {
-        return;
-      }
-
-      this.processedIframes.add(source);
-
-      try {
-        const iframeDocument = await this.getAccessibleIframeDocument(iframe);
-        if (iframeDocument) {
-          this.extractNestedSources(iframeDocument, iframeContent);
+    const tasks = uniqueIframes.map((iframe) => {
+      return async (): Promise<void> => {
+        const source = iframe.src;
+        if (
+          !source ||
+          this.processedIframes.has(source) ||
+          !this.canAccessIframe(source)
+        ) {
+          return;
         }
-      } catch (error) {
-        logger.debug('Skipping iframe content due to access error', error);
-      }
+
+        this.processedIframes.add(source);
+
+        try {
+          const iframeDocument = await this.getAccessibleIframeDocument(iframe);
+          if (iframeDocument) {
+            this.extractNestedSources(iframeDocument, iframeContent);
+          }
+        } catch (error) {
+          logger.debug('Skipping iframe content due to access error', error);
+        }
+      };
     });
     await this.runTasksWithConcurrency(tasks, this.iframeReadConcurrency);
 
@@ -703,7 +712,9 @@ class ContentScript {
     );
   }
 
-  /** Pulls nested script, iframe, and form URLs out of an accessible iframe. */
+  /**
+  Pulls nested script, iframe, and form URLs out of an accessible iframe.
+   */
   private extractNestedSources(document_: Document, content: string[]): void {
     // Get nested iframe sources
     document_.querySelectorAll(':scope iframe[src]').forEach((nestedIframe) => {

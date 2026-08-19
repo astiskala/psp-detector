@@ -109,18 +109,17 @@ function requestUrl(input: RequestInfo | URL): string {
 }
 
 function mockTimezone(timeZone: string | undefined): void {
-  jest.spyOn(Intl, 'DateTimeFormat').mockImplementation(
-    () =>
-      ({
-        resolvedOptions: (): Intl.ResolvedDateTimeFormatOptions => {
-          if (timeZone === undefined) {
-            throw new Error('timezone unavailable');
-          }
+  jest.spyOn(Intl, 'DateTimeFormat').mockImplementation(() => {
+    return {
+      resolvedOptions: (): Intl.ResolvedDateTimeFormatOptions => {
+        if (timeZone === undefined) {
+          throw new Error('timezone unavailable');
+        }
 
-          return { timeZone } as Intl.ResolvedDateTimeFormatOptions;
-        },
-      }) as unknown as Intl.DateTimeFormat,
-  );
+        return { timeZone } as Intl.ResolvedDateTimeFormatOptions;
+      },
+    } as unknown as Intl.DateTimeFormat;
+  });
 }
 
 async function withNavigatorLanguage(

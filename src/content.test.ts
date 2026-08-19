@@ -25,23 +25,31 @@ interface WindowContentState {
   };
 }
 
-jest.mock('./services/psp-detector', () => ({
-  PSPDetectorService: jest.fn().mockImplementation(() => ({
-    setExemptDomains: setExemptDomainsMock,
-    initialize: initializePspMock,
-    isInitialized: isInitializedMock,
-    detectPSP: detectPSPMock,
-  })),
-}));
+jest.mock('./services/psp-detector', () => {
+  return {
+    PSPDetectorService: jest.fn().mockImplementation(() => {
+      return {
+        setExemptDomains: setExemptDomainsMock,
+        initialize: initializePspMock,
+        isInitialized: isInitializedMock,
+        detectPSP: detectPSPMock,
+      };
+    }),
+  };
+});
 
-jest.mock('./services/dom-observer', () => ({
-  DOMObserverService: jest.fn().mockImplementation(() => ({
-    initialize: domObserverInitializeMock,
-    startObserving: domObserverStartObservingMock,
-    stopObserving: domObserverStopObservingMock,
-    cleanup: domObserverCleanupMock,
-  })),
-}));
+jest.mock('./services/dom-observer', () => {
+  return {
+    DOMObserverService: jest.fn().mockImplementation(() => {
+      return {
+        initialize: domObserverInitializeMock,
+        startObserving: domObserverStartObservingMock,
+        stopObserving: domObserverStopObservingMock,
+        cleanup: domObserverCleanupMock,
+      };
+    }),
+  };
+});
 
 function setupContentDOM(): void {
   document.body.innerHTML = `

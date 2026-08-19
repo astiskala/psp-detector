@@ -22,13 +22,14 @@ const parsedConfig = ts.parseJsonConfigFileContent(
 
 const files = parsedConfig.fileNames
   .map((filePath) => path.resolve(filePath))
-  .filter(
-    (filePath) =>
+  .filter((filePath) => {
+    return (
       filePath.includes(`${path.sep}src${path.sep}`) &&
       !filePath.endsWith('.test.ts') &&
       !filePath.endsWith('.spec.ts') &&
-      !filePath.includes(`${path.sep}src${path.sep}test-helpers${path.sep}`),
-  );
+      !filePath.includes(`${path.sep}src${path.sep}test-helpers${path.sep}`)
+    );
+  });
 
 const scriptVersions = new Map(
   files.map((filePath) => [filePath, String(fs.statSync(filePath).mtimeMs)]),
@@ -103,11 +104,11 @@ function findUnusedPublicMethods(sourceFile) {
         languageService.findReferences(sourceFile.fileName, position) ?? [];
 
       const declarationPath = path.resolve(sourceFile.fileName);
-      const hasNonDefinitionReference = references.some((referencedSymbol) =>
-        referencedSymbol.references.some(
+      const hasNonDefinitionReference = references.some((referencedSymbol) => {
+        return referencedSymbol.references.some(
           (reference) => !isDefinitionReference(reference, declarationPath),
-        ),
-      );
+        );
+      });
 
       if (!hasNonDefinitionReference) {
         const owner = node.parent;

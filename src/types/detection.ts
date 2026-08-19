@@ -12,7 +12,9 @@ export type SourceType =
   | 'networkRequest'
   | 'pageUrl';
 
-/** One provider hit plus the signal that caused it. */
+/**
+One provider hit plus the signal that caused it.
+ */
 export interface PSPMatch {
   readonly psp: PSPName;
   readonly detectionInfo?: {
@@ -39,29 +41,39 @@ export type PSPDetectionResult =
       readonly context?: string;
     };
 
-/** Constructors and guards for building `PSPDetectionResult` values. */
+/**
+Constructors and guards for building `PSPDetectionResult` values.
+ */
 export const PSPDetectionResult = {
-  detected: (psps: PSPMatch[]): PSPDetectionResult => ({
-    type: 'detected',
-    psps,
-  }),
+  detected: (psps: PSPMatch[]): PSPDetectionResult => {
+    return {
+      type: 'detected',
+      psps,
+    };
+  },
 
-  exempt: (reason: string, url: URL): PSPDetectionResult => ({
-    type: 'exempt',
-    reason,
-    url,
-  }),
+  exempt: (reason: string, url: URL): PSPDetectionResult => {
+    return {
+      type: 'exempt',
+      reason,
+      url,
+    };
+  },
 
-  none: (scannedPatterns: number): PSPDetectionResult => ({
-    type: 'none',
-    scannedPatterns,
-  }),
+  none: (scannedPatterns: number): PSPDetectionResult => {
+    return {
+      type: 'none',
+      scannedPatterns,
+    };
+  },
 
-  error: (error: Error, context?: string): PSPDetectionResult => ({
-    type: 'error',
-    error,
-    ...(context !== undefined && { context }),
-  }),
+  error: (error: Error, context?: string): PSPDetectionResult => {
+    return {
+      type: 'error',
+      error,
+      ...(context !== undefined && { context }),
+    };
+  },
 
   isDetected: (
     result: PSPDetectionResult,

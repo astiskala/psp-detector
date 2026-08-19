@@ -27,9 +27,11 @@ beforeEach(() => {
   (globalThis as unknown as { chrome: unknown }).chrome = {
     storage: {
       local: {
-        get: jest.fn(async (key: string) => ({
-          [key]: storedData[key],
-        })),
+        get: jest.fn(async (key: string) => {
+          return {
+            [key]: storedData[key],
+          };
+        }),
         set: jest.fn(async (data: Record<string, unknown>) => {
           Object.assign(storedData, data);
         }),
@@ -38,14 +40,16 @@ beforeEach(() => {
   };
 });
 
-const makeEntry = (overrides: Partial<HistoryEntry> = {}): HistoryEntry => ({
-  id: 'tab1_1000',
-  domain: 'example.com',
-  url: DEFAULT_CHECKOUT_URL,
-  timestamp: 1000,
-  psps: [],
-  ...overrides,
-});
+const makeEntry = (overrides: Partial<HistoryEntry> = {}): HistoryEntry => {
+  return {
+    id: 'tab1_1000',
+    domain: 'example.com',
+    url: DEFAULT_CHECKOUT_URL,
+    timestamp: 1000,
+    psps: [],
+    ...overrides,
+  };
+};
 
 describe('readHistory', () => {
   it('returns empty array when nothing stored', async () => {
@@ -73,13 +77,14 @@ describe('writeHistoryEntry', () => {
   it('caps at HISTORY_MAX_ENTRIES and drops oldest', async () => {
     storedData[STORAGE_KEYS.PSP_HISTORY] = Array.from(
       { length: HISTORY_MAX_ENTRIES },
-      (_, index) =>
-        makeEntry({
+      (_, index) => {
+        return makeEntry({
           id: `old_${index}`,
           timestamp: index,
           domain: `site-${index}.example.com`,
           url: `https://site-${index}.example.com/checkout`,
-        }),
+        });
+      },
     );
 
     await writeHistoryEntry(
@@ -93,13 +98,14 @@ describe('writeHistoryEntry', () => {
   it('retries with eviction if first write fails', async () => {
     storedData[STORAGE_KEYS.PSP_HISTORY] = Array.from(
       { length: HISTORY_MAX_ENTRIES },
-      (_, index) =>
-        makeEntry({
+      (_, index) => {
+        return makeEntry({
           id: `old_${index}`,
           timestamp: index,
           domain: `site-${index}.example.com`,
           url: `https://site-${index}.example.com/checkout`,
-        }),
+        });
+      },
     );
 
     const setMock = chrome.storage.local.set as unknown as jest.Mock;
@@ -198,13 +204,14 @@ describe('writeHistoryEntry', () => {
     // path (not just a single retry).
     storedData[STORAGE_KEYS.PSP_HISTORY] = Array.from(
       { length: HISTORY_MAX_ENTRIES },
-      (_, index) =>
-        makeEntry({
+      (_, index) => {
+        return makeEntry({
           id: `old_${index}`,
           timestamp: index,
           domain: `site-${index}.example.com`,
           url: `https://site-${index}.example.com/checkout`,
-        }),
+        });
+      },
     );
 
     const setMock = chrome.storage.local.set as unknown as jest.Mock;
@@ -236,13 +243,14 @@ describe('writeHistoryEntry', () => {
   it('stops halving at retain=0 and persists only the new entry', async () => {
     storedData[STORAGE_KEYS.PSP_HISTORY] = Array.from(
       { length: HISTORY_MAX_ENTRIES },
-      (_, index) =>
-        makeEntry({
+      (_, index) => {
+        return makeEntry({
           id: `old_${index}`,
           timestamp: index,
           domain: `site-${index}.example.com`,
           url: `https://site-${index}.example.com/checkout`,
-        }),
+        });
+      },
     );
 
     const setMock = chrome.storage.local.set as unknown as jest.Mock;

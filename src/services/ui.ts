@@ -91,7 +91,9 @@ export class UIService {
     this.showPSPImage();
   }
 
-  /** Renders the empty-state copy shown when no provider evidence is found. */
+  /**
+  Renders the empty-state copy shown when no provider evidence is found.
+   */
   public showNoPSPDetected(): void {
     this.transitionToContent();
     this.setUIState('no-psp');
@@ -140,7 +142,9 @@ export class UIService {
     this.updateImage('default', 'PSP detection disabled');
   }
 
-  /** Renders the fallback error state for popup initialization failures. */
+  /**
+  Renders the fallback error state for popup initialization failures.
+   */
   public showError(): void {
     this.transitionToContent();
     this.setUIState('error');
@@ -239,13 +243,17 @@ export class UIService {
     }
   }
 
-  /** Switches the popup shell from its loading skeleton to rendered content. */
+  /**
+  Switches the popup shell from its loading skeleton to rendered content.
+   */
   private transitionToContent(): void {
     this.hideLoadingState();
     this.showContentState();
   }
 
-  /** Applies state classes that drive popup styling for non-success flows. */
+  /**
+  Applies state classes that drive popup styling for non-success flows.
+   */
   private setUIState(state: UIState): void {
     if (!this.elements['container']) return;
 

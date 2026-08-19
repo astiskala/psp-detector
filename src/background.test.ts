@@ -211,9 +211,10 @@ function setupChromeMocks(options: ChromeMockOptions = {}): ChromeMockContext {
     .mockResolvedValue([{ id: 12, url: activeTabUrl } as chrome.tabs.Tab]);
   const tabsGet = jest
     .fn()
-    .mockImplementation(async (tabId: number): Promise<chrome.tabs.Tab> => {
-      return { id: tabId, url: activeTabUrl } as chrome.tabs.Tab;
-    });
+    .mockImplementation(
+      async (tabId: number): Promise<chrome.tabs.Tab> =>
+        ({ id: tabId, url: activeTabUrl }) as chrome.tabs.Tab,
+    );
   const executeScript = jest.fn().mockResolvedValue([]);
   const permissionContains = jest.fn().mockResolvedValue(hasHostPermission);
   const permissionRequest = jest.fn().mockResolvedValue(false);

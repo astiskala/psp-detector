@@ -4,12 +4,16 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import sharp from 'sharp';
 
-/** Tiny sync helper used while preparing build metadata files. */
+/**
+Tiny sync helper used while preparing build metadata files.
+*/
 function readJsonSync(filePath) {
   return JSON.parse(readFileSync(filePath, 'utf8'));
 }
 
-/** Writes JSON with stable formatting so generated metadata stays diffable. */
+/**
+Writes JSON with stable formatting so generated metadata stays diffable.
+*/
 function writeJsonSync(filePath, object) {
   writeFileSync(filePath, `${JSON.stringify(object, undefined, 2)}\n`);
 }
@@ -167,13 +171,13 @@ async function buildFiles() {
 
     // 6) bundle JS
     await Promise.all(
-      Object.entries(mainEntryPoints).map(([name, entry]) =>
-        esbuild.build({
+      Object.entries(mainEntryPoints).map(([name, entry]) => {
+        return esbuild.build({
           ...sharedConfig,
           entryPoints: [entry],
           outfile: `dist/${name}.js`,
-        }),
-      ),
+        });
+      }),
     );
 
     // 7) regenerate PSP images

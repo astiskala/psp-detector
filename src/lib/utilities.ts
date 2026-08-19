@@ -160,7 +160,9 @@ export function debouncedMutation<
   };
 }
 
-/** Normalizes a provider name for case-insensitive keying and lookup. */
+/**
+Normalizes a provider name for case-insensitive keying and lookup.
+ */
 export function normalizeProviderName(name: string): string {
   return name.trim().toLowerCase();
 }

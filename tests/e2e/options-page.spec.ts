@@ -141,9 +141,11 @@ async function seedChromeStorage(
       (globalThis as unknown as { chrome: unknown }).chrome = {
         storage: {
           local: {
-            get: async (key: string): Promise<Record<string, unknown>> => ({
-              [key]: store[key],
-            }),
+            get: async (key: string): Promise<Record<string, unknown>> => {
+              return {
+                [key]: store[key],
+              };
+            },
             set: async (payload: Record<string, unknown>): Promise<void> => {
               Object.assign(store, payload);
             },
@@ -264,12 +266,12 @@ test('options page telemetry toggle is visible and persists opting out', async (
   await toggle.uncheck();
 
   await expect
-    .poll(async () =>
-      page.evaluate(async () => {
+    .poll(async () => {
+      return page.evaluate(async () => {
         const result = await chrome.storage.local.get('telemetryEnabled');
         return (result as Record<string, unknown>)['telemetryEnabled'];
-      }),
-    )
+      });
+    })
     .toBe(false);
 
   // No GA credentials are bundled in the test build, so nothing is ever sent.
