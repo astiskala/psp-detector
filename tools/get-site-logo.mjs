@@ -13,8 +13,8 @@ Requires:
   rel="shortcut icon">, apple-touch icons, PWA manifest icons, common icon
   paths (android-chrome-512x512.png, etc.), and OG image metadata.
 - Also tries third-party favicon APIs: Google and DuckDuckGo.
-- No heuristic scoring or scanning of all <img> elements/social links—only
-  metadata and common paths.
+- Prefers Apple touch icons over generic icons, manifests, and OG images. Does
+  not scan arbitrary <img> elements or social links.
 - Requires icons to be square (or within 5% aspect tolerance) and at least
   128x128. No bitmap upscaling.
 - Outputs a lossless PNG (compressionLevel=9) at exactly 128x128 (downscale
@@ -70,9 +70,16 @@ const COMMON_ICON_PATHS = [
   '/android-chrome-256x256.png',
   '/android-chrome-384x384.png',
   '/android-chrome-512x512.png',
+  '/apple-touch-icon-128x128.png',
+  '/apple-touch-icon-144x144.png',
+  '/apple-touch-icon-144x144-precomposed.png',
   '/apple-touch-icon-152x152.png',
+  '/apple-touch-icon-152x152-precomposed.png',
   '/apple-touch-icon-167x167.png',
+  '/apple-touch-icon-167x167-precomposed.png',
   '/apple-touch-icon-180x180.png',
+  '/apple-touch-icon-180x180-precomposed.png',
+  '/apple-touch-icon-192x192.png',
   '/apple-touch-icon-precomposed.png',
   '/apple-touch-icon.png',
   '/favicon-194x194.png',
@@ -88,6 +95,17 @@ const COMMON_ICON_PATHS = [
   '/mstile-150x150.png',
   '/site.webmanifest',
 ];
+
+const ICON_SOURCE_PRIORITY = new Map([
+  ['apple-touch-icon', 0],
+  ['icon', 1],
+  ['manifest-icon', 2],
+  ['mask-icon', 3],
+  ['guess-path', 4],
+  ['og-image', 5],
+  ['google-favicon', 6],
+  ['duckduckgo-favicon', 7],
+]);
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -184,8 +202,27 @@ function parseSizes(sizesAttribute) {
 }
 
 function uniq(array) {
-  const map = new Map(array.map((a) => [a.url, a]));
+  const map = new Map();
+  for (const candidate of array) {
+    const existing = map.get(candidate.url);
+    if (!existing || compareIconCandidates(candidate, existing) < 0) {
+      map.set(candidate.url, candidate);
+    }
+  }
+
   return map.values().toArray();
+}
+
+function compareIconCandidates(a, b) {
+  const priorityDifference =
+    (ICON_SOURCE_PRIORITY.get(a.source) ?? Number.MAX_SAFE_INTEGER) -
+    (ICON_SOURCE_PRIORITY.get(b.source) ?? Number.MAX_SAFE_INTEGER);
+  if (priorityDifference !== 0) return priorityDifference;
+
+  return (
+    Math.min(a.width || 0, a.height || 0) -
+    Math.min(b.width || 0, b.height || 0)
+  );
 }
 
 function isSquareish(w, h, tolerance = 0.05) {
@@ -397,21 +434,34 @@ async function tryManifestIcons(manifestUrl, base) {
 
 function collectFromDom($, baseUrl) {
   const cands = [];
+  const baseHref = $('base[href]').first().attr('href');
+  const documentBaseUrl = baseHref ? toAbsolute(baseHref, baseUrl) : undefined;
+  const metadataBaseUrl = documentBaseUrl || baseUrl;
 
   // <link rel="...">
-  $(
-    'link[rel*="icon"], link[rel="mask-icon"], link[rel="apple-touch-icon"], link[rel="apple-touch-icon-precomposed"]',
-  ).each((_, element) => {
+  $('link[rel]').each((_, element) => {
     const rel = ($(element).attr('rel') || '').toLowerCase();
+    const relTokens = rel.split(/\s+/).filter(Boolean);
+    if (relTokens.every((token) => !token.includes('icon'))) return;
+
     const href = $(element).attr('href');
     if (!href) return;
     const sizes = parseSizes($(element).attr('sizes'));
-    const abs = toAbsolute(href, baseUrl);
+    const abs = toAbsolute(href, metadataBaseUrl);
     if (!abs) return;
     let source = 'icon';
-    if (rel.includes('apple-touch')) source = 'apple-touch-icon';
-    else if (rel.includes('mask-icon')) source = 'mask-icon';
-    const cand = { url: abs, source, declaredSizes: sizes };
+    if (relTokens.some((token) => token.startsWith('apple-touch-icon'))) {
+      source = 'apple-touch-icon';
+    } else if (relTokens.includes('mask-icon')) {
+      source = 'mask-icon';
+    }
+
+    const cand = {
+      url: abs,
+      source,
+      declaredSizes: sizes,
+      type: $(element).attr('type'),
+    };
     if (candidateMeetsMinByDeclaration(cand)) {
       cands.push(cand);
     } else {
@@ -422,14 +472,14 @@ function collectFromDom($, baseUrl) {
   // Manifest
   const manifestHref = $('link[rel="manifest"]').attr('href');
   if (manifestHref) {
-    const abs = toAbsolute(manifestHref, baseUrl);
+    const abs = toAbsolute(manifestHref, metadataBaseUrl);
     if (abs) cands.push({ url: abs, source: 'manifest-link' });
   }
 
   // OG image
   const og = $('meta[property="og:image"]').attr('content');
   if (og) {
-    const abs = toAbsolute(og, baseUrl);
+    const abs = toAbsolute(og, metadataBaseUrl);
     if (abs) {
       const cand = { url: abs, source: 'og-image' };
       if (candidateMeetsMinByDeclaration(cand)) {
@@ -702,10 +752,7 @@ function collectCommonPathCandidateForBase(base, p, commonCands) {
   if (!abs) return;
   const cand = {
     url: abs,
-    source:
-      p.endsWith('.json') || p.endsWith('manifest')
-        ? 'manifest-link'
-        : 'guess-path',
+    source: commonPathSource(p),
   };
   if (
     cand.source === 'manifest-link' ||
@@ -752,9 +799,7 @@ function isAcceptableIconCandidate(m) {
 async function writeBestMeasured(pspName, measured, outputPath) {
   if (!measured || measured.length === 0) return;
 
-  const best = measured.toSorted(
-    (a, b) => Math.min(a.width, a.height) - Math.min(b.width, b.height),
-  )[0];
+  const best = measured.toSorted(compareIconCandidates)[0];
 
   await writeOut128(best.buffer, outputPath, best.format);
   console.log(
@@ -1236,16 +1281,21 @@ function collectSingleCommonPathCandidate(base, p, common) {
   if (!abs) return;
   const cand = {
     url: abs,
-    source:
-      p.endsWith('.json') || p.endsWith('manifest')
-        ? 'manifest-link'
-        : 'guess-path',
+    source: commonPathSource(p),
   };
   if (cand.source === 'manifest-link' || candidateMeetsMinByDeclaration(cand)) {
     common.push(cand);
   } else if (VERBOSE) {
     console.log(`[v] prefilter(common-single): drop < ${MIN_SIZE}px ${abs}`);
   }
+}
+
+function commonPathSource(pathname) {
+  if (pathname.endsWith('.json') || pathname.endsWith('manifest')) {
+    return 'manifest-link';
+  }
+  if (pathname.includes('apple-touch-icon')) return 'apple-touch-icon';
+  return 'guess-path';
 }
 
 async function tryWriteSingleFromCommonPaths(bases, outPath, isAcceptable) {
@@ -1306,9 +1356,7 @@ async function writeSingleChoiceOrNull(measured, outPath) {
 
 function pickBestMeasured(measured) {
   if (!measured || measured.length === 0) return;
-  return measured.toSorted(
-    (a, b) => Math.min(a.width, a.height) - Math.min(b.width, b.height),
-  )[0];
+  return measured.toSorted(compareIconCandidates)[0];
 }
 
 try {

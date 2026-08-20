@@ -1366,6 +1366,22 @@
       "image": "tazapay",
       "summary": "Tazapay is a cross-border payment gateway supporting cards, bank transfers, local payment methods, hosted checkout, payment links, and API integrations.",
       "url": "https://tazapay.com"
+    },
+    {
+      "name": "Rootline",
+      "matchStrings": [
+        "checkout.dev.rootline.com",
+        "checkout.sandbox.rootline.com",
+        "checkout.staging.rootline.com",
+        "checkout.rootline.com",
+        "js.dev.rootline.com",
+        "js.sandbox.rootline.com",
+        "js.staging.rootline.com",
+        "js.rootline.com"
+      ],
+      "image": "rootline",
+      "summary": "Rootline is a payments infrastructure provider for platforms, offering online and in-person payments, configurable routing, payouts, and automated reconciliation through a single API.",
+      "url": "https://rootline.com"
     }
   ],
   "orchestrators": {

@@ -146,6 +146,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Razorpay
 - Red Dot Payment
 - Redsys
+- Rootline
 - SB Payment Service
 - senangPay
 - Shift4

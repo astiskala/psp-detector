@@ -27,7 +27,7 @@ Focused guidance for AI coding agents working in this repository. Keep answers c
 
 ### 4. Commands / Workflows
 
-- Full local check: `pnpm run validate` (format:check → lint → typecheck → build → unit tests → web lint).
+- Full local check: `pnpm run validate` (format check → TypeScript/JavaScript lint → typecheck → Knip/dead-code/dependency checks → build → Jest coverage → web lint).
 - Unit tests: `pnpm test` (Jest, jsdom).
 - Integration: `pnpm run test:integration` (Playwright real-site checks; installs Chromium).
 - E2E: `pnpm run test:e2e` (Playwright popup, options, history, and export flows in loaded extension).
@@ -38,18 +38,21 @@ Focused guidance for AI coding agents working in this repository. Keep answers c
 ### 5. Conventions
 
 - Use `logger.*` (avoid raw console.\* outside utils/tests).
-- Provider order = precedence; place more specific host strings earlier.
+- Provider order = precedence; append new providers unless they must outrank an existing, more generic entry.
+- Prefer provider-owned runtime SDK, iframe, checkout, or API hosts/paths in `matchStrings`. Include relevant staging or sandbox hosts, but avoid marketing and documentation domains.
 - Regex: always compile with `safeCompileRegex`; never throw on invalid.
 - Images: commit only original base PNG (128px). Build generates `_48` + `_128`.
+- Obtain images first with `node tools/get-site-logo.mjs example.com assets/images/newpsp.png`. If it cannot find a suitable square image, use an official brand guide or company social-media logo and resize it to 128×128.
 - Version: never hand‑edit `package.json` version (auto `3.YYYY.MMDD.HHMM`).
 
 ### 6. Adding a Provider (Example)
 
-1. Add `assets/images/newpsp.png` (square/transparent 128px) Attempt to find a favicon or the logo used on social media for the company (LinkedIn, X, Facebook).
-2. Append to `public/psps.json`:
+1. Confirm provider-owned runtime hosts or paths from official integration documentation, SDKs, or a real checkout. Include relevant test environments without using generic root domains.
+2. Run `node tools/get-site-logo.mjs newpsp.com assets/images/newpsp.png`. If needed, use an official brand asset or social-media logo as the 128×128 source PNG.
+3. Append to `public/psps.json` with a concise, factual summary consistent with nearby entries:
    `{ "name": "NewPSP", "matchStrings": ["cdn.newpsp.com"], "image": "newpsp", "summary": "…", "url": "https://www.newpsp.com" }`
-3. `pnpm run build` (verifies image resizing & version bump).
-4. Add to README
+4. Add the provider alphabetically to the appropriate supported-provider section in `README.md`.
+5. Run `pnpm run validate` (verifies the data, image generation, generated version, and full project checks).
 
 ### 7. Pitfalls
 
