@@ -313,4 +313,54 @@ describe('UIService', () => {
     expect(cardNotice).not.toBeNull();
     expect(cardNotice?.textContent).toBe(groupNoticeText);
   });
+
+  it('shows the status icon when the fallback header image fails', () => {
+    service.renderMultiplePSPs([{ psp: 'Stripe' }], {
+      psps: [
+        {
+          name: requirePSPName('Stripe'),
+          url: requireURL('https://stripe.com'),
+          image: 'stripe',
+          summary: 'Stripe summary',
+        },
+      ],
+    });
+    const image = elements['image'] as HTMLImageElement;
+
+    expect(elements['statusIcon']?.style.display).toBe('none');
+
+    image.dispatchEvent(new Event('error'));
+    expect(image.src).toContain('images/default_128.png');
+    expect(elements['statusIcon']?.style.display).toBe('flex');
+    expect(elements['statusIcon']?.textContent).toBe('🏦');
+  });
+
+  it('removes a card logo when both provider and fallback images fail', () => {
+    service.renderMultiplePSPs([{ psp: 'Stripe' }], {
+      psps: [
+        {
+          name: requirePSPName('Stripe'),
+          url: requireURL('https://stripe.com'),
+          image: 'stripe',
+          summary: 'Stripe summary',
+        },
+      ],
+    });
+
+    const image = requireQuery('.psp-card-logo') as HTMLImageElement;
+    image.dispatchEvent(new Event('error'));
+    expect(image.src).toContain('images/default_48.png');
+
+    image.dispatchEvent(new Event('error'));
+    expect(image.isConnected).toBe(false);
+  });
+
+  it('renders the empty state when called with an empty provider list', () => {
+    service.renderMultiplePSPs([], { psps: [] });
+
+    expect(elements['name']?.textContent).toBe('No PSP detected');
+    expect(elements['container']?.classList.contains('no-psp-state')).toBe(
+      true,
+    );
+  });
 });

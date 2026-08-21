@@ -50,6 +50,7 @@ function regexPattern(pattern: string): RegexPattern {
   );
 }
 
+// eslint-disable-next-line max-statements -- detector behavior belongs in one service fixture
 describe('PSPDetectorService', () => {
   let service: PSPDetectorService;
 
@@ -721,6 +722,74 @@ describe('PSPDetectorService', () => {
     expect(result.type).toBe('error');
     if (result.type === 'error') {
       expect(result.context).toBe('url_validation');
+    }
+  });
+
+  it('returns a URL validation error for malformed absolute URLs', () => {
+    const result = service.detectPSP('not a url', 'content');
+
+    expect(result.type).toBe('error');
+    if (result.type === 'error') {
+      expect(result.context).toBe('url_validation');
+      expect(result.error.message).toContain('Invalid URL format');
+    }
+  });
+
+  it('returns a config error if the initialized provider cache is unavailable', () => {
+    (service as unknown as { providerCache: unknown }).providerCache =
+      undefined;
+    service.setExemptDomains([]);
+
+    const result = service.detectPSP('https://merchant.example', 'content');
+
+    expect(result.type).toBe('error');
+    if (result.type === 'error') {
+      expect(result.context).toBe('config_validation');
+    }
+  });
+
+  it('skips a provider when its compiled regex throws during matching', () => {
+    const config: PSPConfig = {
+      psps: [
+        {
+          name: pspName('Throwing Regex'),
+          regex: regexPattern('throwing'),
+          url: pspUrl('https://throwing.example'),
+          image: 'throwing',
+          summary: 'Throwing regex',
+        },
+      ],
+    };
+    service.initialize(config);
+    service.setExemptDomains([]);
+    config.psps[0]!.compiledRegex = {
+      test: (): never => {
+        throw new Error('regex engine failed');
+      },
+    } as unknown as RegExp;
+
+    expect(service.detectPSP('https://merchant.example', 'content').type).toBe(
+      'none',
+    );
+  });
+
+  it('returns a detection-process error for unexpected content coercion failures', () => {
+    const invalidContent = {
+      toString: (): never => {
+        // eslint-disable-next-line @typescript-eslint/only-throw-error -- verifies non-Error normalization
+        throw 'content conversion failed';
+      },
+    };
+
+    const result = service.detectPSP(
+      'https://merchant.example',
+      invalidContent as unknown as string,
+    );
+
+    expect(result.type).toBe('error');
+    if (result.type === 'error') {
+      expect(result.context).toBe('detection_process');
+      expect(result.error.message).toBe('Unknown detection error');
     }
   });
 

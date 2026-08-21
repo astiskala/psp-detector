@@ -603,7 +603,11 @@ class BackgroundService {
     sender: chrome.runtime.MessageSender,
     sendResponse: (response?: unknown) => void,
   ): Promise<void> {
-    if (typeof message.action !== 'string') {
+    if (
+      typeof message !== 'object' ||
+      message === null ||
+      typeof message.action !== 'string'
+    ) {
       logger.error('Invalid message format received:', message);
       sendResponse({ error: 'Invalid message format' });
       return;

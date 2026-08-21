@@ -233,10 +233,32 @@ describe('trackEvent payload', () => {
   });
 
   it('swallows fetch failures without throwing', async () => {
-    fetchMock.mockRejectedValueOnce(new Error('network down'));
+    fetchMock.mockImplementation((input: RequestInfo | URL) => {
+      const url = requestUrl(input);
+      if (url === CLOUDFLARE_TRACE_URL) {
+        return Promise.resolve({
+          ok: true,
+          text: async () => 'loc=SG\n',
+        } as Response);
+      }
+
+      return Promise.reject(new Error('network down'));
+    });
     await expect(
       trackEvent(TELEMETRY_EVENTS.POPUP_OPENED),
     ).resolves.toBeUndefined();
+  });
+
+  it('uses an unknown extension version when manifest access fails', async () => {
+    (chrome.runtime.getManifest as jest.Mock).mockImplementation(() => {
+      throw new Error('manifest unavailable');
+    });
+
+    await trackEvent(TELEMETRY_EVENTS.POPUP_OPENED);
+
+    expect(lastFetchBody().events[0]?.params?.['extension_version']).toBe(
+      'unknown',
+    );
   });
 });
 
@@ -613,5 +635,27 @@ describe('user context', () => {
     expect(sessionArea.store.get(STORAGE_KEYS.TELEMETRY_COUNTRY_CODE)).toBe(
       'SG',
     );
+  });
+
+  it('continues when country cache reads and writes fail', async () => {
+    sessionArea.get.mockImplementation((key: string) => {
+      if (key === STORAGE_KEYS.TELEMETRY_COUNTRY_CODE) {
+        return Promise.reject(new Error('country cache read failed'));
+      }
+      return Promise.resolve({ [key]: sessionArea.store.get(key) });
+    });
+    sessionArea.set.mockImplementation((items: Record<string, unknown>) => {
+      if (Object.hasOwn(items, STORAGE_KEYS.TELEMETRY_COUNTRY_CODE)) {
+        return Promise.reject(new Error('country cache write failed'));
+      }
+      for (const [key, value] of Object.entries(items)) {
+        sessionArea.store.set(key, value);
+      }
+      return Promise.resolve();
+    });
+
+    await trackEvent(TELEMETRY_EVENTS.POPUP_OPENED);
+
+    expect(lastFetchBody().events[0]?.params?.['user_country']).toBe('SG');
   });
 });

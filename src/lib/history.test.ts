@@ -68,6 +68,25 @@ describe('readHistory', () => {
     expect(history[0]?.url).toBe('https://example.com');
     expect(storedData[STORAGE_KEYS.PSP_HISTORY]).toEqual(history);
   });
+
+  it('returns empty history when the stored value is not an array', async () => {
+    storedData[STORAGE_KEYS.PSP_HISTORY] = { corrupt: true };
+
+    await expect(readHistory()).resolves.toEqual([]);
+  });
+
+  it('returns normalized history when migration persistence fails', async () => {
+    storedData[STORAGE_KEYS.PSP_HISTORY] = [
+      makeEntry({ url: 'https://example.com/checkout?token=secret' }),
+    ];
+    (chrome.storage.local.set as unknown as jest.Mock).mockRejectedValueOnce(
+      new Error('storage unavailable'),
+    );
+
+    const history = await readHistory();
+
+    expect(history[0]?.url).toBe('https://example.com');
+  });
 });
 
 describe('writeHistoryEntry', () => {
@@ -641,6 +660,41 @@ describe('writeHistoryEntry', () => {
     expect(stripe?.value).toBe(STRIPE_SCRIPT_SIGNAL);
   });
 
+  it('upgrades merged evidence through every ordered source priority', async () => {
+    const sources = [
+      'networkRequest',
+      'pageUrl',
+      'linkHref',
+      'formAction',
+      'iframeSrc',
+      'scriptSrc',
+    ] as const;
+
+    for (const [index, sourceType] of sources.entries()) {
+      await writeHistoryEntry(
+        makeEntry({
+          id: `priority-${index}`,
+          timestamp: 100_000 + index,
+          psps: [
+            {
+              name: 'Stripe',
+              method: 'matchString',
+              value: `signal-${index}`,
+              sourceType,
+            },
+          ],
+        }),
+      );
+    }
+
+    const history = await readHistory();
+    expect(history).toHaveLength(1);
+    expect(history[0]?.psps[0]).toMatchObject({
+      sourceType: 'scriptSrc',
+      value: 'signal-5',
+    });
+  });
+
   it('keeps existing high-priority source when a lower-priority match arrives', async () => {
     const BASE_TS = 100_000;
     const scriptStripe = makeEntry({
@@ -866,6 +920,89 @@ describe('writeHistoryEntry', () => {
 
     const history = await readHistory();
     expect(history).toHaveLength(2);
+  });
+
+  it('does not merge distinct malformed URLs through their empty normalized origin', async () => {
+    await writeHistoryEntry(
+      makeEntry({
+        id: 'malformed-a',
+        domain: 'first.example',
+        url: 'not a url',
+        timestamp: 1000,
+        psps: [
+          {
+            name: 'Stripe',
+            method: 'matchString',
+            value: STRIPE_NETWORK_SIGNAL,
+            sourceType: 'networkRequest',
+          },
+        ],
+      }),
+    );
+    await writeHistoryEntry(
+      makeEntry({
+        id: 'malformed-b',
+        domain: 'second.example',
+        url: 'also not a url',
+        timestamp: 2000,
+        psps: [
+          {
+            name: 'Adyen',
+            method: 'matchString',
+            value: ADYEN_NETWORK_SIGNAL,
+            sourceType: 'networkRequest',
+          },
+        ],
+      }),
+    );
+
+    const history = await readHistory();
+    expect(history.map((item) => item.id)).toEqual([
+      'malformed-b',
+      'malformed-a',
+    ]);
+  });
+
+  it('merges unsupported URLs from the same domain within the merge window', async () => {
+    await writeHistoryEntry(
+      makeEntry({
+        id: 'unsupported-a',
+        domain: 'extension.example',
+        url: 'about:blank',
+        timestamp: 1000,
+        psps: [
+          {
+            name: 'Stripe',
+            method: 'matchString',
+            value: STRIPE_NETWORK_SIGNAL,
+            sourceType: 'networkRequest',
+          },
+        ],
+      }),
+    );
+    await writeHistoryEntry(
+      makeEntry({
+        id: 'unsupported-b',
+        domain: 'extension.example',
+        url: 'about:blank',
+        timestamp: 2000,
+        psps: [
+          {
+            name: 'Adyen',
+            method: 'matchString',
+            value: ADYEN_NETWORK_SIGNAL,
+            sourceType: 'networkRequest',
+          },
+        ],
+      }),
+    );
+
+    const history = await readHistory();
+    expect(history).toHaveLength(1);
+    expect(history[0]?.psps.map((psp) => psp.name)).toEqual([
+      'Stripe',
+      'Adyen',
+    ]);
   });
 });
 

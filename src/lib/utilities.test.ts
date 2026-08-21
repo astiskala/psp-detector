@@ -124,6 +124,23 @@ describe('utils', () => {
     }
   });
 
+  it('logger.debug emits prefixed output in development', () => {
+    const originalEnvironment = process.env['NODE_ENV'];
+    process.env['NODE_ENV'] = 'development';
+    const debugSpy = jest.spyOn(console, 'debug').mockImplementation(() => {
+      // No-op for testing.
+    });
+
+    try {
+      logger.debug('details', { attempt: 1 });
+      expect(debugSpy).toHaveBeenCalledWith('[PSP Detector] details', {
+        attempt: 1,
+      });
+    } finally {
+      process.env['NODE_ENV'] = originalEnvironment;
+    }
+  });
+
   it('debouncedMutation delays function calls', (done) => {
     const mockFunction = jest.fn();
     const debouncedFunction = debouncedMutation(mockFunction, 50);
@@ -246,6 +263,30 @@ describe('utils', () => {
 
         const init = fetchMock.mock.calls[0]?.[1] as RequestInit | undefined;
         expect(init?.signal?.aborted).toBe(true);
+      } finally {
+        globalThis.fetch = originalFetch;
+      }
+    });
+
+    it('propagates a parent abort that occurs while fetch is pending', async () => {
+      const originalFetch = globalThis.fetch;
+      const fetchMock = jest.fn((_url: string, init?: RequestInit) => {
+        return new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => {
+            reject(new DOMException('Aborted', 'AbortError'));
+          });
+        });
+      });
+      globalThis.fetch = fetchMock as unknown as typeof fetch;
+      const controller = new AbortController();
+
+      try {
+        const request = fetchWithTimeout(EXAMPLE_URL, 1000, {
+          signal: controller.signal,
+        });
+        controller.abort();
+
+        await expect(request).rejects.toMatchObject({ name: 'AbortError' });
       } finally {
         globalThis.fetch = originalFetch;
       }

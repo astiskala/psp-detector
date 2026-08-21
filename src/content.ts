@@ -26,7 +26,9 @@ const SERVICE_WORKER_RESTART_ERRORS = [
 const isExtensionContextInvalidated = (error: unknown): boolean => {
   return (
     error instanceof Error &&
-    error.message.includes(EXTENSION_CONTEXT_INVALIDATED_MESSAGE)
+    (error.message.includes(EXTENSION_CONTEXT_INVALIDATED_MESSAGE) ||
+      (error.cause instanceof Error &&
+        error.cause.message.includes(EXTENSION_CONTEXT_INVALIDATED_MESSAGE)))
   );
 };
 
@@ -494,7 +496,7 @@ class ContentScript {
       action: MessageAction.GET_TAB_ID,
     });
 
-    if (!tabResponse?.tabId) return undefined;
+    if (tabResponse?.tabId === undefined) return undefined;
     return TypeConverters.toTabId(tabResponse.tabId);
   }
 
@@ -509,7 +511,7 @@ class ContentScript {
     );
 
     const brandedPspName = TypeConverters.toPSPName(pspName);
-    if (brandedPspName === null) {
+    if (brandedPspName === undefined) {
       logger.warn(
         'Content: Skipping detection report for empty PSP name:',
         pspName,

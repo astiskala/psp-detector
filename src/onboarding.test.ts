@@ -97,15 +97,17 @@ async function flushAsyncTasks(): Promise<void> {
 }
 
 describe('onboarding page', () => {
+  beforeAll(async () => {
+    await import('./onboarding');
+  });
+
   beforeEach(() => {
-    jest.resetModules();
     jest.clearAllMocks();
     setupOnboardingDOM();
   });
 
   it('shows not-enabled status when permission is missing', async () => {
     setupChromeMocks({ host: false, webRequest: false }, false);
-    await import('./onboarding');
     document.dispatchEvent(new Event('DOMContentLoaded'));
     await flushAsyncTasks();
 
@@ -120,7 +122,6 @@ describe('onboarding page', () => {
 
   it('shows not-enabled status when webRequest permission is missing', async () => {
     setupChromeMocks({ host: true, webRequest: false }, false);
-    await import('./onboarding');
     document.dispatchEvent(new Event('DOMContentLoaded'));
     await flushAsyncTasks();
 
@@ -133,12 +134,25 @@ describe('onboarding page', () => {
     expect(button?.disabled).toBe(false);
   });
 
+  it('shows an unavailable status when checking permissions rejects', async () => {
+    const mocks = setupChromeMocks({ host: false, webRequest: false }, false);
+    mocks.contains.mockRejectedValue(new Error('permission check failed'));
+    document.dispatchEvent(new Event('DOMContentLoaded'));
+    await flushAsyncTasks();
+
+    const status = document.querySelector(`#${PERMISSION_STATUS_ID}`);
+    const button = document.querySelector<HTMLButtonElement>(
+      `#${GRANT_HOST_ACCESS_BUTTON_ID}`,
+    );
+    expect(status?.textContent).toContain('Unable to verify');
+    expect(button?.disabled).toBe(false);
+  });
+
   it('requests permission and triggers re-detection from onboarding', async () => {
     const chromeMocks = setupChromeMocks(
       { host: false, webRequest: false },
       true,
     );
-    await import('./onboarding');
     document.dispatchEvent(new Event('DOMContentLoaded'));
     await flushAsyncTasks();
 
@@ -171,9 +185,26 @@ describe('onboarding page', () => {
     expect(button?.disabled).toBe(true);
   });
 
+  it('still marks permissions ready when the redetect message rejects', async () => {
+    const mocks = setupChromeMocks({ host: false, webRequest: false }, true);
+    mocks.sendMessage.mockRejectedValue(new Error('background unavailable'));
+    document.dispatchEvent(new Event('DOMContentLoaded'));
+    await flushAsyncTasks();
+
+    const grantButton = document.querySelector<HTMLButtonElement>(
+      `#${GRANT_HOST_ACCESS_BUTTON_ID}`,
+    )!;
+    grantButton.click();
+    await flushAsyncTasks();
+
+    expect(
+      document.querySelector(`#${PERMISSION_STATUS_ID}`)?.textContent,
+    ).toContain('enabled');
+    expect(grantButton.disabled).toBe(true);
+  });
+
   it('re-enables the grant button when permission is denied', async () => {
     setupChromeMocks({ host: false, webRequest: false }, false);
-    await import('./onboarding');
     document.dispatchEvent(new Event('DOMContentLoaded'));
     await flushAsyncTasks();
 
@@ -201,7 +232,6 @@ describe('onboarding page', () => {
       throw new Error('permission API failure');
     });
 
-    await import('./onboarding');
     document.dispatchEvent(new Event('DOMContentLoaded'));
     await flushAsyncTasks();
 
@@ -233,7 +263,6 @@ describe('onboarding page', () => {
       });
     });
 
-    await import('./onboarding');
     document.dispatchEvent(new Event('DOMContentLoaded'));
     await flushAsyncTasks();
 

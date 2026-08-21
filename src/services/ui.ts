@@ -336,18 +336,14 @@ export class UIService {
       const fallbackImageSource = chrome.runtime.getURL(
         'images/default_48.png',
       );
-      img.addEventListener(
-        'error',
-        (): void => {
-          if (img.src !== fallbackImageSource) {
-            img.src = fallbackImageSource;
-            return;
-          }
+      img.addEventListener('error', (): void => {
+        if (img.src !== fallbackImageSource) {
+          img.src = fallbackImageSource;
+          return;
+        }
 
-          img.remove();
-        },
-        { once: true },
-      );
+        img.remove();
+      });
 
       img.src = chrome.runtime.getURL(`images/${config.image}_48.png`);
       img.alt = stored.psp;

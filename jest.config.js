@@ -41,54 +41,53 @@ module.exports = {
   //
   // Jest subtracts any file with its own path-specific threshold from the
   // `global` pool. `global` is therefore the floor for the remaining DOM and
-  // async entry/service modules, whose behaviour is mostly exercised by the
-  // Playwright e2e/integration suites, so they sit near 79% lines and 61%
-  // branches. The modules listed below are held to a much higher individual bar.
+  // async entry/service modules. The modules listed below are held to their own
+  // higher individual bars.
   //
   // Per-file `functions` floors keep extra slack: function coverage is
   // count-coarse, so one uncovered function in a small file shifts it by points.
   coverageThreshold: {
     global: {
-      statements: 77,
-      branches: 59,
-      functions: 88,
-      lines: 77,
-    },
-    './src/lib/history.ts': {
-      statements: 88,
-      branches: 80,
-      functions: 90,
-      lines: 88,
-    },
-    './src/lib/utilities.ts': {
       statements: 95,
-      branches: 85,
-      functions: 90,
+      branches: 88,
+      functions: 98,
       lines: 95,
     },
+    './src/lib/history.ts': {
+      statements: 92,
+      branches: 86,
+      functions: 98,
+      lines: 92,
+    },
+    './src/lib/utilities.ts': {
+      statements: 98,
+      branches: 90,
+      functions: 98,
+      lines: 98,
+    },
     './src/options-core.ts': {
-      statements: 96,
-      branches: 92,
-      functions: 95,
-      lines: 96,
+      statements: 98,
+      branches: 98,
+      functions: 98,
+      lines: 98,
     },
     './src/options.ts': {
-      statements: 91,
-      branches: 73,
-      functions: 95,
-      lines: 91,
+      statements: 95,
+      branches: 80,
+      functions: 98,
+      lines: 95,
     },
     './src/services/psp-detector.ts': {
-      statements: 88,
-      branches: 82,
-      functions: 92,
-      lines: 88,
+      statements: 95,
+      branches: 87,
+      functions: 98,
+      lines: 95,
     },
     './src/services/telemetry.ts': {
-      statements: 98,
-      branches: 92,
-      functions: 95,
-      lines: 98,
+      statements: 99,
+      branches: 95,
+      functions: 98,
+      lines: 99,
     },
   },
 

@@ -80,18 +80,19 @@ export class DOMObserverService {
       const isRelevantLink =
         element.tagName === 'LINK' &&
         this.isRelevantLinkElement(element as HTMLLinkElement);
+      const hasRelevantDescendant =
+        element.querySelector('script, iframe, form') !== null ||
+        [...element.querySelectorAll<HTMLLinkElement>('link')].some((link) =>
+          this.isRelevantLinkElement(link),
+        );
 
       // Check for payment-related elements
       if (
+        hasRelevantDescendant ||
         isRelevantLink ||
         element.tagName === 'SCRIPT' ||
         element.tagName === 'IFRAME' ||
-        element.tagName === 'FORM' ||
-        element.querySelector?.(
-          'script, iframe, form, link[rel="preconnect"], ' +
-            'link[rel="dns-prefetch"], link[rel="preload"], ' +
-            'link[rel="modulepreload"]',
-        )
+        element.tagName === 'FORM'
       ) {
         return true;
       }
@@ -196,6 +197,10 @@ export class DOMObserverService {
     if (!this.observer || !this.isObserving) return;
     try {
       this.observer.disconnect();
+      logger.debug('DOM observer stopped');
+    } catch (stopError) {
+      logger.error('Failed to stop DOM observer', stopError);
+    } finally {
       this.isObserving = false;
       if (this.debounceTimer !== undefined) {
         clearTimeout(this.debounceTimer);
@@ -203,9 +208,6 @@ export class DOMObserverService {
       }
 
       this.pendingMutations = [];
-      logger.debug('DOM observer stopped');
-    } catch (stopError) {
-      logger.error('Failed to stop DOM observer', stopError);
     }
   }
 

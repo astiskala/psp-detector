@@ -183,7 +183,11 @@ function findEntryStatus(
     }
 
     if (
-      existing.url === normalizedEntry.url &&
+      ((normalizedEntry.url.length > 0 &&
+        existing.url === normalizedEntry.url) ||
+        (normalizedEntry.url.length === 0 &&
+          normalizeDomain(existing.domain) ===
+            normalizeDomain(normalizedEntry.domain))) &&
       existing.timestamp >= mergeThreshold
     ) {
       return { kind: 'merge', index: index };

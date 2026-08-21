@@ -8,6 +8,9 @@ import {
 import { STORAGE_KEYS } from './lib/storage-keys';
 import * as utilities from './lib/utilities';
 
+const PERMISSION_STATE_SELECTOR = '#permission-state';
+const NO_PSP_DETECTED_TEXT = 'No PSP detected';
+
 interface ChromeMocks {
   contains: jest.Mock<Promise<boolean>, [chrome.permissions.Permissions]>;
   request: jest.Mock<Promise<boolean>, [chrome.permissions.Permissions]>;
@@ -120,6 +123,11 @@ async function flushAsyncTasks(): Promise<void> {
   await Promise.resolve();
 }
 
+async function initializePopup(): Promise<void> {
+  const popup = new PopupManager();
+  await popup.initialize();
+}
+
 function mockSendMessageResponses(
   sendMessage: ChromeMocks['sendMessage'],
   responses: unknown[],
@@ -166,7 +174,8 @@ describe('PopupManager', () => {
     await popup.initialize();
 
     expect(
-      document.querySelector<HTMLElement>('#permission-state')?.style.display,
+      document.querySelector<HTMLElement>(PERMISSION_STATE_SELECTOR)?.style
+        .display,
     ).toBe('block');
 
     expect(
@@ -191,7 +200,8 @@ describe('PopupManager', () => {
     await popup.initialize();
 
     expect(
-      document.querySelector<HTMLElement>('#permission-state')?.style.display,
+      document.querySelector<HTMLElement>(PERMISSION_STATE_SELECTOR)?.style
+        .display,
     ).toBe('block');
 
     expect(
@@ -202,6 +212,56 @@ describe('PopupManager', () => {
     expect(chromeMocks.sendMessage.mock.calls[0]?.[0]).toEqual({
       action: MessageAction.GET_PSP,
     });
+  });
+
+  it('shows the permission request when checking permissions rejects', async () => {
+    chromeMocks.contains.mockRejectedValue(
+      new Error('permissions unavailable'),
+    );
+    mockSendMessageResponses(chromeMocks.sendMessage, [{ psps: [] }]);
+
+    await initializePopup();
+
+    expect(
+      document.querySelector<HTMLElement>(PERMISSION_STATE_SELECTOR)?.style
+        .display,
+    ).toBe('block');
+    expect(document.querySelector('#psp-name')?.textContent).toBe(
+      NO_PSP_DETECTED_TEXT,
+    );
+  });
+
+  it('leaves the permission request visible when the user denies it', async () => {
+    chromeMocks.contains.mockResolvedValue(false);
+    chromeMocks.request.mockResolvedValue(false);
+    mockSendMessageResponses(chromeMocks.sendMessage, [{ psps: [] }]);
+    const popup = new PopupManager();
+    await popup.initialize();
+
+    document.querySelector<HTMLElement>('#grant-permission-btn')!.click();
+    await flushAsyncTasks();
+
+    expect(chromeMocks.sendMessage).toHaveBeenCalledTimes(1);
+    expect(
+      document.querySelector<HTMLElement>(PERMISSION_STATE_SELECTOR)?.style
+        .display,
+    ).toBe('block');
+  });
+
+  it('keeps the permission request usable when requesting permission rejects', async () => {
+    chromeMocks.contains.mockResolvedValue(false);
+    chromeMocks.request.mockRejectedValue(new Error('request failed'));
+    mockSendMessageResponses(chromeMocks.sendMessage, [{ psps: [] }]);
+    const popup = new PopupManager();
+    await popup.initialize();
+
+    document.querySelector<HTMLElement>('#grant-permission-btn')!.click();
+    await flushAsyncTasks();
+
+    expect(
+      document.querySelector<HTMLElement>(PERMISSION_STATE_SELECTOR)?.style
+        .display,
+    ).toBe('block');
   });
 
   it('requests permission from button and re-initializes on grant', async () => {
@@ -236,7 +296,8 @@ describe('PopupManager', () => {
     });
 
     expect(
-      document.querySelector<HTMLElement>('#permission-state')?.style.display,
+      document.querySelector<HTMLElement>(PERMISSION_STATE_SELECTOR)?.style
+        .display,
     ).toBe('none');
 
     expect(chromeMocks.contains.mock.calls.length).toBeGreaterThanOrEqual(4);
@@ -277,7 +338,7 @@ describe('PopupManager', () => {
     await popup.initialize();
 
     expect(document.querySelector('#psp-name')?.textContent).toBe(
-      'No PSP detected',
+      NO_PSP_DETECTED_TEXT,
     );
   });
 
@@ -371,6 +432,84 @@ describe('PopupManager', () => {
     expect(document.querySelector('#psp-name')?.textContent).toBe('Error');
   });
 
+  it('shows error state when fetching config returns an HTTP error', async () => {
+    mockSendMessageResponses(chromeMocks.sendMessage, [
+      { psps: [{ psp: 'Stripe' }] },
+    ]);
+    jest.spyOn(utilities, 'fetchWithTimeout').mockResolvedValue({
+      ok: false,
+      status: 503,
+      statusText: 'Unavailable',
+    } as Response);
+
+    await initializePopup();
+
+    expect(document.querySelector('#psp-name')?.textContent).toBe('Error');
+  });
+
+  it('translates a config fetch abort into the popup error state', async () => {
+    mockSendMessageResponses(chromeMocks.sendMessage, [
+      { psps: [{ psp: 'Stripe' }] },
+    ]);
+    jest
+      .spyOn(utilities, 'fetchWithTimeout')
+      .mockRejectedValue(new DOMException('Aborted', 'AbortError'));
+
+    await initializePopup();
+
+    expect(document.querySelector('#psp-name')?.textContent).toBe('Error');
+  });
+
+  it('renders after cache read and write failures', async () => {
+    const config = createStripeConfig();
+    chromeMocks.localGet.mockRejectedValue(new Error('read failed'));
+    chromeMocks.localSet.mockRejectedValue(new Error('write failed'));
+    mockSendMessageResponses(chromeMocks.sendMessage, [
+      { psps: [{ psp: 'Stripe' }] },
+    ]);
+    jest.spyOn(utilities, 'fetchWithTimeout').mockResolvedValue({
+      ok: true,
+      json: async () => config,
+    } as Response);
+
+    await initializePopup();
+
+    expect(document.querySelectorAll('.psp-card')).toHaveLength(1);
+  });
+
+  it('falls back to no-PSP state for a non-object background response', async () => {
+    jest
+      .spyOn(utilities.errorUtilities, 'withRetry')
+      .mockImplementation(
+        <T>(function_: () => Promise<T>): (() => Promise<T>) => function_,
+      );
+    mockSendMessageResponses(chromeMocks.sendMessage, [42]);
+
+    await initializePopup();
+
+    expect(document.querySelector('#psp-name')?.textContent).toBe(
+      NO_PSP_DETECTED_TEXT,
+    );
+  });
+
+  it('falls back to no-PSP state when runtime messaging reports an error', async () => {
+    jest
+      .spyOn(utilities.errorUtilities, 'withRetry')
+      .mockImplementation(
+        <T>(function_: () => Promise<T>): (() => Promise<T>) => function_,
+      );
+    (
+      chrome.runtime as unknown as { lastError?: { message?: string } }
+    ).lastError = { message: 'background unavailable' };
+    mockSendMessageResponses(chromeMocks.sendMessage, [undefined]);
+
+    await initializePopup();
+
+    expect(document.querySelector('#psp-name')?.textContent).toBe(
+      NO_PSP_DETECTED_TEXT,
+    );
+  });
+
   it('falls back to no-PSP state when background response is malformed', async () => {
     jest
       .spyOn(utilities.errorUtilities, 'withRetry')
@@ -384,7 +523,7 @@ describe('PopupManager', () => {
     await popup.initialize();
 
     expect(document.querySelector('#psp-name')?.textContent).toBe(
-      'No PSP detected',
+      NO_PSP_DETECTED_TEXT,
     );
   });
 
@@ -432,6 +571,25 @@ describe('PopupManager', () => {
     expect(chromeMocks.openOptionsPage).toHaveBeenCalledTimes(1);
   });
 
+  it('bindHistoryAction is a no-op without a history button', () => {
+    document.querySelector('#history-link')?.remove();
+    const popup = new PopupManager();
+
+    expect(() => popup.bindHistoryAction()).not.toThrow();
+    expect(chromeMocks.openOptionsPage).not.toHaveBeenCalled();
+  });
+
+  it('swallows options-page open failures', async () => {
+    chromeMocks.openOptionsPage.mockRejectedValue(new Error('open failed'));
+    const popup = new PopupManager();
+    popup.bindHistoryAction();
+
+    document.querySelector<HTMLElement>('#history-link')!.click();
+    await flushAsyncTasks();
+
+    expect(chromeMocks.openOptionsPage).toHaveBeenCalledTimes(1);
+  });
+
   it('DOMContentLoaded bootstrap initializes popup and beforeunload cleanup runs', async () => {
     chromeMocks.contains.mockResolvedValue(false);
     mockSendMessageResponses(chromeMocks.sendMessage, [{ psps: [] }]);
@@ -442,7 +600,37 @@ describe('PopupManager', () => {
     dispatchEvent(new Event('beforeunload'));
 
     expect(
-      document.querySelector<HTMLElement>('#permission-state')?.style.display,
+      document.querySelector<HTMLElement>(PERMISSION_STATE_SELECTOR)?.style
+        .display,
     ).toBe('block');
+  });
+
+  it('popup bootstrap logs an unexpected manager rejection', async () => {
+    jest.resetModules();
+    const initialize = jest
+      .fn()
+      .mockRejectedValue(new Error('unexpected failure'));
+    jest.doMock('./services/popup-manager', () => {
+      return {
+        PopupManager: class {
+          bindHistoryAction = jest.fn();
+          initialize = initialize;
+        },
+      };
+    });
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {
+      // Expected bootstrap failure.
+    });
+
+    try {
+      await import('./popup');
+      document.dispatchEvent(new Event('DOMContentLoaded'));
+      await flushAsyncTasks();
+
+      expect(initialize).toHaveBeenCalled();
+      expect(errorSpy).toHaveBeenCalled();
+    } finally {
+      jest.dontMock('./services/popup-manager');
+    }
   });
 });

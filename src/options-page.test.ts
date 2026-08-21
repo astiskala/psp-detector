@@ -361,6 +361,79 @@ describe('options page wiring', () => {
     expect(historyBody.querySelectorAll(':scope tr')).toHaveLength(1);
   });
 
+  it('shows redirect provenance without exposing the merchant path', async () => {
+    const { readHistoryMock } = setupSuccessMocks();
+    readHistoryMock.mockResolvedValueOnce([
+      {
+        ...createHistoryEntries()[0]!,
+        merchantOrigin: 'https://merchant.example.com/private/checkout',
+      },
+    ]);
+    await initializeOptionsPage();
+
+    const merchant = getRequiredElement<HTMLElement>('.merchant-origin');
+    expect(merchant.textContent).toBe('via merchant.example.com');
+    expect(merchant.textContent).not.toContain('/private/checkout');
+    expect(merchant.title).toContain('https://merchant.example.com');
+  });
+
+  it('ignores malformed merchant provenance', async () => {
+    const { readHistoryMock } = setupSuccessMocks();
+    readHistoryMock.mockResolvedValueOnce([
+      {
+        ...createHistoryEntries()[0]!,
+        merchantOrigin: 'not a URL',
+      },
+    ]);
+    await initializeOptionsPage();
+
+    expect(document.querySelector('.merchant-origin')).toBeNull();
+  });
+
+  it('falls back to slug icons when provider metadata is malformed', async () => {
+    const { fetchMock, loggerMock } = setupSuccessMocks();
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({ invalid: true }),
+    });
+    await initializeOptionsPage();
+
+    expect(loggerMock.warn).toHaveBeenCalledWith(
+      'Failed to load PSP icon metadata for history table',
+      expect.any(Error),
+    );
+    expect(getRequiredElement<HTMLImageElement>('.psp-icon').src).toContain(
+      'images/stripe_48.png',
+    );
+  });
+
+  it('uses requestIdleCallback for deferred chart refreshes', async () => {
+    setupSuccessMocks();
+    const requestIdleCallback = jest.fn((callback: IdleRequestCallback) => {
+      callback({ didTimeout: false, timeRemaining: () => 50 });
+      return 1;
+    });
+    Object.defineProperty(globalThis, 'requestIdleCallback', {
+      value: requestIdleCallback,
+      configurable: true,
+    });
+
+    try {
+      await initializeOptionsPage();
+      const filter = getRequiredElementById<HTMLSelectElement>('pspFilter');
+      filter.value = 'Stripe';
+      filter.dispatchEvent(new Event('change'));
+
+      expect(requestIdleCallback).toHaveBeenCalledWith(expect.any(Function), {
+        timeout: 200,
+      });
+    } finally {
+      delete (globalThis as { requestIdleCallback?: unknown })
+        .requestIdleCallback;
+    }
+  });
+
   it('exports history and applies clear confirmation behavior', async () => {
     const {
       clearHistoryMock,
