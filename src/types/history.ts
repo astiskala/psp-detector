@@ -20,6 +20,9 @@ One stored page-level detection record in newest-first history order.
 export interface HistoryEntry {
   readonly id: string;
   readonly domain: string;
+  /**
+   * HTTP(S) origin only; paths, credentials, queries, and fragments are removed.
+   */
   readonly url: string;
   readonly timestamp: number;
   readonly psps: readonly HistoryPSPMatch[];

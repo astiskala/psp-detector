@@ -5,12 +5,22 @@ import { logger } from './utilities';
 
 export const HISTORY_ENTRY_DEBOUNCE_MS = 15 * 60_000;
 export const HISTORY_ENTRY_MERGE_WINDOW_MS = 30_000;
+const HISTORY_URL_PROTOCOLS = new Set(['http:', 'https:']);
 
 type EntryStatus =
   { kind: 'merge'; index: number } | { kind: 'debounce' } | { kind: 'none' };
 
 function normalizeDomain(domain: string): string {
   return domain.trim().toLowerCase();
+}
+
+function normalizeHistoryUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    return HISTORY_URL_PROTOCOLS.has(parsed.protocol) ? parsed.origin : '';
+  } catch {
+    return '';
+  }
 }
 
 function normalizeHistoryMatch(
@@ -26,6 +36,7 @@ function normalizeHistoryMatch(
 function normalizeHistoryEntry(entry: HistoryEntry): HistoryEntry {
   return {
     ...entry,
+    url: normalizeHistoryUrl(entry.url),
     psps: entry.psps.map((match) =>
       normalizeHistoryMatch(match, entry.timestamp),
     ),
@@ -215,9 +226,29 @@ Reads and normalizes persisted detection history from local storage.
 export async function readHistory(): Promise<HistoryEntry[]> {
   const data = await chrome.storage.local.get(STORAGE_KEYS.PSP_HISTORY);
   const raw = data[STORAGE_KEYS.PSP_HISTORY];
-  return Array.isArray(raw)
-    ? (raw as HistoryEntry[]).map((entry) => normalizeHistoryEntry(entry))
-    : [];
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+
+  const storedEntries = raw as HistoryEntry[];
+  const normalizedEntries = storedEntries.map((entry) =>
+    normalizeHistoryEntry(entry),
+  );
+  const containsSensitiveUrls = normalizedEntries.some(
+    (entry, index) => entry.url !== storedEntries[index]?.url,
+  );
+
+  if (containsSensitiveUrls) {
+    try {
+      await chrome.storage.local.set({
+        [STORAGE_KEYS.PSP_HISTORY]: normalizedEntries,
+      });
+    } catch (error) {
+      logger.warn('Failed to migrate history URLs to origins:', error);
+    }
+  }
+
+  return normalizedEntries;
 }
 
 // Serializes writeHistoryEntry calls so concurrent invocations don't

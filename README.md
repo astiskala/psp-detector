@@ -14,6 +14,8 @@ With PSP Detector, you can quickly find out which PSP is handling payments on a 
 
 - Real-Time Detection: Identify PSPs, orchestrators, and TSPs on the active tab.
 - History Dashboard: Track detections over time, filter/search, and export CSV.
+  History stays in local extension storage and retains only each page's origin;
+  paths, credentials, query strings, and fragments are discarded.
 - Direct Links: Quickly navigate to provider websites or suggest coverage improvements.
 
 ## How to Use:

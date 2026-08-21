@@ -31,11 +31,5 @@
   "icons": {
     "48": "images/default_48.png",
     "128": "images/default_128.png"
-  },
-  "web_accessible_resources": [
-    {
-      "resources": ["images/*", "psps.json", "exempt-domains.json"],
-      "matches": ["https://*/*"]
-    }
-  ]
+  }
 }

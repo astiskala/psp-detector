@@ -39,7 +39,7 @@ Serializes history entries into an RFC 4180-compatible CSV download.
  */
 export function buildCSV(entries: HistoryEntry[]): string {
   const header =
-    'Date,Domain,Merchant Origin,URL,PSP Names,Types,Detection Sources,Detection Signals';
+    'Date,Domain,Merchant Origin,Page Origin,PSP Names,Types,Detection Sources,Detection Signals';
   if (entries.length === 0) return header;
 
   const rows = entries.map((entry) => {

@@ -82,4 +82,19 @@ describe('build artifacts', () => {
       expect(html).toContain('href="common.css"');
     }
   });
+
+  it('does not expose extension resources to visited pages', () => {
+    const manifestPath = path.join(
+      __dirname,
+      '..',
+      '..',
+      'assets',
+      'manifest.json',
+    );
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8')) as {
+      web_accessible_resources?: unknown;
+    };
+
+    expect(manifest.web_accessible_resources).toBeUndefined();
+  });
 });

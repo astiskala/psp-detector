@@ -42,6 +42,7 @@ describe('buildCSV', () => {
     const lines = csv.split('\r\n');
     expect(lines[0]).toContain('Date');
     expect(lines[0]).toContain('Domain');
+    expect(lines[0]).toContain('Page Origin');
     expect(lines[0]).toContain('Types');
     expect(lines[1]).toContain('example.com');
     expect(lines[1]).toContain('Stripe');

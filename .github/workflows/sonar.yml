@@ -43,3 +43,4 @@ jobs:
         with:
           args: >
             -Dsonar.organization=${{ github.repository_owner }}
+            -Dsonar.host.url=https://sonarcloud.io

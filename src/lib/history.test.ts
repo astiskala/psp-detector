@@ -55,6 +55,19 @@ describe('readHistory', () => {
   it('returns empty array when nothing stored', async () => {
     expect(await readHistory()).toEqual([]);
   });
+
+  it('removes sensitive URL components from stored history', async () => {
+    storedData[STORAGE_KEYS.PSP_HISTORY] = [
+      makeEntry({
+        url: 'https://user:pass@example.com/checkout/session-token?secret=1#pay',
+      }),
+    ];
+
+    const history = await readHistory();
+
+    expect(history[0]?.url).toBe('https://example.com');
+    expect(storedData[STORAGE_KEYS.PSP_HISTORY]).toEqual(history);
+  });
 });
 
 describe('writeHistoryEntry', () => {
@@ -82,7 +95,7 @@ describe('writeHistoryEntry', () => {
           id: `old_${index}`,
           timestamp: index,
           domain: `site-${index}.example.com`,
-          url: `https://site-${index}.example.com/checkout`,
+          url: `https://site-${index}.example.com`,
         });
       },
     );
@@ -103,7 +116,7 @@ describe('writeHistoryEntry', () => {
           id: `old_${index}`,
           timestamp: index,
           domain: `site-${index}.example.com`,
-          url: `https://site-${index}.example.com/checkout`,
+          url: `https://site-${index}.example.com`,
         });
       },
     );
@@ -209,7 +222,7 @@ describe('writeHistoryEntry', () => {
           id: `old_${index}`,
           timestamp: index,
           domain: `site-${index}.example.com`,
-          url: `https://site-${index}.example.com/checkout`,
+          url: `https://site-${index}.example.com`,
         });
       },
     );
@@ -248,7 +261,7 @@ describe('writeHistoryEntry', () => {
           id: `old_${index}`,
           timestamp: index,
           domain: `site-${index}.example.com`,
-          url: `https://site-${index}.example.com/checkout`,
+          url: `https://site-${index}.example.com`,
         });
       },
     );
@@ -726,7 +739,7 @@ describe('writeHistoryEntry', () => {
     expect(history).toHaveLength(2);
 
     // The merged checkout entry (Stripe+Adyen) must be at position 0
-    expect(history[0]?.url).toBe(DEFAULT_CHECKOUT_URL);
+    expect(history[0]?.url).toBe('https://example.com');
     const pspNames = history[0]?.psps.map((p) => p.name);
     expect(pspNames).toContain('Stripe');
     expect(pspNames).toContain('Adyen');
@@ -735,7 +748,7 @@ describe('writeHistoryEntry', () => {
     expect(history[0]?.timestamp).toBe(BASE_TS + 5000);
 
     // The other URL entry is behind it
-    expect(history[1]?.url).toBe(SHOP_PAY_URL);
+    expect(history[1]?.url).toBe('https://shop.example.com');
   });
 
   it('keeps the first-seen timestamp when merge updates refresh the entry timestamp', async () => {
