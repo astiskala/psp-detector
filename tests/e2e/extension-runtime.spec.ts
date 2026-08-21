@@ -204,7 +204,9 @@ async function expectHistoryChartsAndColumns(
 
 async function expectHistoryRowsAndMetadata(optionsPage: Page): Promise<void> {
   await expect(optionsPage.locator('#historyBody tr')).toHaveCount(1);
-  await expect(optionsPage.locator('#historyBody .domain-icon')).toHaveCount(1);
+  // This fixture uses about:blank; non-HTTP(S) URLs are intentionally removed
+  // from history and therefore cannot produce a domain favicon.
+  await expect(optionsPage.locator('#historyBody .domain-icon')).toHaveCount(0);
   await expect(optionsPage.locator('#historyBody img.psp-icon')).toHaveCount(2);
 
   const pspIconSources = await optionsPage
