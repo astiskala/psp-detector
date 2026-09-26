@@ -1,13 +1,13 @@
 # PSP Detector
 
-Curious about which Payment Service Provider (PSP) is used on a webpage? PSP Detector is a straightforward extension that helps you identify the payment gateway powering any site you visit.
+PSP Detector is a Chrome extension that identifies visible payment-provider and platform integrations on a webpage.
 
-With PSP Detector, you can quickly find out which PSP is handling payments on a specific website. The extension displays the PSP's logo, offers a brief description, and provides a link to its official website for more information.
+The extension checks the page URL, HTML, and observed network request URLs, then displays matching providers with a logo, description, and official website link. A match identifies integration code; it does not prove which processor handles a transaction. Orchestration, shared gateways, and hospitality platforms can hide or connect to other providers.
 
 ## Why Install PSP Detector?
 
-- Quick Identification: Easily see which payment service provider is used on any site without needing to dig through code.
-- Wide Coverage: Supports 160+ PSPs, making it easier to learn about the payment technology in use across different websites.
+- Quick Identification: See payment integrations visible on the current page.
+- Wide Coverage: Includes 210 provider and platform records: 174 in the PSP/gateway catalogue (including two historical entries), 32 orchestrators/proxies, and 4 TSPs.
 - Useful Insights: Whether you're a business owner looking to compare payment options or just curious about the payment providers in use, this tool can offer you valuable insights.
 
 ## Key Features:
@@ -20,9 +20,11 @@ With PSP Detector, you can quickly find out which PSP is handling payments on a 
 
 ## How to Use:
 
-Just install the PSP Detector extension (available in the Chrome Web Store at https://chromewebstore.google.com/detail/iblfofcbjioicompkmafdehbdakdbjle), visit any website, navigate to the checkout page, and click on the extension icon to see the payment provider in use. It's that simple!
+Just install the PSP Detector extension (available in the Chrome Web Store at https://chromewebstore.google.com/detail/iblfofcbjioicompkmafdehbdakdbjle), visit any website, navigate to the checkout page, and click on the extension icon to see the payment integrations detected on that page.
 
-## Supported PSPs:
+## Supported PSPs, gateways, and payment platforms
+
+This catalogue also includes merchant-of-record services and existing wallet integrations. Shared gateway infrastructure is labelled separately when its hostname cannot establish a provider brand.
 
 - 2C2P
 - 2Checkout (Verifone)
@@ -34,7 +36,6 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - AsiaBill
 - AsiaPay
 - Authorize.net
-- Barclaycard ePDQ
 - BaoKim
 - BillDesk
 - Billplz
@@ -59,10 +60,13 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Debia
 - DG Financial Technology
 - dLocal
+- DNA Payments
+- Dodo Payments
 - DPO Group
 - Easebuzz
 - Easy Pay Direct
 - EBANX
+- Ecommpay
 - Elavon
 - EVO Payments
 - Eway
@@ -70,6 +74,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - FastSpring
 - Fat Zebra
 - Fawry
+- Finix
 - Fiserv
 - Fiuu
 - Flutterwave
@@ -80,6 +85,7 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Helcim
 - HiPay
 - HitPay
+- iugu
 - Iyzico
 - Judopay
 - KG Inicis
@@ -90,9 +96,10 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - LianLian
 - Linkly
 - Lyra
+- Mangopay
 - Mastercard Gateway (MPGS)
 - Maya
-- MercadoPago
+- Mercado Pago
 - Midtrans
 - Mollie
 - MONEI
@@ -106,37 +113,45 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - NHN KCP
 - NICE Payments
 - NMI
-- NTT DATA
+- NTT DATA Payment Services (iPay88 / ADAPTIS)
 - Nuvei
 - Oceanpayment
+- Omise (formerly Opn Payments)
 - OnePay
 - Openpay
-- Opn Payments
 - Paddle
+- Pagar.me
 - PagBrasil
 - PagSeguro
 - Pay.
+- payabl.
+- PAYCOMET
 - Paydibs
+- Payfast
+- PayGate by Network
 - PayGent
+- PayHere
 - PayJunction
 - PayKings
 - Payletter
 - Paymentwall
 - PayMob
+- PayMongo
 - Payoneer
 - Payoo
 - PayPal
 - PayPal Enterprise Payments
 - PayPlug
 - Paysafe
-- Paysbuy
 - Paysera
 - Paystack
 - PayTabs
 - Paytm
+- PayTR
 - Paytrail
 - PayU
 - Peach Payments
+- PhonePe Payment Gateway
 - Pine Labs
 - Plastiq
 - Plug'n Pay
@@ -146,10 +161,13 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Quickpay
 - Rapyd
 - Razorpay
+- Realex Gateway (Global Payments / Elavon)
 - Red Dot Payment
 - Redsys
+- Revolut Merchant
 - Rootline
 - SB Payment Service
+- SecurePay (Fat Zebra)
 - senangPay
 - Shift4
 - Shopify Payments
@@ -169,8 +187,10 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Trust Payments
 - Tyro
 - Unzer
+- Viva.com
 - VNPAY
 - WePay
+- Westpac PayWay
 - Windcave
 - Worldline
 - Worldpay
@@ -178,6 +198,13 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Xsolla Pay
 - Yoco
 - Zai
+
+### Historical integrations
+
+These entries identify older integration code and do not imply an active service.
+
+- Barclaycard ePDQ (retired) — closed on 31 March 2026.
+- Paysbuy (historical) — acquired by Omise in 2017; current endpoint operation is unconfirmed.
 
 ## Supported orchestrators / proxies
 
@@ -192,24 +219,31 @@ Just install the PSP Detector extension (available in the Chrome Web Store at ht
 - Corefy
 - DEUNA
 - Gr4vy
+- Hyperswitch (Juspay)
 - IXOPAY
 - Juspay
 - Pay2B
 - Paydock
+- Payrails
+- PaymentsOS (PayU)
 - Paytiko
 - PCI Proxy
 - PCI Vault
+- PortOne
 - Praxis Tech
 - Primer
 - ProcessOut
 - Rebilly
 - Recurly
+- Solidgate
 - Spreedly
 - Tranzzo
 - VGS (Very Good Security)
 - Yuno
 
 ## Supported third-party service providers (TSPs)
+
+A booking platform signal does not by itself establish that an online payment is taken or identify its processor.
 
 - Amadeus Hospitality (TravelClick)
 - Cloudbeds

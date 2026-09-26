@@ -1,6 +1,6 @@
 {
   "name": "psp-detector",
-  "version": "3.2026.926.2201",
+  "version": "3.2026.927.2",
   "description": "Chrome extension to detect Payment Service Providers on web pages",
   "private": true,
   "scripts": {
@@ -26,7 +26,7 @@
     "test:integration": "pnpm run build && pnpm exec playwright install chromium && playwright test --config=playwright.config.ts --project=integration-chromium",
     "test:watch": "jest --watch",
     "test": "pnpm run build && jest",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit --project tsconfig.test.json",
     "validate": "pnpm run format:check && pnpm run lint && pnpm run lint:scripts && pnpm run typecheck && pnpm run knip && pnpm run deadcode && pnpm run lint:deps && pnpm run build && jest --coverage && pnpm run lint:web",
     "prepare": "husky"
   },
