@@ -1,4 +1,5 @@
 :root {
+  color-scheme: light dark;
   --bg: #f3f4f6;
   --surface: #ffffff;
   --surface-elevated: #f9fafb;
@@ -11,6 +12,7 @@
   --outline: #e5e7eb;
   --primary: #2563eb;
   --primary-dark: #1d4ed8;
+  --on-primary: #ffffff;
   --secondary: #60a5fa;
   --accent: #2563eb;
   --danger: #dc2626;
@@ -40,6 +42,7 @@
     --outline: #374151;
     --primary: #60a5fa;
     --primary-dark: #3b82f6;
+    --on-primary: #111827;
     --secondary: #93c5fd;
     --accent: #60a5fa;
     --danger: #f87171;
@@ -55,6 +58,21 @@
 
 * {
   box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+:where(a, button, input, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+}
+
+button,
+input,
+select {
+  font-family: inherit;
 }
 
 body {
@@ -74,6 +92,7 @@ body.app-page {
 
 .page-content {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
 }
 
@@ -141,7 +160,7 @@ body.app-page {
 
 .btn-primary {
   background: var(--primary);
-  color: #ffffff;
+  color: var(--on-primary);
 }
 
 .btn-primary:hover {

@@ -349,6 +349,70 @@ test('popup restores detected PSPs when current tab switches back', async ({
   }
 });
 
+test('late detection for a closed tab leaves no action errors in the console', async ({
+  page: _page,
+}, testInfo) => {
+  const context = await launchExtensionContext(
+    testInfo.outputPath('ext-user-data-closed-tab'),
+  );
+  const tabErrors: string[] = [];
+  context.on('console', (message) => {
+    if (message.text().includes('No tab with id:')) {
+      tabErrors.push(message.text());
+    }
+  });
+
+  try {
+    const extensionId = await getExtensionId(context);
+    const popupPage = await openPopupPage(context, extensionId);
+    await sendRuntimeMessage(popupPage, { action: 'getPspConfig' });
+    const tabId = await createMerchantTab(popupPage, 'closed');
+    await popupPage.evaluate(async (id) => chrome.tabs.remove(id), tabId);
+
+    const [worker] = context.serviceWorkers();
+    if (!worker) throw new Error('Service worker not found');
+    // Observe completion of the real Chrome icon callback, including image
+    // decoding, so the assertion cannot pass before lastError is delivered.
+    await worker.evaluate(() => {
+      const state = globalThis as typeof globalThis & {
+        iconUpdateFinished?: boolean;
+      };
+      state.iconUpdateFinished = false;
+      const setIcon = chrome.action.setIcon.bind(chrome.action);
+      chrome.action.setIcon = ((
+        details: chrome.action.TabIconDetails,
+        callback?: () => void,
+      ): void => {
+        if (callback === undefined) {
+          void setIcon(details);
+          return;
+        }
+        setIcon(details, () => {
+          callback();
+          state.iconUpdateFinished = true;
+        });
+      }) as typeof chrome.action.setIcon;
+    });
+
+    await sendRuntimeMessage(popupPage, {
+      action: 'detectPsp',
+      data: { tabId, psp: 'Adyen' },
+    });
+    await expect
+      .poll(async () => {
+        return worker.evaluate(() => {
+          return (
+            globalThis as typeof globalThis & { iconUpdateFinished?: boolean }
+          ).iconUpdateFinished;
+        });
+      })
+      .toBe(true);
+    expect(tabErrors).toEqual([]);
+  } finally {
+    await context.close();
+  }
+});
+
 test('history page opened from popup shows charts and detection metadata columns', async ({
   page: _page,
 }, testInfo) => {

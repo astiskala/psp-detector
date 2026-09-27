@@ -26,13 +26,14 @@
         transition: var(--transition);
         display: flex;
         flex-direction: column;
+        max-height: 600px;
       }
 
       .popup-header {
         display: flex;
         align-items: center;
-        padding: 16px;
-        gap: 12px;
+        padding: 12px;
+        gap: 10px;
         background: linear-gradient(
           180deg,
           var(--surface),
@@ -41,6 +42,7 @@
         color: var(--on-surface);
         border-bottom: 1px solid var(--outline);
         position: relative;
+        flex-shrink: 0;
       }
 
       #psp-image {
@@ -76,9 +78,9 @@
       }
 
       .popup-body {
-        padding: 16px;
-        /* Ensure body grows only to needed height and no extra flex expansion */
-        flex: 0 0 auto;
+        padding: 12px;
+        min-height: 0;
+        overflow-y: auto;
       }
 
       #psp-description {
@@ -91,12 +93,12 @@
       .psp-list {
         display: flex;
         flex-direction: column;
-        gap: 12px;
+        gap: 10px;
       }
 
       .psp-card {
         display: grid;
-        grid-template-columns: 32px 1fr;
+        grid-template-columns: 32px minmax(0, 1fr);
         column-gap: 10px;
         row-gap: 6px;
         align-items: center;
@@ -107,20 +109,71 @@
       }
 
       .psp-card-logo {
-        width: 28px;
-        height: 28px;
+        width: 32px;
+        height: 32px;
+        padding: 4px;
+        background: var(--surface);
+        border-radius: 8px;
         object-fit: contain;
-        grid-row: 1 / 3;
+        grid-row: 1;
       }
 
       .psp-card-name {
         margin: 0;
+        grid-column: 2;
+        font-size: 15px;
         font-weight: 600;
         color: var(--on-surface);
+        overflow-wrap: anywhere;
+      }
+
+      .psp-card-summary {
+        grid-column: 1 / -1;
+        margin: 0;
+        line-height: 1.5;
+        color: var(--on-surface);
+        overflow-wrap: anywhere;
+      }
+
+      .psp-card-name:first-child {
+        grid-column: 1 / -1;
+      }
+
+      .psp-card-website {
+        grid-column: 1 / -1;
+        justify-self: start;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        min-height: 28px;
+        color: var(--primary);
+        font-weight: 600;
+        text-decoration: none;
+        overflow-wrap: anywhere;
+      }
+
+      .psp-card-website::after {
+        content: '↗';
+      }
+
+      .psp-card-website:hover {
+        text-decoration: underline;
+        text-underline-offset: 3px;
+      }
+
+      .psp-card-website:focus-visible,
+      .secondary-action:focus-visible {
+        outline: 2px solid var(--primary);
+        outline-offset: 3px;
+        border-radius: 4px;
       }
 
       .detection-evidence {
+        grid-column: 1 / -1;
+        min-width: 0;
         margin: 0;
+        padding-top: 8px;
+        border-top: 1px solid var(--outline);
         font-size: 11px;
         color: var(--on-surface-variant);
         font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
@@ -164,7 +217,7 @@
 
       .psp-card-notice {
         grid-column: 1 / -1;
-        margin-top: 4px;
+        margin-top: 0;
         padding: 8px 10px;
         border-radius: 6px;
         font-size: 11px;
@@ -189,7 +242,7 @@
       }
 
       .action-row {
-        margin-top: 16px;
+        margin-top: 12px;
         display: flex;
         gap: 8px;
         flex-wrap: wrap;
@@ -208,7 +261,7 @@
         min-height: 36px;
         padding: 0 12px;
         background: var(--primary);
-        color: white;
+        color: var(--on-primary);
         border-radius: var(--radius);
         text-decoration: none;
         font-weight: 500;
@@ -220,7 +273,7 @@
 
       #psp-url a:hover {
         background: var(--primary-dark);
-        box-shadow: var(--shadow);
+        box-shadow: var(--elevation);
       }
 
       #psp-url a:focus {

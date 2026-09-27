@@ -6,6 +6,11 @@
     <title>PSP Detector - History</title>
     <link rel="stylesheet" href="common.css" />
     <style>
+      body.app-page {
+        max-width: 1440px;
+        margin: 0 auto;
+      }
+
       .header-actions {
         align-items: center;
         display: flex;
@@ -16,8 +21,23 @@
 
       .controls {
         display: flex;
+        align-items: end;
         gap: 8px;
         flex-wrap: wrap;
+      }
+
+      .filter-field {
+        display: grid;
+        gap: 4px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-secondary);
+      }
+
+      .results-summary {
+        margin: -4px 0 0;
+        color: var(--text-secondary);
+        font-size: 12px;
       }
 
       .settings-dialog {
@@ -27,6 +47,8 @@
         box-shadow: var(--card-shadow);
         color: var(--text);
         max-width: 440px;
+        max-height: calc(100dvh - 32px);
+        overflow-y: auto;
         padding: 20px;
         width: calc(100% - 32px);
       }
@@ -55,6 +77,9 @@
         font-size: 24px;
         line-height: 1;
         padding: 4px 8px;
+        min-width: 36px;
+        min-height: 36px;
+        border-radius: var(--radius-sm);
       }
 
       .settings-dialog-close:hover {
@@ -101,6 +126,15 @@
         align-items: center;
         display: flex;
         gap: 8px;
+        cursor: pointer;
+      }
+
+      .settings-toggle input {
+        accent-color: var(--primary);
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+        margin: 0;
       }
 
       .settings-hint {
@@ -108,6 +142,16 @@
         font-size: 12px;
         margin: 8px 0 0;
         max-width: 60ch;
+      }
+
+      .settings-status {
+        color: var(--text-secondary);
+        font-size: 12px;
+        margin: 8px 0 0;
+      }
+
+      .settings-status:empty {
+        display: none;
       }
 
       .field-control {
@@ -128,29 +172,32 @@
       .chart-grid {
         display: grid;
         gap: 12px;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
       }
 
       .chart-card {
         padding: 12px;
+        display: grid;
+        grid-template-columns: 112px minmax(0, 1fr);
+        gap: 8px 12px;
+        align-items: center;
       }
 
       .chart-card h2 {
         font-size: 14px;
-        margin: 0 0 8px;
+        grid-column: 1 / -1;
+        margin: 0;
       }
 
       .chart-canvas-wrap {
         align-items: center;
         display: flex;
         justify-content: center;
-        margin-bottom: 10px;
       }
 
       .chart-canvas-wrap canvas {
-        height: 200px;
-        max-width: 200px;
-        width: 200px;
+        height: 112px;
+        width: 112px;
       }
 
       .chart-legend {
@@ -170,6 +217,7 @@
         font-size: 12px;
         gap: 8px;
         line-height: 1.3;
+        overflow-wrap: anywhere;
       }
 
       .legend-swatch {
@@ -182,12 +230,39 @@
 
       .table-wrap {
         overflow-x: auto;
+        min-width: 0;
       }
 
       table {
         border-collapse: collapse;
         font-size: 13px;
         width: 100%;
+        min-width: 960px;
+        table-layout: fixed;
+      }
+
+      th:nth-child(1) {
+        width: 13%;
+      }
+
+      th:nth-child(2) {
+        width: 20%;
+      }
+
+      th:nth-child(3) {
+        width: 16%;
+      }
+
+      th:nth-child(4) {
+        width: 12%;
+      }
+
+      th:nth-child(5) {
+        width: 15%;
+      }
+
+      th:nth-child(6) {
+        width: 24%;
       }
 
       th {
@@ -266,7 +341,7 @@
       }
 
       tr:hover td {
-        background: var(--surface);
+        background: var(--surface-elevated);
       }
 
       code {
@@ -278,7 +353,9 @@
         font-size: 11px;
         margin-bottom: 4px;
         padding: 2px 6px;
-        white-space: nowrap;
+        max-width: 100%;
+        white-space: normal;
+        overflow-wrap: anywhere;
       }
 
       code:last-child {
@@ -287,7 +364,7 @@
 
       .empty {
         color: var(--text-secondary);
-        padding: 48px;
+        padding: 32px 16px;
         text-align: center;
       }
 
@@ -299,6 +376,12 @@
 
         .search-control {
           min-width: 0;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .search-control {
+          flex-basis: 100%;
         }
       }
     </style>
@@ -342,20 +425,30 @@
 
       <section class="settings-section">
         <label class="settings-toggle">
-          <input type="checkbox" id="telemetryToggle" />
+          <input
+            type="checkbox"
+            id="telemetryToggle"
+            aria-describedby="telemetryHint"
+            disabled
+          />
           <span>Share anonymous usage analytics</span>
         </label>
-        <p class="settings-hint">
+        <p class="settings-hint" id="telemetryHint">
           Helps improve PSP Detector by sending aggregate feature usage and
           detected PSP names only. No page URLs, domains, page titles, page
           content, network request URLs, or payment data are ever sent. You can
           turn this off at any time.
         </p>
+        <p class="settings-status" id="telemetryStatus" role="status"></p>
       </section>
 
       <section class="settings-section">
         <h3 class="settings-section-title">History</h3>
         <button class="btn btn-danger" id="clearBtn">Clear History</button>
+        <p class="settings-hint">
+          Remove all saved detections from this browser. This cannot be undone.
+        </p>
+        <p class="settings-status" id="historyStatus" role="status"></p>
       </section>
 
       <section class="settings-section">
@@ -396,19 +489,38 @@
 
     <main class="page-content">
       <div class="controls">
-        <input
-          type="search"
-          id="search"
-          class="field-control search-control"
-          placeholder="Search domains, PSPs, or detection signals..."
-          autocomplete="off"
-        />
-        <select id="pspFilter" class="field-control">
-          <option value="">All PSPs</option>
-        </select>
+        <label class="filter-field search-control" for="search">
+          Search history
+          <input
+            type="search"
+            id="search"
+            class="field-control"
+            placeholder="Search domains, PSPs, or detection signals..."
+            autocomplete="off"
+          />
+        </label>
+        <label class="filter-field" for="pspFilter">
+          Payment provider
+          <select id="pspFilter" class="field-control">
+            <option value="">All PSPs</option>
+          </select>
+        </label>
+        <button
+          class="btn btn-secondary"
+          id="resetFiltersBtn"
+          type="button"
+          hidden
+        >
+          Clear filters
+        </button>
       </div>
+      <p id="resultCount" class="results-summary" role="status"></p>
 
-      <section class="chart-grid" aria-label="Detection breakdown charts">
+      <section
+        id="historyCharts"
+        class="chart-grid"
+        aria-label="Detection breakdown charts"
+      >
         <article class="chart-card surface-card">
           <h2>Detected PSPs</h2>
           <div class="chart-canvas-wrap">
@@ -417,6 +529,8 @@
               width="200"
               height="200"
               aria-label="PSP share chart"
+              role="img"
+              aria-describedby="pspChartLegend"
             ></canvas>
           </div>
           <ul id="pspChartLegend" class="chart-legend"></ul>
@@ -429,6 +543,8 @@
               width="200"
               height="200"
               aria-label="Detection source share chart"
+              role="img"
+              aria-describedby="sourceChartLegend"
             ></canvas>
           </div>
           <ul id="sourceChartLegend" class="chart-legend"></ul>
@@ -441,22 +557,29 @@
               width="200"
               height="200"
               aria-label="Provider type share chart"
+              role="img"
+              aria-describedby="typeChartLegend"
             ></canvas>
           </div>
           <ul id="typeChartLegend" class="chart-legend"></ul>
         </article>
       </section>
 
-      <div class="table-wrap surface-card">
-        <table>
+      <div
+        class="table-wrap surface-card"
+        role="region"
+        aria-label="Detection history; scroll horizontally for all columns"
+        tabindex="0"
+      >
+        <table aria-label="Detection history">
           <thead>
             <tr>
-              <th>Date / Time</th>
-              <th>Domain</th>
-              <th>PSP(s)</th>
-              <th>Type</th>
-              <th>Detection Source</th>
-              <th>Detection Signal</th>
+              <th scope="col">Date / Time</th>
+              <th scope="col">Domain</th>
+              <th scope="col">PSP(s)</th>
+              <th scope="col">Type</th>
+              <th scope="col">Detection Source</th>
+              <th scope="col">Detection Signal</th>
             </tr>
           </thead>
           <tbody id="historyBody"></tbody>

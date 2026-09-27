@@ -24,6 +24,10 @@ const BLUESNAP_SITE: SiteCase = {
   url: 'https://checkout.bluesnapdemo.com',
   expected: 'BlueSnap',
 };
+const CASHFREE_SITE: SiteCase = {
+  url: 'https://www.cashfree.com/devstudio/preview/pg/web/inlineCheckout',
+  expected: 'Cashfree Payments',
+};
 const CHECKOUT_SITE: SiteCase = {
   url: 'https://flow-demo.sandbox.checkout.com',
   expected: 'Checkout.com',
@@ -40,9 +44,21 @@ const GLOBAL_PAYMENTS_SITE: SiteCase = {
   url: 'https://demo.globalpay.com/merchants/dropin-ui',
   expected: 'Global Payments',
 };
+const HIPAY_SITE: SiteCase = {
+  url: 'https://demo.hipay.com/',
+  expected: 'HiPay',
+};
+const MIDTRANS_SITE: SiteCase = {
+  url: 'https://demo.midtrans.com',
+  expected: 'Midtrans',
+};
 const NUVEI_SITE: SiteCase = {
   url: 'https://demos.nuvei.com/intdemo-ecom/checkout/',
   expected: 'Nuvei',
+};
+const RAZORPAY_SITE: SiteCase = {
+  url: 'https://razorpay.com/demo/',
+  expected: 'Razorpay',
 };
 const SKRILL_SITE: SiteCase = {
   url: 'https://pay.skrill.com/assets/skrill-demo/ecommerce.html',
@@ -254,6 +270,10 @@ test.describe('demo-site coverage', () => {
     await detectAndAssert(page, BLUESNAP_SITE);
   });
 
+  test('Cashfree demo detects Cashfree Payments', async ({ page }) => {
+    await detectAndAssert(page, CASHFREE_SITE);
+  });
+
   test('Checkout.com demo detects Checkout.com', async ({ page }) => {
     await detectAndAssert(page, CHECKOUT_SITE);
   });
@@ -270,8 +290,20 @@ test.describe('demo-site coverage', () => {
     await detectAndAssert(page, GLOBAL_PAYMENTS_SITE);
   });
 
+  test('HiPay demo detects HiPay', async ({ page }) => {
+    await detectAndAssert(page, HIPAY_SITE);
+  });
+
+  test('Midtrans demo detects Midtrans', async ({ page }) => {
+    await detectAndAssert(page, MIDTRANS_SITE);
+  });
+
   test('Nuvei demo detects Nuvei', async ({ page }) => {
     await detectAndAssert(page, NUVEI_SITE);
+  });
+
+  test('Razorpay demo detects Razorpay', async ({ page }) => {
+    await detectAndAssert(page, RAZORPAY_SITE);
   });
 
   test('Skrill demo detects Skrill', async ({ page }) => {

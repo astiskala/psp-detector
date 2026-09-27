@@ -5,6 +5,9 @@ import {
   setupCleanDOM,
 } from '../test-helpers/utilities';
 
+const SUMMARY_SELECTOR = '.psp-card-summary';
+const WEBSITE_SELECTOR = '.psp-card-website';
+
 function requireElement(id: string): HTMLElement {
   const element = document.querySelector<HTMLElement>(`#${id}`);
   if (!element) throw new Error(`${id} not found`);
@@ -189,6 +192,15 @@ describe('UIService', () => {
     expect(document.querySelector('.match-value')?.textContent).toBe(
       'js.stripe.com',
     );
+    expect(document.querySelector(SUMMARY_SELECTOR)?.textContent).toBe(
+      'Stripe summary',
+    );
+    const website = requireQuery(WEBSITE_SELECTOR) as HTMLAnchorElement;
+    expect(website.textContent).toBe('Visit Stripe website');
+    expect(website.href).toBe('https://stripe.com/');
+    expect(website.target).toBe('_blank');
+    expect(website.rel).toBe('noopener noreferrer');
+    expect(website.getAttribute('aria-label')).toContain('opens in a new tab');
   });
 
   it('renders a notice within the PSP card when present in config', () => {
@@ -256,6 +268,12 @@ describe('UIService', () => {
     const cardNotice = document.querySelector('.psp-card-notice');
     expect(cardNotice).not.toBeNull();
     expect(cardNotice?.textContent).toBe(groupNoticeText);
+    expect(document.querySelector(SUMMARY_SELECTOR)?.textContent).toBe(
+      'Primer summary',
+    );
+    expect(requireQuery(WEBSITE_SELECTOR).getAttribute('href')).toBe(
+      'https://primer.io/',
+    );
   });
 
   it('does not crash when orchestrators or tsps are missing from config', () => {
@@ -277,6 +295,11 @@ describe('UIService', () => {
         },
       );
     }).not.toThrow();
+    expect(document.querySelector('.psp-card-name')?.textContent).toBe(
+      'Unknown PSP',
+    );
+    expect(document.querySelector(SUMMARY_SELECTOR)).toBeNull();
+    expect(document.querySelector(WEBSITE_SELECTOR)).toBeNull();
   });
 
   it('renders group notices for TSPs', () => {
@@ -312,6 +335,70 @@ describe('UIService', () => {
     const cardNotice = document.querySelector('.psp-card-notice');
     expect(cardNotice).not.toBeNull();
     expect(cardNotice?.textContent).toBe(groupNoticeText);
+    expect(document.querySelector(SUMMARY_SELECTOR)?.textContent).toBe(
+      'Cloudbeds summary',
+    );
+    expect(requireQuery(WEBSITE_SELECTOR).getAttribute('href')).toBe(
+      'https://cloudbeds.com/',
+    );
+  });
+
+  it('keeps metadata tied to each provider and clears it on an empty state', () => {
+    service.showError();
+    service.renderMultiplePSPs([{ psp: 'Stripe' }, { psp: 'Primer' }], {
+      psps: [
+        {
+          name: requirePSPName('Stripe'),
+          url: requireURL('https://stripe.com'),
+          image: 'stripe',
+          summary: 'Stripe <script>summary</script>',
+        },
+        {
+          name: requirePSPName('Primer'),
+          url: requireURL('https://primer.io'),
+          image: 'primer',
+          summary: 'Primer summary',
+        },
+      ],
+    });
+
+    const cards = document.querySelectorAll('.psp-card');
+    expect(cards[0]?.querySelector(SUMMARY_SELECTOR)?.textContent).toBe(
+      'Stripe <script>summary</script>',
+    );
+    expect(cards[0]?.querySelector('script')).toBeNull();
+    expect(cards[0]?.querySelector('a')?.href).toBe('https://stripe.com/');
+    expect(cards[1]?.querySelector(SUMMARY_SELECTOR)?.textContent).toBe(
+      'Primer summary',
+    );
+    expect(cards[1]?.querySelector('a')?.href).toBe('https://primer.io/');
+    expect(elements['container']?.classList.contains('error-state')).toBe(
+      false,
+    );
+
+    service.showNoPSPDetected();
+    expect(document.querySelector('.psp-card')).toBeNull();
+  });
+
+  it.each([
+    'javascript:alert(1)',
+    'invalid-url',
+    'mailto:hello@example.com',
+    '',
+  ])('omits unusable website links for %s', (url) => {
+    service.renderMultiplePSPs([{ psp: 'Stripe' }], {
+      psps: [
+        {
+          name: requirePSPName('Stripe'),
+          url: url as URL,
+          image: 'stripe',
+          summary: '',
+        },
+      ],
+    });
+
+    expect(document.querySelector(WEBSITE_SELECTOR)).toBeNull();
+    expect(document.querySelector(SUMMARY_SELECTOR)).toBeNull();
   });
 
   it('shows the status icon when the fallback header image fails', () => {

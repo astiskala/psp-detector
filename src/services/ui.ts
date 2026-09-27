@@ -68,6 +68,7 @@ export class UIService {
       return;
     }
 
+    this.setUIState('success');
     const list = document.createElement('div');
     list.className = 'psp-list';
 
@@ -159,6 +160,10 @@ export class UIService {
 
     this.updateNoticeSection('');
     this.updateImage('default', 'Error');
+    this.updateLearnMoreLink(
+      'mailto:psp-detector@adamstiskala.com',
+      'Suggest Improvement',
+    );
   }
 
   private updateTextContent(elementId: string, content: string): void {
@@ -351,10 +356,12 @@ export class UIService {
       card.append(img);
     }
 
-    const name = document.createElement('p');
+    const name = document.createElement('h2');
     name.className = 'psp-card-name';
     name.textContent = stored.psp;
     card.append(name);
+
+    card.append(this.buildProviderDetails(stored.psp, config));
 
     if (stored.detectionInfo) {
       const evidence = document.createElement('div');
@@ -383,6 +390,36 @@ export class UIService {
     }
 
     return card;
+  }
+
+  private buildProviderDetails(
+    pspName: string,
+    config: PSP | undefined,
+  ): DocumentFragment {
+    const details = document.createDocumentFragment();
+    if (typeof config?.summary === 'string' && config.summary.length > 0) {
+      const summary = document.createElement('p');
+      summary.className = 'psp-card-summary';
+      summary.textContent = config.summary;
+      details.append(summary);
+    }
+
+    const websiteUrl = config?.url ? createSafeUrl(config.url) : '#';
+    if (websiteUrl.startsWith('https:') || websiteUrl.startsWith('http:')) {
+      const website = document.createElement('a');
+      website.className = 'psp-card-website';
+      website.href = websiteUrl;
+      website.textContent = `Visit ${pspName} website`;
+      website.target = '_blank';
+      website.rel = 'noopener noreferrer';
+      website.setAttribute(
+        'aria-label',
+        `${website.textContent} (opens in a new tab)`,
+      );
+      details.append(website);
+    }
+
+    return details;
   }
 
   private buildEvidenceRow(

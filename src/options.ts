@@ -213,7 +213,7 @@ function drawPieChartCenterHole(chart: PieChartContext): void {
     Math.PI * 2,
   );
 
-  chart.ctx.fillStyle = readCssVariable('--bg', '#ffffff');
+  chart.ctx.fillStyle = readCssVariable('--surface', '#ffffff');
   chart.ctx.fill();
 }
 
@@ -527,11 +527,26 @@ function populatePspFilter(history: HistoryEntry[]): void {
   }
 }
 
-function renderTable(entries: HistoryEntry[]): void {
+function updateHistoryFeedback(count: number, total: number): void {
+  setText('resultCount', `Showing ${count} of ${total} saved entries`);
+  setText(
+    'emptyState',
+    total === 0
+      ? 'No history yet. Visit a checkout page to detect your first payment provider.'
+      : 'No matching detections. Try another search or clear the filters.',
+  );
+  const exportButton = document.querySelector<HTMLButtonElement>('#exportBtn');
+  if (exportButton) exportButton.disabled = count === 0;
+  const charts = document.querySelector<HTMLElement>('#historyCharts');
+  if (charts) charts.hidden = count === 0;
+}
+
+function renderTable(entries: HistoryEntry[], total = entries.length): void {
   const body = document.querySelector('#historyBody');
   const emptyState = document.querySelector<HTMLElement>('#emptyState');
   if (!body || !emptyState) return;
 
+  updateHistoryFeedback(entries.length, total);
   body.replaceChildren();
 
   if (entries.length === 0) {
@@ -589,6 +604,8 @@ interface HistoryReference {
 function bindControls(historyReference: HistoryReference): void {
   const search = document.querySelector<HTMLInputElement>('#search');
   const pspFilter = document.querySelector<HTMLSelectElement>('#pspFilter');
+  const resetFilters =
+    document.querySelector<HTMLButtonElement>('#resetFiltersBtn');
   let searchRefreshTimer: ReturnType<typeof setTimeout> | undefined;
 
   const getFilteredEntries = (): HistoryEntry[] => {
@@ -601,7 +618,11 @@ function bindControls(historyReference: HistoryReference): void {
 
   const refresh = (deferCharts: boolean): void => {
     const filtered = getFilteredEntries();
-    renderTable(filtered);
+    renderTable(filtered, historyReference.getHistory().length);
+    if (resetFilters) {
+      resetFilters.hidden =
+        (search?.value ?? '') === '' && (pspFilter?.value ?? '') === '';
+    }
 
     if (deferCharts) {
       scheduleIdle(() => renderCharts(filtered));
@@ -623,6 +644,16 @@ function bindControls(historyReference: HistoryReference): void {
   });
 
   pspFilter?.addEventListener('change', () => refresh(true));
+  globalThis
+    .matchMedia?.('(prefers-color-scheme: dark)')
+    .addEventListener('change', () => refresh(false));
+
+  resetFilters?.addEventListener('click', () => {
+    if (search) search.value = '';
+    if (pspFilter) pspFilter.value = '';
+    refresh(true);
+    search?.focus();
+  });
 
   document.querySelector('#exportBtn')?.addEventListener('click', () => {
     const filtered = getFilteredEntries();
@@ -661,9 +692,12 @@ function bindControls(historyReference: HistoryReference): void {
       populatePspFilter([]);
       renderStats([]);
       renderTable([]);
+      if (resetFilters) resetFilters.hidden = true;
+      setText('historyStatus', 'History cleared.');
       scheduleIdle(() => renderCharts([]));
     } catch (error) {
       logger.error('Failed to clear history', error);
+      setText('historyStatus', 'Could not clear history. Please try again.');
     }
   });
 }
@@ -692,10 +726,16 @@ function bindSettingsDialog(): void {
     dialog.close();
   });
 
-  // A click whose target is the dialog itself (rather than its content) is a
-  // click on the backdrop — close the dialog, matching the Escape behaviour.
+  // Dialog padding also targets the dialog; only close for clicks outside it.
   dialog.addEventListener('click', (event) => {
-    if (event.target === dialog) {
+    const bounds = dialog.getBoundingClientRect();
+    if (
+      event.target === dialog &&
+      (event.clientX < bounds.left ||
+        event.clientX > bounds.right ||
+        event.clientY < bounds.top ||
+        event.clientY > bounds.bottom)
+    ) {
       dialog.close();
     }
   });
@@ -711,9 +751,22 @@ async function bindTelemetryControl(): Promise<void> {
     return;
   }
 
-  toggle.checked = await isTelemetryEnabled();
+  try {
+    toggle.checked = await isTelemetryEnabled();
+    toggle.disabled = false;
+  } catch (error) {
+    toggle.disabled = true;
+    setText(
+      'telemetryStatus',
+      'Could not load your preference. Please reload this page.',
+    );
+    logger.error('Failed to load telemetry setting', error);
+    return;
+  }
   toggle.addEventListener('change', async () => {
     const enabled = toggle.checked;
+    toggle.disabled = true;
+    setText('telemetryStatus', 'Saving preference...');
     try {
       if (enabled) {
         await setTelemetryEnabled(true);
@@ -730,8 +783,16 @@ async function bindTelemetryControl(): Promise<void> {
         });
         await setTelemetryEnabled(false);
       }
+      setText('telemetryStatus', 'Preference saved.');
     } catch (error) {
+      toggle.checked = !enabled;
+      setText(
+        'telemetryStatus',
+        'Could not save your preference. Please try again.',
+      );
       logger.error('Failed to update telemetry setting', error);
+    } finally {
+      toggle.disabled = false;
     }
   });
 }
@@ -766,5 +827,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     await init();
   } catch (error) {
     logger.error('Failed to initialize options page', error);
+    setText('stats', 'Could not load history. Please reload this page.');
   }
 });

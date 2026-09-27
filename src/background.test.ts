@@ -270,10 +270,14 @@ function setupChromeMocks(options: ChromeMockOptions = {}): ChromeMockContext {
     .mockImplementation(async (items: Record<string, unknown>) => {
       Object.assign(sessionStore, items);
     });
-  const actionSetIcon = jest.fn().mockResolvedValue(undefined);
+  const actionSetIcon = jest.fn(
+    (_details: chrome.action.TabIconDetails, callback: () => void) => {
+      callback();
+    },
+  );
   const actionSetTitle = jest.fn();
-  const actionSetBadgeText = jest.fn();
-  const actionSetBadgeBackgroundColor = jest.fn();
+  const actionSetBadgeText = jest.fn().mockResolvedValue(undefined);
+  const actionSetBadgeBackgroundColor = jest.fn().mockResolvedValue(undefined);
 
   const fetchMock = jest.fn().mockImplementation(async (resource: unknown) => {
     const url = typeof resource === 'string' ? resource : String(resource);
@@ -912,6 +916,7 @@ describe('background service onboarding and re-detect flow', () => {
     ]);
 
     expect(mocks.actionSetIcon.mock.calls.at(-1)?.[0]).toEqual({
+      tabId: 91,
       path: {
         48: 'images/adyen_48.png',
         128: 'images/adyen_128.png',
@@ -919,10 +924,12 @@ describe('background service onboarding and re-detect flow', () => {
     });
 
     expect(mocks.actionSetBadgeText).toHaveBeenLastCalledWith({
+      tabId: 91,
       text: '+1',
     });
 
     expect(mocks.actionSetBadgeBackgroundColor).toHaveBeenLastCalledWith({
+      tabId: 91,
       color: '#6B7280',
     });
   });
@@ -1579,16 +1586,23 @@ describe('background service edge-case coverage', () => {
 
     activated({ tabId: 12 });
     await flushAsyncTasks();
-    expect(mocks.actionSetIcon).toHaveBeenCalledWith({
-      path: {
-        48: 'images/stripe_48.png',
-        128: 'images/stripe_128.png',
+    expect(mocks.actionSetIcon).toHaveBeenCalledWith(
+      {
+        tabId: 12,
+        path: {
+          48: 'images/stripe_48.png',
+          128: 'images/stripe_128.png',
+        },
       },
-    });
+      expect.any(Function),
+    );
 
     activated({ tabId: 13 });
     await flushAsyncTasks();
-    expect(mocks.actionSetBadgeText).toHaveBeenCalledWith({ text: '🚫' });
+    expect(mocks.actionSetBadgeText).toHaveBeenCalledWith({
+      tabId: 13,
+      text: '🚫',
+    });
 
     mocks.tabsGet.mockResolvedValueOnce({ id: 14 } as chrome.tabs.Tab);
     activated({ tabId: 14 });
@@ -1597,6 +1611,91 @@ describe('background service edge-case coverage', () => {
       target: { tabId: 14 },
       files: ['content.js'],
     });
+  });
+
+  it('restores the provider icon when activation wakes a worker still restoring state', async () => {
+    const mocks = setupChromeMocks({
+      localStore: {
+        [STORAGE_KEYS.CACHED_PSP_CONFIG]: createDefaultPSPConfig(),
+      },
+    });
+    const readSession = mocks.sessionGet.getMockImplementation()!;
+    let finishRestore!: () => void;
+    const restorePending = new Promise<void>((resolve) => {
+      finishRestore = resolve;
+    });
+    mocks.sessionGet.mockImplementationOnce(async (query: StorageQuery) => {
+      await restorePending;
+      return readSession(query);
+    });
+    await import('./background');
+
+    mocks.onActivated.getListener()?.({ tabId: 12 });
+    await flushAsyncTasks();
+    finishRestore();
+    await flushAsyncTasks();
+
+    expect(mocks.actionSetIcon).toHaveBeenLastCalledWith(
+      {
+        tabId: 12,
+        path: {
+          48: 'images/stripe_48.png',
+          128: 'images/stripe_128.png',
+        },
+      },
+      expect.any(Function),
+    );
+    expect(mocks.executeScript).not.toHaveBeenCalled();
+  });
+
+  it('keeps the merchant icon when a closed provider tab finishes activation late', async () => {
+    const mocks = setupChromeMocks({
+      localStore: {
+        [STORAGE_KEYS.CACHED_PSP_CONFIG]: createDefaultPSPConfig(),
+      },
+    });
+    await import('./background');
+    await flushAsyncTasks();
+    const activated = mocks.onActivated.getListener()!;
+    const icons = new Map<number | undefined, unknown>();
+    mocks.actionSetIcon.mockImplementation(
+      ({ tabId, path }: chrome.action.TabIconDetails, callback: () => void) => {
+        icons.set(tabId ?? undefined, path);
+        callback();
+      },
+    );
+
+    activated({ tabId: 12 });
+    await flushAsyncTasks();
+    let closeProviderTab!: (error: Error) => void;
+    mocks.tabsGet.mockImplementationOnce(() => {
+      return new Promise<chrome.tabs.Tab>((_resolve, reject) => {
+        closeProviderTab = reject;
+      });
+    });
+    activated({ tabId: 13 });
+    await flushAsyncTasks();
+    mocks.onRemoved.getListener()?.(13);
+    activated({ tabId: 12 });
+    await flushAsyncTasks();
+    closeProviderTab(new Error('No tab with id: 13'));
+    await flushAsyncTasks();
+
+    // Loading another background tab must not reset the merchant's icon either.
+    mocks.onUpdated.getListener()?.(14, { status: 'loading' }, {
+      id: 14,
+      url: 'https://provider.example.com',
+    } as chrome.tabs.Tab);
+    await flushAsyncTasks();
+
+    expect(icons.get(12) ?? icons.get(undefined)).toEqual({
+      48: 'images/stripe_48.png',
+      128: 'images/stripe_128.png',
+    });
+    expect(icons.has(undefined)).toBe(false);
+    expect(
+      await getDetectedPspsForTab(getRegisteredMessageListener(mocks), 12),
+    ).toEqual([{ psp: 'Stripe' }]);
   });
 
   it('handles loading, exempt, restricted, and regular completed tab updates', async () => {
@@ -1624,7 +1723,10 @@ describe('background service edge-case coverage', () => {
       url: 'chrome://settings',
     } as chrome.tabs.Tab);
     await flushAsyncTasks();
-    expect(mocks.actionSetBadgeText).toHaveBeenCalledWith({ text: '🚫' });
+    expect(mocks.actionSetBadgeText).toHaveBeenCalledWith({
+      tabId: 12,
+      text: '🚫',
+    });
 
     updated(22, { status: 'complete' }, {
       id: 22,
@@ -1764,7 +1866,15 @@ describe('background service edge-case coverage', () => {
       },
       sessionStore: {},
     });
-    mocks.actionSetIcon.mockRejectedValueOnce(new Error('missing icon'));
+    mocks.actionSetIcon.mockImplementationOnce(
+      (_details: chrome.action.TabIconDetails, callback: () => void) => {
+        Object.defineProperty(chrome.runtime, 'lastError', {
+          configurable: true,
+          get: jest.fn().mockReturnValueOnce({ message: 'missing icon' }),
+        });
+        callback();
+      },
+    );
     await import('./background');
     await flushAsyncTasks();
 
@@ -1775,18 +1885,89 @@ describe('background service edge-case coverage', () => {
     );
     await flushAsyncTasks();
 
-    expect(mocks.actionSetIcon).toHaveBeenNthCalledWith(1, {
-      path: {
-        48: 'images/stripe_48.png',
-        128: 'images/stripe_128.png',
+    expect(mocks.actionSetIcon).toHaveBeenNthCalledWith(
+      1,
+      {
+        tabId: 55,
+        path: {
+          48: 'images/stripe_48.png',
+          128: 'images/stripe_128.png',
+        },
+      },
+      expect.any(Function),
+    );
+    expect(mocks.actionSetIcon).toHaveBeenNthCalledWith(
+      2,
+      {
+        tabId: 55,
+        path: {
+          48: 'images/default_48.png',
+          128: 'images/default_128.png',
+        },
+      },
+      expect.any(Function),
+    );
+  });
+
+  it('consumes icon errors and quietly ignores badge failures after a tab closes', async () => {
+    const mocks = setupChromeMocks({
+      localStore: {
+        [STORAGE_KEYS.CACHED_PSP_CONFIG]: createDefaultPSPConfig(),
       },
     });
-    expect(mocks.actionSetIcon).toHaveBeenNthCalledWith(2, {
-      path: {
-        48: 'images/default_48.png',
-        128: 'images/default_128.png',
+    await import('./background');
+    await flushAsyncTasks();
+    let finishIconUpdate!: () => void;
+    mocks.actionSetIcon.mockImplementationOnce(
+      (_details: chrome.action.TabIconDetails, callback: () => void) => {
+        finishIconUpdate = callback;
       },
+    );
+    const message = 'No tab with id: 12.';
+    mocks.actionSetBadgeText.mockRejectedValueOnce(new Error(message));
+    mocks.actionSetBadgeBackgroundColor.mockRejectedValueOnce(
+      new Error(message),
+    );
+
+    mocks.onActivated.getListener()?.({ tabId: 12 });
+    await flushAsyncTasks();
+    mocks.onRemoved.getListener()?.(12);
+    const readLastError = jest.fn(() => ({ message }));
+    Object.defineProperty(chrome.runtime, 'lastError', {
+      configurable: true,
+      get: readLastError,
     });
+    finishIconUpdate();
+    await flushAsyncTasks();
+
+    expect(readLastError).toHaveBeenCalledTimes(1);
+    expect(mocks.actionSetIcon).toHaveBeenCalledTimes(1);
+    expect(console.warn).not.toHaveBeenCalled();
+    expect(console.error).not.toHaveBeenCalled();
+  });
+
+  it('still reports unexpected badge failures', async () => {
+    const mocks = setupChromeMocks();
+    await import('./background');
+    await flushAsyncTasks();
+    const failure = new Error('Unexpected action failure');
+    mocks.actionSetBadgeText.mockRejectedValueOnce(failure);
+    mocks.actionSetBadgeBackgroundColor.mockRejectedValueOnce(failure);
+
+    mocks.onUpdated.getListener()?.(12, { status: 'loading' }, {
+      id: 12,
+      url: DEFAULT_ACTIVE_TAB_URL,
+    } as chrome.tabs.Tab);
+    await flushAsyncTasks();
+
+    expect(console.warn).toHaveBeenCalledWith(
+      expect.stringContaining('Failed to set tab badge text'),
+      failure,
+    );
+    expect(console.warn).toHaveBeenCalledWith(
+      expect.stringContaining('Failed to set tab badge color'),
+      failure,
+    );
   });
 
   it('uses current-tab state when active-tab and storage APIs fail', async () => {
@@ -1834,7 +2015,10 @@ describe('background service edge-case coverage', () => {
     } as chrome.tabs.Tab);
     activated({ tabId: 68 });
     await flushAsyncTasks();
-    expect(mocks.actionSetBadgeText).toHaveBeenCalledWith({ text: '🚫' });
+    expect(mocks.actionSetBadgeText).toHaveBeenCalledWith({
+      tabId: 68,
+      text: '🚫',
+    });
 
     mocks.tabsQuery.mockResolvedValueOnce([
       { id: 69, url: 'not a URL' } as chrome.tabs.Tab,

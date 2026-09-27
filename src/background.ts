@@ -78,6 +78,7 @@ interface NetworkMatcher {
 
 class BackgroundService {
   private isInitialized = false;
+  private initializationPromise: Promise<void> | undefined;
   private inMemoryPspConfig: PSPConfig | undefined = undefined;
   private inMemoryExemptDomains: string[] | undefined = undefined;
   private webRequestListenerRegistered = false;
@@ -93,7 +94,8 @@ class BackgroundService {
   >();
 
   public async initialize(): Promise<void> {
-    await this.initializeServiceWorker();
+    this.initializationPromise ??= this.initializeServiceWorker();
+    await this.initializationPromise;
   }
 
   /**
@@ -125,7 +127,7 @@ class BackgroundService {
     chrome.runtime.onStartup.addListener(() => {
       logger.info('Extension startup detected');
       // eslint-disable-next-line unicorn/prefer-await -- fire-and-forget in sync event listener
-      this.initializeServiceWorker().catch((error: unknown) => {
+      this.initialize().catch((error: unknown) => {
         logger.error('Failed to initialize service worker on startup:', error);
       });
     });
@@ -541,7 +543,7 @@ class BackgroundService {
     );
 
     this.markTabPspCacheDirty();
-    this.showExemptDomainIcon();
+    this.showExemptDomainIcon(tabId);
   }
 
   /**
@@ -911,8 +913,6 @@ class BackgroundService {
     logger.debug('Background: Received PSP detection message:', data);
 
     try {
-      const currentTabId = await this.getCurrentTabId();
-      logger.debug('Background: Current tab ID:', currentTabId);
       const resolvedData = this.resolveDetectionPayload(data, sender);
       if (resolvedData === undefined) {
         return;
@@ -920,8 +920,7 @@ class BackgroundService {
 
       const { tabId, pspName } = resolvedData;
       logger.debug(
-        `Background: Processing PSP detection - PSP: ${pspName}, ` +
-          `TabID: ${tabId}, CurrentTabID: ${currentTabId}`,
+        `Background: Processing PSP detection - PSP: ${pspName}, TabID: ${tabId}`,
       );
 
       if (pspName === PSP_DETECTION_EXEMPT) {
@@ -938,7 +937,7 @@ class BackgroundService {
         return;
       }
 
-      this.syncCurrentTabDetection(tabId, currentTabId);
+      this.updateIconForStoredPsps(tabId, this.tabPspCache.get(tabId) ?? []);
       this.emitPspDetected(pspName, data.detectionInfo);
 
       await this.recordDetectionHistory(
@@ -951,7 +950,6 @@ class BackgroundService {
     } catch (error) {
       logger.error('Background: Error processing PSP detection:', error);
       this.emitScanError('detection_failed', 'background_detect');
-      this.resetIcon();
     }
   }
 
@@ -1073,21 +1071,6 @@ class BackgroundService {
     return (
       sourcePriority(incomingInfo.sourceType) >
       sourcePriority(existingInfo.sourceType)
-    );
-  }
-
-  private syncCurrentTabDetection(
-    tabId: number,
-    currentTabId: number | undefined,
-  ): void {
-    if (currentTabId !== undefined && tabId === currentTabId) {
-      this.updateIconForStoredPsps(this.tabPspCache.get(tabId) ?? []);
-      return;
-    }
-
-    logger.debug(
-      `Background: Detection recorded for tab ${tabId}; ` +
-        `active tab is ${currentTabId}`,
     );
   }
 
@@ -1229,6 +1212,8 @@ class BackgroundService {
   @private
    */
   async handleTabActivation(activeInfo: { tabId: number }): Promise<void> {
+    // Activation can wake the worker before its session cache and config load.
+    await this.initialize();
     const tabId = TypeConverters.toTabId(activeInfo.tabId);
     if (tabId === undefined) return;
 
@@ -1239,7 +1224,6 @@ class BackgroundService {
       tab = await chrome.tabs.get(activeInfo.tabId);
     } catch (error) {
       logger.warn('Tab access error:', error);
-      this.resetIcon();
       return;
     }
 
@@ -1278,19 +1262,19 @@ class BackgroundService {
   ): Promise<void> {
     if (detectedPsp) {
       if (detectedPsp.type === 'exempt') {
-        this.showExemptDomainIcon();
+        this.showExemptDomainIcon(tabId);
         return;
       }
 
       if (detectedPsp.type === 'detected') {
-        this.updateIconForStoredPsps(this.tabPspCache.get(tabId) ?? []);
+        this.updateIconForStoredPsps(tabId, this.tabPspCache.get(tabId) ?? []);
         return;
       }
 
       return;
     }
 
-    this.resetIcon();
+    this.resetIcon(tabId);
     if (typeof tab.url !== 'string' || tab.url.length === 0) {
       return;
     }
@@ -1724,7 +1708,7 @@ class BackgroundService {
   ): Promise<void> {
     const brandedTabId = TypeConverters.toTabId(tabId);
     if (brandedTabId !== undefined && changeInfo.status === 'loading') {
-      this.resetIcon();
+      this.resetIcon(brandedTabId);
       this.cleanupTabData(brandedTabId);
     }
 
@@ -1753,38 +1737,51 @@ class BackgroundService {
   @private
    */
   private setIconWithErrorHandling(
+    tabId: number,
     path: NonNullable<chrome.action.TabIconDetails['path']>,
     errorMessage: string,
     onError?: () => void,
   ): void {
-    void chrome.action.setIcon({ path }).catch((error: unknown) => {
+    // Consume lastError in the callback: setIcon's asynchronous image loading
+    // can otherwise leave a closed-tab error unchecked in Chrome's bindings.
+    chrome.action.setIcon({ tabId, path }, () => {
+      const lastError = chrome.runtime.lastError;
+      if (lastError === undefined) return;
+      const error = new Error(lastError.message);
+      if (this.isMissingTabError(error)) return;
       logger.error(errorMessage, error);
       onError?.();
     });
   }
 
-  /**
-  Update extension icon
-  @private
-   */
-  private updateIconForStoredPsps(psps: StoredTabPsp[]): void {
-    const detectedPsps = this.sortStoredTabPsps(
-      psps.filter((entry) => entry.psp !== PSP_DETECTION_EXEMPT),
+  private isMissingTabError(error: unknown): boolean {
+    return (
+      error instanceof Error && error.message.startsWith('No tab with id:')
     );
-    const primaryPsp = detectedPsps[0]?.psp;
-    if (primaryPsp === undefined) {
-      this.resetIcon();
-      return;
-    }
-
-    this.updateIcon(primaryPsp, Math.max(0, detectedPsps.length - 1));
   }
 
   /**
   Update extension icon
   @private
    */
-  private updateIcon(psp: string, extraCount = 0): void {
+  private updateIconForStoredPsps(tabId: number, psps: StoredTabPsp[]): void {
+    const detectedPsps = this.sortStoredTabPsps(
+      psps.filter((entry) => entry.psp !== PSP_DETECTION_EXEMPT),
+    );
+    const primaryPsp = detectedPsps[0]?.psp;
+    if (primaryPsp === undefined) {
+      this.resetIcon(tabId);
+      return;
+    }
+
+    this.updateIcon(tabId, primaryPsp, Math.max(0, detectedPsps.length - 1));
+  }
+
+  /**
+  Update extension icon
+  @private
+   */
+  private updateIcon(tabId: number, psp: string, extraCount = 0): void {
     logger.debug(`Background: Attempting to update icon for PSP: ${psp}`);
     const pspInfo = this.getPspInfo(psp);
     logger.debug('Background: PSP info lookup result:', pspInfo);
@@ -1797,10 +1794,12 @@ class BackgroundService {
       logger.debug('Background: Setting icon paths:', iconPaths);
 
       this.setIconWithErrorHandling(
+        tabId,
         iconPaths,
         `Background: Failed to set icon for ${psp}`,
         () => {
           this.setIconWithErrorHandling(
+            tabId,
             DEFAULT_ICONS,
             'Background: Failed to set default icon fallback',
           );
@@ -1812,10 +1811,21 @@ class BackgroundService {
     }
 
     const badgeText = extraCount > 0 ? `+${extraCount}` : '';
-    void chrome.action.setBadgeText({ text: badgeText });
+    this.updateBadge(tabId, badgeText);
+  }
 
-    // Neutral grey
-    void chrome.action.setBadgeBackgroundColor({ color: BADGE_COLOR });
+  private updateBadge(tabId: number, text: string): void {
+    // A tab may close while an asynchronous detection or activation completes.
+    void chrome.action.setBadgeText({ tabId, text }).catch((error: unknown) => {
+      if (this.isMissingTabError(error)) return;
+      logger.warn('Failed to set tab badge text:', error);
+    });
+    void chrome.action
+      .setBadgeBackgroundColor({ tabId, color: BADGE_COLOR })
+      .catch((error: unknown) => {
+        if (this.isMissingTabError(error)) return;
+        logger.warn('Failed to set tab badge color:', error);
+      });
   }
 
   private sortStoredTabPsps(entries: StoredTabPsp[]): StoredTabPsp[] {
@@ -1848,18 +1858,16 @@ class BackgroundService {
   Show exempt domain icon with warning badge
   @private
    */
-  showExemptDomainIcon(): void {
+  showExemptDomainIcon(tabId: number): void {
     // Set default icon
     this.setIconWithErrorHandling(
+      tabId,
       DEFAULT_ICONS,
       'Background: Failed to set exempt icon',
     );
 
     // Add warning badge
-    void chrome.action.setBadgeText({ text: '🚫' });
-
-    // Neutral grey
-    void chrome.action.setBadgeBackgroundColor({ color: BADGE_COLOR });
+    this.updateBadge(tabId, '🚫');
     logger.debug('Showing exempt domain icon with warning badge');
   }
 
@@ -1867,17 +1875,15 @@ class BackgroundService {
   Reset extension icon to default
   @private
    */
-  resetIcon(): void {
+  resetIcon(tabId: number): void {
     this.setIconWithErrorHandling(
+      tabId,
       DEFAULT_ICONS,
       'Background: Failed to set default icon',
     );
 
     // Add searching badge
-    void chrome.action.setBadgeText({ text: '🔍' });
-
-    // Neutral grey
-    void chrome.action.setBadgeBackgroundColor({ color: BADGE_COLOR });
+    this.updateBadge(tabId, '🔍');
   }
 
   /**

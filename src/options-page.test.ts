@@ -61,6 +61,7 @@ interface LoggerMock {
 function setupOptionsDOM(): void {
   document.body.innerHTML = `
     <div id="stats"></div>
+    <p id="resultCount"></p>
     <button id="exportBtn" type="button">Export</button>
     <button id="settingsBtn" type="button">Settings</button>
     <dialog id="settingsDialog">
@@ -68,13 +69,16 @@ function setupOptionsDOM(): void {
         &times;
       </button>
       <label><input type="checkbox" id="telemetryToggle" /> Analytics</label>
+      <p id="telemetryStatus"></p>
       <button id="clearBtn" type="button">Clear History</button>
+      <p id="historyStatus"></p>
       <ul class="settings-links">
         <li><a id="suggestLink" href="mailto:psp-detector@adamstiskala.com">Suggest</a></li>
         <li><a id="privacyLink" href="https://astiskala.github.io/psp-detector/privacy-policy.html" target="_blank" rel="noopener">Privacy</a></li>
       </ul>
     </dialog>
     <input id="search" />
+    <button id="resetFiltersBtn" hidden>Clear filters</button>
     <select id="pspFilter">
       <option value="">All PSPs</option>
     </select>
@@ -318,7 +322,7 @@ describe('options page wiring', () => {
     loggerMock.error.mockReset();
   });
 
-  it('renders history, handles icons, and supports filtering', async () => {
+  it('renders history and supports filtering', async () => {
     setupSuccessMocks();
     await initializeOptionsPage();
 
@@ -332,15 +336,6 @@ describe('options page wiring', () => {
       getRequiredElementById<HTMLTableSectionElement>('historyBody');
     expect(historyBody.querySelectorAll(':scope tr')).toHaveLength(3);
 
-    const firstDomainIcon =
-      getRequiredElement<HTMLImageElement>('.domain-icon');
-    firstDomainIcon.dispatchEvent(new Event('error'));
-    expect(firstDomainIcon.isConnected).toBe(false);
-
-    const firstPspIcon = getRequiredElement<HTMLImageElement>('.psp-icon');
-    firstPspIcon.dispatchEvent(new Event('error'));
-    expect(firstPspIcon.src).toContain('images/default_48.png');
-
     const search = getRequiredElementById<HTMLInputElement>('search');
 
     search.value = 'does-not-exist';
@@ -350,15 +345,43 @@ describe('options page wiring', () => {
 
     const emptyState = getRequiredElementById<HTMLElement>('emptyState');
     expect(emptyState.hidden).toBe(false);
+    expect(emptyState.textContent).toContain('No matching detections');
+    expect(getRequiredElementById('resultCount').textContent).toBe(
+      'Showing 0 of 3 saved entries',
+    );
+    expect(
+      getRequiredElementById<HTMLButtonElement>('exportBtn').disabled,
+    ).toBe(true);
 
-    search.value = '';
-    search.dispatchEvent(new Event('input'));
-    await flushAsync(160);
+    getRequiredElementById<HTMLButtonElement>('resetFiltersBtn').click();
+    expect(search.value).toBe('');
+    expect(document.activeElement).toBe(search);
+    expect(historyBody.querySelectorAll(':scope tr')).toHaveLength(3);
+    expect(
+      getRequiredElementById<HTMLButtonElement>('exportBtn').disabled,
+    ).toBe(false);
 
     pspFilter.value = 'Stripe';
     pspFilter.dispatchEvent(new Event('change'));
     await flushAsync();
     expect(historyBody.querySelectorAll(':scope tr')).toHaveLength(1);
+    expect(getRequiredElementById('resultCount').textContent).toBe(
+      'Showing 1 of 3 saved entries',
+    );
+  });
+
+  it('falls back when history icons cannot load', async () => {
+    setupSuccessMocks();
+    await initializeOptionsPage();
+
+    const firstDomainIcon =
+      getRequiredElement<HTMLImageElement>('.domain-icon');
+    firstDomainIcon.dispatchEvent(new Event('error'));
+    expect(firstDomainIcon.isConnected).toBe(false);
+
+    const firstPspIcon = getRequiredElement<HTMLImageElement>('.psp-icon');
+    firstPspIcon.dispatchEvent(new Event('error'));
+    expect(firstPspIcon.src).toContain('images/default_48.png');
   });
 
   it('shows redirect provenance without exposing the merchant path', async () => {
@@ -464,6 +487,12 @@ describe('options page wiring', () => {
     await flushAsync();
     expect(clearHistoryMock).toHaveBeenCalledTimes(1);
     expect(historyBody.querySelectorAll(':scope tr')).toHaveLength(0);
+    expect(getRequiredElementById('emptyState').textContent).toContain(
+      'No history yet',
+    );
+    expect(getRequiredElementById('historyStatus').textContent).toBe(
+      'History cleared.',
+    );
 
     confirmSpy.mockReturnValueOnce(true);
     clearHistoryMock.mockRejectedValueOnce(new Error('Clear failed'));
@@ -472,6 +501,9 @@ describe('options page wiring', () => {
     expect(loggerMock.error).toHaveBeenCalledWith(
       'Failed to clear history',
       expect.any(Error),
+    );
+    expect(getRequiredElementById('historyStatus').textContent).toContain(
+      'Could not clear history',
     );
   });
 
@@ -533,9 +565,34 @@ describe('options page wiring', () => {
     getRequiredElementById<HTMLButtonElement>('settingsBtn').click();
     expect(dialog.open).toBe(true);
 
-    // A click whose target is the dialog itself represents the backdrop.
-    dialog.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    jest.spyOn(dialog, 'getBoundingClientRect').mockReturnValue({
+      left: 20,
+      top: 20,
+      right: 460,
+      bottom: 520,
+    } as DOMRect);
+    dialog.dispatchEvent(
+      new MouseEvent('click', { bubbles: true, clientX: 10, clientY: 10 }),
+    );
     expect(dialog.open).toBe(false);
+  });
+
+  it('keeps settings open when its padding is clicked', async () => {
+    setupSuccessMocks();
+    await initializeOptionsPage();
+    const dialog = getRequiredElementById<HTMLDialogElement>('settingsDialog');
+    getRequiredElementById<HTMLButtonElement>('settingsBtn').click();
+    jest.spyOn(dialog, 'getBoundingClientRect').mockReturnValue({
+      left: 20,
+      top: 20,
+      right: 460,
+      bottom: 520,
+    } as DOMRect);
+
+    dialog.dispatchEvent(
+      new MouseEvent('click', { bubbles: true, clientX: 25, clientY: 25 }),
+    );
+    expect(dialog.open).toBe(true);
   });
 
   it('keeps the dialog open when its content is clicked', async () => {
@@ -604,6 +661,26 @@ describe('options page wiring', () => {
     expect(loggerMock.error).toHaveBeenCalledWith(
       'Failed to update telemetry setting',
       expect.any(Error),
+    );
+    expect(toggle.checked).toBe(true);
+    expect(toggle.disabled).toBe(false);
+    expect(getRequiredElementById('telemetryStatus').textContent).toContain(
+      'Could not save your preference',
+    );
+  });
+
+  it('shows a load error and disables an unavailable analytics preference', async () => {
+    setupSuccessMocks();
+    jest
+      .mocked(isTelemetryEnabled)
+      .mockRejectedValueOnce(new Error('storage failed'));
+    await initializeOptionsPage();
+
+    expect(
+      getRequiredElementById<HTMLInputElement>('telemetryToggle').disabled,
+    ).toBe(true);
+    expect(getRequiredElementById('telemetryStatus').textContent).toContain(
+      'Could not load your preference',
     );
   });
 
