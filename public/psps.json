@@ -361,7 +361,7 @@
     },
     {
       "name": "Fiuu",
-      "matchStrings": ["onlinepayment.com.my"],
+      "matchStrings": ["onlinepayment.com.my", "pay.merchant.razer.com"],
       "image": "fiuu",
       "summary": "Southeast Asian payment gateway formerly known as Razer Merchant Services and MOLPay.",
       "url": "https://www.fiuu.com"
