@@ -120,14 +120,12 @@ export class PSPDetectorService {
   }
 
   private validateInputs(url: string): PSPDetectionResult | undefined {
-    if (url.trim().length === 0) {
-      return PSPDetectionResult.error(
-        new Error('Invalid URL provided'),
-        'url_validation',
-      );
-    }
-
-    return undefined;
+    return url.trim().length === 0
+      ? PSPDetectionResult.error(
+          new Error('Invalid URL provided'),
+          'url_validation',
+        )
+      : undefined;
   }
 
   private getUrlToCheck(fallbackUrl: string): string {
@@ -239,13 +237,15 @@ export class PSPDetectorService {
       const hit = matchStrings.find((matchString) =>
         content.includes(matchString),
       );
-      if (hit !== undefined) {
-        results.push({
-          psp: psp.name,
-          detectionInfo: { method: 'matchString', value: hit },
-        });
-        matched.add(psp.name);
+      if (hit === undefined) {
+        continue;
       }
+
+      results.push({
+        psp: psp.name,
+        detectionInfo: { method: 'matchString', value: hit },
+      });
+      matched.add(psp.name);
     }
 
     // Phase 2: regex (only PSPs not already matched)

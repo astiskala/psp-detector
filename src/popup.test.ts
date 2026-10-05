@@ -106,15 +106,10 @@ function bindPermissionState(
   state: OptionalPermissionState,
 ): void {
   chromeMocks.contains.mockImplementation(async (permissionRequest) => {
-    if (permissionRequest.permissions?.includes('webRequest') === true) {
-      return state.webRequest;
-    }
-
-    if (permissionRequest.origins?.includes('https://*/*') === true) {
-      return state.host;
-    }
-
-    return false;
+    return permissionRequest.permissions?.includes('webRequest') === true
+      ? state.webRequest
+      : permissionRequest.origins?.includes('https://*/*') === true &&
+          state.host;
   });
 }
 

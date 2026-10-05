@@ -14,24 +14,14 @@ export const TypeConverters = {
   Accepts only non-empty provider names so empty detection results never get
   branded as valid PSP identifiers.
    */
-  toPSPName: (name: string): PSPName | undefined => {
-    if (!name || name.trim().length === 0) {
-      return undefined;
-    }
-
-    return name as PSPName;
-  },
+  toPSPName: (name: string): PSPName | undefined =>
+    !name || name.trim().length === 0 ? undefined : (name as PSPName),
 
   /**
   Accepts only non-negative integer tab ids returned by the browser APIs.
    */
-  toTabId: (id: number): TabId | undefined => {
-    if (!Number.isSafeInteger(id) || id < 0) {
-      return undefined;
-    }
-
-    return id as TabId;
-  },
+  toTabId: (id: number): TabId | undefined =>
+    !Number.isSafeInteger(id) || id < 0 ? undefined : (id as TabId),
 
   /**
   Brands only syntactically valid absolute URLs.

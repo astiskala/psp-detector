@@ -111,12 +111,10 @@ export class DOMObserverService {
     }
 
     const rel = new Set(relTokens);
-    if (rel.has('preconnect') || rel.has('dns-prefetch')) {
-      return true;
-    }
-
     return (
-      (rel.has('preload') || rel.has('modulepreload')) && link.as === 'script'
+      rel.has('preconnect') ||
+      rel.has('dns-prefetch') ||
+      ((rel.has('preload') || rel.has('modulepreload')) && link.as === 'script')
     );
   }
 
@@ -140,15 +138,10 @@ export class DOMObserverService {
         return attributeName === 'action';
       }
       case 'LINK': {
-        if (
-          attributeName !== 'href' &&
-          attributeName !== 'rel' &&
-          attributeName !== 'as'
-        ) {
-          return false;
-        }
-
-        return this.isRelevantLinkElement(target as HTMLLinkElement);
+        return (
+          ['href', 'rel', 'as'].includes(attributeName) &&
+          this.isRelevantLinkElement(target as HTMLLinkElement)
+        );
       }
       default: {
         return false;

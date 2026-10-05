@@ -133,6 +133,8 @@ function generateRandomToken(): string {
     // Fallback for the rare runtime without randomUUID — still sourced from the
     // cryptographic RNG rather than a pseudo-random one.
     const bytes = crypto.getRandomValues(new Uint8Array(16));
+    // Node.js 22 and older Chrome runtimes lack Uint8Array#toHex().
+    // eslint-disable-next-line unicorn/prefer-uint8array-hex
     return [...bytes]
       .map((byte) => byte.toString(16).padStart(2, '0'))
       .join('');
@@ -243,11 +245,7 @@ function sanitizeParameterValue(
     return Number.isFinite(value) ? value : undefined;
   }
 
-  if (typeof value === 'boolean') {
-    return value;
-  }
-
-  return undefined;
+  return typeof value === 'boolean' ? value : undefined;
 }
 
 function sanitizeParameters(
@@ -436,11 +434,7 @@ async function sendEvent(
   parameters: TelemetryParameters,
 ): Promise<void> {
   const config = getGaConfig();
-  if (!isGaConfigured(config)) {
-    return;
-  }
-
-  if (!(await isTelemetryEnabled())) {
+  if (!isGaConfigured(config) || !(await isTelemetryEnabled())) {
     return;
   }
 

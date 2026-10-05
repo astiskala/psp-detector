@@ -102,8 +102,7 @@ function toAbsolute(href, base) {
 
 function stripHttpScheme(input) {
   if (input.startsWith('https://')) return input.slice('https://'.length);
-  if (input.startsWith('http://')) return input.slice('http://'.length);
-  return input;
+  return input.startsWith('http://') ? input.slice('http://'.length) : input;
 }
 
 function stripTrailingSlashes(input) {
@@ -189,8 +188,7 @@ function uniq(array) {
 }
 
 function isSquareish(w, h, tolerance = 0.05) {
-  if (!w || !h) return false;
-  return Math.abs(w - h) / Math.max(w, h) <= tolerance;
+  return Boolean(w && h) && Math.abs(w - h) / Math.max(w, h) <= tolerance;
 }
 
 function parseSzParameter(searchParameters, sizes) {
@@ -291,9 +289,7 @@ function sniffImageFormat(buffer, contentType = '', url = '') {
     if (fromSvg) return fromSvg;
 
     const fromUrl = sniffFromUrlExtension(url);
-    if (fromUrl) return fromUrl;
-
-    return 'unknown';
+    return fromUrl || 'unknown';
   } catch {
     return 'unknown';
   }
@@ -743,10 +739,12 @@ function isAcceptableIconCandidate(m) {
     'avif',
   ].includes(fmt);
 
-  if (!isRaster && fmt !== 'svg') return false;
-  if (fmt === 'svg' && (!w || !h)) return false;
-  if (Math.min(w, h) < MIN_SIZE) return false;
-  return isSquareish(w, h, 0.05);
+  return (
+    (isRaster || fmt === 'svg') &&
+    (fmt !== 'svg' || Boolean(w && h)) &&
+    Math.min(w, h) >= MIN_SIZE &&
+    isSquareish(w, h, 0.05)
+  );
 }
 
 async function writeBestMeasured(pspName, measured, outputPath) {

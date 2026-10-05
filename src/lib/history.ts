@@ -139,14 +139,15 @@ function mergeHistoryPsps(
     }
 
     const existingMatch = mergedPsps[existingIndex];
-    if (existingMatch === undefined) {
+    if (
+      existingMatch === undefined ||
+      !shouldReplaceMatch(existingMatch, incomingMatch)
+    ) {
       continue;
     }
 
-    if (shouldReplaceMatch(existingMatch, incomingMatch)) {
-      mergedPsps[existingIndex] = incomingMatch;
-      hasChanges = true;
-    }
+    mergedPsps[existingIndex] = incomingMatch;
+    hasChanges = true;
   }
 
   return hasChanges ? mergedPsps : undefined;
@@ -217,11 +218,12 @@ function findEntryStatus(
     return { kind: 'debounce' };
   }
 
-  if (normalizedEntry.timestamp - firstDetectedAt < HISTORY_ENTRY_DEBOUNCE_MS) {
-    return { kind: 'debounce' };
-  }
-
-  return { kind: 'none' };
+  return {
+    kind:
+      normalizedEntry.timestamp - firstDetectedAt < HISTORY_ENTRY_DEBOUNCE_MS
+        ? 'debounce'
+        : 'none',
+  };
 }
 
 /**

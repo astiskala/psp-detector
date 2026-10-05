@@ -280,10 +280,12 @@ export class UIService {
       this.elements['image'].style.display = 'none';
     }
 
-    if (this.elements['statusIcon']) {
-      this.elements['statusIcon'].style.display = 'flex';
-      this.elements['statusIcon'].textContent = icon;
+    if (!this.elements['statusIcon']) {
+      return;
     }
+
+    this.elements['statusIcon'].style.display = 'flex';
+    this.elements['statusIcon'].textContent = icon;
   }
 
   private showPSPImage(): void {
