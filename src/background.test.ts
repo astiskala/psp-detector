@@ -281,11 +281,9 @@ function setupChromeMocks(options: ChromeMockOptions = {}): ChromeMockContext {
 
   const fetchMock = jest.fn().mockImplementation(async (resource: unknown) => {
     const url = typeof resource === 'string' ? resource : String(resource);
-    if (url.includes('psps.json')) {
-      return createFetchResponse(pspConfig);
-    }
-
-    return createFetchResponse({ exemptDomains });
+    return createFetchResponse(
+      url.includes('psps.json') ? pspConfig : { exemptDomains },
+    );
   });
 
   const webRequestAddListener = jest.fn();
@@ -445,8 +443,11 @@ function getLatestHistoryEntries(
       (
         payload,
       ): payload is { [STORAGE_KEYS.PSP_HISTORY]: HistoryEntryLike[] } => {
-        if (typeof payload !== 'object' || payload === null) return false;
-        return Object.hasOwn(payload, STORAGE_KEYS.PSP_HISTORY);
+        return (
+          typeof payload === 'object' &&
+          payload !== null &&
+          Object.hasOwn(payload, STORAGE_KEYS.PSP_HISTORY)
+        );
       },
     );
   return historyWrites.at(-1)?.[STORAGE_KEYS.PSP_HISTORY];

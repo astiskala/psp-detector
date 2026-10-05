@@ -147,11 +147,9 @@ function setupChromeRuntimeMock(
         }
       }
 
-      if (message.action === MessageAction.CHECK_TAB_STATE) {
-        return Promise.resolve({ hasState: checkTabState });
-      }
-
-      return Promise.resolve({});
+      return message.action === MessageAction.CHECK_TAB_STATE
+        ? Promise.resolve({ hasState: checkTabState })
+        : Promise.resolve({});
     },
   );
 

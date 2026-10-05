@@ -27,11 +27,9 @@ export function formatDate(timestamp: number): string {
 }
 
 function escapeCSV(value: string): string {
-  if (value.includes(',') || value.includes('"') || value.includes('\n')) {
-    return `"${value.replaceAll('"', '""')}"`;
-  }
-
-  return value;
+  return value.includes(',') || value.includes('"') || value.includes('\n')
+    ? `"${value.replaceAll('"', '""')}"`
+    : value;
 }
 
 /**
@@ -85,11 +83,7 @@ export function bucketRowCount(count: number): string {
     return '51-100';
   }
 
-  if (count <= 500) {
-    return '101-500';
-  }
-
-  return '500+';
+  return count <= 500 ? '101-500' : '500+';
 }
 
 /**
@@ -105,13 +99,12 @@ export function filterEntries(
   return entries.filter((entry) => {
     const pspNames = entry.psps.map((p) => p.name);
     if (pspFilter && !pspNames.includes(pspFilter)) return false;
-    if (!lowerQuery) return true;
-    if (entry.domain.toLowerCase().includes(lowerQuery)) return true;
-    if (entry.merchantOrigin?.toLowerCase().includes(lowerQuery) === true) {
-      return true;
-    }
-
-    if (pspNames.some((name) => name.toLowerCase().includes(lowerQuery))) {
+    if (
+      !lowerQuery ||
+      entry.domain.toLowerCase().includes(lowerQuery) ||
+      entry.merchantOrigin?.toLowerCase().includes(lowerQuery) === true ||
+      pspNames.some((name) => name.toLowerCase().includes(lowerQuery))
+    ) {
       return true;
     }
 
@@ -140,10 +133,12 @@ export function getHistoryStats(history: HistoryEntry[]): HistoryStats {
       const nextCount = (pspCounts.get(psp.name) ?? 0) + 1;
       pspCounts.set(psp.name, nextCount);
 
-      if (nextCount > topCount) {
-        topCount = nextCount;
-        topPsp = psp.name;
+      if (nextCount <= topCount) {
+        continue;
       }
+
+      topCount = nextCount;
+      topPsp = psp.name;
     }
   }
 

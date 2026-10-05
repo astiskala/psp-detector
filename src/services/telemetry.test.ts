@@ -101,11 +101,7 @@ function requestUrl(input: RequestInfo | URL): string {
     return input;
   }
 
-  if (input instanceof URL) {
-    return input.href;
-  }
-
-  return input.url;
+  return input instanceof URL ? input.href : input.url;
 }
 
 function mockTimezone(timeZone: string | undefined): void {
@@ -600,11 +596,9 @@ describe('user context', () => {
     );
     fetchMock.mockImplementation((input: RequestInfo | URL) => {
       const url = requestUrl(input);
-      if (url === CLOUDFLARE_TRACE_URL) {
-        return Promise.reject(new Error('country unavailable'));
-      }
-
-      return Promise.resolve({ ok: true } as Response);
+      return url === CLOUDFLARE_TRACE_URL
+        ? Promise.reject(new Error('country unavailable'))
+        : Promise.resolve({ ok: true } as Response);
     });
     (chrome as unknown as { i18n?: unknown }).i18n = undefined;
 
@@ -639,10 +633,9 @@ describe('user context', () => {
 
   it('continues when country cache reads and writes fail', async () => {
     sessionArea.get.mockImplementation((key: string) => {
-      if (key === STORAGE_KEYS.TELEMETRY_COUNTRY_CODE) {
-        return Promise.reject(new Error('country cache read failed'));
-      }
-      return Promise.resolve({ [key]: sessionArea.store.get(key) });
+      return key === STORAGE_KEYS.TELEMETRY_COUNTRY_CODE
+        ? Promise.reject(new Error('country cache read failed'))
+        : Promise.resolve({ [key]: sessionArea.store.get(key) });
     });
     sessionArea.set.mockImplementation((items: Record<string, unknown>) => {
       if (Object.hasOwn(items, STORAGE_KEYS.TELEMETRY_COUNTRY_CODE)) {

@@ -223,41 +223,41 @@ async function detectAndAssert(page: Page, site: SiteCase): Promise<void> {
   const matchedNames = PSPDetectionResult.isDetected(result)
     ? result.psps.map((match): string => match.psp)
     : [];
-  if (!matchedNames.includes(site.expected)) {
-    // Provide concise diagnostics
-    const hostSet = [
-      ...new Set(
-        requests
-          .map((u) => {
-            try {
-              const parsed = new URL(u);
-              return parsed.host;
-            } catch {
-              return '';
-            }
-          })
-          .filter(Boolean),
-      ),
-    ].slice(0, 15);
-    const snippet = html.slice(0, 5000); // cap output size
-    const diag = {
-      expected: site.expected,
-      received: matchedNames.length > 0 ? matchedNames : 'NONE',
-      detectionInfo: PSPDetectionResult.isDetected(result)
-        ? result.psps.map((match) => match.detectionInfo)
-        : undefined,
-      firstHosts: hostSet,
-      requestCount: requests.length,
-      htmlPrefixSample: snippet,
-    };
-    throw new Error(
-      `PSP detection mismatch for ${site.url}\n${JSON.stringify(
-        diag,
-        undefined,
-        2,
-      )}`,
-    );
-  }
+  if (matchedNames.includes(site.expected)) return;
+
+  // Provide concise diagnostics
+  const hostSet = [
+    ...new Set(
+      requests
+        .map((u) => {
+          try {
+            const parsed = new URL(u);
+            return parsed.host;
+          } catch {
+            return '';
+          }
+        })
+        .filter(Boolean),
+    ),
+  ].slice(0, 15);
+  const snippet = html.slice(0, 5000); // cap output size
+  const diag = {
+    expected: site.expected,
+    received: matchedNames.length > 0 ? matchedNames : 'NONE',
+    detectionInfo: PSPDetectionResult.isDetected(result)
+      ? result.psps.map((match) => match.detectionInfo)
+      : undefined,
+    firstHosts: hostSet,
+    requestCount: requests.length,
+    htmlPrefixSample: snippet,
+  };
+  throw new Error(
+    `PSP detection mismatch for ${site.url}\n${JSON.stringify(
+      diag,
+      undefined,
+      2,
+    )}`,
+  );
 }
 
 // One test per site so failures clearly identify the PSP.

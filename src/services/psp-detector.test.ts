@@ -684,11 +684,13 @@ describe('PSPDetectorService', () => {
     );
 
     expect(result.type).toBe('detected');
-    if (result.type === 'detected') {
-      expect(result.psps).toHaveLength(2);
-      expect(result.psps[0]?.psp).toBe(STRIPE_NAME);
-      expect(result.psps[1]?.psp).toBe('Adyen');
+    if (result.type !== 'detected') {
+      return;
     }
+
+    expect(result.psps).toHaveLength(2);
+    expect(result.psps[0]?.psp).toBe(STRIPE_NAME);
+    expect(result.psps[1]?.psp).toBe('Adyen');
   });
 
   it('deduplicates same PSP across matchString and regex', () => {
@@ -711,10 +713,12 @@ describe('PSPDetectorService', () => {
 
     const result = service.detectPSP('https://example.com', STRIPE_MATCH);
     expect(result.type).toBe('detected');
-    if (result.type === 'detected') {
-      expect(result.psps).toHaveLength(1);
-      expect(result.psps[0]?.psp).toBe(STRIPE_NAME);
+    if (result.type !== 'detected') {
+      return;
     }
+
+    expect(result.psps).toHaveLength(1);
+    expect(result.psps[0]?.psp).toBe(STRIPE_NAME);
   });
 
   it('returns error for empty url input', () => {
@@ -729,10 +733,12 @@ describe('PSPDetectorService', () => {
     const result = service.detectPSP('not a url', 'content');
 
     expect(result.type).toBe('error');
-    if (result.type === 'error') {
-      expect(result.context).toBe('url_validation');
-      expect(result.error.message).toContain('Invalid URL format');
+    if (result.type !== 'error') {
+      return;
     }
+
+    expect(result.context).toBe('url_validation');
+    expect(result.error.message).toContain('Invalid URL format');
   });
 
   it('returns a config error if the initialized provider cache is unavailable', () => {
@@ -787,10 +793,12 @@ describe('PSPDetectorService', () => {
     );
 
     expect(result.type).toBe('error');
-    if (result.type === 'error') {
-      expect(result.context).toBe('detection_process');
-      expect(result.error.message).toBe('Unknown detection error');
+    if (result.type !== 'error') {
+      return;
     }
+
+    expect(result.context).toBe('detection_process');
+    expect(result.error.message).toBe('Unknown detection error');
   });
 
   it('returns error when provider list is empty', () => {

@@ -382,22 +382,16 @@ class ContentScript {
       .toLowerCase()
       .split(/\s+/u)
       .filter((token) => token.length > 0);
-    if (relValues.length === 0) {
-      return false;
-    }
-
     if (relValues.every((rel) => !RELEVANT_LINK_RELS.has(rel))) {
       return false;
     }
 
     const relSet = new Set(relValues);
-    if (relSet.has('preconnect') || relSet.has('dns-prefetch')) {
-      return true;
-    }
-
     return (
-      (relSet.has('preload') || relSet.has('modulepreload')) &&
-      link.as.toLowerCase() === 'script'
+      relSet.has('preconnect') ||
+      relSet.has('dns-prefetch') ||
+      ((relSet.has('preload') || relSet.has('modulepreload')) &&
+        link.as.toLowerCase() === 'script')
     );
   }
 
@@ -405,8 +399,9 @@ class ContentScript {
     if (sources.scriptSrcs.some((s) => s.includes(value))) return 'scriptSrc';
     if (sources.iframeSrcs.some((s) => s.includes(value))) return 'iframeSrc';
     if (sources.formActions.some((s) => s.includes(value))) return 'formAction';
-    if (sources.linkHrefs.some((s) => s.includes(value))) return 'linkHref';
-    return 'pageUrl';
+    return sources.linkHrefs.some((s) => s.includes(value))
+      ? 'linkHref'
+      : 'pageUrl';
   }
 
   /**
@@ -479,11 +474,9 @@ class ContentScript {
         return undefined;
       }
 
-      if (referrerUrl.hostname === location.hostname) {
-        return undefined;
-      }
-
-      return referrerUrl.origin;
+      return referrerUrl.hostname === location.hostname
+        ? undefined
+        : referrerUrl.origin;
     } catch {
       return undefined;
     }
@@ -496,8 +489,9 @@ class ContentScript {
       action: MessageAction.GET_TAB_ID,
     });
 
-    if (tabResponse?.tabId === undefined) return undefined;
-    return TypeConverters.toTabId(tabResponse.tabId);
+    return tabResponse?.tabId === undefined
+      ? undefined
+      : TypeConverters.toTabId(tabResponse.tabId);
   }
 
   private async reportDetectionToBackground(
@@ -721,10 +715,12 @@ class ContentScript {
     // Get nested iframe sources
     document_.querySelectorAll(':scope iframe[src]').forEach((nestedIframe) => {
       const nestedSource = (nestedIframe as HTMLIFrameElement).src;
-      if (nestedSource && !this.processedIframes.has(nestedSource)) {
-        content.push(nestedSource);
-        this.processedIframes.add(nestedSource);
+      if (!nestedSource || this.processedIframes.has(nestedSource)) {
+        return;
       }
+
+      content.push(nestedSource);
+      this.processedIframes.add(nestedSource);
     });
 
     // Get script sources from iframe

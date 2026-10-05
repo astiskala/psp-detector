@@ -803,16 +803,13 @@ class BackgroundService {
   private isValidProviderGroup(
     group: Partial<PSPConfig>['orchestrators'],
   ): boolean {
-    if (
-      typeof group !== 'object' ||
-      group === null ||
-      typeof group.notice !== 'string' ||
-      !Array.isArray(group.list)
-    ) {
-      return false;
-    }
-
-    return this.isValidProviderArray(group.list);
+    return (
+      typeof group === 'object' &&
+      group !== null &&
+      typeof group.notice === 'string' &&
+      Array.isArray(group.list) &&
+      this.isValidProviderArray(group.list)
+    );
   }
 
   private isValidProviderArray(psps: unknown[]): boolean {
@@ -1060,17 +1057,11 @@ class BackgroundService {
     existingInfo: StoredTabPsp['detectionInfo'] | undefined,
     incomingInfo: PSPDetectionData['detectionInfo'] | undefined,
   ): boolean {
-    if (incomingInfo === undefined) {
-      return false;
-    }
-
-    if (existingInfo === undefined) {
-      return true;
-    }
-
     return (
-      sourcePriority(incomingInfo.sourceType) >
-      sourcePriority(existingInfo.sourceType)
+      incomingInfo !== undefined &&
+      (existingInfo === undefined ||
+        sourcePriority(incomingInfo.sourceType) >
+          sourcePriority(existingInfo.sourceType))
     );
   }
 
@@ -1128,11 +1119,9 @@ class BackgroundService {
 
     try {
       const parsed = new URL(merchantOrigin);
-      if (parsed.hostname.toLowerCase() === domain.toLowerCase()) {
-        return undefined;
-      }
-
-      return parsed.origin;
+      return parsed.hostname.toLowerCase() === domain.toLowerCase()
+        ? undefined
+        : parsed.origin;
     } catch {
       return undefined;
     }
@@ -1443,11 +1432,7 @@ class BackgroundService {
     const isTsp = config.tsps?.list.some(
       (provider) => provider.name.toLowerCase() === normalizedName,
     );
-    if (isTsp === true) {
-      return 'TSP';
-    }
-
-    return 'PSP';
+    return isTsp === true ? 'TSP' : 'PSP';
   }
 
   private rebuildNetworkMatcherIndex(config: PSPConfig | undefined): void {
@@ -1524,11 +1509,7 @@ class BackgroundService {
       .map((part) => part.trim())
       .filter((part) => part.length > 0);
 
-    if (hostParts.length >= 2) {
-      return hostParts.slice(-2).join('.');
-    }
-
-    return hostParts[0];
+    return hostParts.length >= 2 ? hostParts.slice(-2).join('.') : hostParts[0];
   }
 
   private extractRequestTokens(requestUrl: string): string[] {
@@ -1650,11 +1631,10 @@ class BackgroundService {
 
     const candidates = this.getCandidateNetworkMatchers(url);
     for (const matcher of candidates) {
-      if (matchedProvidersForTab.has(matcher.pspName)) {
-        continue;
-      }
-
-      if (!url.toLowerCase().includes(matcher.matchString)) {
+      if (
+        matchedProvidersForTab.has(matcher.pspName) ||
+        !url.toLowerCase().includes(matcher.matchString)
+      ) {
         continue;
       }
 
@@ -1713,22 +1693,24 @@ class BackgroundService {
     }
 
     if (
-      changeInfo.status === 'complete' &&
-      typeof tab.url === 'string' &&
-      tab.url.length > 0
+      changeInfo.status !== 'complete' ||
+      typeof tab.url !== 'string' ||
+      tab.url.length === 0
     ) {
-      const isExempt = await this.isUrlExempt(tab.url);
-      if (isExempt || this.isSpecialUrl(tab.url)) {
-        this.emitScanSkipped(isExempt, TELEMETRY_ENTRY_POINTS.TAB_UPDATE);
-        const currentTabId = await this.getCurrentTabId();
-        if (brandedTabId !== undefined && brandedTabId === currentTabId) {
-          this.setExemptTabState(brandedTabId);
-        }
-      } else {
-        // For regular websites, inject content script for detection
-        this.emitScanRequested(TELEMETRY_ENTRY_POINTS.TAB_UPDATE);
-        await this.injectContentScript(tabId);
+      return;
+    }
+
+    const isExempt = await this.isUrlExempt(tab.url);
+    if (isExempt || this.isSpecialUrl(tab.url)) {
+      this.emitScanSkipped(isExempt, TELEMETRY_ENTRY_POINTS.TAB_UPDATE);
+      const currentTabId = await this.getCurrentTabId();
+      if (brandedTabId !== undefined && brandedTabId === currentTabId) {
+        this.setExemptTabState(brandedTabId);
       }
+    } else {
+      // For regular websites, inject content script for detection
+      this.emitScanRequested(TELEMETRY_ENTRY_POINTS.TAB_UPDATE);
+      await this.injectContentScript(tabId);
     }
   }
 

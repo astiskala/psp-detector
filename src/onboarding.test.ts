@@ -33,15 +33,10 @@ function setupChromeMocks(
     .fn()
     .mockImplementation(
       async (permissionRequest: chrome.permissions.Permissions) => {
-        if (permissionRequest.permissions?.includes('webRequest') === true) {
-          return permissionState.webRequest;
-        }
-
-        if (permissionRequest.origins?.includes('https://*/*') === true) {
-          return permissionState.host;
-        }
-
-        return false;
+        return permissionRequest.permissions?.includes('webRequest') === true
+          ? permissionState.webRequest
+          : permissionRequest.origins?.includes('https://*/*') === true &&
+              permissionState.host;
       },
     );
   const request = jest

@@ -292,11 +292,11 @@ export class PopupManager {
   Performs a lightweight shape check before trusting cached popup config.
    */
   private isPspConfig(value: unknown): value is PSPConfig {
-    if (typeof value !== 'object' || value === null) {
-      return false;
-    }
-
-    return Array.isArray((value as Partial<PSPConfig>).psps);
+    return (
+      typeof value === 'object' &&
+      value !== null &&
+      Array.isArray((value as Partial<PSPConfig>).psps)
+    );
   }
 
   private async setCache(key: string, data: PSPConfig): Promise<void> {

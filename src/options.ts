@@ -279,11 +279,7 @@ function getProviderIconPath(pspName: string): string {
   }
 
   const slug = buildProviderSlug(pspName);
-  if (slug.length > 0) {
-    return `images/${slug}_48.png`;
-  }
-
-  return DEFAULT_PSP_ICON_PATH;
+  return slug.length > 0 ? `images/${slug}_48.png` : DEFAULT_PSP_ICON_PATH;
 }
 
 function getHistoryEntryHostname(entry: HistoryEntry): string {
@@ -309,11 +305,9 @@ function buildDomainFaviconUrl(entry: HistoryEntry): string | undefined {
   const extensionId = (
     globalThis as typeof globalThis & { chrome?: typeof chrome }
   ).chrome?.runtime?.id;
-  if (!extensionId) {
-    return undefined;
-  }
-
-  return `chrome-extension://${extensionId}/_favicon/?pageUrl=${encodeURIComponent(url)}&size=16`;
+  return extensionId
+    ? `chrome-extension://${extensionId}/_favicon/?pageUrl=${encodeURIComponent(url)}&size=16`
+    : undefined;
 }
 
 function createTableIcon(
@@ -467,11 +461,11 @@ function appendPspCellContent(
 }
 
 function isPspConfig(value: unknown): value is PSPConfig {
-  if (typeof value !== 'object' || value === null) {
-    return false;
-  }
-
-  return Array.isArray((value as Partial<PSPConfig>).psps);
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    Array.isArray((value as Partial<PSPConfig>).psps)
+  );
 }
 
 async function loadProviderIcons(): Promise<void> {
